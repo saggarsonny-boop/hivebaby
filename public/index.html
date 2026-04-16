@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hive — Free tools for everyone</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #060a14; color: #e8f4ff; font-family: system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px; }
+.container { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 48px; }
+.hero { text-align: center; display: flex; flex-direction: column; gap: 16px; }
+.hero .bee { font-size: 48px; }
+h1 { font-size: clamp(32px, 8vw, 52px); font-weight: 700; letter-spacing: -0.03em; }
+.hero .tagline { font-size: 18px; color: #4a7fa5; line-height: 1.6; }
+.hero .sub { font-size: 14px; color: #2a4a6a; max-width: 480px; margin: 0 auto; line-height: 1.7; }
+.section-label { font-size: 11px; color: #2a4a6a; text-transform: uppercase; letter-spacing: 0.12em; }
+.engines { display: flex; flex-direction: column; gap: 16px; }
+.engine { background: #0a1a2e; border: 1px solid #1a3a5c; border-radius: 16px; padding: 24px; text-decoration: none; color: inherit; display: flex; gap: 20px; align-items: flex-start; transition: border-color 0.2s; }
+.engine:hover { border-color: #4a7fa5; }
+.engine.soon { opacity: 0.5; cursor: default; pointer-events: none; }
+.engine-emoji { font-size: 32px; flex-shrink: 0; }
+.engine-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.engine-title-row { display: flex; align-items: center; gap: 10px; }
+.engine-name { font-size: 18px; font-weight: 700; color: #e8f4ff; }
+.badge-live { font-size: 10px; background: #0d2a1a; color: #4a9a6a; border-radius: 20px; padding: 2px 8px; font-weight: 600; }
+.badge-soon { font-size: 10px; background: #0d1f35; color: #2a5a7a; border-radius: 20px; padding: 2px 8px; font-weight: 600; }
+.engine-tagline { font-size: 14px; color: #4a7fa5; font-style: italic; }
+.engine-desc { font-size: 13px; color: #2a5a7a; line-height: 1.6; }
+.engine-arrow { color: #1a3a5c; font-size: 20px; flex-shrink: 0; align-self: center; }
+.support { background: #0a1a2e; border: 1px solid #1a3a5c; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+.support-title { font-size: 16px; font-weight: 700; color: #e8f4ff; }
+.support-desc { font-size: 13px; color: #4a7fa5; line-height: 1.6; }
+.support-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.support-btn { background: #0d1f35; border: 1px solid #1a3a5c; border-radius: 10px; padding: 10px 16px; color: #c8e0f0; font-size: 13px; text-decoration: none; font-weight: 500; }
+.footer { border-top: 1px solid #0d1f35; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.footer-text { font-size: 12px; color: #1a3a5c; }
+.footer-console { font-size: 11px; color: #0d1f35; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <div class="bee">🐝</div>
+    <h1>Hive</h1>
+    <p class="tagline">Free tools for everyone. Built for the community first.</p>
+    <p class="sub">Hive builds AI-powered tools that are free at the base tier, forever. No ads. No investors. Optional support if you love what we make.</p>
+  </div>
+
+  <div class="engines">
+    <div class="section-label">Engines</div>
+    <a href="https://hiveclock.hive.baby" class="engine">
+      <div class="engine-emoji">🕐</div>
+      <div class="engine-body">
+        <div class="engine-title-row">
+          <span class="engine-name">HiveClock</span>
+          <span class="badge-live">LIVE</span>
+        </div>
+        <div class="engine-tagline">The world's most humane clock.</div>
+        <div class="engine-desc">Analog and digital. AI clock faces. World time. Prayer times for Islam, Judaism, and any tradition. Free forever.</div>
+      </div>
+      <div class="engine-arrow">→</div>
+    </a>
+    <a href="https://hive-clarity.vercel.app" class="engine">
+      <div class="engine-emoji">💬</div>
+      <div class="engine-body">
+        <div class="engine-title-row">
+          <span class="engine-name">HiveClarity</span>
+          <span class="badge-live">LIVE</span>
+        </div>
+        <div class="engine-tagline">Say what you actually mean.</div>
+        <div class="engine-desc">Takes tangled thoughts and returns precise, expressible language. No advice. Just clarity.</div>
+      </div>
+      <div class="engine-arrow">→</div>
+    </a>
+    <div class="engine soon">
+      <div class="engine-emoji">🌤</div>
+      <div class="engine-body">
+        <div class="engine-title-row">
+          <span class="engine-name">HiveWeather</span>
+          <span class="badge-soon">SOON</span>
+        </div>
+        <div class="engine-tagline">Weather as it feels, not just as it is.</div>
+        <div class="engine-desc">Coming soon.</div>
+      </div>
+    </div>
+    <div class="engine soon">
+      <div class="engine-emoji">🤫</div>
+      <div class="engine-body">
+        <div class="engine-title-row">
+          <span class="engine-name">HiveConfession</span>
+          <span class="badge-soon">SOON</span>
+        </div>
+        <div class="engine-tagline">Say the thing you haven't said.</div>
+        <div class="engine-desc">Coming soon.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="support">
+    <div class="support-title">Support Hive</div>
+    <div class="support-desc">Everything we build is free. If Hive becomes part of your day, support it when you can. It keeps the engines running and the community first.</div>
+    <div class="support-buttons">
+      <a href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" class="support-btn">$1.99 / month</a>
+      <a href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" class="support-btn">$19 / year</a>
+      <a href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" class="support-btn">$5 one-time</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="footer-text">Hive · Free forever at the base tier</span>
+    <a href="https://creator-console-steel.vercel.app" target="_blank" class="footer-console">console</a>
+  </div>
+</div>
+</body>
+</html>
