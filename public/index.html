@@ -852,23 +852,24 @@ cells.forEach((cell,ci)=>{
   geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
   geo.computeVertexNormals();
 
-  let color,emissive,emissiveIntensity,roughness,metalness;
+  let color,emissive,emissiveIntensity,roughness,metalness,opacity,transparent,depthWrite,blending;
   if(isPatron){
     color=C.patron.clone(); emissive=C.patronEm.clone(); emissiveIntensity=0.35; roughness=0.3; metalness=0.5;
+    opacity=1; transparent=true; depthWrite=false; blending=THREE.AdditiveBlending;
   } else if(engine?.status==='live'){
     color=C.live.clone(); emissive=C.liveEm.clone(); emissiveIntensity=0.4; roughness=0.25; metalness=0.65;
+    opacity=1; transparent=true; depthWrite=false; blending=THREE.AdditiveBlending;
   } else if(engine?.status==='soon'){
     color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.06; roughness=0.8; metalness=0.15;
+    opacity=0.45; transparent=true; depthWrite=false; blending=THREE.NormalBlending;
   } else {
     color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05;
+    opacity=0.08; transparent=true; depthWrite=false; blending=THREE.NormalBlending;
   }
 
   const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
-    color,emissive,emissiveIntensity,roughness,metalness,
+    color,emissive,emissiveIntensity,roughness,metalness,opacity,transparent,depthWrite,blending,
     side:THREE.DoubleSide,
-    blending: (engine?.status==='live'||isPatron)?THREE.AdditiveBlending:THREE.NormalBlending,
-    transparent: (engine?.status==='live'||isPatron),
-    depthWrite: !(engine?.status==='live'||isPatron),
   }));
   GROUP.add(mesh); meshes.push(mesh);
   cellInfo.push({engine,code:codes[ci],mesh,color:color.clone(),emissive:emissive.clone(),emissiveIntensity,center:cell.center.clone(),isPatron});
