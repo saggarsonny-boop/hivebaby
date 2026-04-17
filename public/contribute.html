@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contribute — Hive</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #060a14;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #e8f4ff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 24px 80px;
+}
+
+.back {
+  align-self: flex-start;
+  font-size: 12px;
+  color: rgba(74, 127, 165, 0.4);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  margin-bottom: 48px;
+  transition: color 0.2s;
+}
+.back:hover { color: rgba(74, 127, 165, 0.8); }
+
+.page-title {
+  font-size: clamp(22px, 5vw, 32px);
+  font-weight: 700;
+  color: #e8f4ff;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.page-sub {
+  font-size: 14px;
+  color: rgba(74, 127, 165, 0.6);
+  margin-bottom: 48px;
+  text-align: center;
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+.forms {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-box {
+  background: rgba(8, 16, 30, 0.7);
+  border: 1px solid rgba(74, 127, 165, 0.18);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.2s;
+}
+.form-box:focus-within { border-color: rgba(74, 127, 165, 0.4); }
+
+.form-box h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8f4ff;
+}
+.form-box p {
+  font-size: 13px;
+  color: rgba(74, 127, 165, 0.6);
+  line-height: 1.6;
+}
+.form-box textarea {
+  width: 100%;
+  background: rgba(4, 8, 18, 0.6);
+  border: 1px solid rgba(74, 127, 165, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #e8f4ff;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 90px;
+  outline: none;
+  transition: border-color 0.2s;
+  caret-color: #4a9fe0;
+}
+.form-box textarea::placeholder { color: rgba(74, 127, 165, 0.35); }
+.form-box textarea:focus { border-color: rgba(74, 127, 165, 0.5); }
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.form-status {
+  font-size: 12px;
+  color: rgba(212, 175, 55, 0.7);
+  min-height: 16px;
+}
+.form-status.error { color: rgba(255, 100, 80, 0.7); }
+
+.submit-btn {
+  background: rgba(20, 36, 60, 0.9);
+  border: 1px solid rgba(74, 127, 165, 0.3);
+  border-radius: 10px;
+  padding: 10px 20px;
+  color: #9acce8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: border-color 0.2s, color 0.2s;
+}
+.submit-btn:hover { border-color: rgba(74, 127, 165, 0.6); color: #e8f4ff; }
+
+#toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: rgba(4, 8, 18, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-size: 14px;
+  color: #d4af37;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+  white-space: nowrap;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<a class="back" href="/">← Hive</a>
+
+<h1 class="page-title">Contribute</h1>
+<p class="page-sub">Hive builds what the community asks for. Tell us what to build next, or what to fix.</p>
+
+<div class="forms">
+
+  <div class="form-box">
+    <h3>Got an idea for an engine?</h3>
+    <p>Describe a tool you'd use every day. We read everything.</p>
+    <textarea id="idea-text" placeholder="I'd love a tool that helps me…" rows="4"></textarea>
+    <div class="form-row">
+      <span class="form-status" id="idea-status"></span>
+      <button class="submit-btn" onclick="submitForm('idea')">Submit idea →</button>
+    </div>
+  </div>
+
+  <div class="form-box">
+    <h3>Feedback on an existing engine?</h3>
+    <p>What's working, what's broken, what's missing.</p>
+    <textarea id="feedback-text" placeholder="In HiveClock I wish…" rows="4"></textarea>
+    <div class="form-row">
+      <span class="form-status" id="feedback-status"></span>
+      <button class="submit-btn" onclick="submitForm('feedback')">Send feedback →</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+}
+function submitForm(type) {
+  const el = document.getElementById(type + '-text');
+  const st = document.getElementById(type + '-status');
+  if (!el.value.trim()) {
+    st.textContent = 'Please write something first.';
+    st.className = 'form-status error';
+    return;
+  }
+  st.textContent = '';
+  el.value = '';
+  showToast(type === 'idea' ? '💡 Idea received. We\'re reading everything.' : '✓ Feedback received. Thank you.');
+}
+</script>
+</body>
+</html>

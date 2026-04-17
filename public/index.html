@@ -13,7 +13,8 @@ body {
   background: #060a14;
   font-family: system-ui, -apple-system, sans-serif;
   color: #e8f4ff;
-  overflow-x: hidden;
+  overflow: hidden;
+  height: 100vh;
 }
 
 /* Canvas: fixed full-viewport, always behind everything */
@@ -29,7 +30,7 @@ body {
 }
 #c:active { cursor: grabbing; }
 
-/* Planet UI: fixed overlay, fades out on scroll */
+/* Planet UI: fixed overlay */
 #planet-ui {
   position: fixed;
   top: 0; left: 0;
@@ -37,7 +38,6 @@ body {
   height: 100vh;
   z-index: 10;
   pointer-events: none;
-  transition: opacity 0.3s;
 }
 #planet-ui > * { pointer-events: auto; }
 
@@ -86,36 +86,6 @@ body {
 .result-name  { font-size: 14px; font-weight: 700; color: #e8f4ff; }
 .result-tagline { font-size: 12px; color: #4a7fa5; margin-top: 2px; }
 
-#wordmark {
-  position: absolute;
-  bottom: 52px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: rgba(74, 127, 165, 0.3);
-  font-size: 11px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-}
-
-#scroll-cue {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: rgba(74, 127, 165, 0.4);
-  font-size: 18px;
-  animation: bob 2.4s ease-in-out infinite;
-  cursor: pointer;
-  user-select: none;
-}
-@keyframes bob {
-  0%,100% { transform: translateX(-50%) translateY(0);   opacity: .4; }
-  50%      { transform: translateX(-50%) translateY(7px); opacity: .7; }
-}
-
 /* Tooltip: fixed, above everything */
 #tooltip {
   position: fixed;
@@ -137,120 +107,107 @@ body {
 #tooltip .tt-action  { font-size: 11px; color: rgba(212,175,55,.65); margin-top: 8px; }
 #tooltip .tt-action.soon-action { color: rgba(74,127,165,.5); }
 
-/* Spacer: holds vertical space for the planet viewport */
-#planet-spacer { height: 100vh; }
+/* Footer: one-line, fixed bottom */
+#footer {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 11px;
+  color: rgba(74, 127, 165, 0.3);
+  letter-spacing: 0.02em;
+}
+#footer span { pointer-events: none; }
+#footer a, #footer button {
+  color: rgba(74, 127, 165, 0.3);
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  pointer-events: auto;
+  transition: color 0.2s;
+}
+#footer a:hover, #footer button:hover { color: rgba(74, 127, 165, 0.7); }
 
-/* Content section */
-#content {
+/* Support modal */
+#support-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(2, 4, 8, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+}
+#support-modal.open { display: flex; }
+#support-panel {
+  background: rgba(6, 10, 20, 0.97);
+  border: 1px solid rgba(74, 127, 165, 0.25);
+  border-radius: 20px;
+  padding: 32px 28px 28px;
+  width: min(360px, calc(100vw - 40px));
   position: relative;
-  z-index: 5;
-  background: #060a14;
-  max-width: 660px;
-  margin: 0 auto;
-  padding: 80px 24px 100px;
+}
+#support-panel p {
+  font-size: 13px;
+  color: rgba(74, 127, 165, 0.7);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+#support-links {
   display: flex;
   flex-direction: column;
-  gap: 72px;
+  gap: 10px;
 }
-
-.manifesto {
+.s-btn {
+  display: block;
+  padding: 14px 20px;
+  background: rgba(10, 20, 36, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 12px;
+  color: #d4af37;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
   text-align: center;
-  display: flex; flex-direction: column; gap: 20px;
+  transition: border-color 0.2s, background 0.2s;
 }
-.manifesto .eyebrow {
-  font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
-  color: rgba(212,175,55,.5);
+.s-btn:hover {
+  border-color: rgba(212, 175, 55, 0.6);
+  background: rgba(20, 36, 60, 0.9);
 }
-.manifesto h2 {
-  font-size: clamp(28px, 6vw, 42px); font-weight: 800;
-  letter-spacing: -.03em; line-height: 1.1; color: #e8f4ff;
+.s-btn small {
+  display: block;
+  font-size: 11px;
+  color: rgba(212, 175, 55, 0.45);
+  font-weight: 400;
+  margin-top: 2px;
 }
-.manifesto p {
-  font-size: 17px; color: #4a7fa5; line-height: 1.75;
-  max-width: 520px; margin: 0 auto;
+#support-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  background: none;
+  border: none;
+  color: rgba(74, 127, 165, 0.4);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s;
 }
-.manifesto p strong { color: #9acce8; font-weight: 600; }
-.manifesto .badges {
-  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
-}
-.manifesto .badge {
-  font-size: 11px; padding: 5px 12px;
-  border: 1px solid rgba(74,127,165,.2); border-radius: 20px;
-  color: rgba(74,127,165,.6); letter-spacing:.06em; text-transform: uppercase;
-}
+#support-close:hover { color: rgba(74, 127, 165, 0.8); }
 
-.support { display: flex; flex-direction: column; gap: 20px; }
-.support-header h2 { font-size: 22px; font-weight: 700; color: #e8f4ff; }
-.support-header p  { font-size: 14px; color: #4a7fa5; line-height: 1.65; margin-top: 8px; }
-.support-buttons   { display: flex; gap: 10px; flex-wrap: wrap; }
-.support-btn {
-  flex: 1; min-width: 120px;
-  background: rgba(10,20,36,.8);
-  border: 1px solid rgba(212,175,55,.25);
-  border-radius: 14px; padding: 16px 20px;
-  color: #d4af37; font-size: 15px; font-weight: 600;
-  text-decoration: none; text-align: center;
-  display: flex; flex-direction: column; gap: 4px;
-  transition: border-color .2s, background .2s, transform .15s;
-}
-.support-btn:hover {
-  border-color: rgba(212,175,55,.65);
-  background: rgba(20,36,60,.9);
-  transform: translateY(-2px);
-}
-.support-btn .btn-price { font-size: 18px; }
-.support-btn .btn-label { font-size: 11px; color: rgba(212,175,55,.5); font-weight: 400; }
-
-.forms { display: flex; flex-direction: column; gap: 28px; }
-.form-box {
-  background: rgba(8,16,30,.7);
-  border: 1px solid rgba(74,127,165,.18);
-  border-radius: 18px; padding: 24px;
-  display: flex; flex-direction: column; gap: 14px;
-  transition: border-color .2s;
-}
-.form-box:focus-within { border-color: rgba(74,127,165,.4); }
-.form-box h3 { font-size: 16px; font-weight: 700; color: #e8f4ff; }
-.form-box p  { font-size: 13px; color: #4a7fa5; line-height: 1.6; }
-.form-box textarea {
-  width: 100%;
-  background: rgba(4,8,18,.6);
-  border: 1px solid rgba(74,127,165,.2);
-  border-radius: 10px; padding: 12px 14px;
-  color: #e8f4ff; font-size: 14px; font-family: inherit;
-  line-height: 1.6; resize: vertical; min-height: 80px;
-  outline: none; transition: border-color .2s; caret-color: #4a9fe0;
-}
-.form-box textarea::placeholder { color: rgba(74,127,165,.4); }
-.form-box textarea:focus { border-color: rgba(74,127,165,.5); }
-.form-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.form-status { font-size: 12px; color: rgba(212,175,55,.7); min-height: 16px; }
-.form-status.error { color: rgba(255,100,80,.7); }
-.submit-btn {
-  background: rgba(20,36,60,.9);
-  border: 1px solid rgba(74,127,165,.3);
-  border-radius: 10px; padding: 10px 20px;
-  color: #9acce8; font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: inherit; white-space: nowrap;
-  transition: border-color .2s, color .2s;
-}
-.submit-btn:hover { border-color: rgba(74,127,165,.6); color: #e8f4ff; }
-
-footer {
-  position: relative; z-index: 5;
-  background: #060a14;
-  border-top: 1px solid rgba(13,31,53,.8);
-  padding: 28px 24px 48px;
-  max-width: 660px; margin: 0 auto;
-  display: flex; justify-content: space-between;
-  align-items: center; flex-wrap: wrap; gap: 12px;
-}
-footer .ft { font-size: 12px; color: rgba(26,58,92,.8); }
-footer a   { font-size: 11px; color: rgba(26,58,92,.6); text-decoration: none; }
-footer a:hover { color: #4a7fa5; }
-
+/* Toast */
 #toast {
-  position: fixed; bottom: 32px; left: 50%;
+  position: fixed; bottom: 52px; left: 50%;
   transform: translateX(-50%) translateY(80px);
   background: rgba(4,8,18,.95);
   border: 1px solid rgba(212,175,55,.4);
@@ -269,7 +226,7 @@ footer a:hover { color: #4a7fa5; }
 <!-- Canvas: fixed behind everything, always full-viewport -->
 <canvas id="c"></canvas>
 
-<!-- Planet UI overlay: fades on scroll -->
+<!-- Planet UI overlay -->
 <div id="planet-ui">
   <div id="search-wrap">
     <input id="search" type="text"
@@ -277,9 +234,6 @@ footer a:hover { color: #4a7fa5; }
       autocomplete="off" spellcheck="false">
     <div id="results"></div>
   </div>
-  <div id="wordmark">HIVE</div>
-  <div id="scroll-cue"
-    onclick="document.getElementById('planet-spacer').nextElementSibling.scrollIntoView({behavior:'smooth'})">↓</div>
 </div>
 
 <!-- Tooltip -->
@@ -290,78 +244,40 @@ footer a:hover { color: #4a7fa5; }
   <div class="tt-action"></div>
 </div>
 
-<!-- Spacer: scroll area for planet -->
-<div id="planet-spacer"></div>
-
-<!-- Content -->
-<div id="content">
-
-  <div class="manifesto">
-    <div class="eyebrow">A social experiment</div>
-    <h2>You are the investor.</h2>
-    <p>Hive builds AI-powered tools that are <strong>free at the base tier, forever.</strong>
-       No ads. No investors. No agenda. We build what the community asks for —
-       and you decide if it earns your support.</p>
-    <div class="badges">
-      <span class="badge">No ads</span>
-      <span class="badge">No investors</span>
-      <span class="badge">No agenda</span>
-      <span class="badge">Free forever</span>
-    </div>
-  </div>
-
-  <div class="support">
-    <div class="support-header">
-      <h2>Support Hive</h2>
-      <p>Everything we build is free. If Hive becomes part of your day, support it when you
-         can — it keeps the engines running and the community first.</p>
-    </div>
-    <div class="support-buttons">
-      <a href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" class="support-btn">
-        <span class="btn-price">$1.99</span><span class="btn-label">per month</span>
-      </a>
-      <a href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" class="support-btn">
-        <span class="btn-price">$19</span><span class="btn-label">per year</span>
-      </a>
-      <a href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" class="support-btn">
-        <span class="btn-price">$5</span><span class="btn-label">one-time</span>
-      </a>
-    </div>
-  </div>
-
-  <div class="forms">
-    <div class="form-box">
-      <h3>Got an idea for an engine?</h3>
-      <p>Hive is built by its community. Tell us what you'd build if you could.</p>
-      <textarea id="idea-text" placeholder="I'd love a tool that helps me…" rows="3"></textarea>
-      <div class="form-row">
-        <span class="form-status" id="idea-status"></span>
-        <button class="submit-btn" onclick="submitForm('idea')">Submit idea →</button>
-      </div>
-    </div>
-    <div class="form-box">
-      <h3>Feedback on an existing engine?</h3>
-      <p>Tell us what's working, what's broken, or what's missing.</p>
-      <textarea id="feedback-text" placeholder="In HiveClock I wish…" rows="3"></textarea>
-      <div class="form-row">
-        <span class="form-status" id="feedback-status"></span>
-        <button class="submit-btn" onclick="submitForm('feedback')">Send feedback →</button>
-      </div>
-    </div>
-  </div>
-
+<!-- Footer -->
+<div id="footer">
+  <span>A social experiment · Free forever · </span><button onclick="openSupport()">Support</button><span> · </span><a href="/contribute">Contribute</a>
 </div>
 
-<footer>
-  <span class="ft">Hive · Free forever at the base tier</span>
-  <a href="https://creator-console-steel.vercel.app" target="_blank">console</a>
-</footer>
+<!-- Support modal -->
+<div id="support-modal" onclick="if(event.target===this)closeSupport()">
+  <div id="support-panel">
+    <button id="support-close" onclick="closeSupport()">×</button>
+    <p>Hive is free forever at the base tier.<br>Support it if it earns a place in your day.</p>
+    <div id="support-links">
+      <a class="s-btn" href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" rel="noopener">
+        $1.99 <small>per month</small>
+      </a>
+      <a class="s-btn" href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" rel="noopener">
+        $19 <small>per year</small>
+      </a>
+      <a class="s-btn" href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" rel="noopener">
+        $5 <small>one-time</small>
+      </a>
+    </div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script>
-// ─── Forms / Toast ────────────────────────────────────────────────────────────
+// ─── Support modal ────────────────────────────────────────────────────────────
+function openSupport()  { document.getElementById('support-modal').classList.add('open'); }
+function closeSupport() { document.getElementById('support-modal').classList.remove('open'); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeSupport(); });
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
 const toastEl = document.getElementById('toast');
 let toastTimer;
 function showToast(msg) {
@@ -370,26 +286,9 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
 }
-function submitForm(type) {
-  const el  = document.getElementById(type + '-text');
-  const st  = document.getElementById(type + '-status');
-  if (!el.value.trim()) { st.textContent = 'Please write something first.'; st.className = 'form-status error'; return; }
-  st.textContent = '';
-  el.value = '';
-  showToast(type === 'idea' ? '💡 Idea received. We\'re reading everything.' : '✓ Feedback received. Thank you.');
-}
-
-// ─── Scroll: fade planet UI, disable canvas interaction when below fold ───────
-const planetUI = document.getElementById('planet-ui');
-const canvas   = document.getElementById('c');
-window.addEventListener('scroll', () => {
-  const past = window.scrollY > window.innerHeight * 0.6;
-  planetUI.style.opacity       = past ? '0' : '1';
-  planetUI.style.pointerEvents = past ? 'none' : '';
-  canvas.style.pointerEvents   = past ? 'none' : 'auto';
-}, { passive: true });
 
 // ─── Guard: Three.js CDN ──────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
 if (typeof THREE === 'undefined') {
   canvas.style.background = '#060a14';
   document.body.insertAdjacentHTML('beforeend',
@@ -411,7 +310,6 @@ const ENGINES = [
 ];
 
 // ─── Renderer ─────────────────────────────────────────────────────────────────
-// Canvas is position:fixed so window.innerWidth/Height is always correct.
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -451,7 +349,6 @@ function buildDual(detail) {
   const pos = geo.attributes.position;
   const idx = geo.index; // null in Three.js r152+ (non-indexed)
 
-  // Deduplicate vertices
   const SCALE = 1e5, kmap = new Map(), uniq = [], remap = new Int32Array(pos.count);
   for (let i = 0; i < pos.count; i++) {
     const x=pos.getX(i), y=pos.getY(i), z=pos.getZ(i);
@@ -461,7 +358,6 @@ function buildDual(detail) {
     else { kmap.set(k,uniq.length); remap[i]=uniq.length; uniq.push(new THREE.Vector3(x/L,y/L,z/L)); }
   }
 
-  // Build face centroids — works whether indexed or flat
   const triN = idx ? idx.count : pos.count;
   const getI = idx ? i => idx.getX(i) : i => i;
   const faces = [];
@@ -471,11 +367,9 @@ function buildDual(detail) {
     faces.push({ centroid: new THREE.Vector3().addVectors(uniq[a],uniq[b]).add(uniq[c]).divideScalar(3).normalize(), verts:[a,b,c] });
   }
 
-  // Vertex → adjacent faces map
   const vf = new Map();
   faces.forEach((f,fi) => f.verts.forEach(vi => { if(!vf.has(vi)) vf.set(vi,[]); vf.get(vi).push(fi); }));
 
-  // Build dual cells (sorted polygon per vertex)
   return uniq.map((center, vi) => {
     const fis = vf.get(vi)||[];
     if (fis.length < 3) return null;
@@ -543,17 +437,14 @@ cells.forEach((cell, ci) => {
   cellInfo.push({engine, code:codes[ci], mesh, color:color.clone(), emissive:emissive.clone(), emissiveIntensity, center:cell.center.clone()});
 });
 
-// Sphere base
 GROUP.add(new THREE.Mesh(new THREE.SphereGeometry(0.98,64,64), new THREE.MeshStandardMaterial({color:0x020810,roughness:.95,metalness:.05})));
 
-// Point lights on live cells
 cellInfo.forEach(cd => {
   if (cd.engine?.status==='live') {
     const l=new THREE.PointLight(0xd4af37,1.2,1.8); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
   }
 });
 
-// Sprites for named cells
 function makeSprite(text, color, alpha, fs) {
   const c=document.createElement('canvas'); c.width=256; c.height=80;
   const ctx=c.getContext('2d');
