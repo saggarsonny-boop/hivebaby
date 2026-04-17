@@ -196,7 +196,7 @@ body {
     <div class="form-box">
       <h3>Got an idea for an engine?</h3>
       <p>Describe a tool you'd use every day. We read everything.</p>
-      <textarea id="idea-text" placeholder="I'd love a tool that helps me…" rows="4"></textarea>
+      <textarea id="idea-text" placeholder="" rows="4"></textarea>
       <div class="form-row">
         <span class="form-status" id="idea-status"></span>
         <button class="submit-btn" id="idea-btn" onclick="submitForm('idea')">Submit idea →</button>
@@ -206,7 +206,7 @@ body {
     <div class="form-box">
       <h3>How are the existing engines?</h3>
       <p>What's working, what's broken, what's missing.</p>
-      <textarea id="feedback-text" placeholder="In HiveClock I wish…" rows="4"></textarea>
+      <textarea id="feedback-text" placeholder="" rows="4"></textarea>
       <div class="form-row">
         <span class="form-status" id="feedback-status"></span>
         <button class="submit-btn" id="feedback-btn" onclick="submitForm('feedback')">Send feedback →</button>
@@ -238,6 +238,51 @@ body {
 <div id="toast"></div>
 
 <script>
+// ─── Rotating placeholders ────────────────────────────────────────────────────
+function rotatePlaceholder(el, examples) {
+  let idx = 0, busy = false;
+  function cycle() {
+    if (busy || document.activeElement === el) return;
+    el.placeholder = '';
+    const text = examples[idx % examples.length]; idx++;
+    let i = 0;
+    const t = setInterval(() => {
+      el.placeholder = text.slice(0, ++i);
+      if (i >= text.length) { clearInterval(t); setTimeout(erase, 2400); }
+    }, 44);
+  }
+  function erase() {
+    if (busy || document.activeElement === el) return;
+    const text = el.placeholder; let i = text.length;
+    const t = setInterval(() => {
+      el.placeholder = text.slice(0, --i);
+      if (i <= 0) { clearInterval(t); setTimeout(cycle, 600); }
+    }, 28);
+  }
+  el.addEventListener('focus', () => { busy = true; el.placeholder = ''; });
+  el.addEventListener('blur',  () => { busy = false; setTimeout(cycle, 800); });
+  setTimeout(cycle, 1000 + Math.random() * 600);
+}
+
+rotatePlaceholder(document.getElementById('idea-text'), [
+  "I'd love a tool that helps me fall asleep…",
+  "What if Hive could read my lab results?",
+  "I need something for daily journalling…",
+  "A tool for learning any instrument…",
+  "Something to help me write better emails…",
+  "I want a calm way to track my mood…",
+]);
+
+rotatePlaceholder(document.getElementById('feedback-text'), [
+  "In HiveClock I wish the font was larger…",
+  "HiveField feels too short — I want longer scenarios…",
+  "HiveClarity always gives me exactly what I need…",
+  "The planet on hive.baby is mesmerising…",
+  "HiveStrength could use rest day planning…",
+  "Would love a dark mode that's even darker…",
+]);
+
+// ─── API ──────────────────────────────────────────────────────────────────────
 const API = 'https://creator-console-steel.vercel.app/api/submissions';
 
 const toastEl = document.getElementById('toast');

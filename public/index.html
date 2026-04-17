@@ -255,7 +255,7 @@ body {
 <div id="planet-ui">
   <div id="search-wrap">
     <input id="search" type="text"
-      placeholder="Find an engine… try 'help me practice my job'"
+      placeholder=""
       autocomplete="off" spellcheck="false">
     <div id="results"></div>
   </div>
@@ -291,6 +291,43 @@ body {
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script>
+// ─── Rotating placeholder ─────────────────────────────────────────────────────
+(function(){
+  const el = document.getElementById('search');
+  const examples = [
+    "help me practice my job…",
+    "I want to get stronger…",
+    "I need more clarity…",
+    "what time is it in Tokyo?",
+    "I have something to confess…",
+    "train me like a surgeon…",
+    "help me say what I mean…",
+  ];
+  let idx = 0, typing = false;
+  function cycle() {
+    if (typing || document.activeElement === el) return;
+    el.placeholder = '';
+    const text = examples[idx % examples.length]; idx++;
+    let i = 0;
+    const t = setInterval(() => {
+      el.placeholder = text.slice(0, ++i);
+      if (i >= text.length) { clearInterval(t); setTimeout(erase, 2200); }
+    }, 42);
+  }
+  function erase() {
+    if (typing || document.activeElement === el) return;
+    const text = el.placeholder;
+    let i = text.length;
+    const t = setInterval(() => {
+      el.placeholder = text.slice(0, --i);
+      if (i <= 0) { clearInterval(t); setTimeout(cycle, 600); }
+    }, 28);
+  }
+  el.addEventListener('focus', () => { typing = true; el.placeholder = ''; });
+  el.addEventListener('blur',  () => { typing = false; setTimeout(cycle, 800); });
+  setTimeout(cycle, 1200);
+})();
+
 // ─── Support modal ────────────────────────────────────────────────────────────
 function openSupport()  { document.getElementById('support-modal').classList.add('open'); }
 function closeSupport() { document.getElementById('support-modal').classList.remove('open'); }
