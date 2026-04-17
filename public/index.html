@@ -637,7 +637,11 @@ cells.forEach((cell, ci) => {
   else if (engine?.status==='soon') { color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.06; roughness=0.8;  metalness=0.15; }
   else { color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05; }
 
-  const mesh=new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide}));
+  const isEmpty = !engine;
+  const mat = isEmpty
+    ? new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide,transparent:true,opacity:0,depthWrite:false})
+    : new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide});
+  const mesh=new THREE.Mesh(geo, mat);
   GROUP.add(mesh); meshes.push(mesh);
   cellInfo.push({engine, code:codes[ci], mesh, color:color.clone(), emissive:emissive.clone(), emissiveIntensity, center:cell.center.clone()});
 });
