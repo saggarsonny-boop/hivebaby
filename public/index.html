@@ -1,4 +1,4 @@
-<!-- deploy: 2026-04-17T20:46:01Z -->
+<!-- deploy: 2026-04-17T20:56:07Z -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -483,7 +483,7 @@ let starPoints;
 
 (async function loadHYG(){
   try {
-    const r=await fetch('https://raw.githubusercontent.com/astronexus/HYG-Database/master/hygdata_v3.csv');
+    const r=await fetch('/hyg.csv');
     if(!r.ok) return;
     const txt=await r.text();
     const lines=txt.split(/\r?\n/);
