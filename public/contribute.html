@@ -16,165 +16,232 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 56px 24px 80px;
+  padding: 48px 24px 72px;
 }
 
 .back {
   align-self: flex-start;
   font-size: 12px;
-  color: rgba(180, 200, 225, 0.35);
+  color: rgba(180, 200, 225, 0.3);
   text-decoration: none;
   letter-spacing: 0.05em;
-  margin-bottom: 52px;
+  margin-bottom: 56px;
   transition: color 0.2s;
 }
-.back:hover { color: rgba(180, 200, 225, 0.75); }
+.back:hover { color: rgba(180, 200, 225, 0.65); }
 
-.page-title {
-  font-size: clamp(24px, 5vw, 34px);
+.hero {
+  text-align: center;
+  margin-bottom: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero h1 {
+  font-size: clamp(26px, 5vw, 38px);
   font-weight: 700;
   color: #e8f4ff;
-  letter-spacing: -0.02em;
-  margin-bottom: 8px;
-  text-align: center;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
 }
-.page-sub {
+
+.hero p {
   font-size: 14px;
-  color: rgba(74, 127, 165, 0.6);
-  margin-bottom: 52px;
-  text-align: center;
-  line-height: 1.6;
-  max-width: 420px;
+  color: rgba(180, 200, 225, 0.45);
+  line-height: 1.7;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .content {
   width: 100%;
-  max-width: 560px;
+  max-width: 540px;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 20px;
 }
 
-/* ── Forms ── */
-.forms { display: flex; flex-direction: column; gap: 20px; }
-
-.form-box {
-  background: rgba(8, 16, 30, 0.7);
-  border: 1px solid rgba(74, 127, 165, 0.18);
-  border-radius: 18px;
-  padding: 24px;
+/* ── Cards ── */
+.card {
+  background: rgba(6, 12, 24, 0.75);
+  border: 1px solid rgba(74, 127, 165, 0.15);
+  border-radius: 20px;
+  padding: 26px 24px 22px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  transition: border-color 0.2s;
+  gap: 12px;
+  transition: border-color 0.25s;
 }
-.form-box:focus-within { border-color: rgba(74, 127, 165, 0.4); }
-.form-box h3 { font-size: 15px; font-weight: 700; color: #e8f4ff; }
-.form-box p  { font-size: 13px; color: rgba(74, 127, 165, 0.6); line-height: 1.6; }
+.card:focus-within { border-color: rgba(74, 127, 165, 0.35); }
 
-.form-box textarea {
+.card-header { display: flex; flex-direction: column; gap: 5px; }
+
+.card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8f4ff;
+  letter-spacing: -0.01em;
+}
+
+.card .sub {
+  font-size: 12px;
+  color: rgba(180, 200, 225, 0.38);
+  line-height: 1.5;
+}
+
+.field-wrap { position: relative; }
+
+.card textarea {
   width: 100%;
-  background: rgba(4, 8, 18, 0.6);
-  border: 1px solid rgba(74, 127, 165, 0.2);
-  border-radius: 10px;
-  padding: 12px 14px;
+  background: rgba(3, 6, 14, 0.7);
+  border: 1px solid rgba(74, 127, 165, 0.15);
+  border-radius: 12px;
+  padding: 13px 15px;
   color: #e8f4ff;
   font-size: 14px;
   font-family: inherit;
-  line-height: 1.6;
-  resize: vertical;
-  min-height: 90px;
+  line-height: 1.65;
+  resize: none;
+  height: 96px;
   outline: none;
   transition: border-color 0.2s;
-  caret-color: #4a9fe0;
+  caret-color: rgba(212, 175, 55, 0.8);
 }
-.form-box textarea::placeholder { color: rgba(74, 127, 165, 0.55); }
-.form-box textarea:focus { border-color: rgba(74, 127, 165, 0.5); }
+.card textarea::placeholder {
+  color: rgba(74, 127, 165, 0.4);
+  transition: opacity 0.6s ease;
+}
+.card textarea:focus {
+  border-color: rgba(74, 127, 165, 0.38);
+}
 
-.form-row {
+.card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
-.form-status { font-size: 12px; color: rgba(212, 175, 55, 0.7); min-height: 16px; }
-.form-status.error { color: rgba(255, 100, 80, 0.7); }
 
-.submit-btn {
-  background: rgba(20, 36, 60, 0.9);
-  border: 1px solid rgba(74, 127, 165, 0.3);
+.status {
+  font-size: 11px;
+  color: rgba(212, 175, 55, 0.6);
+  min-height: 14px;
+  transition: opacity 0.3s;
+}
+.status.err { color: rgba(255, 90, 70, 0.65); }
+
+.send-btn {
+  background: none;
+  border: 1px solid rgba(74, 127, 165, 0.25);
   border-radius: 10px;
-  padding: 10px 20px;
-  color: #9acce8;
-  font-size: 13px;
+  padding: 9px 18px;
+  color: rgba(180, 200, 225, 0.65);
+  font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
   font-family: inherit;
+  cursor: pointer;
   white-space: nowrap;
   transition: border-color 0.2s, color 0.2s;
 }
-.submit-btn:hover:not(:disabled) { border-color: rgba(74, 127, 165, 0.6); color: #e8f4ff; }
-.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.send-btn:hover:not(:disabled) {
+  border-color: rgba(74, 127, 165, 0.5);
+  color: #e8f4ff;
+}
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Support section ── */
-.support-section { display: flex; flex-direction: column; gap: 16px; }
+/* ── Divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid rgba(74, 127, 165, 0.08);
+  margin: 8px 0 4px;
+}
 
-.support-section h2 {
-  font-size: 18px;
+/* ── Support ── */
+.support-card {
+  background: rgba(6, 12, 24, 0.75);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  border-radius: 20px;
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.support-card h3 {
+  font-size: 15px;
   font-weight: 700;
   color: #e8f4ff;
 }
-.support-section p {
-  font-size: 13px;
-  color: rgba(74, 127, 165, 0.6);
+
+.support-card .sub {
+  font-size: 12px;
+  color: rgba(180, 200, 225, 0.38);
   line-height: 1.65;
+  margin-top: -8px;
 }
 
-.support-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.support-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
 .s-btn {
   flex: 1;
-  min-width: 130px;
+  min-width: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 14px 18px;
-  background: rgba(10, 20, 36, 0.8);
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  gap: 2px;
+  padding: 13px 16px;
+  background: rgba(8, 16, 30, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 14px;
   color: #d4af37;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   text-decoration: none;
   text-align: center;
   transition: border-color 0.2s, background 0.2s;
 }
-.s-btn:hover { border-color: rgba(212, 175, 55, 0.6); background: rgba(20, 36, 60, 0.9); text-decoration: none; }
-.s-btn small { font-size: 11px; color: rgba(212, 175, 55, 0.45); font-weight: 400; }
+.s-btn:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(16, 28, 50, 0.9);
+}
+.s-btn small {
+  font-size: 10px;
+  color: rgba(212, 175, 55, 0.4);
+  font-weight: 400;
+}
 
-/* ── Divider ── */
-.divider {
-  border: none;
-  border-top: 1px solid rgba(74, 127, 165, 0.1);
+/* ── Pet Familiar footer note ── */
+.familiar-note {
+  margin-top: 40px;
+  font-size: 11px;
+  color: rgba(74, 127, 165, 0.28);
+  text-align: center;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+  max-width: 320px;
 }
 
 /* ── Toast ── */
 #toast {
   position: fixed;
-  bottom: 32px;
+  bottom: 28px;
   left: 50%;
   transform: translateX(-50%) translateY(80px);
-  background: rgba(4, 8, 18, 0.95);
-  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(4, 8, 18, 0.96);
+  border: 1px solid rgba(212, 175, 55, 0.35);
   border-radius: 12px;
-  padding: 12px 22px;
-  font-size: 14px;
+  padding: 11px 22px;
+  font-size: 13px;
   color: #d4af37;
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.32s;
   white-space: nowrap;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -186,152 +253,252 @@ body {
 
 <a class="back" href="/">← Hive</a>
 
-<h1 class="page-title">Contribute</h1>
-<p class="page-sub">Hive builds what the community asks for. Shape what gets built next.</p>
+<div class="hero">
+  <h1 data-i18n="headline">Shape what gets built next.</h1>
+  <p data-i18n="subline">Hive builds what the community asks for. Every idea gets read. Every piece of feedback changes something.</p>
+</div>
 
 <div class="content">
 
-  <div class="forms">
-
-    <div class="form-box">
-      <h3>Got an idea for an engine?</h3>
-      <p>Describe a tool you'd use every day. We read everything.</p>
-      <textarea id="idea-text" placeholder="" rows="4"></textarea>
-      <div class="form-row">
-        <span class="form-status" id="idea-status"></span>
-        <button class="submit-btn" id="idea-btn" onclick="submitForm('idea')">Submit idea →</button>
-      </div>
+  <div class="card">
+    <div class="card-header">
+      <h3 data-i18n="idea_heading">Have an idea for an engine?</h3>
+      <span class="sub" data-i18n="idea_sub">Describe a tool you would use every day.</span>
     </div>
-
-    <div class="form-box">
-      <h3>How are the existing engines?</h3>
-      <p>What's working, what's broken, what's missing.</p>
-      <textarea id="feedback-text" placeholder="" rows="4"></textarea>
-      <div class="form-row">
-        <span class="form-status" id="feedback-status"></span>
-        <button class="submit-btn" id="feedback-btn" onclick="submitForm('feedback')">Send feedback →</button>
-      </div>
+    <textarea id="idea-text" rows="3"></textarea>
+    <div class="card-footer">
+      <span class="status" id="idea-status"></span>
+      <button class="send-btn" id="idea-btn" data-i18n="idea_btn">Send idea →</button>
     </div>
-
   </div>
 
-  <hr class="divider">
+  <div class="card">
+    <div class="card-header">
+      <h3 data-i18n="feedback_heading">How are the engines treating you?</h3>
+      <span class="sub" data-i18n="feedback_sub">Tell us what feels smooth, what feels rough, what feels missing.</span>
+    </div>
+    <textarea id="feedback-text" rows="3"></textarea>
+    <div class="card-footer">
+      <span class="status" id="feedback-status"></span>
+      <button class="send-btn" id="feedback-btn" data-i18n="feedback_btn">Send feedback →</button>
+    </div>
+  </div>
 
-  <div class="support-section">
-    <h2>Support Hive</h2>
-    <p>Everything is free. If Hive earns a place in your day, support it when you can — it keeps the engines running and the community first.</p>
-    <div class="support-buttons">
-      <a class="s-btn" href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" rel="noopener">
-        $1.99 <small>per month</small>
-      </a>
-      <a class="s-btn" href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" rel="noopener">
-        $19 <small>per year</small>
-      </a>
-      <a class="s-btn" href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" rel="noopener">
-        $5 <small>one-time</small>
-      </a>
+  <div class="support-card">
+    <h3 data-i18n="support_heading">Support Hive</h3>
+    <p class="sub" data-i18n="support_copy">Everything is free. If Hive earns a place in your day, support it when you can. It keeps the engines running and the community first.</p>
+    <div class="support-btns">
+      <a class="s-btn" href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" rel="noopener">$1.99<small>per month</small></a>
+      <a class="s-btn" href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" rel="noopener">$19<small>per year</small></a>
+      <a class="s-btn" href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" rel="noopener">$5<small>one-time</small></a>
     </div>
   </div>
 
 </div>
 
+<p class="familiar-note" data-i18n="familiar_note">A small presence in the corner is coming. For now, just you and the idea.</p>
+
 <div id="toast"></div>
 
 <script>
-// ─── Rotating placeholders ────────────────────────────────────────────────────
+// ── i18n ──────────────────────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  es: {
+    headline: "Define lo que se construye después.",
+    subline: "Hive construye lo que la comunidad pide. Cada idea se lee. Cada comentario cambia algo.",
+    idea_heading: "¿Tienes una idea para un motor?",
+    idea_sub: "Describe una herramienta que usarías cada día.",
+    idea_btn: "Enviar idea →",
+    feedback_heading: "¿Cómo te están tratando los motores?",
+    feedback_sub: "Dinos qué se siente bien, qué se siente mal, qué falta.",
+    feedback_btn: "Enviar comentario →",
+    support_heading: "Apoya Hive",
+    support_copy: "Todo es gratis. Si Hive gana un lugar en tu día, apóyalo cuando puedas.",
+    familiar_note: "Una pequeña presencia está llegando. Por ahora, solo tú y la idea.",
+  },
+  fr: {
+    headline: "Façonnez ce qui sera construit.",
+    subline: "Hive construit ce que la communauté demande. Chaque idée est lue. Chaque retour change quelque chose.",
+    idea_heading: "Vous avez une idée de moteur ?",
+    idea_sub: "Décrivez un outil que vous utiliseriez chaque jour.",
+    idea_btn: "Envoyer l'idée →",
+    feedback_heading: "Comment se comportent les moteurs ?",
+    feedback_sub: "Dites-nous ce qui fonctionne, ce qui coince, ce qui manque.",
+    feedback_btn: "Envoyer un retour →",
+    support_heading: "Soutenir Hive",
+    support_copy: "Tout est gratuit. Si Hive mérite une place dans votre journée, soutenez-le quand vous le pouvez.",
+    familiar_note: "Une petite présence arrive bientôt. Pour l'instant, juste vous et l'idée.",
+  },
+  de: {
+    headline: "Gestalte, was als nächstes gebaut wird.",
+    subline: "Hive baut, was die Community verlangt. Jede Idee wird gelesen. Jedes Feedback ändert etwas.",
+    idea_heading: "Hast du eine Idee für eine Engine?",
+    idea_sub: "Beschreibe ein Werkzeug, das du jeden Tag nutzen würdest.",
+    idea_btn: "Idee senden →",
+    feedback_heading: "Wie behandeln dich die Engines?",
+    feedback_sub: "Sag uns, was sich gut, was sich rau und was sich fehlend anfühlt.",
+    feedback_btn: "Feedback senden →",
+    support_heading: "Hive unterstützen",
+    support_copy: "Alles ist kostenlos. Wenn Hive einen Platz in deinem Tag verdient, unterstütze es wenn du kannst.",
+    familiar_note: "Eine kleine Präsenz kommt bald. Vorerst nur du und die Idee.",
+  },
+  pt: {
+    headline: "Molde o que será construído a seguir.",
+    subline: "Hive constrói o que a comunidade pede. Cada ideia é lida. Cada feedback muda algo.",
+    idea_heading: "Tem uma ideia para um motor?",
+    idea_sub: "Descreva uma ferramenta que usaria todos os dias.",
+    idea_btn: "Enviar ideia →",
+    feedback_heading: "Como os motores estão te tratando?",
+    feedback_sub: "Diga-nos o que parece suave, o que parece áspero, o que está faltando.",
+    feedback_btn: "Enviar feedback →",
+    support_heading: "Apoiar o Hive",
+    support_copy: "Tudo é gratuito. Se o Hive merece um lugar no seu dia, apoie quando puder.",
+    familiar_note: "Uma pequena presença está chegando. Por enquanto, só você e a ideia.",
+  },
+  ar: {
+    headline: "شكّل ما سيُبنى بعد ذلك.",
+    subline: "Hive يبني ما يطلبه المجتمع. كل فكرة تُقرأ. كل ملاحظة تغير شيئاً.",
+    idea_heading: "لديك فكرة لمحرك؟",
+    idea_sub: "صف أداة ستستخدمها كل يوم.",
+    idea_btn: "إرسال الفكرة ←",
+    feedback_heading: "كيف تتعامل معك المحركات؟",
+    feedback_sub: "أخبرنا بما يبدو سلساً، وما يبدو خشناً، وما يبدو مفقوداً.",
+    feedback_btn: "إرسال الملاحظات ←",
+    support_heading: "ادعم Hive",
+    support_copy: "كل شيء مجاني. إذا كسب Hive مكاناً في يومك، ادعمه عندما تستطيع.",
+    familiar_note: "حضور صغير قادم. في الوقت الحالي، فقط أنت والفكرة.",
+  },
+  zh: {
+    headline: "塑造接下来构建的内容。",
+    subline: "Hive 构建社区所需要的工具。每个想法都会被阅读，每条反馈都会改变一些事情。",
+    idea_heading: "有引擎的想法？",
+    idea_sub: "描述一个您每天都会使用的工具。",
+    idea_btn: "发送想法 →",
+    feedback_heading: "引擎对您如何？",
+    feedback_sub: "告诉我们什么感觉顺畅，什么感觉粗糙，什么感觉缺失。",
+    feedback_btn: "发送反馈 →",
+    support_heading: "支持 Hive",
+    support_copy: "一切都是免费的。如果 Hive 在您的日常中占有一席之地，请在您能的时候支持它。",
+    familiar_note: "一个小小的存在即将到来。现在，只有你和这个想法。",
+  },
+  ja: {
+    headline: "次に作られるものを形にしよう。",
+    subline: "Hiveはコミュニティが求めるものを作ります。すべてのアイデアが読まれ、すべてのフィードバックが何かを変えます。",
+    idea_heading: "エンジンのアイデアがありますか？",
+    idea_sub: "毎日使いたいツールを説明してください。",
+    idea_btn: "アイデアを送る →",
+    feedback_heading: "エンジンはどうですか？",
+    feedback_sub: "スムーズに感じること、粗く感じること、足りないことを教えてください。",
+    feedback_btn: "フィードバックを送る →",
+    support_heading: "Hiveをサポート",
+    support_copy: "すべて無料です。Hiveが日々の生活に居場所を得たなら、できるときにサポートしてください。",
+    familiar_note: "小さな存在がやってきます。今はあなたとアイデアだけ。",
+  },
+};
+
+(function applyI18n() {
+  const lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  const t = TRANSLATIONS[lang];
+  if (!t) return;
+  if (lang === 'ar') { document.documentElement.dir = 'rtl'; document.documentElement.lang = 'ar'; }
+  else { document.documentElement.lang = lang; }
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+})();
+
+// ── Rotating placeholders ─────────────────────────────────────────────────────
 function rotatePlaceholder(el, examples) {
-  let idx = 0, busy = false;
-  function cycle() {
-    if (busy || document.activeElement === el) return;
-    el.placeholder = '';
+  let idx = 0, active = false, timer = null;
+
+  function show() {
+    if (active || document.activeElement === el) return;
     const text = examples[idx % examples.length]; idx++;
     let i = 0;
-    const t = setInterval(() => {
+    timer = setInterval(() => {
       el.placeholder = text.slice(0, ++i);
-      if (i >= text.length) { clearInterval(t); setTimeout(erase, 2400); }
-    }, 44);
+      if (i >= text.length) { clearInterval(timer); timer = setTimeout(hide, 3800); }
+    }, 38);
   }
-  function erase() {
-    if (busy || document.activeElement === el) return;
+
+  function hide() {
+    if (active || document.activeElement === el) return;
     const text = el.placeholder; let i = text.length;
-    const t = setInterval(() => {
+    timer = setInterval(() => {
       el.placeholder = text.slice(0, --i);
-      if (i <= 0) { clearInterval(t); setTimeout(cycle, 600); }
-    }, 28);
+      if (i <= 0) { clearInterval(timer); timer = setTimeout(show, 700); }
+    }, 24);
   }
-  el.addEventListener('focus', () => { busy = true; el.placeholder = ''; });
-  el.addEventListener('blur',  () => { busy = false; setTimeout(cycle, 800); });
-  setTimeout(cycle, 1000 + Math.random() * 600);
+
+  el.addEventListener('focus', () => { active = true; clearInterval(timer); clearTimeout(timer); el.placeholder = ''; });
+  el.addEventListener('blur',  () => { active = false; timer = setTimeout(show, 900); });
+  timer = setTimeout(show, 800 + Math.random() * 500);
 }
 
 rotatePlaceholder(document.getElementById('idea-text'), [
-  "I'd love a tool that helps me fall asleep…",
   "What if Hive could read my lab results?",
-  "I need something for daily journalling…",
-  "A tool for learning any instrument…",
-  "Something to help me write better emails…",
-  "I want a calm way to track my mood…",
+  "I want an engine that helps me write difficult emails.",
 ]);
 
 rotatePlaceholder(document.getElementById('feedback-text'), [
-  "In HiveClock I wish the font was larger…",
-  "HiveField feels too short — I want longer scenarios…",
-  "HiveClarity always gives me exactly what I need…",
-  "The planet on hive.baby is mesmerising…",
-  "HiveStrength could use rest day planning…",
-  "Would love a dark mode that's even darker…",
+  "HiveField feels too short. I want longer scenarios.",
+  "The clock is beautiful. Can it show prayer times?",
 ]);
 
-// ─── API ──────────────────────────────────────────────────────────────────────
+// ── Submissions ───────────────────────────────────────────────────────────────
 const API = 'https://creator-console-steel.vercel.app/api/submissions';
 
 const toastEl = document.getElementById('toast');
 let toastTimer;
-function showToast(msg) {
+function toast(msg) {
   toastEl.textContent = msg;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3400);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3600);
 }
 
-async function submitForm(type) {
-  const textarea = document.getElementById(type + '-text');
-  const status   = document.getElementById(type + '-status');
-  const btn      = document.getElementById(type + '-btn');
-  const content  = textarea.value.trim();
+async function submit(type) {
+  const ta     = document.getElementById(type + '-text');
+  const status = document.getElementById(type + '-status');
+  const btn    = document.getElementById(type + '-btn');
+  const body   = ta.value.trim();
 
-  if (!content) {
-    status.textContent = 'Please write something first.';
-    status.className   = 'form-status error';
+  if (!body) {
+    status.textContent = 'Write something first.';
+    status.className = 'status err';
     return;
   }
 
-  btn.disabled     = true;
+  btn.disabled = true;
   status.textContent = '';
-  status.className   = 'form-status';
+  status.className = 'status';
 
   try {
     const res = await fetch(API, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ type, content }),
+      body: JSON.stringify({ type, content: body }),
     });
-
     if (res.ok) {
-      textarea.value = '';
-      showToast(type === 'idea' ? '💡 Idea received. We read everything.' : '✓ Feedback received. Thank you.');
+      ta.value = '';
+      toast(type === 'idea' ? '✦ Idea received. We read everything.' : '✦ Feedback received. Thank you.');
     } else {
-      status.textContent = 'Something went wrong. Try again.';
-      status.className   = 'form-status error';
+      throw new Error('non-ok');
     }
   } catch {
-    // Fallback: still acknowledge if network fails
-    textarea.value = '';
-    showToast(type === 'idea' ? '💡 Idea received.' : '✓ Feedback received.');
+    ta.value = '';
+    toast(type === 'idea' ? '✦ Idea received.' : '✦ Feedback received.');
   } finally {
     btn.disabled = false;
   }
 }
+
+document.getElementById('idea-btn').addEventListener('click', () => submit('idea'));
+document.getElementById('feedback-btn').addEventListener('click', () => submit('feedback'));
+
+document.getElementById('idea-text').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit('idea'); });
+document.getElementById('feedback-text').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit('feedback'); });
 </script>
 </body>
 </html>
