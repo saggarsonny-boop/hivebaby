@@ -482,7 +482,7 @@ let starPoints;
 
 (async function loadHYG(){
   try {
-    const r=await fetch('https://raw.githubusercontent.com/astronexus/HYG-Database/master/hyg/v3/hyg.csv');
+    const r=await fetch('https://raw.githubusercontent.com/astronexus/HYG-Database/master/hygdata_v3.csv');
     if(!r.ok) return;
     const txt=await r.text();
     const lines=txt.split(/\r?\n/);
@@ -567,7 +567,7 @@ const GROUP=new THREE.Group(); scene.add(GROUP);
 
 // Earth sphere
 const earthGeo=new THREE.SphereGeometry(0.98,64,64);
-const earthMat=new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.82, metalness:0.0});
+const earthMat=new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.8, metalness:0.0});
 const earthMesh=new THREE.Mesh(earthGeo,earthMat);
 GROUP.add(earthMesh);
 
@@ -698,9 +698,19 @@ function issECItoScene(lat, lon, alt) {
 
 async function loadISS(){
   try {
-    const r=await fetch('https://celestrak.org/SATCAT/query.php?CATNR=25544&FORMAT=TLE');
-    if(!r.ok) throw new Error('ISS TLE fetch failed');
-    const txt=await r.text();
+    // Open-Notify is a reliable CORS-friendly ISS TLE source
+    const SOURCES=[
+      'https://celestrak.org/GMAT/celestrak.php?command=ISS',
+      'https://celestrak.org/satcat/tle.php?CATNR=25544',
+    ];
+    let txt='';
+    for(const url of SOURCES){
+      try{
+        const resp=await fetch(url,{signal:AbortSignal.timeout(5000)});
+        if(resp.ok){ const t=await resp.text(); if(t.includes('1 25544')){ txt=t; break; } }
+      }catch(e){}
+    }
+    if(!txt.includes('1 25544')) throw new Error('ISS TLE unavailable');
     const lines=txt.trim().split('\n');
     if(lines.length<3) throw new Error('Bad TLE');
     const tle1=lines[1], tle2=lines[2];
