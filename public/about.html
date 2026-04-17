@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Hive</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #060a14;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #e8f4ff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 24px 80px;
+}
+
+.back {
+  align-self: flex-start;
+  font-size: 12px;
+  color: rgba(180, 200, 225, 0.35);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  margin-bottom: 52px;
+  transition: color 0.2s;
+}
+.back:hover { color: rgba(180, 200, 225, 0.75); }
+
+.content {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hero h1 {
+  font-size: clamp(26px, 5vw, 36px);
+  font-weight: 700;
+  color: #e8f4ff;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.hero p {
+  font-size: 15px;
+  color: rgba(74, 127, 165, 0.75);
+  line-height: 1.7;
+  max-width: 440px;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.block h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(212, 175, 55, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.block p {
+  font-size: 15px;
+  color: rgba(180, 200, 225, 0.65);
+  line-height: 1.75;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid rgba(74, 127, 165, 0.1);
+}
+
+.principles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.principle {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 15px;
+  color: rgba(180, 200, 225, 0.65);
+  line-height: 1.5;
+}
+
+.principle::before {
+  content: '—';
+  color: rgba(212, 175, 55, 0.35);
+  flex-shrink: 0;
+}
+
+.email-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: rgba(8, 16, 30, 0.8);
+  border: 1px solid rgba(74, 127, 165, 0.25);
+  border-radius: 14px;
+  color: #9acce8;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s;
+  align-self: flex-start;
+}
+.email-btn:hover {
+  border-color: rgba(74, 127, 165, 0.55);
+  color: #e8f4ff;
+}
+
+.footer-link {
+  margin-top: 16px;
+  font-size: 12px;
+  color: rgba(74, 127, 165, 0.35);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+  align-self: center;
+}
+.footer-link:hover { color: rgba(74, 127, 165, 0.7); }
+</style>
+</head>
+<body>
+
+<a class="back" href="/">← Hive</a>
+
+<div class="content">
+
+  <div class="hero">
+    <h1>A social experiment<br>in collective tool-building.</h1>
+    <p>The Hive is a growing planet of free tools. It builds what the community asks for. No more, no less.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="block">
+    <h2>The rules</h2>
+    <div class="principles">
+      <div class="principle">No investors.</div>
+      <div class="principle">No ads.</div>
+      <div class="principle">No agenda.</div>
+      <div class="principle">Tools should be free. The ones here are.</div>
+      <div class="principle">Free at the base tier, forever.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="block">
+    <h2>How it works</h2>
+    <p>You suggest engines. They get built. The planet grows.</p>
+    <p>Every cell on the planet is a tool. Live cells glow gold. The rest are coming. What gets built next is decided by what people ask for — not by a roadmap, not by a board, not by anyone's agenda.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="block">
+    <h2>Support</h2>
+    <p>Optional support keeps the lights on. If a tool earns a place in your day, you can support it when you can. Not a subscription, not a paywall. Just an honest ask.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="block">
+    <h2>Say something</h2>
+    <p>The Hive reads everything.</p>
+    <a class="email-btn" href="mailto:hive@hive.baby">✉ Email the Hive</a>
+  </div>
+
+</div>
+
+<a class="footer-link" href="/">← Back to the planet</a>
+
+</body>
+</html>
