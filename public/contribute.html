@@ -20,19 +20,19 @@ body {
 }
 
 .back {
-  align-self: flex-start;
+  display: block;
   font-size: 13px;
   font-weight: 500;
-  color: rgba(212, 175, 55, 0.65);
+  color: rgba(212, 175, 55, 0.7);
   text-decoration: none;
   letter-spacing: 0.04em;
-  margin-bottom: 56px;
+  margin-bottom: 48px;
   transition: color 0.2s, text-shadow 0.2s;
-  text-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+  text-shadow: 0 0 14px rgba(212, 175, 55, 0.3);
 }
 .back:hover {
-  color: rgba(212, 175, 55, 0.95);
-  text-shadow: 0 0 18px rgba(212, 175, 55, 0.5);
+  color: rgba(212, 175, 55, 1);
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
 }
 
 .hero {
@@ -256,6 +256,8 @@ body {
 </head>
 <body>
 
+<div class="content">
+
 <a class="back" href="https://hive.baby">← Back to Hive</a>
 
 <div class="hero">
@@ -302,6 +304,8 @@ body {
 </div>
 
 <p class="familiar-note" data-i18n="familiar_note">A small presence in the corner is coming. For now, just you and the idea.</p>
+
+</div><!-- /content -->
 
 <div id="toast"></div>
 
