@@ -243,7 +243,7 @@ scene.add(rimLight);
 function buildDual(detail) {
   const icoGeo = new THREE.IcosahedronGeometry(1, detail);
   const pos = icoGeo.attributes.position;
-  const idx = icoGeo.index;
+  const idx = icoGeo.index; // null in Three.js r152+ (non-indexed geometry)
 
   // Hash-based vertex deduplication
   const SCALE = 100000;
@@ -253,7 +253,7 @@ function buildDual(detail) {
 
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    const len = Math.sqrt(x*x + y*y + z*z);
+    const len = Math.sqrt(x*x + y*y + z*z) || 1;
     const nx = x/len, ny = y/len, nz = z/len;
     const k = `${Math.round(nx*SCALE)},${Math.round(ny*SCALE)},${Math.round(nz*SCALE)}`;
     if (keyMap.has(k)) {
@@ -265,12 +265,15 @@ function buildDual(detail) {
     }
   }
 
-  // Build face centroids
+  // Build face centroids — handle both indexed and non-indexed geometry
   const faces = [];
-  for (let i = 0; i < idx.count; i += 3) {
-    const a = remap[idx.getX(i)];
-    const b = remap[idx.getX(i+1)];
-    const c = remap[idx.getX(i+2)];
+  const triCount = idx ? idx.count : pos.count;
+  const getVI = idx ? (i) => idx.getX(i) : (i) => i;
+
+  for (let i = 0; i < triCount; i += 3) {
+    const a = remap[getVI(i)];
+    const b = remap[getVI(i+1)];
+    const c = remap[getVI(i+2)];
     if (a === b || b === c || a === c) continue;
     const centroid = new THREE.Vector3()
       .addVectors(unique[a], unique[b]).add(unique[c])
@@ -388,7 +391,7 @@ cells.forEach((cell, ci) => {
     emissiveIntensity = 0; roughness = 0.95; metalness = 0.05;
   }
 
-  const mat = new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity, roughness, metalness, side: THREE.FrontSide });
+  const mat = new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity, roughness, metalness, side: THREE.DoubleSide });
   const mesh = new THREE.Mesh(geo, mat);
   GROUP.add(mesh);
   meshes.push(mesh);
