@@ -78,7 +78,7 @@ body {
 #search {
   width: 100%;
   background: rgba(4, 8, 18, 0.88);
-  border: 1px solid rgba(212, 175, 55, 0.18);
+  border: 1px solid rgba(212, 175, 55, 0.32);
   border-radius: 28px;
   padding: 13px 22px;
   color: #e8f4ff;
@@ -90,7 +90,7 @@ body {
   caret-color: #d4af37;
   animation: orb-pulse 4.5s ease-in-out infinite;
 }
-#search::placeholder { color: rgba(74, 127, 165, 0.45); }
+#search::placeholder { color: rgba(74, 127, 165, 0.7); }
 #search:focus {
   border-color: rgba(212, 175, 55, 0.45);
   box-shadow:
@@ -148,10 +148,10 @@ body {
   z-index: 20;
   white-space: nowrap;
   font-size: 12px;
-  color: rgba(180, 200, 225, 0.5);
+  color: rgba(180, 200, 225, 0.75);
   letter-spacing: 0.02em;
   background: rgba(4, 8, 18, 0.72);
-  border: 1px solid rgba(212, 175, 55, 0.13);
+  border: 1px solid rgba(212, 175, 55, 0.22);
   border-radius: 100px;
   padding: 8px 20px;
   backdrop-filter: blur(12px);
@@ -160,7 +160,7 @@ body {
 }
 #footer span { pointer-events: none; }
 #footer a, #footer button {
-  color: rgba(180, 200, 225, 0.5);
+  color: rgba(180, 200, 225, 0.75);
   text-decoration: none;
   background: none;
   border: none;
@@ -466,9 +466,9 @@ const scene  = new THREE.Scene();
 scene.background = new THREE.Color(0x020408);
 
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 100);
-camera.position.z = 3.2;
-const BASE_Z  = 3.2;
-const FOCUS_Z = 2.3;
+camera.position.z = 2.4;
+const BASE_Z  = 2.4;
+const FOCUS_Z = 1.8;
 let targetCamZ = BASE_Z;
 
 // ─── Stars (with parallax) ────────────────────────────────────────────────────
@@ -656,7 +656,7 @@ canvas.addEventListener('pointerup', e=>{
   if(Math.hypot(e.clientX-downX,e.clientY-downY)<6) handleClick(e.clientX,e.clientY);
 });
 canvas.addEventListener('pointercancel',()=>{ dragging=false; });
-canvas.addEventListener('wheel', e=>{ targetCamZ=Math.max(1.5,Math.min(6.5,targetCamZ+e.deltaY*.004)); },{passive:true});
+canvas.addEventListener('wheel', e=>{ targetCamZ=Math.max(1.2,Math.min(5.0,targetCamZ+e.deltaY*.004)); },{passive:true});
 
 let pinch0=null;
 canvas.addEventListener('touchstart',e=>{ if(e.touches.length===2) pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); },{passive:true});
@@ -676,7 +676,7 @@ function handleClick(cx,cy){
   const h=raycaster.intersectObjects(meshes); if(!h.length) return;
   const cd=cellInfo[meshes.indexOf(h[0].object)];
   if(cd.engine?.url) {
-    targetCamZ = 1.15;
+    targetCamZ = 0.95;
     setTimeout(() => { window.location.href = cd.engine.url; }, 580);
   }
 }
