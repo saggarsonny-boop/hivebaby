@@ -337,6 +337,48 @@ Engines specifically designed to drive viral growth:
 
 ---
 
+## ADOPTION AMPLIFIER SUITE (RANKED BY POWER)
+
+### TIER 1 — DOMINANT (exponential growth)
+1. Universal Input to Universal Output — accepts anything, always returns clean structured output
+2. Global Language Agnosticism — 200+ languages, dialect aware, culturally adaptive, auto-detection
+3. Activity Partner — gentle companion who does the task with the user, not a chatbot, a presence and behavioural anchor
+4. Anticipation Module — predicts what user needs next, offers subtly, never intrusive
+
+### TIER 2 — HIGH IMPACT (daily use and virality)
+5. Pet Familiar — small consistent emotional anchor across all engines, travels with user, creates continuity
+6. Free Text Box with Rotating Faded Examples — two faint rotating examples teach the user instantly, removes cognitive load
+7. Voice Input and Output — hands free, emotionally richer, accessible to all literacy levels
+8. One Screen Only — no menus, no settings, no onboarding, no friction
+9. Screenshot Ready Output — clean, shareable, visually minimal, optimised for virality
+10. Daily Frequency Above 95% — engines used every day spread faster
+
+### TIER 3 — STRUCTURAL (alive, stable, trustworthy)
+11. AI Native Schema, Process, Metadata — clear structure, no drift, predictable behaviour
+12. Grappler Hook to QueenBee.MasterGrappler — engines evolve without republishing
+13. Multimodal Input — text, voice, images, gestures, location, time
+14. Multi Profession and Multi Level — adapts to novices, experts, children, elders, different fields
+15. Offline and Near Offline Resilience — works with degraded connectivity, never breaks
+16. Zero Data Retention — no accounts, no tracking, no surveillance, trust becomes a growth engine
+17. Micro Delight Layer — tiny animations, seasonal skins, ambient micro sounds, small joy moments
+18. Universal Need Alignment — engines solving needs shared by all humans spread fastest
+19. Viral Simplicity — understandable in one second, usable in three
+20. Build Time Under One Hour — rapid iteration, hundreds of engines, ecosystem scale
+
+### TIER 4 — SUPPORTING
+21. Zero Governance — no approvals, no committees, no friction
+22. Zero Backend — no servers, no databases, no maintenance
+23. No Settings — engine adapts automatically
+24. No Menus — everything visible at once
+25. No Learning Curve — engine teaches itself through examples
+26. Emotional Stability — tone is calm, warm, steady
+27. Cross Engine Continuity — pet, partner, and tone travel with the user
+
+### INFRASTRUCTURE NOTE
+Every new engine inherits the entire adoption stack automatically through Queen Bee. The Hive provides shared language, emotional, anticipation, pet/partner, formatting, schema, virality, multimodal, trust, and build constraint substrates. This is why engines behave like a platform, not like apps.
+
+---
+
 ## Standard New Engine Pattern
 - Next.js + TypeScript
 - Anthropic SDK (claude-opus-4-5)
