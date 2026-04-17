@@ -227,77 +227,66 @@ body {
 }
 #support-close:hover { color: rgba(74, 127, 165, 0.8); }
 
-/* First-visit overlay */
+/* First-visit side card */
 #welcome {
   position: fixed;
-  inset: 0;
+  right: clamp(16px, 4vw, 48px);
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(2, 4, 10, 0.82);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  opacity: 1;
-  transition: opacity 0.5s ease;
-}
-#welcome.hide { opacity: 0; pointer-events: none; }
-#welcome-panel {
-  text-align: center;
+  width: min(300px, calc(100vw - 32px));
+  background: rgba(4, 8, 18, 0.88);
+  border: 1px solid rgba(74, 127, 165, 0.22);
+  border-radius: 20px;
+  padding: 28px 26px 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  padding: 0 32px;
-  max-width: 340px;
+  gap: 14px;
+  opacity: 1;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  box-shadow: 0 0 60px 0 rgba(0,0,0,0.5);
 }
-#welcome-panel h2 {
-  font-size: 22px;
+#welcome.hide {
+  opacity: 0;
+  transform: translateY(-50%) translateX(18px);
+  pointer-events: none;
+}
+#welcome h2 {
+  font-size: 18px;
   font-weight: 700;
   color: #e8f4ff;
   letter-spacing: -0.02em;
 }
-#welcome-panel p {
-  font-size: 14px;
-  color: rgba(180, 200, 225, 0.6);
-  line-height: 1.7;
+#welcome p {
+  font-size: 13px;
+  color: rgba(180, 200, 225, 0.58);
+  line-height: 1.75;
 }
 #welcome-btn {
-  margin-top: 4px;
-  padding: 11px 28px;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 9px 22px;
   background: rgba(12, 22, 40, 0.9);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid rgba(212, 175, 55, 0.28);
   border-radius: 100px;
   color: #d4af37;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition: border-color 0.2s, color 0.2s;
 }
-#welcome-btn:hover { border-color: rgba(212, 175, 55, 0.65); color: #f0d060; }
+#welcome-btn:hover { border-color: rgba(212, 175, 55, 0.6); color: #f0d060; }
 
-/* Down arrow after dismissal */
-#hint-arrow {
-  position: fixed;
-  bottom: 64px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 30;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  pointer-events: none;
-  animation: arrow-bob 1.6s ease-in-out 3;
-  opacity: 0;
+/* Post-dismissal search pulse */
+@keyframes search-nudge {
+  0%   { box-shadow: 0 0 0 1px rgba(212,175,55,.09), 0 0 14px 2px rgba(212,175,55,.05); }
+  40%  { box-shadow: 0 0 0 2px rgba(212,175,55,.5),  0 0 28px 8px rgba(212,175,55,.18), 0 0 60px 14px rgba(212,175,55,.08); }
+  100% { box-shadow: 0 0 0 1px rgba(212,175,55,.09), 0 0 14px 2px rgba(212,175,55,.05); }
 }
-#hint-arrow.show { display: flex; opacity: 1; }
-@keyframes arrow-bob {
-  0%, 100% { transform: translateX(-50%) translateY(0);   opacity: 0.55; }
-  50%       { transform: translateX(-50%) translateY(7px); opacity: 0.9; }
-}
-#hint-arrow svg { display: block; }
+#search.nudge { animation: search-nudge 1.1s ease-out 2; }
 
 /* Toast */
 #toast {
@@ -361,40 +350,37 @@ body {
 
 <div id="toast"></div>
 
-<!-- First-visit welcome overlay -->
+<!-- First-visit side card -->
 <div id="welcome">
-  <div id="welcome-panel">
-    <h2>Welcome to Hive</h2>
-    <p>A collection of free tools, built by the people who need them. Search for anything. Click a glowing cell to explore.</p>
-    <button id="welcome-btn">Got it</button>
-  </div>
-</div>
-
-<!-- Post-dismissal hint arrow -->
-<div id="hint-arrow">
-  <svg width="18" height="22" viewBox="0 0 18 22" fill="none">
-    <path d="M9 1v16M2 11l7 8 7-8" stroke="rgba(212,175,55,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
+  <h2>Welcome to Hive</h2>
+  <p>Free tools, built by the people who need them. Search for an engine, suggest a new one, or tell us what could be better. The planet grows as the community does.</p>
+  <button id="welcome-btn">Got it</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script>
-// ─── First-visit overlay ──────────────────────────────────────────────────────
+// ─── First-visit side card ────────────────────────────────────────────────────
 (function(){
-  const overlay = document.getElementById('welcome');
-  const arrow   = document.getElementById('hint-arrow');
-  if (localStorage.getItem('hive_welcomed')) {
-    overlay.remove(); return;
-  }
+  const card = document.getElementById('welcome');
+  if (localStorage.getItem('hive_welcomed')) { card.remove(); return; }
   document.getElementById('welcome-btn').addEventListener('click', () => {
     localStorage.setItem('hive_welcomed', '1');
-    overlay.classList.add('hide');
+    card.classList.add('hide');
     setTimeout(() => {
-      overlay.remove();
-      arrow.classList.add('show');
-      setTimeout(() => { arrow.style.opacity = '0'; arrow.style.transition = 'opacity 0.8s'; }, 5000);
-      setTimeout(() => arrow.remove(), 6000);
-    }, 500);
+      card.remove();
+      // Briefly pulse the search box to draw attention
+      const s = document.getElementById('search');
+      s.classList.add('nudge');
+      s.addEventListener('animationend', () => s.classList.remove('nudge'), { once: true });
+      // Then pulse the footer after a short delay
+      setTimeout(() => {
+        const f = document.getElementById('footer');
+        f.style.transition = 'border-color 0.3s, box-shadow 0.3s';
+        f.style.borderColor = 'rgba(212,175,55,0.45)';
+        f.style.boxShadow = '0 0 22px 4px rgba(212,175,55,0.12)';
+        setTimeout(() => { f.style.borderColor = ''; f.style.boxShadow = ''; }, 1000);
+      }, 2400);
+    }, 460);
   });
 })();
 
