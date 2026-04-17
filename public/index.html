@@ -642,9 +642,8 @@ cells.forEach((cell, ci) => {
   cellInfo.push({engine, code:codes[ci], mesh, color:color.clone(), emissive:emissive.clone(), emissiveIntensity, center:cell.center.clone()});
 });
 
-const earthMat = new THREE.MeshStandardMaterial({color:0x020810,roughness:.95,metalness:.05});
-const loader = new THREE.TextureLoader();
-loader.load('/earth.jpg', tex => { earthMat.map = tex; earthMat.needsUpdate = true; });
+const earthMat = new THREE.MeshStandardMaterial({color:0xffffff,roughness:.95,metalness:.05});
+new THREE.TextureLoader().load('/earth.jpg', tex => { earthMat.map = tex; earthMat.needsUpdate = true; });
 GROUP.add(new THREE.Mesh(new THREE.SphereGeometry(0.98,64,64), earthMat));
 
 cellInfo.forEach(cd => {
