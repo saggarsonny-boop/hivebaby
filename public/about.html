@@ -16,47 +16,34 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 56px 24px 80px;
+  padding: 48px 24px 80px;
 }
 
 .back {
   align-self: flex-start;
   font-size: 12px;
-  color: rgba(180, 200, 225, 0.35);
+  color: rgba(180, 200, 225, 0.3);
   text-decoration: none;
   letter-spacing: 0.05em;
-  margin-bottom: 52px;
+  margin-bottom: 56px;
   transition: color 0.2s;
 }
-.back:hover { color: rgba(180, 200, 225, 0.75); }
+.back:hover { color: rgba(180, 200, 225, 0.65); }
 
 .content {
   width: 100%;
   max-width: 520px;
   display: flex;
   flex-direction: column;
-  gap: 48px;
-}
-
-.hero {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  gap: 52px;
 }
 
 .hero h1 {
-  font-size: clamp(26px, 5vw, 36px);
+  font-size: clamp(22px, 4.5vw, 32px);
   font-weight: 700;
   color: #e8f4ff;
   letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.hero p {
-  font-size: 15px;
-  color: rgba(74, 127, 165, 0.75);
-  line-height: 1.7;
-  max-width: 440px;
+  line-height: 1.2;
 }
 
 .block {
@@ -65,77 +52,97 @@ body {
   gap: 10px;
 }
 
-.block h2 {
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(212, 175, 55, 0.6);
+.block-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(212, 175, 55, 0.45);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
 }
 
 .block p {
   font-size: 15px;
-  color: rgba(180, 200, 225, 0.65);
-  line-height: 1.75;
+  color: rgba(180, 200, 225, 0.58);
+  line-height: 1.8;
 }
 
 .divider {
   border: none;
-  border-top: 1px solid rgba(74, 127, 165, 0.1);
+  border-top: 1px solid rgba(74, 127, 165, 0.08);
 }
 
-.principles {
+/* Support links */
+.support-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.s-btn {
+  flex: 1;
+  min-width: 110px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.principle {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  font-size: 15px;
-  color: rgba(180, 200, 225, 0.65);
-  line-height: 1.5;
-}
-
-.principle::before {
-  content: '—';
-  color: rgba(212, 175, 55, 0.35);
-  flex-shrink: 0;
-}
-
-.email-btn {
-  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 24px;
+  gap: 2px;
+  padding: 12px 14px;
   background: rgba(8, 16, 30, 0.8);
-  border: 1px solid rgba(74, 127, 165, 0.25);
-  border-radius: 14px;
-  color: #9acce8;
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: 13px;
+  color: #d4af37;
   font-size: 14px;
   font-weight: 600;
-  font-family: inherit;
   text-decoration: none;
-  transition: border-color 0.2s, color 0.2s;
-  align-self: flex-start;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
 }
-.email-btn:hover {
-  border-color: rgba(74, 127, 165, 0.55);
-  color: #e8f4ff;
+.s-btn:hover { border-color: rgba(212, 175, 55, 0.45); background: rgba(14, 24, 44, 0.9); }
+.s-btn small { font-size: 10px; color: rgba(212, 175, 55, 0.38); font-weight: 400; }
+
+/* Email display */
+.email-display {
+  font-size: 15px;
+  color: rgba(180, 200, 225, 0.5);
+  letter-spacing: 0.03em;
+  margin-top: 2px;
 }
 
-.footer-link {
-  margin-top: 16px;
-  font-size: 12px;
-  color: rgba(74, 127, 165, 0.35);
-  text-decoration: none;
-  letter-spacing: 0.05em;
-  transition: color 0.2s;
-  align-self: center;
+/* Rotating faint prompts */
+.prompt-wrap {
+  min-height: 20px;
+  margin-top: 6px;
 }
-.footer-link:hover { color: rgba(74, 127, 165, 0.7); }
+.prompt {
+  font-size: 12px;
+  color: rgba(74, 127, 165, 0.3);
+  font-style: italic;
+  letter-spacing: 0.01em;
+  transition: opacity 0.7s ease;
+}
+.prompt.hidden { opacity: 0; }
+
+/* Multilingual note */
+.lang-note {
+  font-size: 12px;
+  color: rgba(74, 127, 165, 0.28);
+  letter-spacing: 0.02em;
+  text-align: center;
+  margin-top: -16px;
+}
+
+/* Footer */
+.page-footer {
+  margin-top: 56px;
+  font-size: 12px;
+}
+.page-footer a {
+  color: rgba(74, 127, 165, 0.3);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+.page-footer a:hover { color: rgba(74, 127, 165, 0.65); }
 </style>
 </head>
 <body>
@@ -145,49 +152,79 @@ body {
 <div class="content">
 
   <div class="hero">
-    <h1>A social experiment<br>in collective tool-building.</h1>
-    <p>The Hive is a growing planet of free tools. It builds what the community asks for. No more, no less.</p>
+    <h1>A social experiment in collective tool-building.</h1>
   </div>
 
   <hr class="divider">
 
   <div class="block">
-    <h2>The rules</h2>
-    <div class="principles">
-      <div class="principle">No investors.</div>
-      <div class="principle">No ads.</div>
-      <div class="principle">No agenda.</div>
-      <div class="principle">Tools should be free. The ones here are.</div>
-      <div class="principle">Free at the base tier, forever.</div>
+    <span class="block-label">The rules</span>
+    <p>No investors. No ads. No agenda. Tools should be free. The ones here are. Free at the base tier, forever.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="block">
+    <span class="block-label">How it works</span>
+    <p>You suggest engines. They get built. The planet grows.<br><br>
+    Every glowing cell is a live tool. The dark ones are coming.<br><br>
+    What gets built next is decided by what people ask for. Not a roadmap. Not a board. Just the community.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="block">
+    <span class="block-label">Support</span>
+    <p>Optional support keeps the lights on. If a tool earns a place in your day, support it when you can. Not a subscription. Not a paywall. Just an honest ask.</p>
+    <div class="support-links">
+      <a class="s-btn" href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" rel="noopener">$1.99<small>per month</small></a>
+      <a class="s-btn" href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" rel="noopener">$19<small>per year</small></a>
+      <a class="s-btn" href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" rel="noopener">$5<small>one-time</small></a>
     </div>
   </div>
 
   <hr class="divider">
 
   <div class="block">
-    <h2>How it works</h2>
-    <p>You suggest engines. They get built. The planet grows.</p>
-    <p>Every cell on the planet is a tool. Live cells glow gold. The rest are coming. What gets built next is decided by what people ask for — not by a roadmap, not by a board, not by anyone's agenda.</p>
-  </div>
-
-  <hr class="divider">
-
-  <div class="block">
-    <h2>Support</h2>
-    <p>Optional support keeps the lights on. If a tool earns a place in your day, you can support it when you can. Not a subscription, not a paywall. Just an honest ask.</p>
-  </div>
-
-  <hr class="divider">
-
-  <div class="block">
-    <h2>Say something</h2>
+    <span class="block-label">Say something</span>
     <p>The Hive reads everything.</p>
-    <p style="font-size:14px;color:rgba(180,200,225,0.55);letter-spacing:0.03em;">hive@hive.baby</p>
+    <div class="email-display">hive@hive.baby</div>
+    <div class="prompt-wrap">
+      <div class="prompt" id="prompt"></div>
+    </div>
   </div>
+
+  <div class="lang-note">Write in any language. Hive understands.</div>
+
+  <!-- Activity Partner and Pet Familiar will appear here -->
 
 </div>
 
-<a class="footer-link" href="/">← Back to the planet</a>
+<div class="page-footer"><a href="/">← Back to the planet</a></div>
 
+<script>
+// Rotating faint prompts beneath the email address
+(function () {
+  const prompts = [
+    "What if Hive could help me plan my day",
+    "Could Hive explain my lab results",
+  ];
+  const el = document.getElementById('prompt');
+  let idx = 0;
+
+  function show() {
+    el.textContent = prompts[idx % prompts.length]; idx++;
+    el.classList.remove('hidden');
+    setTimeout(hide, 3800);
+  }
+  function hide() {
+    el.classList.add('hidden');
+    setTimeout(show, 900);
+  }
+
+  el.classList.add('hidden');
+  setTimeout(show, 1400);
+})();
+</script>
 </body>
 </html>
