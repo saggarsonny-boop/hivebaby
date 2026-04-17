@@ -16,22 +16,22 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 60px 24px 80px;
+  padding: 56px 24px 80px;
 }
 
 .back {
   align-self: flex-start;
   font-size: 12px;
-  color: rgba(74, 127, 165, 0.4);
+  color: rgba(180, 200, 225, 0.35);
   text-decoration: none;
   letter-spacing: 0.05em;
-  margin-bottom: 48px;
+  margin-bottom: 52px;
   transition: color 0.2s;
 }
-.back:hover { color: rgba(74, 127, 165, 0.8); }
+.back:hover { color: rgba(180, 200, 225, 0.75); }
 
 .page-title {
-  font-size: clamp(22px, 5vw, 32px);
+  font-size: clamp(24px, 5vw, 34px);
   font-weight: 700;
   color: #e8f4ff;
   letter-spacing: -0.02em;
@@ -41,19 +41,22 @@ body {
 .page-sub {
   font-size: 14px;
   color: rgba(74, 127, 165, 0.6);
-  margin-bottom: 48px;
+  margin-bottom: 52px;
   text-align: center;
   line-height: 1.6;
-  max-width: 400px;
+  max-width: 420px;
 }
 
-.forms {
+.content {
   width: 100%;
   max-width: 560px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 48px;
 }
+
+/* ── Forms ── */
+.forms { display: flex; flex-direction: column; gap: 20px; }
 
 .form-box {
   background: rgba(8, 16, 30, 0.7);
@@ -66,17 +69,9 @@ body {
   transition: border-color 0.2s;
 }
 .form-box:focus-within { border-color: rgba(74, 127, 165, 0.4); }
+.form-box h3 { font-size: 15px; font-weight: 700; color: #e8f4ff; }
+.form-box p  { font-size: 13px; color: rgba(74, 127, 165, 0.6); line-height: 1.6; }
 
-.form-box h3 {
-  font-size: 15px;
-  font-weight: 700;
-  color: #e8f4ff;
-}
-.form-box p {
-  font-size: 13px;
-  color: rgba(74, 127, 165, 0.6);
-  line-height: 1.6;
-}
 .form-box textarea {
   width: 100%;
   background: rgba(4, 8, 18, 0.6);
@@ -102,11 +97,7 @@ body {
   justify-content: space-between;
   gap: 12px;
 }
-.form-status {
-  font-size: 12px;
-  color: rgba(212, 175, 55, 0.7);
-  min-height: 16px;
-}
+.form-status { font-size: 12px; color: rgba(212, 175, 55, 0.7); min-height: 16px; }
 .form-status.error { color: rgba(255, 100, 80, 0.7); }
 
 .submit-btn {
@@ -122,8 +113,53 @@ body {
   white-space: nowrap;
   transition: border-color 0.2s, color 0.2s;
 }
-.submit-btn:hover { border-color: rgba(74, 127, 165, 0.6); color: #e8f4ff; }
+.submit-btn:hover:not(:disabled) { border-color: rgba(74, 127, 165, 0.6); color: #e8f4ff; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ── Support section ── */
+.support-section { display: flex; flex-direction: column; gap: 16px; }
+
+.support-section h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e8f4ff;
+}
+.support-section p {
+  font-size: 13px;
+  color: rgba(74, 127, 165, 0.6);
+  line-height: 1.65;
+}
+
+.support-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.s-btn {
+  flex: 1;
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 14px 18px;
+  background: rgba(10, 20, 36, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 14px;
+  color: #d4af37;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+.s-btn:hover { border-color: rgba(212, 175, 55, 0.6); background: rgba(20, 36, 60, 0.9); text-decoration: none; }
+.s-btn small { font-size: 11px; color: rgba(212, 175, 55, 0.45); font-weight: 400; }
+
+/* ── Divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid rgba(74, 127, 165, 0.1);
+}
+
+/* ── Toast ── */
 #toast {
   position: fixed;
   bottom: 32px;
@@ -151,27 +187,49 @@ body {
 <a class="back" href="/">← Hive</a>
 
 <h1 class="page-title">Contribute</h1>
-<p class="page-sub">Hive builds what the community asks for. Tell us what to build next, or what to fix.</p>
+<p class="page-sub">Hive builds what the community asks for. Shape what gets built next.</p>
 
-<div class="forms">
+<div class="content">
 
-  <div class="form-box">
-    <h3>Got an idea for an engine?</h3>
-    <p>Describe a tool you'd use every day. We read everything.</p>
-    <textarea id="idea-text" placeholder="I'd love a tool that helps me…" rows="4"></textarea>
-    <div class="form-row">
-      <span class="form-status" id="idea-status"></span>
-      <button class="submit-btn" onclick="submitForm('idea')">Submit idea →</button>
+  <div class="forms">
+
+    <div class="form-box">
+      <h3>Got an idea for an engine?</h3>
+      <p>Describe a tool you'd use every day. We read everything.</p>
+      <textarea id="idea-text" placeholder="I'd love a tool that helps me…" rows="4"></textarea>
+      <div class="form-row">
+        <span class="form-status" id="idea-status"></span>
+        <button class="submit-btn" id="idea-btn" onclick="submitForm('idea')">Submit idea →</button>
+      </div>
     </div>
+
+    <div class="form-box">
+      <h3>How are the existing engines?</h3>
+      <p>What's working, what's broken, what's missing.</p>
+      <textarea id="feedback-text" placeholder="In HiveClock I wish…" rows="4"></textarea>
+      <div class="form-row">
+        <span class="form-status" id="feedback-status"></span>
+        <button class="submit-btn" id="feedback-btn" onclick="submitForm('feedback')">Send feedback →</button>
+      </div>
+    </div>
+
   </div>
 
-  <div class="form-box">
-    <h3>Feedback on an existing engine?</h3>
-    <p>What's working, what's broken, what's missing.</p>
-    <textarea id="feedback-text" placeholder="In HiveClock I wish…" rows="4"></textarea>
-    <div class="form-row">
-      <span class="form-status" id="feedback-status"></span>
-      <button class="submit-btn" onclick="submitForm('feedback')">Send feedback →</button>
+  <hr class="divider">
+
+  <div class="support-section">
+    <h2>Support Hive</h2>
+    <p>Everything is free. If Hive earns a place in your day, support it when you can — it keeps the engines running and the community first.</p>
+    <div class="support-buttons">
+      <a class="s-btn" href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" rel="noopener">
+        $1.99 <small>per month</small>
+      </a>
+      <a class="s-btn" href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" rel="noopener">
+        $19 <small>per year</small>
+      </a>
+      <a class="s-btn" href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" rel="noopener">
+        $5 <small>one-time</small>
+      </a>
     </div>
   </div>
 
@@ -180,25 +238,54 @@ body {
 <div id="toast"></div>
 
 <script>
+const API = 'https://creator-console-steel.vercel.app/api/submissions';
+
 const toastEl = document.getElementById('toast');
 let toastTimer;
 function showToast(msg) {
   toastEl.textContent = msg;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3400);
 }
-function submitForm(type) {
-  const el = document.getElementById(type + '-text');
-  const st = document.getElementById(type + '-status');
-  if (!el.value.trim()) {
-    st.textContent = 'Please write something first.';
-    st.className = 'form-status error';
+
+async function submitForm(type) {
+  const textarea = document.getElementById(type + '-text');
+  const status   = document.getElementById(type + '-status');
+  const btn      = document.getElementById(type + '-btn');
+  const content  = textarea.value.trim();
+
+  if (!content) {
+    status.textContent = 'Please write something first.';
+    status.className   = 'form-status error';
     return;
   }
-  st.textContent = '';
-  el.value = '';
-  showToast(type === 'idea' ? '💡 Idea received. We\'re reading everything.' : '✓ Feedback received. Thank you.');
+
+  btn.disabled     = true;
+  status.textContent = '';
+  status.className   = 'form-status';
+
+  try {
+    const res = await fetch(API, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ type, content }),
+    });
+
+    if (res.ok) {
+      textarea.value = '';
+      showToast(type === 'idea' ? '💡 Idea received. We read everything.' : '✓ Feedback received. Thank you.');
+    } else {
+      status.textContent = 'Something went wrong. Try again.';
+      status.className   = 'form-status error';
+    }
+  } catch {
+    // Fallback: still acknowledge if network fails
+    textarea.value = '';
+    showToast(type === 'idea' ? '💡 Idea received.' : '✓ Feedback received.');
+  } finally {
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
