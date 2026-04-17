@@ -583,16 +583,17 @@ GROUP.add(earthMesh);
     earthMat.needsUpdate=true;
   }
 
-  // Step 1: Blue Marble from Three.js examples repo (CORS-safe, always works)
-  const BLUE_MARBLE='https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg';
-  loader.load(BLUE_MARBLE, tex=>{
-    applyTex(tex,false);
-    // Step 2: Try GIBS live satellite data as an upgrade
-    tryGIBS();
-  }, undefined, err=>{
-    console.warn('Blue Marble load failed, trying GIBS directly:',err);
-    tryGIBS();
-  });
+  // Step 1: Blue Marble — try unpkg CDN first, fall back to raw.githubusercontent
+  const URLS=[
+    'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+    'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
+  ];
+  function tryNext(i){
+    if(i>=URLS.length){ tryGIBS(); return; }
+    loader.load(URLS[i], tex=>{ applyTex(tex,false); tryGIBS(); },
+      undefined, ()=>{ tryNext(i+1); });
+  }
+  tryNext(0);
 
   function tryGIBS(){
     const d=new Date(); d.setDate(d.getDate()-2);
