@@ -41,6 +41,16 @@ body {
 }
 #planet-ui > * { pointer-events: auto; }
 
+/* Connection line SVG — sits between canvas and planet-ui */
+#conn-svg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 9;
+  pointer-events: none;
+  overflow: visible;
+}
+
 #search-wrap {
   position: absolute;
   top: 24px;
@@ -48,10 +58,27 @@ body {
   transform: translateX(-50%);
   width: min(440px, calc(100vw - 40px));
 }
+
+/* Shared ambient pulse for search + footer */
+@keyframes orb-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(212,175,55,.09),
+      0 0 14px 2px rgba(212,175,55,.05),
+      0 0 36px 6px rgba(212,175,55,.02);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(212,175,55,.18),
+      0 0 20px 4px rgba(212,175,55,.10),
+      0 0 48px 8px rgba(212,175,55,.04);
+  }
+}
+
 #search {
   width: 100%;
   background: rgba(4, 8, 18, 0.88);
-  border: 1px solid rgba(74, 127, 165, 0.35);
+  border: 1px solid rgba(212, 175, 55, 0.18);
   border-radius: 28px;
   padding: 13px 22px;
   color: #e8f4ff;
@@ -59,13 +86,18 @@ body {
   outline: none;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  transition: border-color 0.2s, box-shadow 0.2s;
-  caret-color: #4a9fe0;
+  transition: border-color 0.2s;
+  caret-color: #d4af37;
+  animation: orb-pulse 4.5s ease-in-out infinite;
 }
-#search::placeholder { color: rgba(74, 127, 165, 0.5); }
+#search::placeholder { color: rgba(74, 127, 165, 0.45); }
 #search:focus {
-  border-color: rgba(74, 127, 165, 0.7);
-  box-shadow: 0 0 0 3px rgba(74, 127, 165, 0.1);
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(212,175,55,.25),
+    0 0 22px 5px rgba(212,175,55,.13),
+    0 0 50px 10px rgba(212,175,55,.05);
+  animation: none;
 }
 #results { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
 .result-item {
@@ -86,14 +118,14 @@ body {
 .result-name  { font-size: 14px; font-weight: 700; color: #e8f4ff; }
 .result-tagline { font-size: 12px; color: #4a7fa5; margin-top: 2px; }
 
-/* Tooltip: fixed, above everything */
+/* Tooltip */
 #tooltip {
   position: fixed;
   pointer-events: none;
   z-index: 20;
   display: none;
   background: rgba(4, 8, 18, 0.94);
-  border: 1px solid rgba(212, 175, 55, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.35);
   border-radius: 14px;
   padding: 13px 17px;
   min-width: 160px; max-width: 230px;
@@ -107,7 +139,7 @@ body {
 #tooltip .tt-action  { font-size: 11px; color: rgba(212,175,55,.65); margin-top: 8px; }
 #tooltip .tt-action.soon-action { color: rgba(74,127,165,.5); }
 
-/* Footer: one-line, fixed bottom */
+/* Footer: capsule with matching ambient pulse */
 #footer {
   position: fixed;
   bottom: 22px;
@@ -117,12 +149,19 @@ body {
   pointer-events: none;
   white-space: nowrap;
   font-size: 12px;
-  color: rgba(180, 200, 225, 0.45);
+  color: rgba(180, 200, 225, 0.5);
   letter-spacing: 0.02em;
+  background: rgba(4, 8, 18, 0.72);
+  border: 1px solid rgba(212, 175, 55, 0.13);
+  border-radius: 100px;
+  padding: 8px 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: orb-pulse 4.5s ease-in-out infinite 1.9s;
 }
 #footer span { pointer-events: none; }
 #footer a, #footer button {
-  color: rgba(180, 200, 225, 0.45);
+  color: rgba(180, 200, 225, 0.5);
   text-decoration: none;
   background: none;
   border: none;
@@ -133,7 +172,7 @@ body {
   pointer-events: auto;
   transition: color 0.2s;
 }
-#footer a:hover, #footer button:hover { color: rgba(180, 200, 225, 0.85); }
+#footer a:hover, #footer button:hover { color: rgba(180, 200, 225, 0.9); }
 
 /* Support modal */
 #support-modal {
@@ -162,11 +201,7 @@ body {
   margin-bottom: 20px;
   line-height: 1.6;
 }
-#support-links {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+#support-links { display: flex; flex-direction: column; gap: 10px; }
 .s-btn {
   display: block;
   padding: 14px 20px;
@@ -180,27 +215,15 @@ body {
   text-align: center;
   transition: border-color 0.2s, background 0.2s;
 }
-.s-btn:hover {
-  border-color: rgba(212, 175, 55, 0.6);
-  background: rgba(20, 36, 60, 0.9);
-}
-.s-btn small {
-  display: block;
-  font-size: 11px;
-  color: rgba(212, 175, 55, 0.45);
-  font-weight: 400;
-  margin-top: 2px;
-}
+.s-btn:hover { border-color: rgba(212, 175, 55, 0.6); background: rgba(20, 36, 60, 0.9); }
+.s-btn small { display: block; font-size: 11px; color: rgba(212, 175, 55, 0.45); font-weight: 400; margin-top: 2px; }
 #support-close {
   position: absolute;
   top: 14px; right: 16px;
-  background: none;
-  border: none;
+  background: none; border: none;
   color: rgba(74, 127, 165, 0.4);
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px 8px;
-  line-height: 1;
+  font-size: 20px; cursor: pointer;
+  padding: 4px 8px; line-height: 1;
   transition: color 0.2s;
 }
 #support-close:hover { color: rgba(74, 127, 165, 0.8); }
@@ -223,8 +246,11 @@ body {
 </head>
 <body>
 
-<!-- Canvas: fixed behind everything, always full-viewport -->
+<!-- Canvas: fixed behind everything -->
 <canvas id="c"></canvas>
+
+<!-- Connection line SVG overlay -->
+<svg id="conn-svg"></svg>
 
 <!-- Planet UI overlay -->
 <div id="planet-ui">
@@ -244,7 +270,7 @@ body {
   <div class="tt-action"></div>
 </div>
 
-<!-- Footer -->
+<!-- Footer capsule -->
 <div id="footer">
   <span>A social experiment · Free forever · </span><button onclick="openSupport()">Support</button><span> · </span><a href="/contribute">Contribute</a>
 </div>
@@ -255,15 +281,9 @@ body {
     <button id="support-close" onclick="closeSupport()">×</button>
     <p>Hive is free forever at the base tier.<br>Support it if it earns a place in your day.</p>
     <div id="support-links">
-      <a class="s-btn" href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" rel="noopener">
-        $1.99 <small>per month</small>
-      </a>
-      <a class="s-btn" href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" rel="noopener">
-        $19 <small>per year</small>
-      </a>
-      <a class="s-btn" href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" rel="noopener">
-        $5 <small>one-time</small>
-      </a>
+      <a class="s-btn" href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" rel="noopener">$1.99 <small>per month</small></a>
+      <a class="s-btn" href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" rel="noopener">$19 <small>per year</small></a>
+      <a class="s-btn" href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" rel="noopener">$5 <small>one-time</small></a>
     </div>
   </div>
 </div>
@@ -302,7 +322,7 @@ if (typeof THREE === 'undefined') {
 const ENGINES = [
   { name:'HiveClock',      emoji:'🕐', status:'live', tagline:'The world\'s most humane clock.',          url:'https://hiveclock.hive.baby',           keywords:['clock','time','watch','prayer','world','analog','digital','schedule','timezone','hours','minutes','prayer time'] },
   { name:'HiveClarity',    emoji:'💬', status:'live', tagline:'Say what you actually mean.',              url:'https://hiveclarity.hive.baby',          keywords:['clarity','clear','words','language','express','communicate','thoughts','articulate','confused','understand','explain','structured','thinking','write','rewrite'] },
-  { name:'HiveStrength',   emoji:'💪', status:'live', tagline:'Train with intelligence.',                 url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','stronger','stronger','exercise','lift','weights','muscle','body','health','gains','fit','build','physique'] },
+  { name:'HiveStrength',   emoji:'💪', status:'live', tagline:'Train with intelligence.',                 url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','stronger','exercise','lift','weights','muscle','body','health','gains','fit','build','physique'] },
   { name:'HiveField',      emoji:'🎯', status:'live', tagline:'Practice your craft.',                    url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate','scenario','prepare','professional','nurse','doctor','teacher','coding','sales','presentation','role'] },
   { name:'HiveWeather',    emoji:'🌤', status:'soon', tagline:'Weather as it feels, not just as it is.', url:null,                                     keywords:['weather','forecast','climate','rain','sun','temperature','wind','cloudy','storm'] },
   { name:'HiveConfession', emoji:'🤫', status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                     keywords:['confession','secret','anonymous','truth','share','admit','unsaid','say','burden'] },
@@ -322,7 +342,8 @@ const BASE_Z  = 3.2;
 const FOCUS_Z = 2.3;
 let targetCamZ = BASE_Z;
 
-// ─── Stars ────────────────────────────────────────────────────────────────────
+// ─── Stars (with parallax) ────────────────────────────────────────────────────
+let starField;
 (function(){
   const n = 2500, p = new Float32Array(n*3);
   for (let i=0;i<n;i++){
@@ -330,8 +351,15 @@ let targetCamZ = BASE_Z;
     p[i*3]=r*Math.sin(f)*Math.cos(t); p[i*3+1]=r*Math.sin(f)*Math.sin(t); p[i*3+2]=r*Math.cos(f);
   }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
-  scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:.055,sizeAttenuation:true,transparent:true,opacity:.6})));
+  starField = new THREE.Points(g, new THREE.PointsMaterial({color:0xffffff,size:.055,sizeAttenuation:true,transparent:true,opacity:.6}));
+  scene.add(starField);
 })();
+
+let mouseNX = 0, mouseNY = 0;
+window.addEventListener('mousemove', e => {
+  mouseNX = (e.clientX / window.innerWidth  - 0.5);
+  mouseNY = (e.clientY / window.innerHeight - 0.5);
+}, { passive: true });
 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
 scene.add(new THREE.AmbientLight(0x0a1828, 4));
@@ -346,7 +374,7 @@ scene.add(rimLight);
 function buildDual(detail) {
   const geo = new THREE.IcosahedronGeometry(1, detail);
   const pos = geo.attributes.position;
-  const idx = geo.index; // null in Three.js r152+ (non-indexed)
+  const idx = geo.index;
 
   const SCALE = 1e5, kmap = new Map(), uniq = [], remap = new Int32Array(pos.count);
   for (let i = 0; i < pos.count; i++) {
@@ -398,12 +426,12 @@ const codes = cells.map(() => ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.ran
 const C = {
   live:    new THREE.Color(0xd4af37),
   liveEm:  new THREE.Color(0xb8920a),
-  soon:    new THREE.Color(0x2a3d52),
-  soonEm:  new THREE.Color(0x1a2d3e),
+  soon:    new THREE.Color(0x1e3a4a),
+  soonEm:  new THREE.Color(0x0d2535),
   empty:   new THREE.Color(0x080f1c),
   emptyEm: new THREE.Color(0x030810),
   hoverL:  new THREE.Color(0xffe066),
-  hoverS:  new THREE.Color(0x4a7fa5),
+  hoverS:  new THREE.Color(0x4a9fbf),
   focus:   new THREE.Color(0xffffff),
 };
 
@@ -428,7 +456,7 @@ cells.forEach((cell, ci) => {
 
   let color,emissive,emissiveIntensity,roughness,metalness;
   if (engine?.status==='live')  { color=C.live.clone();  emissive=C.liveEm.clone();  emissiveIntensity=0.4;  roughness=0.25; metalness=0.65; }
-  else if (engine?.status==='soon') { color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.08; roughness=0.75; metalness=0.1; }
+  else if (engine?.status==='soon') { color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.06; roughness=0.8;  metalness=0.15; }
   else { color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05; }
 
   const mesh=new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide}));
@@ -457,11 +485,11 @@ function makeSprite(text, color, alpha, fs) {
 cellInfo.forEach(cd => {
   if(!cd.engine) return;
   const short=cd.engine.name.replace('Hive','').toUpperCase()||cd.engine.name;
-  const sp=makeSprite(short, cd.engine.status==='live'?'#f5d060':'#3a5a7a', cd.engine.status==='live'?.9:.5, 28);
+  const sp=makeSprite(short, cd.engine.status==='live'?'#f5d060':'#2a6a88', cd.engine.status==='live'?.9:.55, 28);
   sp.scale.set(0.22,0.07,1); sp.position.copy(cd.center).multiplyScalar(1.045); GROUP.add(sp);
 });
 
-// ─── Rotation (quaternion-based) ──────────────────────────────────────────────
+// ─── Rotation ─────────────────────────────────────────────────────────────────
 const YA=new THREE.Vector3(0,1,0), XA=new THREE.Vector3(1,0,0);
 let dragging=false, autoRot=true;
 let px=0, py=0, dx=0, dy=0, downX=0, downY=0;
@@ -506,18 +534,22 @@ canvas.addEventListener('touchstart',e=>{ if(e.touches.length===2) pinch0=Math.h
 canvas.addEventListener('touchmove',e=>{ if(e.touches.length!==2||!pinch0) return; const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); targetCamZ=Math.max(1.5,Math.min(6.5,targetCamZ-(d-pinch0)*.012)); pinch0=d; },{passive:true});
 canvas.addEventListener('touchend',()=>{ pinch0=null; });
 
-// ─── Raycasting ───────────────────────────────────────────────────────────────
+// ─── Raycasting & hover ───────────────────────────────────────────────────────
 const raycaster=new THREE.Raycaster(), mNDC=new THREE.Vector2();
 const tooltip=document.getElementById('tooltip');
 let hoveredIdx=-1;
 
 function toNDC(cx,cy){ mNDC.x=(cx/window.innerWidth)*2-1; mNDC.y=-(cy/window.innerHeight)*2+1; }
 
+// Click with zoom-in animation before navigation
 function handleClick(cx,cy){
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
   const h=raycaster.intersectObjects(meshes); if(!h.length) return;
   const cd=cellInfo[meshes.indexOf(h[0].object)];
-  if(cd.engine?.url) window.location.href=cd.engine.url;
+  if(cd.engine?.url) {
+    targetCamZ = 1.15;
+    setTimeout(() => { window.location.href = cd.engine.url; }, 580);
+  }
 }
 
 canvas.addEventListener('mousemove',e=>{ if(!dragging) updateHover(e.clientX,e.clientY); });
@@ -565,6 +597,59 @@ function posTip(cx,cy){
   tooltip.style.left=tx+'px'; tooltip.style.top=ty+'px';
 }
 
+// ─── Search-to-cell connection line ──────────────────────────────────────────
+const connSvg = document.getElementById('conn-svg');
+let connLine=null, connDot=null, connGrad=null;
+
+function initConnLine() {
+  const ns='http://www.w3.org/2000/svg';
+  const defs=document.createElementNS(ns,'defs');
+  connGrad=document.createElementNS(ns,'linearGradient');
+  connGrad.id='conn-grad'; connGrad.setAttribute('gradientUnits','userSpaceOnUse');
+  const s1=document.createElementNS(ns,'stop'); s1.setAttribute('offset','0%');   s1.setAttribute('stop-color','rgba(212,175,55,0)');
+  const s2=document.createElementNS(ns,'stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','rgba(212,175,55,0.28)');
+  connGrad.append(s1,s2); defs.appendChild(connGrad); connSvg.appendChild(defs);
+
+  connLine=document.createElementNS(ns,'line');
+  connLine.setAttribute('stroke','url(#conn-grad)');
+  connLine.setAttribute('stroke-width','1');
+  connLine.setAttribute('stroke-dasharray','3 8');
+  connLine.setAttribute('stroke-linecap','round');
+  connLine.style.display='none';
+  connSvg.appendChild(connLine);
+
+  connDot=document.createElementNS(ns,'circle');
+  connDot.setAttribute('r','2.5');
+  connDot.setAttribute('fill','rgba(212,175,55,0.2)');
+  connDot.setAttribute('stroke','rgba(212,175,55,0.45)');
+  connDot.setAttribute('stroke-width','0.5');
+  connDot.style.display='none';
+  connSvg.appendChild(connDot);
+}
+
+function updateConnLine() {
+  if(!connLine) initConnLine();
+  if(focusedIdx<0 || !searchEl.value.trim()) {
+    connLine.style.display='none'; connDot.style.display='none'; return;
+  }
+  const cd=cellInfo[focusedIdx];
+  const wp=cd.center.clone().applyQuaternion(GROUP.quaternion);
+  if(wp.z<0) { connLine.style.display='none'; connDot.style.display='none'; return; }
+
+  const proj=wp.clone().project(camera);
+  const cx=(proj.x+1)/2*window.innerWidth;
+  const cy=(-proj.y+1)/2*window.innerHeight;
+  const sr=searchEl.getBoundingClientRect();
+  const sx=sr.left+sr.width/2, sy=sr.bottom+2;
+
+  connGrad.setAttribute('x1',sx); connGrad.setAttribute('y1',sy);
+  connGrad.setAttribute('x2',cx); connGrad.setAttribute('y2',cy);
+  connLine.setAttribute('x1',sx); connLine.setAttribute('y1',sy);
+  connLine.setAttribute('x2',cx); connLine.setAttribute('y2',cy);
+  connDot.setAttribute('cx',cx);  connDot.setAttribute('cy',cy);
+  connLine.style.display=''; connDot.style.display='';
+}
+
 // ─── Search ───────────────────────────────────────────────────────────────────
 function scoreEng(q,e){
   const words=q.toLowerCase().trim().split(/\s+/).filter(w=>w.length>=3);
@@ -574,14 +659,11 @@ function scoreEng(q,e){
   for(const w of words){
     if(e.name.toLowerCase().includes(w)){t+=80;continue;}
     if(corpus.includes(w)){t+=40;continue;}
-    // query word is prefix of a corpus word (e.g. "str" → "strength")
     if(corpusWords.some(cw=>cw.startsWith(w))){t+=20;continue;}
-    // corpus word is prefix of query word (e.g. "stronger" contains "strength")
     if(corpusWords.some(cw=>w.startsWith(cw)&&cw.length>=4)){t+=20;continue;}
   }
   return t;
 }
-
 function getBestMatch(q){
   return ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s)[0];
 }
@@ -589,7 +671,7 @@ function getBestMatch(q){
 const searchEl=document.getElementById('search'), resultsEl=document.getElementById('results');
 searchEl.addEventListener('input',()=>{
   const q=searchEl.value.trim(); resultsEl.innerHTML='';
-  if(!q){clearFocus();return;}
+  if(!q){ clearFocus(); autoRot=true; return; }
   const all=ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
   if(all.length) focusEngine(all[0].e);
   for(const {e} of all.slice(0,5)){
@@ -605,8 +687,12 @@ searchEl.addEventListener('keydown',e=>{
     const best=getBestMatch(searchEl.value.trim());
     if(best?.e.url) window.location.href=best.e.url;
   }
+  if(e.key==='Escape'){ searchEl.value=''; clearFocus(); autoRot=true; searchEl.blur(); }
 });
-searchEl.addEventListener('blur',()=>setTimeout(()=>{resultsEl.innerHTML=''},200));
+searchEl.addEventListener('blur',()=>{
+  setTimeout(()=>{ resultsEl.innerHTML=''; },200);
+  if(!searchEl.value.trim()){ clearFocus(); autoRot=true; }
+});
 searchEl.addEventListener('focus',()=>{ autoRot=false; });
 
 // ─── Animate ──────────────────────────────────────────────────────────────────
@@ -626,10 +712,20 @@ function animate(){
 
   camera.position.z+=(targetCamZ-camera.position.z)*.06;
 
+  // Star parallax — subtle depth shift on mouse move
+  starField.position.x += (mouseNX*0.38 - starField.position.x) * 0.04;
+  starField.position.y += (-mouseNY*0.38 - starField.position.y) * 0.04;
+
   cellInfo.forEach((cd,i)=>{
-    if(cd.engine?.status==='live'&&i!==hoveredIdx&&i!==focusedIdx)
-      cd.mesh.material.emissiveIntensity=.32+.12*Math.sin(t*1.4+i*.9);
+    if(cd.engine?.status==='live' && i!==hoveredIdx && i!==focusedIdx)
+      cd.mesh.material.emissiveIntensity = .32+.12*Math.sin(t*1.4+i*.9);
+    // Coming soon: slow deep-teal pulse
+    else if(cd.engine?.status==='soon' && i!==hoveredIdx)
+      cd.mesh.material.emissiveIntensity = .04+.04*Math.sin(t*.7+i*1.7);
   });
+
+  // Connection line from search box to focused cell
+  updateConnLine();
 
   renderer.render(scene,camera);
 }
