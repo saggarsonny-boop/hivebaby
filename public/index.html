@@ -116,24 +116,24 @@ body {
   z-index: 10;
   pointer-events: none;
   white-space: nowrap;
-  font-size: 11px;
-  color: rgba(74, 127, 165, 0.3);
+  font-size: 12px;
+  color: rgba(180, 200, 225, 0.45);
   letter-spacing: 0.02em;
 }
 #footer span { pointer-events: none; }
 #footer a, #footer button {
-  color: rgba(74, 127, 165, 0.3);
+  color: rgba(180, 200, 225, 0.45);
   text-decoration: none;
   background: none;
   border: none;
-  font-size: 11px;
+  font-size: 12px;
   font-family: inherit;
   cursor: pointer;
   padding: 0;
   pointer-events: auto;
   transition: color 0.2s;
 }
-#footer a:hover, #footer button:hover { color: rgba(74, 127, 165, 0.7); }
+#footer a:hover, #footer button:hover { color: rgba(180, 200, 225, 0.85); }
 
 /* Support modal */
 #support-modal {
@@ -300,13 +300,12 @@ if (typeof THREE === 'undefined') {
 
 // ─── Engine Data ──────────────────────────────────────────────────────────────
 const ENGINES = [
-  { name:'HiveClock',      emoji:'🕐', status:'live', tagline:'The world\'s most humane clock.',          url:'https://hiveclock.hive.baby',           keywords:['clock','time','watch','prayer','world','analog','digital'] },
-  { name:'HiveClarity',    emoji:'💬', status:'live', tagline:'Say what you actually mean.',              url:'https://hiveclarity.hive.baby',          keywords:['clarity','words','language','express','communicate','thoughts','articulate'] },
-  { name:'HiveStrength',   emoji:'💪', status:'live', tagline:'Train with intelligence.',                 url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','exercise','lift','weights'] },
-  { name:'HEB',            emoji:'🏗️', status:'live', tagline:'Build Hive engines.',                     url:'https://heb.hive.baby',                  keywords:['build','create','engine','developer','make','builder','tool'] },
-  { name:'HiveField',      emoji:'🎯', status:'live', tagline:'Practice your craft.',                    url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate'] },
-  { name:'HiveWeather',    emoji:'🌤', status:'soon', tagline:'Weather as it feels, not just as it is.', url:null,                                     keywords:['weather','forecast','climate','rain','sun','temperature'] },
-  { name:'HiveConfession', emoji:'🤫', status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                     keywords:['confession','secret','anonymous','truth','share','admit'] },
+  { name:'HiveClock',      emoji:'🕐', status:'live', tagline:'The world\'s most humane clock.',          url:'https://hiveclock.hive.baby',           keywords:['clock','time','watch','prayer','world','analog','digital','schedule','timezone','hours','minutes','prayer time'] },
+  { name:'HiveClarity',    emoji:'💬', status:'live', tagline:'Say what you actually mean.',              url:'https://hiveclarity.hive.baby',          keywords:['clarity','clear','words','language','express','communicate','thoughts','articulate','confused','understand','explain','structured','thinking','write','rewrite'] },
+  { name:'HiveStrength',   emoji:'💪', status:'live', tagline:'Train with intelligence.',                 url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','stronger','stronger','exercise','lift','weights','muscle','body','health','gains','fit','build','physique'] },
+  { name:'HiveField',      emoji:'🎯', status:'live', tagline:'Practice your craft.',                    url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate','scenario','prepare','professional','nurse','doctor','teacher','coding','sales','presentation','role'] },
+  { name:'HiveWeather',    emoji:'🌤', status:'soon', tagline:'Weather as it feels, not just as it is.', url:null,                                     keywords:['weather','forecast','climate','rain','sun','temperature','wind','cloudy','storm'] },
+  { name:'HiveConfession', emoji:'🤫', status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                     keywords:['confession','secret','anonymous','truth','share','admit','unsaid','say','burden'] },
 ];
 
 // ─── Renderer ─────────────────────────────────────────────────────────────────
@@ -568,30 +567,43 @@ function posTip(cx,cy){
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 function scoreEng(q,e){
-  const words=q.toLowerCase().trim().split(/\s+/);
+  const words=q.toLowerCase().trim().split(/\s+/).filter(w=>w.length>=3);
   const corpus=(e.name+' '+e.tagline+' '+e.keywords.join(' ')).toLowerCase();
+  const corpusWords=corpus.split(/\s+/);
   let t=0;
   for(const w of words){
-    if(w.length<2) continue;
     if(e.name.toLowerCase().includes(w)){t+=80;continue;}
     if(corpus.includes(w)){t+=40;continue;}
-    for(const cw of corpus.split(/\s+/)) if(cw.startsWith(w)&&w.length>=3){t+=20;break;}
+    // query word is prefix of a corpus word (e.g. "str" → "strength")
+    if(corpusWords.some(cw=>cw.startsWith(w))){t+=20;continue;}
+    // corpus word is prefix of query word (e.g. "stronger" contains "strength")
+    if(corpusWords.some(cw=>w.startsWith(cw)&&cw.length>=4)){t+=20;continue;}
   }
   return t;
+}
+
+function getBestMatch(q){
+  return ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s)[0];
 }
 
 const searchEl=document.getElementById('search'), resultsEl=document.getElementById('results');
 searchEl.addEventListener('input',()=>{
   const q=searchEl.value.trim(); resultsEl.innerHTML='';
   if(!q){clearFocus();return;}
-  const scored=ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,5);
-  if(scored.length) focusEngine(scored[0].e);
-  for(const {e} of scored){
+  const all=ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
+  if(all.length) focusEngine(all[0].e);
+  for(const {e} of all.slice(0,5)){
     const div=document.createElement('div');
     div.className='result-item'+(e.status==='soon'?' soon':'');
     div.innerHTML=`<span style="font-size:22px;line-height:1">${e.emoji}</span><div><div class="result-name">${e.name}</div><div class="result-tagline">${e.tagline}</div></div>`;
     div.addEventListener('mousedown',()=>{ if(e.url) window.location.href=e.url; else{focusEngine(e);resultsEl.innerHTML='';searchEl.blur();} });
     resultsEl.appendChild(div);
+  }
+});
+searchEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    const best=getBestMatch(searchEl.value.trim());
+    if(best?.e.url) window.location.href=best.e.url;
   }
 });
 searchEl.addEventListener('blur',()=>setTimeout(()=>{resultsEl.innerHTML=''},200));
