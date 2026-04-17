@@ -9,82 +9,110 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #060a14; color: #e8f4ff; font-family: system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px; }
-.container { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 56px; }
-
-.hero { text-align: center; display: flex; flex-direction: column; gap: 16px; }
+.container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 56px; }
+.hero { text-align: center; display: flex; flex-direction: column; gap: 16px; align-items: center; }
 .hero .tagline { font-size: 18px; color: #4a7fa5; line-height: 1.6; }
-.hero .sub { font-size: 14px; color: #2a4a6a; max-width: 480px; margin: 0 auto; line-height: 1.7; }
+.hero .sub { font-size: 14px; color: #2a4a6a; max-width: 480px; line-height: 1.7; }
+.section-label { font-size: 11px; color: #2a4a6a; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 24px; text-align: center; }
 
-.section-label { font-size: 11px; color: #2a4a6a; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; }
-
-/* Honeycomb grid */
-.honeycomb { display: flex; flex-wrap: wrap; justify-content: center; gap: 0; }
-
-.hex-wrap {
-  width: 200px;
-  margin: 4px;
+/* True interlocking honeycomb */
+.honeycomb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
 }
-.hex-wrap:nth-child(odd) {
-  margin-top: 36px;
+.hex-row {
+  display: flex;
+  gap: 0;
+}
+.hex-row.offset {
+  margin-left: 111px;
 }
 
-.hex {
+.hex-outer {
+  width: 210px;
+  height: 188px;
   position: relative;
-  width: 200px;
-  height: 180px;
+  margin: -18px 3px;
+  flex-shrink: 0;
+}
+
+.hex-bg {
+  position: absolute;
+  inset: 0;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background: #0a1a2e;
-  border: none;
+  background: linear-gradient(160deg, #1a2a3a 0%, #0a1520 100%);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.05);
+}
+
+.hex-border {
+  position: absolute;
+  inset: -2px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(160deg, #1a3a5c 0%, #0a1a2e 100%);
+  z-index: -1;
+}
+
+.hex-outer.live .hex-border {
+  background: linear-gradient(160deg, #b8860b 0%, #5a4000 50%, #0a1520 100%);
+}
+.hex-outer.live .hex-bg {
+  background: linear-gradient(160deg, #1a2535 0%, #0d1a28 100%);
+}
+.hex-outer.live:hover .hex-bg {
+  background: linear-gradient(160deg, #1e2d3f 0%, #111f30 100%);
+}
+.hex-outer.live:hover .hex-border {
+  background: linear-gradient(160deg, #ffd700 0%, #b8860b 40%, #2a1a00 100%);
+}
+
+.hex-link {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 24px 20px;
   text-decoration: none;
   color: inherit;
+  text-align: center;
+  padding: 20px;
+  gap: 5px;
   cursor: pointer;
-  transition: background 0.2s;
-  gap: 6px;
+  z-index: 1;
 }
+.hex-outer.soon .hex-link { cursor: default; pointer-events: none; }
 
-.hex::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background: #1a3a5c;
-  z-index: -1;
-  transform: scale(1.03);
-}
-
-.hex:hover { background: #0d2040; }
-.hex.soon { opacity: 0.4; cursor: default; pointer-events: none; }
-
-.hex-emoji { font-size: 28px; line-height: 1; }
+.hex-emoji { font-size: 26px; line-height: 1; }
 .hex-name { font-size: 13px; font-weight: 700; color: #e8f4ff; line-height: 1.2; }
-.hex-tagline { font-size: 11px; color: #4a7fa5; line-height: 1.4; }
-.hex-badge-live { font-size: 9px; background: #0d2a1a; color: #4a9a6a; border-radius: 20px; padding: 2px 7px; font-weight: 600; }
-.hex-badge-soon { font-size: 9px; background: #0d1f35; color: #2a5a7a; border-radius: 20px; padding: 2px 7px; font-weight: 600; }
+.hex-outer.soon .hex-name { color: #2a4a6a; }
+.hex-tagline { font-size: 10px; color: #4a7fa5; line-height: 1.4; max-width: 120px; }
+.hex-outer.soon .hex-tagline { color: #1a3a5c; }
+.badge-live { font-size: 9px; background: rgba(13,42,26,0.8); color: #4a9a6a; border-radius: 20px; padding: 2px 7px; font-weight: 600; margin-top: 2px; }
+.badge-soon { font-size: 9px; background: rgba(13,31,53,0.8); color: #1a3a5c; border-radius: 20px; padding: 2px 7px; font-weight: 600; margin-top: 2px; }
 
-/* Support */
+/* Glow on live hover */
+.hex-outer.live { filter: drop-shadow(0 0 8px rgba(180,130,0,0.15)); transition: filter 0.2s; }
+.hex-outer.live:hover { filter: drop-shadow(0 0 20px rgba(255,215,0,0.4)); }
+
 .support { background: #0a1a2e; border: 1px solid #1a3a5c; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
 .support-title { font-size: 16px; font-weight: 700; color: #e8f4ff; }
 .support-desc { font-size: 13px; color: #4a7fa5; line-height: 1.6; }
 .support-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
-.support-btn { background: #0d1f35; border: 1px solid #1a3a5c; border-radius: 10px; padding: 10px 16px; color: #c8e0f0; font-size: 13px; text-decoration: none; font-weight: 500; }
-
+.support-btn { background: #0d1f35; border: 1px solid #1a3a5c; border-radius: 10px; padding: 10px 16px; color: #c8e0f0; font-size: 13px; text-decoration: none; font-weight: 500; transition: border-color 0.2s; }
+.support-btn:hover { border-color: #4a7fa5; }
 .footer { border-top: 1px solid #0d1f35; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .footer-text { font-size: 12px; color: #1a3a5c; }
 .footer-console { font-size: 11px; color: #0d1f35; text-decoration: none; }
 
-@media (max-width: 480px) {
-  .hex-wrap { width: 140px; }
-  .hex { width: 140px; height: 126px; padding: 16px 12px; }
-  .hex-wrap:nth-child(odd) { margin-top: 24px; }
-  .hex-emoji { font-size: 22px; }
+@media (max-width: 600px) {
+  .hex-outer { width: 140px; height: 126px; margin: -12px 2px; }
+  .hex-row.offset { margin-left: 74px; }
+  .hex-emoji { font-size: 20px; }
   .hex-name { font-size: 11px; }
-  .hex-tagline { font-size: 10px; }
+  .hex-tagline { font-size: 9px; max-width: 90px; }
 }
 </style>
 </head>
@@ -92,7 +120,7 @@ body { background: #060a14; color: #e8f4ff; font-family: system-ui, sans-serif; 
 <div class="container">
 
   <div class="hero">
-    <div style="position:relative;width:220px;height:220px;margin:0 auto;">
+    <div style="position:relative;width:220px;height:220px;">
       <img src="/hive_icon.gif" style="width:100%;height:100%;object-fit:contain;" alt="Hive">
       <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, #060a14 80%);pointer-events:none;"></div>
     </div>
@@ -104,66 +132,82 @@ body { background: #060a14; color: #e8f4ff; font-family: system-ui, sans-serif; 
     <div class="section-label">Engines</div>
     <div class="honeycomb">
 
-      <div class="hex-wrap">
-        <a href="https://hiveclock.hive.baby" class="hex">
-          <div class="hex-emoji">🕐</div>
-          <div class="hex-name">HiveClock</div>
-          <div class="hex-tagline">The world's most humane clock.</div>
-          <div class="hex-badge-live">LIVE</div>
-        </a>
-      </div>
-
-      <div class="hex-wrap">
-        <a href="https://hiveclarity.hive.baby" class="hex">
-          <div class="hex-emoji">💬</div>
-          <div class="hex-name">HiveClarity</div>
-          <div class="hex-tagline">Say what you actually mean.</div>
-          <div class="hex-badge-live">LIVE</div>
-        </a>
-      </div>
-
-      <div class="hex-wrap">
-        <a href="https://hivestrengthmastery.hive.baby" class="hex">
-          <div class="hex-emoji">💪</div>
-          <div class="hex-name">HiveStrength</div>
-          <div class="hex-tagline">Train with intelligence.</div>
-          <div class="hex-badge-live">LIVE</div>
-        </a>
-      </div>
-
-      <div class="hex-wrap">
-        <a href="https://heb.hive.baby" class="hex">
-          <div class="hex-emoji">🏗️</div>
-          <div class="hex-name">HEB</div>
-          <div class="hex-tagline">Build Hive engines.</div>
-          <div class="hex-badge-live">LIVE</div>
-        </a>
-      </div>
-
-      <div class="hex-wrap">
-        <a href="https://hivefield.hive.baby" class="hex">
-          <div class="hex-emoji">🧠</div>
-          <div class="hex-name">HiveField</div>
-          <div class="hex-tagline">Reasoning under pressure.</div>
-          <div class="hex-badge-live">LIVE</div>
-        </a>
-      </div>
-
-      <div class="hex-wrap">
-        <div class="hex soon">
-          <div class="hex-emoji">🌤</div>
-          <div class="hex-name">HiveWeather</div>
-          <div class="hex-tagline">Weather as it feels.</div>
-          <div class="hex-badge-soon">SOON</div>
+      <div class="hex-row">
+        <div class="hex-outer live">
+          <div class="hex-border"></div>
+          <div class="hex-bg"></div>
+          <a href="https://hiveclock.hive.baby" class="hex-link">
+            <div class="hex-emoji">🕐</div>
+            <div class="hex-name">HiveClock</div>
+            <div class="hex-tagline">The world's most humane clock.</div>
+            <div class="badge-live">LIVE</div>
+          </a>
+        </div>
+        <div class="hex-outer live">
+          <div class="hex-border"></div>
+          <div class="hex-bg"></div>
+          <a href="https://hiveclarity.hive.baby" class="hex-link">
+            <div class="hex-emoji">💬</div>
+            <div class="hex-name">HiveClarity</div>
+            <div class="hex-tagline">Say what you actually mean.</div>
+            <div class="badge-live">LIVE</div>
+          </a>
+        </div>
+        <div class="hex-outer live">
+          <div class="hex-border"></div>
+          <div class="hex-bg"></div>
+          <a href="https://hivestrengthmastery.hive.baby" class="hex-link">
+            <div class="hex-emoji">💪</div>
+            <div class="hex-name">HiveStrength</div>
+            <div class="hex-tagline">Train with intelligence.</div>
+            <div class="badge-live">LIVE</div>
+          </a>
         </div>
       </div>
 
-      <div class="hex-wrap">
-        <div class="hex soon">
-          <div class="hex-emoji">🤫</div>
-          <div class="hex-name">HiveConfession</div>
-          <div class="hex-tagline">Say the thing you haven't said.</div>
-          <div class="hex-badge-soon">SOON</div>
+      <div class="hex-row offset">
+        <div class="hex-outer live">
+          <div class="hex-border"></div>
+          <div class="hex-bg"></div>
+          <a href="https://heb.hive.baby" class="hex-link">
+            <div class="hex-emoji">🏗️</div>
+            <div class="hex-name">HEB</div>
+            <div class="hex-tagline">Build Hive engines.</div>
+            <div class="badge-live">LIVE</div>
+          </a>
+        </div>
+        <div class="hex-outer live">
+          <div class="hex-border"></div>
+          <div class="hex-bg"></div>
+          <a href="https://hivefield.hive.baby" class="hex-link">
+            <div class="hex-emoji">🧠</div>
+            <div class="hex-name">HiveField</div>
+            <div class="hex-tagline">Reasoning under pressure.</div>
+            <div class="badge-live">LIVE</div>
+          </a>
+        </div>
+        <div class="hex-outer soon">
+          <div class="hex-border"></div>
+          <div class="hex-bg"></div>
+          <div class="hex-link">
+            <div class="hex-emoji">🌤</div>
+            <div class="hex-name">HiveWeather</div>
+            <div class="hex-tagline">Weather as it feels.</div>
+            <div class="badge-soon">SOON</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hex-row">
+        <div class="hex-outer soon">
+          <div class="hex-border"></div>
+          <div class="hex-bg"></div>
+          <div class="hex-link">
+            <div class="hex-emoji">🤫</div>
+            <div class="hex-name">HiveConfession</div>
+            <div class="hex-tagline">Say the thing you haven't said.</div>
+            <div class="badge-soon">SOON</div>
+          </div>
         </div>
       </div>
 
@@ -176,7 +220,7 @@ body { background: #060a14; color: #e8f4ff; font-family: system-ui, sans-serif; 
     <div class="support-buttons">
       <a href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" class="support-btn">$1.99 / month</a>
       <a href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" class="support-btn">$19 / year</a>
-      <a href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" class="support-btn">$5 one-time</a>
+      <a href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" class="support-btn">$5 one-time</div>
     </div>
   </div>
 
