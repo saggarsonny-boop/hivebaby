@@ -59,6 +59,33 @@ body {
   width: min(440px, calc(100vw - 40px));
 }
 
+#help-btn {
+  position: absolute;
+  top: 24px;
+  right: calc(50% - min(220px, calc(50vw - 20px)) - 38px);
+  width: 30px;
+  height: 30px;
+  background: rgba(4, 8, 18, 0.82);
+  border: 1px solid rgba(74, 127, 165, 0.22);
+  border-radius: 50%;
+  color: rgba(74, 127, 165, 0.55);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.2s, color 0.2s;
+  line-height: 1;
+  padding: 0;
+}
+#help-btn:hover {
+  border-color: rgba(74, 127, 165, 0.55);
+  color: rgba(74, 127, 165, 0.9);
+}
+
 /* Shared ambient pulse for search + footer */
 @keyframes orb-pulse {
   0%, 100% {
@@ -90,7 +117,7 @@ body {
   caret-color: #d4af37;
   animation: orb-pulse 4.5s ease-in-out infinite;
 }
-#search::placeholder { color: rgba(74, 127, 165, 0.7); }
+#search::placeholder { color: rgba(74, 127, 165, 0.88); }
 #search:focus {
   border-color: rgba(212, 175, 55, 0.45);
   box-shadow:
@@ -320,6 +347,7 @@ body {
       autocomplete="off" spellcheck="false">
     <div id="results"></div>
   </div>
+  <button id="help-btn" title="How does this work?">?</button>
 </div>
 
 <!-- Tooltip -->
@@ -360,19 +388,31 @@ body {
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script>
 // ─── First-visit side card ────────────────────────────────────────────────────
-(function(){
-  const card = document.getElementById('welcome');
-  if (localStorage.getItem('hive_welcomed')) { card.remove(); return; }
-  document.getElementById('welcome-btn').addEventListener('click', () => {
+function showWelcomeCard() {
+  // Re-create card if it was removed
+  let card = document.getElementById('welcome');
+  if (!card) {
+    card = document.createElement('div');
+    card.id = 'welcome';
+    card.innerHTML = `<h2>Welcome to Hive</h2>
+  <p>Free tools, built by the people who need them. Search for an engine, suggest a new one, or tell us what could be better. The planet grows as the community does.</p>
+  <button id="welcome-btn">Got it</button>`;
+    document.body.appendChild(card);
+    wireWelcomeBtn(card);
+  } else {
+    card.classList.remove('hide');
+  }
+}
+
+function wireWelcomeBtn(card) {
+  card.querySelector('#welcome-btn').addEventListener('click', () => {
     localStorage.setItem('hive_welcomed', '1');
     card.classList.add('hide');
     setTimeout(() => {
       card.remove();
-      // Briefly pulse the search box to draw attention
       const s = document.getElementById('search');
       s.classList.add('nudge');
       s.addEventListener('animationend', () => s.classList.remove('nudge'), { once: true });
-      // Then pulse the footer after a short delay
       setTimeout(() => {
         const f = document.getElementById('footer');
         f.style.transition = 'border-color 0.3s, box-shadow 0.3s';
@@ -382,6 +422,14 @@ body {
       }, 2400);
     }, 460);
   });
+}
+
+document.getElementById('help-btn').addEventListener('click', showWelcomeCard);
+
+(function(){
+  const card = document.getElementById('welcome');
+  if (localStorage.getItem('hive_welcomed')) { card.remove(); return; }
+  wireWelcomeBtn(card);
 })();
 
 // ─── Rotating placeholder ─────────────────────────────────────────────────────
