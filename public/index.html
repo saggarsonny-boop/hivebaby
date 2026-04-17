@@ -2,126 +2,676 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Hive — Free tools for everyone</title>
 <link rel="icon" type="image/png" href="/favicon.png">
-
-<link rel="apple-touch-icon" href="/icon-192.png">
-<link rel="icon" type="image/png" href="/favicon.png">
-
 <link rel="apple-touch-icon" href="/icon-192.png">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #060a14; color: #e8f4ff; font-family: system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px; }
-.container { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 48px; }
-.hero { text-align: center; display: flex; flex-direction: column; gap: 16px; }
-.hero .bee { font-size: 48px; }
-h1 { font-size: clamp(32px, 8vw, 52px); font-weight: 700; letter-spacing: -0.03em; }
-.hero .tagline { font-size: 18px; color: #4a7fa5; line-height: 1.6; }
-.hero .sub { font-size: 14px; color: #2a4a6a; max-width: 480px; margin: 0 auto; line-height: 1.7; }
-.section-label { font-size: 11px; color: #2a4a6a; text-transform: uppercase; letter-spacing: 0.12em; }
-.engines { display: flex; flex-direction: column; gap: 16px; }
-.engine { background: #0a1a2e; border: 1px solid #1a3a5c; border-radius: 16px; padding: 24px; text-decoration: none; color: inherit; display: flex; gap: 20px; align-items: flex-start; transition: border-color 0.2s; }
-.engine:hover { border-color: #4a7fa5; }
-.engine.soon { opacity: 0.5; cursor: default; pointer-events: none; }
-.engine-emoji { font-size: 32px; flex-shrink: 0; }
-.engine-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.engine-title-row { display: flex; align-items: center; gap: 10px; }
-.engine-name { font-size: 18px; font-weight: 700; color: #e8f4ff; }
-.badge-live { font-size: 10px; background: #0d2a1a; color: #4a9a6a; border-radius: 20px; padding: 2px 8px; font-weight: 600; }
-.badge-soon { font-size: 10px; background: #0d1f35; color: #2a5a7a; border-radius: 20px; padding: 2px 8px; font-weight: 600; }
-.engine-tagline { font-size: 14px; color: #4a7fa5; font-style: italic; }
-.engine-desc { font-size: 13px; color: #2a5a7a; line-height: 1.6; }
-.engine-arrow { color: #1a3a5c; font-size: 20px; flex-shrink: 0; align-self: center; }
-.support { background: #0a1a2e; border: 1px solid #1a3a5c; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
-.support-title { font-size: 16px; font-weight: 700; color: #e8f4ff; }
-.support-desc { font-size: 13px; color: #4a7fa5; line-height: 1.6; }
-.support-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
-.support-btn { background: #0d1f35; border: 1px solid #1a3a5c; border-radius: 10px; padding: 10px 16px; color: #c8e0f0; font-size: 13px; text-decoration: none; font-weight: 500; }
-.footer { border-top: 1px solid #0d1f35; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-.footer-text { font-size: 12px; color: #1a3a5c; }
-.footer-console { font-size: 11px; color: #0d1f35; text-decoration: none; }
+body { background: #000; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
+#c { width: 100vw; height: 100vh; display: block; touch-action: none; }
+
+#search-wrap {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: min(440px, calc(100vw - 40px));
+}
+#search {
+  width: 100%;
+  background: rgba(4, 8, 18, 0.88);
+  border: 1px solid rgba(74, 127, 165, 0.35);
+  border-radius: 28px;
+  padding: 13px 22px;
+  color: #e8f4ff;
+  font-size: 15px;
+  outline: none;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: #4a9fe0;
+}
+#search::placeholder { color: rgba(74, 127, 165, 0.5); }
+#search:focus {
+  border-color: rgba(74, 127, 165, 0.7);
+  box-shadow: 0 0 0 3px rgba(74, 127, 165, 0.1);
+}
+#results { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.result-item {
+  background: rgba(4, 8, 18, 0.92);
+  border: 1px solid rgba(74, 127, 165, 0.25);
+  border-radius: 14px;
+  padding: 11px 16px;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.result-item:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(10, 18, 36, 0.95);
+}
+.result-item.soon { opacity: 0.6; cursor: default; }
+.result-name { font-size: 14px; font-weight: 700; color: #e8f4ff; }
+.result-tagline { font-size: 12px; color: #4a7fa5; margin-top: 2px; }
+
+#tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 20;
+  display: none;
+  background: rgba(4, 8, 18, 0.94);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 14px;
+  padding: 13px 17px;
+  min-width: 160px;
+  max-width: 230px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(212,175,55,0.08);
+}
+#tooltip.soon-tt { border-color: rgba(74, 127, 165, 0.3); }
+#tooltip .tt-name { font-size: 14px; font-weight: 700; color: #e8f4ff; }
+#tooltip .tt-tagline { font-size: 12px; color: #4a7fa5; margin-top: 5px; line-height: 1.5; }
+#tooltip .tt-code { font-size: 11px; color: rgba(74, 127, 165, 0.4); font-family: monospace; margin-top: 4px; letter-spacing: 0.1em; }
+#tooltip .tt-action { font-size: 11px; color: rgba(212, 175, 55, 0.65); margin-top: 8px; letter-spacing: 0.04em; }
+#tooltip .tt-action.soon-action { color: rgba(74, 127, 165, 0.5); }
+
+#wordmark {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(74, 127, 165, 0.35);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+#hint {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(40, 70, 100, 0.4);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="hero">
-    <div style="position:relative;width:280px;height:280px;margin:0 auto;"><img src="/hive_icon.gif" style="width:100%;height:100%;object-fit:contain;" alt="Hive"><div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, #060a14 80%);pointer-events:none;"></div></div>
-    
-    <p class="tagline">Free tools for everyone. Built for the community first.</p>
-    <p class="sub">Hive builds AI-powered tools that are free at the base tier, forever. No ads. No investors. Optional support if you love what we make.</p>
-  </div>
+<canvas id="c"></canvas>
 
-  <div class="engines">
-    <div class="section-label">Engines</div>
-    <a href="https://hiveclock.hive.baby" class="engine">
-      <div class="engine-emoji">🕐</div>
-      <div class="engine-body">
-        <div class="engine-title-row"><span class="engine-name">HiveClock</span><span class="badge-live">LIVE</span></div>
-        <div class="engine-tagline">The world's most humane clock.</div>
-        <div class="engine-desc">Analog and digital. AI clock faces. World time. Prayer times for Islam, Judaism, and any tradition. Free forever.</div>
-      </div>
-      <div class="engine-arrow">→</div>
-    </a>
-    <a href="https://hiveclarity.hive.baby" class="engine">
-      <div class="engine-emoji">💬</div>
-      <div class="engine-body">
-        <div class="engine-title-row"><span class="engine-name">HiveClarity</span><span class="badge-live">LIVE</span></div>
-        <div class="engine-tagline">Say what you actually mean.</div>
-        <div class="engine-desc">Takes tangled thoughts and returns precise, expressible language. No advice. Just clarity.</div>
-      </div>
-      <div class="engine-arrow">→</div>
-    </a>
-    <a href="https://hivestrengthmastery.hive.baby" class="engine">
-      <div class="engine-emoji">💪</div>
-      <div class="engine-body">
-        <div class="engine-title-row"><span class="engine-name">HiveStrength</span><span class="badge-live">LIVE</span></div>
-        <div class="engine-tagline">Train with intelligence.</div>
-        <div class="engine-desc">AI-powered strength and fitness coaching. Programs built around you, not templates.</div>
-      </div>
-      <div class="engine-arrow">→</div>
-    </a>
-    <a href="https://heb.hive.baby" class="engine">
-      <div class="engine-emoji">🏗️</div>
-      <div class="engine-body">
-        <div class="engine-title-row"><span class="engine-name">HEB</span><span class="badge-live">LIVE</span></div>
-        <div class="engine-tagline">Build Hive engines.</div>
-        <div class="engine-desc">The Hive Engine Builder. Design and deploy new engines into the ecosystem.</div>
-      </div>
-      <div class="engine-arrow">→</div>
-    </a>
-    <div class="engine soon">
-      <div class="engine-emoji">🌤</div>
-      <div class="engine-body">
-        <div class="engine-title-row"><span class="engine-name">HiveWeather</span><span class="badge-soon">SOON</span></div>
-        <div class="engine-tagline">Weather as it feels, not just as it is.</div>
-        <div class="engine-desc">Coming soon.</div>
-      </div>
-    </div>
-    <div class="engine soon">
-      <div class="engine-emoji">🤫</div>
-      <div class="engine-body">
-        <div class="engine-title-row"><span class="engine-name">HiveConfession</span><span class="badge-soon">SOON</span></div>
-        <div class="engine-tagline">Say the thing you haven't said.</div>
-        <div class="engine-desc">Coming soon.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="support">
-    <div class="support-title">Support Hive</div>
-    <div class="support-desc">Everything we build is free. If Hive becomes part of your day, support it when you can. It keeps the engines running and the community first.</div>
-    <div class="support-buttons">
-      <a href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" class="support-btn">$1.99 / month</a>
-      <a href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" class="support-btn">$19 / year</a>
-      <a href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" class="support-btn">$5 one-time</a>
-    </div>
-  </div>
-
-  <div class="footer">
-    <span class="footer-text">Hive · Free forever at the base tier</span>
-    <a href="https://creator-console-steel.vercel.app" target="_blank" class="footer-console">console</a>
-  </div>
+<div id="search-wrap">
+  <input id="search" type="text" placeholder="Search engines... try 'help me practice my job'" autocomplete="off" spellcheck="false">
+  <div id="results"></div>
 </div>
+
+<div id="tooltip">
+  <div class="tt-name"></div>
+  <div class="tt-tagline"></div>
+  <div class="tt-code"></div>
+  <div class="tt-action"></div>
+</div>
+
+<div id="wordmark">HIVE</div>
+<div id="hint">drag · scroll to zoom · tap to open</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+<script>
+// ─── Engine Data ─────────────────────────────────────────────────────────────
+const ENGINES = [
+  {
+    name: 'HiveClock', emoji: '🕐', status: 'live',
+    tagline: 'The world\'s most humane clock.',
+    url: 'https://hiveclock.hive.baby',
+    keywords: ['clock','time','watch','prayer','world','analog','digital','hours','minutes']
+  },
+  {
+    name: 'HiveClarity', emoji: '💬', status: 'live',
+    tagline: 'Say what you actually mean.',
+    url: 'https://hiveclarity.hive.baby',
+    keywords: ['clarity','words','language','express','communicate','thoughts','articulate','say','mean','write']
+  },
+  {
+    name: 'HiveStrength', emoji: '💪', status: 'live',
+    tagline: 'Train with intelligence.',
+    url: 'https://hivestrengthmastery.hive.baby',
+    keywords: ['fitness','workout','gym','training','strength','exercise','lift','weights','muscle','body']
+  },
+  {
+    name: 'HEB', emoji: '🏗️', status: 'live',
+    tagline: 'Build Hive engines.',
+    url: 'https://heb.hive.baby',
+    keywords: ['build','create','engine','developer','make','builder','design','tool','launch']
+  },
+  {
+    name: 'HiveField', emoji: '🎯', status: 'live',
+    tagline: 'Practice your craft.',
+    url: 'https://hivefield.hive.baby',
+    keywords: ['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate','role']
+  },
+  {
+    name: 'HiveWeather', emoji: '🌤', status: 'soon',
+    tagline: 'Weather as it feels, not just as it is.',
+    url: null,
+    keywords: ['weather','forecast','climate','rain','sun','temperature','storm']
+  },
+  {
+    name: 'HiveConfession', emoji: '🤫', status: 'soon',
+    tagline: 'Say the thing you haven\'t said.',
+    url: null,
+    keywords: ['confession','secret','anonymous','truth','share','admit','tell']
+  },
+];
+
+// ─── Three.js Setup ───────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020408);
+scene.fog = new THREE.Fog(0x020408, 20, 60);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 100);
+camera.position.set(0, 0, 3.2);
+
+// ─── Stars ────────────────────────────────────────────────────────────────────
+(function () {
+  const count = 2400;
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const u = Math.random(), v = Math.random();
+    const theta = 2 * Math.PI * u;
+    const phi = Math.acos(2 * v - 1);
+    const r = 28 + Math.random() * 22;
+    pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i*3+2] = r * Math.cos(phi);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
+    color: 0xffffff, size: 0.06, sizeAttenuation: true,
+    transparent: true, opacity: 0.65
+  })));
+
+  // Bright stars
+  const bcount = 80;
+  const bpos = new Float32Array(bcount * 3);
+  for (let i = 0; i < bcount; i++) {
+    const u = Math.random(), v = Math.random();
+    const theta = 2 * Math.PI * u;
+    const phi = Math.acos(2 * v - 1);
+    const r = 32 + Math.random() * 15;
+    bpos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    bpos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    bpos[i*3+2] = r * Math.cos(phi);
+  }
+  const bgeo = new THREE.BufferGeometry();
+  bgeo.setAttribute('position', new THREE.BufferAttribute(bpos, 3));
+  scene.add(new THREE.Points(bgeo, new THREE.PointsMaterial({
+    color: 0xaaddff, size: 0.12, sizeAttenuation: true,
+    transparent: true, opacity: 0.9
+  })));
+})();
+
+// ─── Lighting ─────────────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x0a1828, 4));
+const keyLight = new THREE.DirectionalLight(0xfff5e0, 3.5);
+keyLight.position.set(4, 3, 4);
+scene.add(keyLight);
+const rimLight = new THREE.DirectionalLight(0x1a3060, 1.5);
+rimLight.position.set(-4, -1, -3);
+scene.add(rimLight);
+
+// ─── Geodesic Dual (Soccer-ball Hex Sphere) ───────────────────────────────────
+function buildDual(detail) {
+  const icoGeo = new THREE.IcosahedronGeometry(1, detail);
+  const pos = icoGeo.attributes.position;
+  const idx = icoGeo.index;
+
+  // Hash-based vertex deduplication
+  const SCALE = 100000;
+  const keyMap = new Map();
+  const unique = [];
+  const remap = new Array(pos.count);
+
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const len = Math.sqrt(x*x + y*y + z*z);
+    const nx = x/len, ny = y/len, nz = z/len;
+    const k = `${Math.round(nx*SCALE)},${Math.round(ny*SCALE)},${Math.round(nz*SCALE)}`;
+    if (keyMap.has(k)) {
+      remap[i] = keyMap.get(k);
+    } else {
+      keyMap.set(k, unique.length);
+      remap[i] = unique.length;
+      unique.push(new THREE.Vector3(nx, ny, nz));
+    }
+  }
+
+  // Build face centroids
+  const faces = [];
+  for (let i = 0; i < idx.count; i += 3) {
+    const a = remap[idx.getX(i)];
+    const b = remap[idx.getX(i+1)];
+    const c = remap[idx.getX(i+2)];
+    if (a === b || b === c || a === c) continue;
+    const centroid = new THREE.Vector3()
+      .addVectors(unique[a], unique[b]).add(unique[c])
+      .divideScalar(3).normalize();
+    faces.push({ centroid, verts: [a, b, c] });
+  }
+
+  // Map each vertex to its adjacent faces
+  const vFaces = new Map();
+  for (let fi = 0; fi < faces.length; fi++) {
+    for (const vi of faces[fi].verts) {
+      if (!vFaces.has(vi)) vFaces.set(vi, []);
+      vFaces.get(vi).push(fi);
+    }
+  }
+
+  // Build dual cells
+  const cells = [];
+  for (let vi = 0; vi < unique.length; vi++) {
+    const fis = vFaces.get(vi) || [];
+    if (fis.length < 3) continue;
+    const center = unique[vi].clone();
+
+    // Build local frame
+    const N = center.clone();
+    let up = new THREE.Vector3(0, 1, 0);
+    if (Math.abs(N.dot(up)) > 0.99) up.set(1, 0, 0);
+    const T = new THREE.Vector3().crossVectors(up, N).normalize();
+    const B = new THREE.Vector3().crossVectors(N, T);
+
+    const sorted = fis
+      .map(fi => {
+        const d = faces[fi].centroid.clone().sub(center);
+        return { c: faces[fi].centroid.clone(), a: Math.atan2(d.dot(B), d.dot(T)) };
+      })
+      .sort((a, b) => a.a - b.a);
+
+    cells.push({ center, polygon: sorted.map(x => x.c), sides: sorted.length });
+  }
+
+  return cells;
+}
+
+const cells = buildDual(3); // ~642 cells
+
+// ─── Assign Engines to Cells ──────────────────────────────────────────────────
+// Space engines evenly across the sphere, skipping the first few polar cells
+const cellToEngine = new Map();
+const engineToCell = new Map();
+const step = Math.floor(cells.length / ENGINES.length);
+for (let i = 0; i < ENGINES.length; i++) {
+  const ci = 12 + i * step; // skip first 12 (polar pentagon region)
+  cellToEngine.set(ci, ENGINES[i]);
+  engineToCell.set(ENGINES[i].name, ci);
+}
+
+// Random 3-letter codes for empty cells
+const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+function randCode() {
+  return ALPHA[Math.random()*ALPHA.length|0]
+       + ALPHA[Math.random()*ALPHA.length|0]
+       + ALPHA[Math.random()*ALPHA.length|0];
+}
+const cellCodes = cells.map(() => randCode());
+
+// ─── Colors ───────────────────────────────────────────────────────────────────
+const C_LIVE       = new THREE.Color(0xd4af37);
+const C_LIVE_EM    = new THREE.Color(0xb8920a);
+const C_SOON       = new THREE.Color(0x2a3d52);
+const C_SOON_EM    = new THREE.Color(0x1a2d3e);
+const C_EMPTY      = new THREE.Color(0x080f1c);
+const C_EMPTY_EM   = new THREE.Color(0x030810);
+const C_HOVER_LIVE = new THREE.Color(0xffe066);
+const C_HOVER_SOON = new THREE.Color(0x4a7fa5);
+
+// ─── Build Cell Meshes ────────────────────────────────────────────────────────
+const GROUP = new THREE.Group();
+scene.add(GROUP);
+
+const LIFT = 0.007;
+const GAP  = 0.91; // cell scale (gap between cells)
+
+const meshes    = [];
+const cellInfo  = [];
+
+cells.forEach((cell, ci) => {
+  const engine = cellToEngine.get(ci) || null;
+  const poly = cell.polygon;
+  const n = poly.length;
+  const center3 = cell.center.clone().multiplyScalar(1 + LIFT);
+
+  // Scale polygon toward center to create gaps
+  const verts = [];
+  for (let i = 0; i < n; i++) {
+    const a = poly[i].clone().lerp(cell.center, 1 - GAP).normalize().multiplyScalar(1 + LIFT);
+    const b = poly[(i+1)%n].clone().lerp(cell.center, 1 - GAP).normalize().multiplyScalar(1 + LIFT);
+    verts.push(center3.x, center3.y, center3.z);
+    verts.push(a.x, a.y, a.z);
+    verts.push(b.x, b.y, b.z);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  geo.computeVertexNormals();
+
+  let color, emissive, emissiveIntensity, roughness, metalness;
+  if (engine && engine.status === 'live') {
+    color = C_LIVE.clone(); emissive = C_LIVE_EM.clone();
+    emissiveIntensity = 0.4; roughness = 0.25; metalness = 0.65;
+  } else if (engine && engine.status === 'soon') {
+    color = C_SOON.clone(); emissive = C_SOON_EM.clone();
+    emissiveIntensity = 0.08; roughness = 0.75; metalness = 0.1;
+  } else {
+    color = C_EMPTY.clone(); emissive = C_EMPTY_EM.clone();
+    emissiveIntensity = 0; roughness = 0.95; metalness = 0.05;
+  }
+
+  const mat = new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity, roughness, metalness, side: THREE.FrontSide });
+  const mesh = new THREE.Mesh(geo, mat);
+  GROUP.add(mesh);
+  meshes.push(mesh);
+  cellInfo.push({ engine, code: cellCodes[ci], mesh, color, emissive, emissiveIntensity, center: cell.center.clone() });
+});
+
+// ─── Sphere Base ──────────────────────────────────────────────────────────────
+GROUP.add(new THREE.Mesh(
+  new THREE.SphereGeometry(0.98, 64, 64),
+  new THREE.MeshStandardMaterial({ color: 0x020810, roughness: 0.95, metalness: 0.05 })
+));
+
+// ─── Glow Lights for Live Engines ─────────────────────────────────────────────
+cellInfo.forEach((cd) => {
+  if (cd.engine?.status === 'live') {
+    const l = new THREE.PointLight(0xd4af37, 1.2, 1.8);
+    l.position.copy(cd.center).multiplyScalar(1.08);
+    GROUP.add(l);
+  }
+});
+
+// ─── Sprite Labels ────────────────────────────────────────────────────────────
+function makeSprite(text, color, alpha, fontSize, width, height) {
+  const c = document.createElement('canvas');
+  c.width = width; c.height = height;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, width, height);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.font = `bold ${fontSize}px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (alpha > 0.5) { ctx.shadowColor = color; ctx.shadowBlur = 10; }
+  ctx.fillText(text, width/2, height/2);
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false });
+  return new THREE.Sprite(mat);
+}
+
+cellInfo.forEach((cd) => {
+  if (!cd.engine) return;
+  const e = cd.engine;
+  const color = e.status === 'live' ? '#f5d060' : '#3a5a7a';
+  const alpha = e.status === 'live' ? 0.9 : 0.5;
+  // Short label: emoji + abbreviated name
+  const short = e.name.replace('Hive', '').toUpperCase() || e.name;
+  const sprite = makeSprite(short, color, alpha, 28, 256, 80);
+  sprite.scale.set(0.22, 0.07, 1);
+  const pos = cd.center.clone().multiplyScalar(1.045);
+  sprite.position.copy(pos);
+  GROUP.add(sprite);
+  cd.sprite = sprite;
+});
+
+// ─── Orbit Controls (custom) ──────────────────────────────────────────────────
+let isDragging = false;
+let autoRotate = true;
+let prevX = 0, prevY = 0;
+let velX = 0, velY = 0;
+let downX = 0, downY = 0;
+const DAMP = 0.91;
+
+canvas.addEventListener('pointerdown', e => {
+  if (e.target !== canvas) return;
+  isDragging = true;
+  prevX = e.clientX; prevY = e.clientY;
+  downX = e.clientX; downY = e.clientY;
+  velX = 0; velY = 0;
+});
+canvas.addEventListener('pointermove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - prevX, dy = e.clientY - prevY;
+  velX = dy * 0.006; velY = dx * 0.006;
+  GROUP.rotation.x += velX;
+  GROUP.rotation.y += velY;
+  prevX = e.clientX; prevY = e.clientY;
+  autoRotate = false;
+});
+canvas.addEventListener('pointerup', e => {
+  if (!isDragging) return;
+  isDragging = false;
+  const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+  if (moved < 6) handleClick(e.clientX, e.clientY);
+});
+canvas.addEventListener('pointercancel', () => { isDragging = false; });
+canvas.addEventListener('wheel', e => {
+  camera.position.z = Math.max(1.5, Math.min(6.5, camera.position.z + e.deltaY * 0.004));
+  autoRotate = false;
+}, { passive: true });
+
+// Pinch zoom
+let pinch0 = null;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) pinch0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && pinch0 !== null) {
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    camera.position.z = Math.max(1.5, Math.min(6.5, camera.position.z - (d - pinch0) * 0.012));
+    pinch0 = d;
+  }
+}, { passive: true });
+canvas.addEventListener('touchend', () => { pinch0 = null; });
+
+// ─── Raycasting ───────────────────────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const mNDC = new THREE.Vector2();
+const tooltip = document.getElementById('tooltip');
+let hoveredIdx = -1;
+
+function setNDC(cx, cy) {
+  mNDC.x = (cx / window.innerWidth) * 2 - 1;
+  mNDC.y = -(cy / window.innerHeight) * 2 + 1;
+}
+
+function handleClick(cx, cy) {
+  setNDC(cx, cy);
+  raycaster.setFromCamera(mNDC, camera);
+  const hits = raycaster.intersectObjects(meshes);
+  if (hits.length) {
+    const i = meshes.indexOf(hits[0].object);
+    const cd = cellInfo[i];
+    if (cd.engine?.url) window.location.href = cd.engine.url;
+  }
+}
+
+canvas.addEventListener('mousemove', e => {
+  if (isDragging) return;
+  updateHover(e.clientX, e.clientY);
+});
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) updateHover(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+
+function updateHover(cx, cy) {
+  setNDC(cx, cy);
+  raycaster.setFromCamera(mNDC, camera);
+  const hits = raycaster.intersectObjects(meshes);
+
+  const newIdx = hits.length ? meshes.indexOf(hits[0].object) : -1;
+
+  if (newIdx === hoveredIdx) {
+    if (newIdx >= 0) positionTooltip(cx, cy);
+    return;
+  }
+
+  // Restore previous
+  if (hoveredIdx >= 0) {
+    const cd = cellInfo[hoveredIdx];
+    cd.mesh.material.color.copy(cd.color);
+    cd.mesh.material.emissive.copy(cd.emissive);
+    cd.mesh.material.emissiveIntensity = cd.emissiveIntensity;
+  }
+
+  hoveredIdx = newIdx;
+
+  if (newIdx >= 0) {
+    const cd = cellInfo[newIdx];
+    if (cd.engine) {
+      const hc = cd.engine.status === 'live' ? C_HOVER_LIVE : C_HOVER_SOON;
+      cd.mesh.material.color.copy(hc);
+      cd.mesh.material.emissive.copy(hc);
+      cd.mesh.material.emissiveIntensity = 0.7;
+      showTooltip(cd, cx, cy);
+      canvas.style.cursor = cd.engine.url ? 'pointer' : 'default';
+    } else {
+      showTooltip(cd, cx, cy);
+      canvas.style.cursor = 'default';
+    }
+  } else {
+    tooltip.style.display = 'none';
+    canvas.style.cursor = isDragging ? 'grabbing' : 'grab';
+  }
+}
+
+function showTooltip(cd, cx, cy) {
+  const tt = tooltip;
+  if (cd.engine) {
+    tt.className = cd.engine.status === 'soon' ? 'soon-tt' : '';
+    tt.querySelector('.tt-name').textContent = cd.engine.emoji + '  ' + cd.engine.name;
+    tt.querySelector('.tt-tagline').textContent = cd.engine.tagline;
+    tt.querySelector('.tt-code').textContent = '';
+    const action = tt.querySelector('.tt-action');
+    action.textContent = cd.engine.url ? 'Tap to open →' : 'Coming soon';
+    action.className = 'tt-action' + (cd.engine.url ? '' : ' soon-action');
+  } else {
+    tt.className = '';
+    tt.querySelector('.tt-name').textContent = cd.code;
+    tt.querySelector('.tt-tagline').textContent = '';
+    tt.querySelector('.tt-code').textContent = 'UNASSIGNED NODE';
+    tt.querySelector('.tt-action').textContent = '';
+  }
+  tt.style.display = 'block';
+  positionTooltip(cx, cy);
+}
+
+function positionTooltip(cx, cy) {
+  const w = 240, h = 120;
+  let tx = cx + 18, ty = cy - 70;
+  if (tx + w > window.innerWidth - 8) tx = cx - w - 18;
+  if (ty < 8) ty = cy + 18;
+  if (ty + h > window.innerHeight - 8) ty = window.innerHeight - h - 8;
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top  = ty + 'px';
+}
+
+// ─── Fuzzy Search ─────────────────────────────────────────────────────────────
+function score(q, eng) {
+  const s = q.toLowerCase().trim();
+  if (!s) return 0;
+  const words = s.split(/\s+/);
+  const corpus = (eng.name + ' ' + eng.tagline + ' ' + eng.keywords.join(' ')).toLowerCase();
+  let total = 0;
+  for (const w of words) {
+    if (w.length < 2) continue;
+    if (eng.name.toLowerCase().includes(w)) { total += 80; continue; }
+    if (corpus.includes(w)) { total += 40; continue; }
+    // Partial
+    for (const cw of corpus.split(/\s+/)) {
+      if (cw.startsWith(w) && w.length >= 3) total += 20;
+    }
+  }
+  return total;
+}
+
+const searchEl  = document.getElementById('search');
+const resultsEl = document.getElementById('results');
+
+searchEl.addEventListener('input', () => {
+  const q = searchEl.value.trim();
+  resultsEl.innerHTML = '';
+  if (!q) return;
+  const scored = ENGINES
+    .map(e => ({ e, s: score(q, e) }))
+    .filter(x => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, 5);
+  for (const { e } of scored) {
+    const div = document.createElement('div');
+    div.className = 'result-item' + (e.status === 'soon' ? ' soon' : '');
+    div.innerHTML = `<span style="font-size:22px;line-height:1">${e.emoji}</span><div><div class="result-name">${e.name}</div><div class="result-tagline">${e.tagline}</div></div>`;
+    if (e.url) div.addEventListener('click', () => { window.location.href = e.url; });
+    resultsEl.appendChild(div);
+  }
+});
+
+searchEl.addEventListener('blur', () => { setTimeout(() => { resultsEl.innerHTML = ''; }, 180); });
+searchEl.addEventListener('focus', () => { autoRotate = false; });
+
+// ─── Render Loop ──────────────────────────────────────────────────────────────
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  if (autoRotate) {
+    GROUP.rotation.y += 0.0007;
+    GROUP.rotation.x = Math.sin(t * 0.04) * 0.06;
+  } else if (!isDragging) {
+    velX *= DAMP; velY *= DAMP;
+    GROUP.rotation.x += velX;
+    GROUP.rotation.y += velY;
+  }
+
+  // Pulse live engine cells
+  cellInfo.forEach((cd, i) => {
+    if (cd.engine?.status === 'live' && i !== hoveredIdx) {
+      cd.mesh.material.emissiveIntensity = 0.32 + 0.12 * Math.sin(t * 1.4 + i * 0.9);
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// ─── Resize ───────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
 </body>
 </html>
