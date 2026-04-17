@@ -160,6 +160,21 @@ body {
 }
 .hud-pill span { color: rgba(180,200,225,0.8); }
 
+/* Orbit tour label */
+#orbit-label {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 25; pointer-events: none; text-align: center;
+  opacity: 0; transition: opacity 0.5s ease;
+}
+#orbit-label.visible { opacity: 1; }
+#orbit-label .ol-emoji { font-size: 32px; line-height: 1; margin-bottom: 8px; }
+#orbit-label .ol-name {
+  font-size: 22px; font-weight: 700; color: #e8f4ff;
+  letter-spacing: -0.02em; text-shadow: 0 0 30px rgba(212,175,55,0.4);
+}
+#orbit-label .ol-tag { font-size: 13px; color: rgba(212,175,55,0.6); margin-top: 4px; }
+
 #support-modal {
   display: none; position: fixed; inset: 0; z-index: 50;
   background: rgba(2,4,8,0.75);
@@ -290,6 +305,12 @@ body {
 
 <div id="toast"></div>
 
+<div id="orbit-label">
+  <div class="ol-emoji"></div>
+  <div class="ol-name"></div>
+  <div class="ol-tag"></div>
+</div>
+
 <div id="welcome">
   <h2>Welcome to Hive</h2>
   <p>Free tools, built by the people who need them. Search for an engine, suggest a new one, or tell us what could be better. The planet grows as the community does.</p>
@@ -326,6 +347,8 @@ function wireWelcomeBtn(card) {
         f.style.boxShadow = '0 0 22px 4px rgba(212,175,55,0.12)';
         setTimeout(() => { f.style.borderColor=''; f.style.boxShadow=''; }, 1000);
       }, 2400);
+      // Trigger first-orbit tour
+      setTimeout(() => startOrbitTour(), 800);
     }, 460);
   });
 }
@@ -910,7 +933,11 @@ function restoreFocused(){
 }
 function clearFocus(){ restoreFocused(); focusQ=null; targetCamZ=BASE_Z; }
 
-canvas.addEventListener('pointerdown',e=>{dragging=true;px=downX=e.clientX;py=downY=e.clientY;dx=dy=0;clearFocus();});
+canvas.addEventListener('pointerdown',e=>{
+  // Cancel orbit tour on user touch
+  if(orbitTour.active){ orbitTour.active=false; orbitLabel.classList.remove('visible'); autoRot=true; localStorage.setItem(ORBIT_KEY,'1'); }
+  dragging=true;px=downX=e.clientX;py=downY=e.clientY;dx=dy=0;clearFocus();
+});
 canvas.addEventListener('pointermove',e=>{
   if(!dragging) return;
   dx=(e.clientX-px)*.006; dy=(e.clientY-py)*.006;
@@ -1073,20 +1100,102 @@ searchEl.addEventListener('keydown',e=>{
 searchEl.addEventListener('blur',()=>{setTimeout(()=>{resultsEl.innerHTML='';},200);if(!searchEl.value.trim()){clearFocus();autoRot=true;}});
 searchEl.addEventListener('focus',()=>{autoRot=false;});
 
+// ─── First-Visit Orbit Tour ───────────────────────────────────────────────────
+const ORBIT_KEY='hive_orbit_done';
+const orbitLabel=document.getElementById('orbit-label');
+const orbitLabelEmoji=orbitLabel.querySelector('.ol-emoji');
+const orbitLabelName=orbitLabel.querySelector('.ol-name');
+const orbitLabelTag=orbitLabel.querySelector('.ol-tag');
+
+let orbitTour={
+  active:false,
+  steps:[], // {targetQ, engine, idx}
+  stepIdx:0,
+  phase:'travel', // 'travel' | 'pause'
+  phaseStart:0,
+  TRAVEL_SECS:1.6,
+  PAUSE_SECS:1.5,
+};
+
+function startOrbitTour(){
+  if(localStorage.getItem(ORBIT_KEY)) return;
+  if(typeof cellInfo==='undefined'||!cellInfo.length) return;
+
+  // Build steps: all live engine cells
+  const steps=[];
+  cellInfo.forEach((cd,i)=>{
+    if(cd.engine?.status==='live'){
+      const targetQ=new THREE.Quaternion().setFromUnitVectors(
+        cd.center.clone().normalize(), new THREE.Vector3(0,0,1)
+      );
+      steps.push({targetQ, engine:cd.engine, idx:i});
+    }
+  });
+  if(!steps.length) return;
+
+  orbitTour.steps=steps;
+  orbitTour.stepIdx=0;
+  orbitTour.phase='travel';
+  orbitTour.phaseStart=performance.now()/1000;
+  orbitTour.active=true;
+  autoRot=false;
+}
+
+function tickOrbitTour(t){
+  if(!orbitTour.active) return;
+  const elapsed=t-orbitTour.phaseStart;
+  const step=orbitTour.steps[orbitTour.stepIdx];
+
+  if(orbitTour.phase==='travel'){
+    const prog=Math.min(elapsed/orbitTour.TRAVEL_SECS,1);
+    const eased=prog<0.5?2*prog*prog:1-Math.pow(-2*prog+2,2)/2;
+    GROUP.quaternion.slerp(step.targetQ,eased*0.18);
+    if(elapsed>=orbitTour.TRAVEL_SECS){
+      GROUP.quaternion.slerp(step.targetQ,1);
+      orbitTour.phase='pause';
+      orbitTour.phaseStart=t;
+      // Show label
+      orbitLabelEmoji.textContent=step.engine.emoji;
+      orbitLabelName.textContent=step.engine.name;
+      orbitLabelTag.textContent=step.engine.tagline;
+      orbitLabel.classList.add('visible');
+    }
+  } else if(orbitTour.phase==='pause'){
+    if(elapsed>=orbitTour.PAUSE_SECS){
+      orbitLabel.classList.remove('visible');
+      orbitTour.stepIdx++;
+      if(orbitTour.stepIdx>=orbitTour.steps.length){
+        // Done — return to auto-rotate
+        orbitTour.active=false;
+        autoRot=true;
+        localStorage.setItem(ORBIT_KEY,'1');
+      } else {
+        orbitTour.phase='travel';
+        orbitTour.phaseStart=t;
+      }
+    }
+  }
+}
+
 // ─── Animate ──────────────────────────────────────────────────────────────────
 const clock=new THREE.Clock();
 function animate(){
   requestAnimationFrame(animate);
   const t=clock.getElapsedTime();
 
-  // Rotation
-  if(focusQ&&!dragging){
-    GROUP.quaternion.slerp(focusQ,.055);
-  } else if(autoRot&&!dragging){
-    GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(YA,.0007));
-  } else if(!dragging&&(Math.abs(dx)>1e-5||Math.abs(dy)>1e-5)){
-    GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(XA,dy)).multiply(new THREE.Quaternion().setFromAxisAngle(YA,dx));
-    dx*=DAMP; dy*=DAMP;
+  // Orbit tour tick (runs before normal rotation)
+  if(orbitTour.active && !dragging){
+    tickOrbitTour(t);
+  } else if(!orbitTour.active){
+    // Normal rotation
+    if(focusQ&&!dragging){
+      GROUP.quaternion.slerp(focusQ,.055);
+    } else if(autoRot&&!dragging){
+      GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(YA,.0007));
+    } else if(!dragging&&(Math.abs(dx)>1e-5||Math.abs(dy)>1e-5)){
+      GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(XA,dy)).multiply(new THREE.Quaternion().setFromAxisAngle(YA,dx));
+      dx*=DAMP; dy*=DAMP;
+    }
   }
 
   camera.position.z+=(targetCamZ-camera.position.z)*.06;
