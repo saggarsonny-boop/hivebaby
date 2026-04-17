@@ -8,231 +8,476 @@
 <link rel="apple-touch-icon" href="/icon-192.png">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #060a14; color: #e8f4ff; font-family: system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px; }
-.container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 56px; }
-.hero { text-align: center; display: flex; flex-direction: column; gap: 16px; align-items: center; }
-.hero .tagline { font-size: 18px; color: #4a7fa5; line-height: 1.6; }
-.hero .sub { font-size: 14px; color: #2a4a6a; max-width: 480px; line-height: 1.7; }
-.section-label { font-size: 11px; color: #2a4a6a; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; text-align: center; }
-.honeycomb-wrap { display: flex; justify-content: center; overflow: visible; }
-svg.honeycomb { overflow: visible; }
-.hex-cell { cursor: pointer; }
-.hex-cell.soon { cursor: default; pointer-events: none; }
-.hex-cell:hover .hex-face { opacity: 0.85; }
-.hex-label { pointer-events: none; }
-.support { background: #0a1a2e; border: 1px solid #1a3a5c; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+
+body {
+  background: #060a14;
+  color: #e8f4ff;
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Full screen hex background */
+#hex-bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Scrollable content over the background */
+.page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 80px 24px 48px;
+  gap: 20px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.hero-icon {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+.hero-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.hero-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 35%, #060a14 75%);
+  pointer-events: none;
+}
+
+.hero h1 {
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #e8f4ff;
+}
+
+.hero .experiment {
+  font-size: 16px;
+  color: #b8860b;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.hero .manifesto {
+  font-size: 17px;
+  color: #4a7fa5;
+  line-height: 1.7;
+  max-width: 480px;
+}
+
+.hero .manifesto strong {
+  color: #7aafcf;
+  font-weight: 600;
+}
+
+.no-bs {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: #2a5a7a;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Engine grid section */
+.engines-section {
+  width: 100%;
+  max-width: 800px;
+  padding: 0 24px 48px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-size: 11px;
+  color: #2a4a6a;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.honeycomb-wrap {
+  display: flex;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* Support + footer */
+.bottom {
+  width: 100%;
+  max-width: 640px;
+  padding: 0 24px 80px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.support {
+  background: rgba(10, 26, 46, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid #1a3a5c;
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 .support-title { font-size: 16px; font-weight: 700; color: #e8f4ff; }
 .support-desc { font-size: 13px; color: #4a7fa5; line-height: 1.6; }
 .support-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
-.support-btn { background: #0d1f35; border: 1px solid #1a3a5c; border-radius: 10px; padding: 10px 16px; color: #c8e0f0; font-size: 13px; text-decoration: none; font-weight: 500; transition: border-color 0.2s; }
-.support-btn:hover { border-color: #4a7fa5; }
-.footer { border-top: 1px solid #0d1f35; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.support-btn {
+  background: #0d1f35;
+  border: 1px solid #1a3a5c;
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: #c8e0f0;
+  font-size: 13px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: border-color 0.2s;
+}
+.support-btn:hover { border-color: #b8860b; color: #ffd700; }
+
+.footer {
+  border-top: 1px solid #0d1f35;
+  padding-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 .footer-text { font-size: 12px; color: #1a3a5c; }
 .footer-console { font-size: 11px; color: #0d1f35; text-decoration: none; }
+.footer-console:hover { color: #2a4a6a; }
 </style>
 </head>
 <body>
-<div class="container">
+
+<!-- Full screen background hex grid -->
+<div id="hex-bg">
+  <svg id="bg-svg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<div class="page">
 
   <div class="hero">
-    <div style="position:relative;width:220px;height:220px;">
-      <img src="/hive_icon.gif" style="width:100%;height:100%;object-fit:contain;" alt="Hive">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, #060a14 80%);pointer-events:none;"></div>
+    <div class="hero-icon">
+      <img src="/hive_icon.gif" alt="Hive">
     </div>
-    <p class="tagline">Free tools for everyone. Built for the community first.</p>
-    <p class="sub">Hive builds AI-powered tools that are free at the base tier, forever. No ads. No investors. Optional support if you love what we make.</p>
+    <div class="experiment">A social experiment</div>
+    <h1>You are the investor.</h1>
+    <p class="manifesto">
+      We build what you ask for. <strong>No ads. No investors. No agenda.</strong>
+      Just people who want useful things, and a team that builds them.
+      Free at the base tier, forever. Support it if it earns your trust.
+    </p>
+    <div class="no-bs">
+      <span>No ads</span>
+      <span>·</span>
+      <span>No investors</span>
+      <span>·</span>
+      <span>No agenda</span>
+      <span>·</span>
+      <span>Free forever</span>
+    </div>
   </div>
 
-  <div>
-    <div class="section-label">Engines</div>
+  <div class="engines-section">
+    <div class="section-label">Live engines</div>
     <div class="honeycomb-wrap">
-    <svg class="honeycomb" width="660" height="420" viewBox="0 0 660 420" xmlns="http://www.w3.org/2000/svg">
+    <svg id="engine-svg" width="660" height="430" viewBox="0 0 660 430" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
       <defs>
-
-        <!-- Outer glow filter for live cells -->
-        <filter id="glow-gold" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="6" result="blur"/>
-          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-        </filter>
-        <filter id="glow-gold-hover" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="12" result="blur"/>
-          <feFlood flood-color="#ffd700" flood-opacity="0.5" result="color"/>
+        <filter id="glow-gold" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="8" result="blur"/>
+          <feFlood flood-color="#ffd700" flood-opacity="0.35" result="color"/>
           <feComposite in="color" in2="blur" operator="in" result="glow"/>
           <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
-        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.6"/>
+        <filter id="shadow-deep" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.8"/>
         </filter>
 
-        <!-- Dark cell base gradient (like logo background cells) -->
-        <linearGradient id="grad-dark" x1="0%" y1="0%" x2="60%" y2="100%">
-          <stop offset="0%" stop-color="#1e2d3d"/>
-          <stop offset="50%" stop-color="#0d1824"/>
-          <stop offset="100%" stop-color="#060e18"/>
+        <!-- 3D gold cell: outer rim, face, inner bevel, specular -->
+        <linearGradient id="g-rim-gold" x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stop-color="#ffd700"/>
+          <stop offset="25%" stop-color="#b8860b"/>
+          <stop offset="60%" stop-color="#5a3a00"/>
+          <stop offset="100%" stop-color="#1a0e00"/>
         </linearGradient>
-
-        <!-- Gold live cell gradient -->
-        <linearGradient id="grad-gold" x1="20%" y1="0%" x2="80%" y2="100%">
-          <stop offset="0%" stop-color="#2a1f00"/>
-          <stop offset="30%" stop-color="#1a1500"/>
-          <stop offset="100%" stop-color="#0d0f18"/>
+        <linearGradient id="g-face-gold" x1="15%" y1="0%" x2="85%" y2="100%">
+          <stop offset="0%" stop-color="#1e2c1a"/>
+          <stop offset="40%" stop-color="#0f1a10"/>
+          <stop offset="100%" stop-color="#060c08"/>
         </linearGradient>
-
-        <!-- Bevel edge gradient - top left highlight -->
-        <linearGradient id="bevel-light" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#3a5a7a" stop-opacity="1"/>
-          <stop offset="40%" stop-color="#1a2a3a" stop-opacity="0.5"/>
-          <stop offset="100%" stop-color="#050a12" stop-opacity="1"/>
-        </linearGradient>
-
-        <!-- Gold bevel -->
-        <linearGradient id="bevel-gold" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#ffd700" stop-opacity="0.9"/>
-          <stop offset="30%" stop-color="#b8860b" stop-opacity="0.6"/>
-          <stop offset="70%" stop-color="#5a4000" stop-opacity="0.4"/>
-          <stop offset="100%" stop-color="#1a0e00" stop-opacity="0.8"/>
-        </linearGradient>
-
-        <!-- Inner specular highlight -->
-        <radialGradient id="specular" cx="35%" cy="25%" r="50%">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
-          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        <radialGradient id="g-spec-gold" cx="32%" cy="22%" r="45%">
+          <stop offset="0%" stop-color="#ffd700" stop-opacity="0.25"/>
+          <stop offset="60%" stop-color="#b8860b" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#000" stop-opacity="0"/>
         </radialGradient>
-        <radialGradient id="specular-gold" cx="35%" cy="25%" r="50%">
-          <stop offset="0%" stop-color="#ffd700" stop-opacity="0.08"/>
-          <stop offset="100%" stop-color="#ffd700" stop-opacity="0"/>
-        </radialGradient>
-
-        <!-- Soon cell gradient -->
-        <linearGradient id="grad-soon" x1="0%" y1="0%" x2="60%" y2="100%">
-          <stop offset="0%" stop-color="#111820"/>
-          <stop offset="100%" stop-color="#070c12"/>
+        <linearGradient id="g-inner-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffd700" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#000" stop-opacity="0"/>
         </linearGradient>
 
+        <!-- 3D dark cell: outer rim, face, specular -->
+        <linearGradient id="g-rim-dark" x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stop-color="#2a3d52"/>
+          <stop offset="35%" stop-color="#1a2a3a"/>
+          <stop offset="70%" stop-color="#0d1824"/>
+          <stop offset="100%" stop-color="#060c14"/>
+        </linearGradient>
+        <linearGradient id="g-face-dark" x1="10%" y1="0%" x2="90%" y2="100%">
+          <stop offset="0%" stop-color="#141f2e"/>
+          <stop offset="50%" stop-color="#0a1520"/>
+          <stop offset="100%" stop-color="#05090f"/>
+        </linearGradient>
+        <radialGradient id="g-spec-dark" cx="32%" cy="22%" r="45%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.07"/>
+          <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+        </radialGradient>
+
+        <!-- Soon cell -->
+        <linearGradient id="g-rim-soon" x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stop-color="#1a2030"/>
+          <stop offset="100%" stop-color="#080c14"/>
+        </linearGradient>
+        <linearGradient id="g-face-soon" x1="10%" y1="0%" x2="90%" y2="100%">
+          <stop offset="0%" stop-color="#0d1018"/>
+          <stop offset="100%" stop-color="#060810"/>
+        </linearGradient>
       </defs>
 
-      <!-- Hexagon cell macro: pointy-top, r=90, spacing cols=156, rows=135 offset=78 -->
-      <!-- Row 1: cols at x=108, 264, 420 y=105 -->
-      <!-- Row 2: cols at x=186, 342, 498 y=240 (offset right by 78) -->
-      <!-- Row 3: cols at x=108, 264 y=375 -->
-
-      <!-- CELL MACRO via reusable approach: draw each manually -->
-      <!-- Pointy-top hex points for r=88: 0,-88  76,-44  76,44  0,88  -76,44  -76,-44 -->
-
-      <!-- ===== ROW 1 ===== -->
-
-      <!-- HiveClock: x=108, y=105 -->
-      <g class="hex-cell live" transform="translate(108,105)" onclick="window.location='https://hiveclock.hive.baby'">
-        <polygon points="0,-88 76,-44 76,44 0,88 -76,44 -76,-44" fill="url(#bevel-gold)" filter="url(#shadow)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#grad-gold)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#specular-gold)"/>
-        <polygon points="0,-78 66,-39 66,39 0,78 -66,39 -66,-39" fill="none" stroke="#b8860b" stroke-width="0.5" stroke-opacity="0.4"/>
-        <text y="-22" text-anchor="middle" font-size="28" class="hex-label">🕐</text>
-        <text y="4" text-anchor="middle" font-size="12" font-weight="700" fill="#e8f4ff" class="hex-label">HiveClock</text>
-        <text y="20" text-anchor="middle" font-size="9" fill="#7aafcf" class="hex-label">Most humane clock.</text>
-        <rect x="-22" y="30" width="44" height="14" rx="7" fill="#0d2a1a"/>
-        <text y="41" text-anchor="middle" font-size="9" font-weight="600" fill="#4a9a6a" class="hex-label">LIVE</text>
+      <!-- ROW 1: x = 108, 264, 420  y=105 -->
+      <!-- HiveClock -->
+      <g style="cursor:pointer" onclick="window.location='https://hiveclock.hive.baby'" filter="url(#glow-gold)">
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(108,105)" fill="url(#g-rim-gold)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(108,105)" fill="url(#g-face-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(108,105)" fill="url(#g-spec-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(108,105)" fill="url(#g-inner-gold)"/>
+        <polygon points="0,-74 64,-37 64,37 0,74 -64,37 -64,-37" transform="translate(108,105)" fill="none" stroke="#b8860b" stroke-width="0.8" stroke-opacity="0.5"/>
+        <text transform="translate(108,80)" text-anchor="middle" font-size="26">🕐</text>
+        <text transform="translate(108,108)" text-anchor="middle" font-size="11" font-weight="700" fill="#e8f4ff">HiveClock</text>
+        <text transform="translate(108,122)" text-anchor="middle" font-size="9" fill="#7aafcf">Humane time.</text>
+        <rect x="86" y="129" width="44" height="13" rx="6" fill="#0d2a1a" transform="translate(0,0)"/>
+        <text transform="translate(108,139)" text-anchor="middle" font-size="8" font-weight="700" fill="#4a9a6a">LIVE</text>
       </g>
 
-      <!-- HiveClarity: x=264, y=105 -->
-      <g class="hex-cell live" transform="translate(264,105)" onclick="window.location='https://hiveclarity.hive.baby'">
-        <polygon points="0,-88 76,-44 76,44 0,88 -76,44 -76,-44" fill="url(#bevel-gold)" filter="url(#shadow)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#grad-gold)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#specular-gold)"/>
-        <polygon points="0,-78 66,-39 66,39 0,78 -66,39 -66,-39" fill="none" stroke="#b8860b" stroke-width="0.5" stroke-opacity="0.4"/>
-        <text y="-22" text-anchor="middle" font-size="28" class="hex-label">💬</text>
-        <text y="4" text-anchor="middle" font-size="12" font-weight="700" fill="#e8f4ff" class="hex-label">HiveClarity</text>
-        <text y="20" text-anchor="middle" font-size="9" fill="#7aafcf" class="hex-label">Say what you mean.</text>
-        <rect x="-22" y="30" width="44" height="14" rx="7" fill="#0d2a1a"/>
-        <text y="41" text-anchor="middle" font-size="9" font-weight="600" fill="#4a9a6a" class="hex-label">LIVE</text>
+      <!-- HiveClarity -->
+      <g style="cursor:pointer" onclick="window.location='https://hiveclarity.hive.baby'" filter="url(#glow-gold)">
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(264,105)" fill="url(#g-rim-gold)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(264,105)" fill="url(#g-face-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(264,105)" fill="url(#g-spec-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(264,105)" fill="url(#g-inner-gold)"/>
+        <polygon points="0,-74 64,-37 64,37 0,74 -64,37 -64,-37" transform="translate(264,105)" fill="none" stroke="#b8860b" stroke-width="0.8" stroke-opacity="0.5"/>
+        <text transform="translate(264,80)" text-anchor="middle" font-size="26">💬</text>
+        <text transform="translate(264,108)" text-anchor="middle" font-size="11" font-weight="700" fill="#e8f4ff">HiveClarity</text>
+        <text transform="translate(264,122)" text-anchor="middle" font-size="9" fill="#7aafcf">Say what you mean.</text>
+        <rect x="242" y="129" width="44" height="13" rx="6" fill="#0d2a1a"/>
+        <text transform="translate(264,139)" text-anchor="middle" font-size="8" font-weight="700" fill="#4a9a6a">LIVE</text>
       </g>
 
-      <!-- HiveStrength: x=420, y=105 -->
-      <g class="hex-cell live" transform="translate(420,105)" onclick="window.location='https://hivestrengthmastery.hive.baby'">
-        <polygon points="0,-88 76,-44 76,44 0,88 -76,44 -76,-44" fill="url(#bevel-gold)" filter="url(#shadow)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#grad-gold)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#specular-gold)"/>
-        <polygon points="0,-78 66,-39 66,39 0,78 -66,39 -66,-39" fill="none" stroke="#b8860b" stroke-width="0.5" stroke-opacity="0.4"/>
-        <text y="-22" text-anchor="middle" font-size="28" class="hex-label">💪</text>
-        <text y="4" text-anchor="middle" font-size="12" font-weight="700" fill="#e8f4ff" class="hex-label">HiveStrength</text>
-        <text y="20" text-anchor="middle" font-size="9" fill="#7aafcf" class="hex-label">Train with intelligence.</text>
-        <rect x="-22" y="30" width="44" height="14" rx="7" fill="#0d2a1a"/>
-        <text y="41" text-anchor="middle" font-size="9" font-weight="600" fill="#4a9a6a" class="hex-label">LIVE</text>
+      <!-- HiveStrength -->
+      <g style="cursor:pointer" onclick="window.location='https://hivestrengthmastery.hive.baby'" filter="url(#glow-gold)">
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(420,105)" fill="url(#g-rim-gold)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(420,105)" fill="url(#g-face-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(420,105)" fill="url(#g-spec-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(420,105)" fill="url(#g-inner-gold)"/>
+        <polygon points="0,-74 64,-37 64,37 0,74 -64,37 -64,-37" transform="translate(420,105)" fill="none" stroke="#b8860b" stroke-width="0.8" stroke-opacity="0.5"/>
+        <text transform="translate(420,80)" text-anchor="middle" font-size="26">💪</text>
+        <text transform="translate(420,108)" text-anchor="middle" font-size="11" font-weight="700" fill="#e8f4ff">HiveStrength</text>
+        <text transform="translate(420,122)" text-anchor="middle" font-size="9" fill="#7aafcf">Train with intelligence.</text>
+        <rect x="398" y="129" width="44" height="13" rx="6" fill="#0d2a1a"/>
+        <text transform="translate(420,139)" text-anchor="middle" font-size="8" font-weight="700" fill="#4a9a6a">LIVE</text>
       </g>
 
-      <!-- ===== ROW 2 (offset +78) ===== -->
-
-      <!-- HEB: x=186, y=240 -->
-      <g class="hex-cell live" transform="translate(186,240)" onclick="window.location='https://heb.hive.baby'">
-        <polygon points="0,-88 76,-44 76,44 0,88 -76,44 -76,-44" fill="url(#bevel-gold)" filter="url(#shadow)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#grad-gold)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#specular-gold)"/>
-        <polygon points="0,-78 66,-39 66,39 0,78 -66,39 -66,-39" fill="none" stroke="#b8860b" stroke-width="0.5" stroke-opacity="0.4"/>
-        <text y="-22" text-anchor="middle" font-size="28" class="hex-label">🏗️</text>
-        <text y="4" text-anchor="middle" font-size="12" font-weight="700" fill="#e8f4ff" class="hex-label">HEB</text>
-        <text y="20" text-anchor="middle" font-size="9" fill="#7aafcf" class="hex-label">Build Hive engines.</text>
-        <rect x="-22" y="30" width="44" height="14" rx="7" fill="#0d2a1a"/>
-        <text y="41" text-anchor="middle" font-size="9" font-weight="600" fill="#4a9a6a" class="hex-label">LIVE</text>
+      <!-- ROW 2: x=186, 342, 498  y=240 -->
+      <!-- HEB -->
+      <g style="cursor:pointer" onclick="window.location='https://heb.hive.baby'" filter="url(#glow-gold)">
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(186,240)" fill="url(#g-rim-gold)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(186,240)" fill="url(#g-face-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(186,240)" fill="url(#g-spec-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(186,240)" fill="url(#g-inner-gold)"/>
+        <polygon points="0,-74 64,-37 64,37 0,74 -64,37 -64,-37" transform="translate(186,240)" fill="none" stroke="#b8860b" stroke-width="0.8" stroke-opacity="0.5"/>
+        <text transform="translate(186,215)" text-anchor="middle" font-size="26">🏗️</text>
+        <text transform="translate(186,243)" text-anchor="middle" font-size="11" font-weight="700" fill="#e8f4ff">HEB</text>
+        <text transform="translate(186,257)" text-anchor="middle" font-size="9" fill="#7aafcf">Build engines.</text>
+        <rect x="164" y="264" width="44" height="13" rx="6" fill="#0d2a1a"/>
+        <text transform="translate(186,274)" text-anchor="middle" font-size="8" font-weight="700" fill="#4a9a6a">LIVE</text>
       </g>
 
-      <!-- HiveField: x=342, y=240 -->
-      <g class="hex-cell live" transform="translate(342,240)" onclick="window.location='https://hivefield.hive.baby'">
-        <polygon points="0,-88 76,-44 76,44 0,88 -76,44 -76,-44" fill="url(#bevel-gold)" filter="url(#shadow)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#grad-gold)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#specular-gold)"/>
-        <polygon points="0,-78 66,-39 66,39 0,78 -66,39 -66,-39" fill="none" stroke="#b8860b" stroke-width="0.5" stroke-opacity="0.4"/>
-        <text y="-22" text-anchor="middle" font-size="28" class="hex-label">🧠</text>
-        <text y="4" text-anchor="middle" font-size="12" font-weight="700" fill="#e8f4ff" class="hex-label">HiveField</text>
-        <text y="20" text-anchor="middle" font-size="9" fill="#7aafcf" class="hex-label">Reasoning under pressure.</text>
-        <rect x="-22" y="30" width="44" height="14" rx="7" fill="#0d2a1a"/>
-        <text y="41" text-anchor="middle" font-size="9" font-weight="600" fill="#4a9a6a" class="hex-label">LIVE</text>
+      <!-- HiveField -->
+      <g style="cursor:pointer" onclick="window.location='https://hivefield.hive.baby'" filter="url(#glow-gold)">
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(342,240)" fill="url(#g-rim-gold)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(342,240)" fill="url(#g-face-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(342,240)" fill="url(#g-spec-gold)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(342,240)" fill="url(#g-inner-gold)"/>
+        <polygon points="0,-74 64,-37 64,37 0,74 -64,37 -64,-37" transform="translate(342,240)" fill="none" stroke="#b8860b" stroke-width="0.8" stroke-opacity="0.5"/>
+        <text transform="translate(342,215)" text-anchor="middle" font-size="26">🧠</text>
+        <text transform="translate(342,243)" text-anchor="middle" font-size="11" font-weight="700" fill="#e8f4ff">HiveField</text>
+        <text transform="translate(342,257)" text-anchor="middle" font-size="9" fill="#7aafcf">Reasoning under pressure.</text>
+        <rect x="320" y="264" width="44" height="13" rx="6" fill="#0d2a1a"/>
+        <text transform="translate(342,274)" text-anchor="middle" font-size="8" font-weight="700" fill="#4a9a6a">LIVE</text>
       </g>
 
-      <!-- HiveWeather: x=498, y=240 SOON -->
-      <g class="hex-cell soon" transform="translate(498,240)">
-        <polygon points="0,-88 76,-44 76,44 0,88 -76,44 -76,-44" fill="url(#bevel-light)" filter="url(#shadow)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#grad-soon)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#specular)"/>
-        <text y="-22" text-anchor="middle" font-size="28" fill-opacity="0.3" class="hex-label">🌤</text>
-        <text y="4" text-anchor="middle" font-size="12" font-weight="700" fill="#2a4a6a" class="hex-label">HiveWeather</text>
-        <text y="20" text-anchor="middle" font-size="9" fill="#1a3a5c" class="hex-label">Weather as it feels.</text>
-        <rect x="-22" y="30" width="44" height="14" rx="7" fill="#0d1f35"/>
-        <text y="41" text-anchor="middle" font-size="9" font-weight="600" fill="#1a3a5c" class="hex-label">SOON</text>
+      <!-- HiveWeather SOON -->
+      <g>
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(498,240)" fill="url(#g-rim-soon)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(498,240)" fill="url(#g-face-soon)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(498,240)" fill="url(#g-spec-dark)"/>
+        <text transform="translate(498,215)" text-anchor="middle" font-size="26" opacity="0.2">🌤</text>
+        <text transform="translate(498,243)" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3040">HiveWeather</text>
+        <text transform="translate(498,257)" text-anchor="middle" font-size="9" fill="#152030">Weather as it feels.</text>
+        <rect x="476" y="264" width="44" height="13" rx="6" fill="#0a1520"/>
+        <text transform="translate(498,274)" text-anchor="middle" font-size="8" font-weight="700" fill="#1a3040">SOON</text>
       </g>
 
-      <!-- ===== ROW 3 ===== -->
+      <!-- ROW 3: x=108, 264, 420  y=375 -->
+      <!-- HiveConfession SOON -->
+      <g>
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(264,375)" fill="url(#g-rim-soon)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(264,375)" fill="url(#g-face-soon)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(264,375)" fill="url(#g-spec-dark)"/>
+        <text transform="translate(264,350)" text-anchor="middle" font-size="26" opacity="0.2">🤫</text>
+        <text transform="translate(264,378)" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3040">HiveConfession</text>
+        <text transform="translate(264,392)" text-anchor="middle" font-size="9" fill="#152030">Say the unsaid thing.</text>
+        <rect x="242" y="399" width="44" height="13" rx="6" fill="#0a1520"/>
+        <text transform="translate(264,409)" text-anchor="middle" font-size="8" font-weight="700" fill="#1a3040">SOON</text>
+      </g>
 
-      <!-- HiveConfession: x=264, y=375 SOON -->
-      <g class="hex-cell soon" transform="translate(264,375)">
-        <polygon points="0,-88 76,-44 76,44 0,88 -76,44 -76,-44" fill="url(#bevel-light)" filter="url(#shadow)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#grad-soon)"/>
-        <polygon points="0,-84 72,-42 72,42 0,84 -72,42 -72,-42" fill="url(#specular)"/>
-        <text y="-22" text-anchor="middle" font-size="28" fill-opacity="0.3" class="hex-label">🤫</text>
-        <text y="4" text-anchor="middle" font-size="12" font-weight="700" fill="#2a4a6a" class="hex-label">HiveConfession</text>
-        <text y="20" text-anchor="middle" font-size="9" fill="#1a3a5c" class="hex-label">Say the unsaid thing.</text>
-        <rect x="-22" y="30" width="44" height="14" rx="7" fill="#0d1f35"/>
-        <text y="41" text-anchor="middle" font-size="9" font-weight="600" fill="#1a3a5c" class="hex-label">SOON</text>
+      <!-- Placeholder dark cells to fill out the grid -->
+      <!-- Row 1 extras -->
+      <g opacity="0.35">
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(576,105)" fill="url(#g-rim-dark)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(576,105)" fill="url(#g-face-dark)"/>
+        <text transform="translate(576,109)" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3040">SYS</text>
+      </g>
+      <g opacity="0.25">
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(420,375)" fill="url(#g-rim-dark)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(420,375)" fill="url(#g-face-dark)"/>
+        <text transform="translate(420,379)" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3040">RLT</text>
+      </g>
+      <g opacity="0.2">
+        <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" transform="translate(108,375)" fill="url(#g-rim-dark)" filter="url(#shadow-deep)"/>
+        <polygon points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41" transform="translate(108,375)" fill="url(#g-face-dark)"/>
+        <text transform="translate(108,379)" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3040">XEN</text>
       </g>
 
     </svg>
     </div>
   </div>
 
-  <div class="support">
-    <div class="support-title">Support Hive</div>
-    <div class="support-desc">Everything we build is free. If Hive becomes part of your day, support it when you can. It keeps the engines running and the community first.</div>
-    <div class="support-buttons">
-      <a href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" class="support-btn">$1.99 / month</a>
-      <a href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" class="support-btn">$19 / year</a>
-      <a href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" class="support-btn">$5 one-time</a>
+  <div class="bottom">
+    <div class="support">
+      <div class="support-title">Support Hive</div>
+      <div class="support-desc">Everything is free. If Hive earns a place in your day, support it when you can. It keeps the engines running and the community first.</div>
+      <div class="support-buttons">
+        <a href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" class="support-btn">$1.99 / month</a>
+        <a href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" class="support-btn">$19 / year</a>
+        <a href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" class="support-btn">$5 one-time</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="footer-text">Hive · Free forever at the base tier</span>
+      <a href="https://creator-console-steel.vercel.app" target="_blank" class="footer-console">console</a>
     </div>
   </div>
 
-  <div class="footer">
-    <span class="footer-text">Hive · Free forever at the base tier</span>
-    <a href="https://creator-console-steel.vercel.app" target="_blank" class="footer-console">console</a>
-  </div>
-
 </div>
+
+<script>
+// Generate full-screen background hex grid
+const svg = document.getElementById("bg-svg");
+const W = window.innerWidth;
+const H = window.innerHeight;
+const R = 48;
+const w = R * 2;
+const h = Math.sqrt(3) * R;
+const cols = Math.ceil(W / (w * 0.75)) + 2;
+const rows = Math.ceil(H / h) + 2;
+const codes = ["LTV","TRK","GTM","API","NLJ","DCE","XEN","RLT","SYS","QBE","MXR","PLX","VNT","KRZ","FLO","BWM","CXT","DRV","HZN","OSC","PRM","SLT","WVX","ARC","BLK","CMR","DNX","EPX","FQT","GVN"];
+
+const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+defs.innerHTML = `
+  <linearGradient id="bg-rim" x1="20%" y1="0%" x2="80%" y2="100%">
+    <stop offset="0%" stop-color="#1a2535" stop-opacity="1"/>
+    <stop offset="100%" stop-color="#060c14" stop-opacity="1"/>
+  </linearGradient>
+  <linearGradient id="bg-face" x1="10%" y1="0%" x2="90%" y2="100%">
+    <stop offset="0%" stop-color="#0d1520" stop-opacity="1"/>
+    <stop offset="100%" stop-color="#050910" stop-opacity="1"/>
+  </linearGradient>
+`;
+svg.appendChild(defs);
+
+for (let row = -1; row < rows; row++) {
+  for (let col = -1; col < cols; col++) {
+    const cx = col * w * 0.75 + R;
+    const cy = row * h + (col % 2 === 0 ? 0 : h / 2);
+    const opacity = 0.12 + Math.random() * 0.18;
+    const code = codes[Math.floor(Math.random() * codes.length)];
+    const pts = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.PI / 180 * (60 * i - 30);
+      pts.push((cx + (R-1) * Math.cos(angle)).toFixed(1) + "," + (cy + (R-1) * Math.sin(angle)).toFixed(1));
+    }
+    const outerPts = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.PI / 180 * (60 * i - 30);
+      outerPts.push((cx + R * Math.cos(angle)).toFixed(1) + "," + (cy + R * Math.sin(angle)).toFixed(1));
+    }
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("opacity", opacity);
+    const rim = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+    rim.setAttribute("points", outerPts.join(" "));
+    rim.setAttribute("fill", "url(#bg-rim)");
+    const face = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+    face.setAttribute("points", pts.join(" "));
+    face.setAttribute("fill", "url(#bg-face)");
+    const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+    txt.setAttribute("x", cx);
+    txt.setAttribute("y", cy + 4);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("font-size", "9");
+    txt.setAttribute("font-weight", "600");
+    txt.setAttribute("fill", "#2a4a6a");
+    txt.setAttribute("font-family", "system-ui, sans-serif");
+    txt.textContent = code;
+    g.appendChild(rim);
+    g.appendChild(face);
+    g.appendChild(txt);
+    svg.appendChild(g);
+  }
+}
+</script>
+
 </body>
 </html>
