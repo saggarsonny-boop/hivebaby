@@ -16,32 +16,36 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Planet section ────────────────────────────────────── */
-#planet {
-  position: relative;
-  width: 100%;
-  height: 100vh;        /* universal fallback */
-  height: 100svh;       /* override on browsers that support svh */
-  overflow: hidden;
-}
-
+/* Canvas: fixed full-viewport, always behind everything */
 #c {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
   touch-action: none;
   cursor: grab;
+  display: block;
 }
 #c:active { cursor: grabbing; }
+
+/* Planet UI: fixed overlay, fades out on scroll */
+#planet-ui {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#planet-ui > * { pointer-events: auto; }
 
 #search-wrap {
   position: absolute;
   top: 24px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
   width: min(440px, calc(100vw - 40px));
 }
 #search {
@@ -82,27 +86,6 @@ body {
 .result-name  { font-size: 14px; font-weight: 700; color: #e8f4ff; }
 .result-tagline { font-size: 12px; color: #4a7fa5; margin-top: 2px; }
 
-#tooltip {
-  position: fixed;
-  pointer-events: none;
-  z-index: 20;
-  display: none;
-  background: rgba(4, 8, 18, 0.94);
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: 14px;
-  padding: 13px 17px;
-  min-width: 160px;
-  max-width: 230px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-#tooltip.soon-tt { border-color: rgba(74, 127, 165, 0.3); }
-#tooltip .tt-name    { font-size: 14px; font-weight: 700; color: #e8f4ff; }
-#tooltip .tt-tagline { font-size: 12px; color: #4a7fa5; margin-top: 5px; line-height: 1.5; }
-#tooltip .tt-code    { font-size: 11px; color: rgba(74,127,165,0.4); font-family: monospace; margin-top: 4px; letter-spacing: .1em; }
-#tooltip .tt-action  { font-size: 11px; color: rgba(212,175,55,0.65); margin-top: 8px; }
-#tooltip .tt-action.soon-action { color: rgba(74,127,165,0.5); }
-
 #wordmark {
   position: absolute;
   bottom: 52px;
@@ -122,20 +105,46 @@ body {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  color: rgba(74, 127, 165, 0.35);
+  color: rgba(74, 127, 165, 0.4);
   font-size: 18px;
   animation: bob 2.4s ease-in-out infinite;
   cursor: pointer;
   user-select: none;
-  z-index: 5;
 }
 @keyframes bob {
-  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.35; }
-  50%       { transform: translateX(-50%) translateY(7px); opacity: 0.6; }
+  0%,100% { transform: translateX(-50%) translateY(0);   opacity: .4; }
+  50%      { transform: translateX(-50%) translateY(7px); opacity: .7; }
 }
 
-/* ── Content section ───────────────────────────────────── */
+/* Tooltip: fixed, above everything */
+#tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 20;
+  display: none;
+  background: rgba(4, 8, 18, 0.94);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 14px;
+  padding: 13px 17px;
+  min-width: 160px; max-width: 230px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+#tooltip.soon-tt { border-color: rgba(74, 127, 165, 0.3); }
+#tooltip .tt-name    { font-size: 14px; font-weight: 700; color: #e8f4ff; }
+#tooltip .tt-tagline { font-size: 12px; color: #4a7fa5; margin-top: 5px; line-height: 1.5; }
+#tooltip .tt-code    { font-size: 11px; color: rgba(74,127,165,0.4); font-family: monospace; margin-top: 4px; letter-spacing:.1em; }
+#tooltip .tt-action  { font-size: 11px; color: rgba(212,175,55,.65); margin-top: 8px; }
+#tooltip .tt-action.soon-action { color: rgba(74,127,165,.5); }
+
+/* Spacer: holds vertical space for the planet viewport */
+#planet-spacer { height: 100vh; }
+
+/* Content section */
 #content {
+  position: relative;
+  z-index: 5;
+  background: #060a14;
   max-width: 660px;
   margin: 0 auto;
   padding: 80px 24px 100px;
@@ -144,217 +153,136 @@ body {
   gap: 72px;
 }
 
-/* Manifesto */
 .manifesto {
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: flex; flex-direction: column; gap: 20px;
 }
 .manifesto .eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(212, 175, 55, 0.5);
+  font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+  color: rgba(212,175,55,.5);
 }
 .manifesto h2 {
-  font-size: clamp(28px, 6vw, 42px);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  color: #e8f4ff;
+  font-size: clamp(28px, 6vw, 42px); font-weight: 800;
+  letter-spacing: -.03em; line-height: 1.1; color: #e8f4ff;
 }
 .manifesto p {
-  font-size: 17px;
-  color: #4a7fa5;
-  line-height: 1.75;
-  max-width: 520px;
-  margin: 0 auto;
+  font-size: 17px; color: #4a7fa5; line-height: 1.75;
+  max-width: 520px; margin: 0 auto;
 }
 .manifesto p strong { color: #9acce8; font-weight: 600; }
 .manifesto .badges {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 4px;
+  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
 }
 .manifesto .badge {
-  font-size: 11px;
-  padding: 5px 12px;
-  border: 1px solid rgba(74, 127, 165, 0.2);
-  border-radius: 20px;
-  color: rgba(74, 127, 165, 0.6);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 11px; padding: 5px 12px;
+  border: 1px solid rgba(74,127,165,.2); border-radius: 20px;
+  color: rgba(74,127,165,.6); letter-spacing:.06em; text-transform: uppercase;
 }
 
-/* Support */
-.support {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.support-header {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.support-header h2 {
-  font-size: 22px;
-  font-weight: 700;
-  color: #e8f4ff;
-}
-.support-header p {
-  font-size: 14px;
-  color: #4a7fa5;
-  line-height: 1.65;
-}
-.support-buttons {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+.support { display: flex; flex-direction: column; gap: 20px; }
+.support-header h2 { font-size: 22px; font-weight: 700; color: #e8f4ff; }
+.support-header p  { font-size: 14px; color: #4a7fa5; line-height: 1.65; margin-top: 8px; }
+.support-buttons   { display: flex; gap: 10px; flex-wrap: wrap; }
 .support-btn {
-  flex: 1;
-  min-width: 120px;
-  background: rgba(10, 20, 36, 0.8);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  border-radius: 14px;
-  padding: 16px 20px;
-  color: #d4af37;
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: border-color 0.2s, background 0.2s, transform 0.15s;
-  cursor: pointer;
+  flex: 1; min-width: 120px;
+  background: rgba(10,20,36,.8);
+  border: 1px solid rgba(212,175,55,.25);
+  border-radius: 14px; padding: 16px 20px;
+  color: #d4af37; font-size: 15px; font-weight: 600;
+  text-decoration: none; text-align: center;
+  display: flex; flex-direction: column; gap: 4px;
+  transition: border-color .2s, background .2s, transform .15s;
 }
 .support-btn:hover {
-  border-color: rgba(212, 175, 55, 0.65);
-  background: rgba(20, 36, 60, 0.9);
+  border-color: rgba(212,175,55,.65);
+  background: rgba(20,36,60,.9);
   transform: translateY(-2px);
 }
 .support-btn .btn-price { font-size: 18px; }
-.support-btn .btn-label { font-size: 11px; color: rgba(212, 175, 55, 0.5); font-weight: 400; letter-spacing: 0.05em; }
+.support-btn .btn-label { font-size: 11px; color: rgba(212,175,55,.5); font-weight: 400; }
 
-/* Submission forms */
-.forms {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
+.forms { display: flex; flex-direction: column; gap: 28px; }
 .form-box {
-  background: rgba(8, 16, 30, 0.7);
-  border: 1px solid rgba(74, 127, 165, 0.18);
-  border-radius: 18px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  transition: border-color 0.2s;
+  background: rgba(8,16,30,.7);
+  border: 1px solid rgba(74,127,165,.18);
+  border-radius: 18px; padding: 24px;
+  display: flex; flex-direction: column; gap: 14px;
+  transition: border-color .2s;
 }
-.form-box:focus-within { border-color: rgba(74, 127, 165, 0.4); }
+.form-box:focus-within { border-color: rgba(74,127,165,.4); }
 .form-box h3 { font-size: 16px; font-weight: 700; color: #e8f4ff; }
 .form-box p  { font-size: 13px; color: #4a7fa5; line-height: 1.6; }
 .form-box textarea {
   width: 100%;
-  background: rgba(4, 8, 18, 0.6);
-  border: 1px solid rgba(74, 127, 165, 0.2);
-  border-radius: 10px;
-  padding: 12px 14px;
-  color: #e8f4ff;
-  font-size: 14px;
-  font-family: inherit;
-  line-height: 1.6;
-  resize: vertical;
-  min-height: 80px;
-  outline: none;
-  transition: border-color 0.2s;
-  caret-color: #4a9fe0;
+  background: rgba(4,8,18,.6);
+  border: 1px solid rgba(74,127,165,.2);
+  border-radius: 10px; padding: 12px 14px;
+  color: #e8f4ff; font-size: 14px; font-family: inherit;
+  line-height: 1.6; resize: vertical; min-height: 80px;
+  outline: none; transition: border-color .2s; caret-color: #4a9fe0;
 }
-.form-box textarea::placeholder { color: rgba(74, 127, 165, 0.4); }
-.form-box textarea:focus { border-color: rgba(74, 127, 165, 0.5); }
-.form-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.form-status { font-size: 12px; color: rgba(212, 175, 55, 0.7); min-height: 16px; }
-.form-status.error { color: rgba(255, 100, 80, 0.7); }
+.form-box textarea::placeholder { color: rgba(74,127,165,.4); }
+.form-box textarea:focus { border-color: rgba(74,127,165,.5); }
+.form-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.form-status { font-size: 12px; color: rgba(212,175,55,.7); min-height: 16px; }
+.form-status.error { color: rgba(255,100,80,.7); }
 .submit-btn {
-  background: rgba(20, 36, 60, 0.9);
-  border: 1px solid rgba(74, 127, 165, 0.3);
-  border-radius: 10px;
-  padding: 10px 20px;
-  color: #9acce8;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-  white-space: nowrap;
-  font-family: inherit;
+  background: rgba(20,36,60,.9);
+  border: 1px solid rgba(74,127,165,.3);
+  border-radius: 10px; padding: 10px 20px;
+  color: #9acce8; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; white-space: nowrap;
+  transition: border-color .2s, color .2s;
 }
-.submit-btn:hover { border-color: rgba(74, 127, 165, 0.6); color: #e8f4ff; }
+.submit-btn:hover { border-color: rgba(74,127,165,.6); color: #e8f4ff; }
 
-/* Footer */
 footer {
-  border-top: 1px solid rgba(13, 31, 53, 0.8);
+  position: relative; z-index: 5;
+  background: #060a14;
+  border-top: 1px solid rgba(13,31,53,.8);
   padding: 28px 24px 48px;
-  max-width: 660px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  max-width: 660px; margin: 0 auto;
+  display: flex; justify-content: space-between;
+  align-items: center; flex-wrap: wrap; gap: 12px;
 }
-footer .ft { font-size: 12px; color: rgba(26, 58, 92, 0.8); }
-footer a   { font-size: 11px; color: rgba(26, 58, 92, 0.6); text-decoration: none; }
+footer .ft { font-size: 12px; color: rgba(26,58,92,.8); }
+footer a   { font-size: 11px; color: rgba(26,58,92,.6); text-decoration: none; }
 footer a:hover { color: #4a7fa5; }
 
-/* Toast */
 #toast {
-  position: fixed;
-  bottom: 32px;
-  left: 50%;
+  position: fixed; bottom: 32px; left: 50%;
   transform: translateX(-50%) translateY(80px);
-  background: rgba(4, 8, 18, 0.95);
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: 12px;
-  padding: 12px 22px;
-  font-size: 14px;
-  color: #d4af37;
-  z-index: 100;
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
-  opacity: 0;
-  pointer-events: none;
+  background: rgba(4,8,18,.95);
+  border: 1px solid rgba(212,175,55,.4);
+  border-radius: 12px; padding: 12px 22px;
+  font-size: 14px; color: #d4af37;
+  z-index: 100; opacity: 0; pointer-events: none;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
   white-space: nowrap;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
 
-<!-- ── Planet ──────────────────────────────────────────────── -->
-<div id="planet">
-  <canvas id="c"></canvas>
+<!-- Canvas: fixed behind everything, always full-viewport -->
+<canvas id="c"></canvas>
 
+<!-- Planet UI overlay: fades on scroll -->
+<div id="planet-ui">
   <div id="search-wrap">
-    <input id="search" type="text" placeholder="Find an engine… try 'help me practice my job'" autocomplete="off" spellcheck="false">
+    <input id="search" type="text"
+      placeholder="Find an engine… try 'help me practice my job'"
+      autocomplete="off" spellcheck="false">
     <div id="results"></div>
   </div>
-
   <div id="wordmark">HIVE</div>
-  <div id="scroll-cue" onclick="document.getElementById('content').scrollIntoView({behavior:'smooth'})">↓</div>
+  <div id="scroll-cue"
+    onclick="document.getElementById('planet-spacer').nextElementSibling.scrollIntoView({behavior:'smooth'})">↓</div>
 </div>
 
+<!-- Tooltip -->
 <div id="tooltip">
   <div class="tt-name"></div>
   <div class="tt-tagline"></div>
@@ -362,17 +290,18 @@ footer a:hover { color: #4a7fa5; }
   <div class="tt-action"></div>
 </div>
 
-<!-- ── Content ─────────────────────────────────────────────── -->
+<!-- Spacer: scroll area for planet -->
+<div id="planet-spacer"></div>
+
+<!-- Content -->
 <div id="content">
 
   <div class="manifesto">
     <div class="eyebrow">A social experiment</div>
     <h2>You are the investor.</h2>
-    <p>
-      Hive builds AI-powered tools that are <strong>free at the base tier, forever.</strong>
-      No ads. No investors. No agenda. We build what the community asks for —
-      and you decide if it earns your support.
-    </p>
+    <p>Hive builds AI-powered tools that are <strong>free at the base tier, forever.</strong>
+       No ads. No investors. No agenda. We build what the community asks for —
+       and you decide if it earns your support.</p>
     <div class="badges">
       <span class="badge">No ads</span>
       <span class="badge">No investors</span>
@@ -384,26 +313,24 @@ footer a:hover { color: #4a7fa5; }
   <div class="support">
     <div class="support-header">
       <h2>Support Hive</h2>
-      <p>Everything we build is free. If Hive becomes part of your day, support it when you can — it keeps the engines running and the community first.</p>
+      <p>Everything we build is free. If Hive becomes part of your day, support it when you
+         can — it keeps the engines running and the community first.</p>
     </div>
     <div class="support-buttons">
       <a href="https://buy.stripe.com/14A6oJ6Mv3sReEa0YV0RG00" target="_blank" class="support-btn">
-        <span class="btn-price">$1.99</span>
-        <span class="btn-label">per month</span>
+        <span class="btn-price">$1.99</span><span class="btn-label">per month</span>
       </a>
       <a href="https://buy.stripe.com/7sYcN79YHe7v53AcHD0RG01" target="_blank" class="support-btn">
-        <span class="btn-price">$19</span>
-        <span class="btn-label">per year</span>
+        <span class="btn-price">$19</span><span class="btn-label">per year</span>
       </a>
       <a href="https://buy.stripe.com/9B6aEZ7Qzd3rcw2bDz0RG02" target="_blank" class="support-btn">
-        <span class="btn-price">$5</span>
-        <span class="btn-label">one-time</span>
+        <span class="btn-price">$5</span><span class="btn-label">one-time</span>
       </a>
     </div>
   </div>
 
   <div class="forms">
-    <div class="form-box" id="idea-box">
+    <div class="form-box">
       <h3>Got an idea for an engine?</h3>
       <p>Hive is built by its community. Tell us what you'd build if you could.</p>
       <textarea id="idea-text" placeholder="I'd love a tool that helps me…" rows="3"></textarea>
@@ -412,8 +339,7 @@ footer a:hover { color: #4a7fa5; }
         <button class="submit-btn" onclick="submitForm('idea')">Submit idea →</button>
       </div>
     </div>
-
-    <div class="form-box" id="feedback-box">
+    <div class="form-box">
       <h3>Feedback on an existing engine?</h3>
       <p>Tell us what's working, what's broken, or what's missing.</p>
       <textarea id="feedback-text" placeholder="In HiveClock I wish…" rows="3"></textarea>
@@ -435,130 +361,79 @@ footer a:hover { color: #4a7fa5; }
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script>
-// ─── Engine Data ─────────────────────────────────────────────────────────────
-const ENGINES = [
-  {
-    name: 'HiveClock', emoji: '🕐', status: 'live',
-    tagline: 'The world\'s most humane clock.',
-    url: 'https://hiveclock.hive.baby',
-    keywords: ['clock','time','watch','prayer','world','analog','digital','hours','minutes']
-  },
-  {
-    name: 'HiveClarity', emoji: '💬', status: 'live',
-    tagline: 'Say what you actually mean.',
-    url: 'https://hiveclarity.hive.baby',
-    keywords: ['clarity','words','language','express','communicate','thoughts','articulate','say','mean','write']
-  },
-  {
-    name: 'HiveStrength', emoji: '💪', status: 'live',
-    tagline: 'Train with intelligence.',
-    url: 'https://hivestrengthmastery.hive.baby',
-    keywords: ['fitness','workout','gym','training','strength','exercise','lift','weights','muscle','body']
-  },
-  {
-    name: 'HEB', emoji: '🏗️', status: 'live',
-    tagline: 'Build Hive engines.',
-    url: 'https://heb.hive.baby',
-    keywords: ['build','create','engine','developer','make','builder','design','tool','launch']
-  },
-  {
-    name: 'HiveField', emoji: '🎯', status: 'live',
-    tagline: 'Practice your craft.',
-    url: 'https://hivefield.hive.baby',
-    keywords: ['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate','role','train']
-  },
-  {
-    name: 'HiveWeather', emoji: '🌤', status: 'soon',
-    tagline: 'Weather as it feels, not just as it is.',
-    url: null,
-    keywords: ['weather','forecast','climate','rain','sun','temperature','storm']
-  },
-  {
-    name: 'HiveConfession', emoji: '🤫', status: 'soon',
-    tagline: 'Say the thing you haven\'t said.',
-    url: null,
-    keywords: ['confession','secret','anonymous','truth','share','admit','tell']
-  },
-];
-
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// ─── Forms / Toast ────────────────────────────────────────────────────────────
 const toastEl = document.getElementById('toast');
-let toastTimer = null;
+let toastTimer;
 function showToast(msg) {
   toastEl.textContent = msg;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
 }
-
-// ─── Form Submission ──────────────────────────────────────────────────────────
 function submitForm(type) {
-  const textEl = document.getElementById(type + '-text');
-  const statusEl = document.getElementById(type + '-status');
-  const text = textEl.value.trim();
-  if (!text) {
-    statusEl.textContent = 'Please write something first.';
-    statusEl.className = 'form-status error';
-    return;
-  }
-  statusEl.textContent = '';
-  textEl.value = '';
+  const el  = document.getElementById(type + '-text');
+  const st  = document.getElementById(type + '-status');
+  if (!el.value.trim()) { st.textContent = 'Please write something first.'; st.className = 'form-status error'; return; }
+  st.textContent = '';
+  el.value = '';
   showToast(type === 'idea' ? '💡 Idea received. We\'re reading everything.' : '✓ Feedback received. Thank you.');
 }
 
-// ─── Guard: Three.js must be loaded ──────────────────────────────────────────
+// ─── Scroll: fade planet UI, disable canvas interaction when below fold ───────
+const planetUI = document.getElementById('planet-ui');
+const canvas   = document.getElementById('c');
+window.addEventListener('scroll', () => {
+  const past = window.scrollY > window.innerHeight * 0.6;
+  planetUI.style.opacity       = past ? '0' : '1';
+  planetUI.style.pointerEvents = past ? 'none' : '';
+  canvas.style.pointerEvents   = past ? 'none' : 'auto';
+}, { passive: true });
+
+// ─── Guard: Three.js CDN ──────────────────────────────────────────────────────
 if (typeof THREE === 'undefined') {
-  document.getElementById('planet').insertAdjacentHTML('beforeend',
-    '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#4a7fa5;text-align:center;font-family:system-ui;pointer-events:none">' +
-    '<div style="font-size:28px;margin-bottom:10px">🌐</div>' +
-    '<div style="font-size:14px">Loading failed — please refresh.</div></div>');
-  throw new Error('Three.js CDN failed to load');
+  canvas.style.background = '#060a14';
+  document.body.insertAdjacentHTML('beforeend',
+    '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+    'color:#4a7fa5;text-align:center;font-size:14px;z-index:999">' +
+    '🌐 Loading failed — please refresh.</div>');
+  throw new Error('Three.js CDN failed');
 }
 
-// ─── Three.js Setup ───────────────────────────────────────────────────────────
-// Always use window.innerWidth/Height — never planetDiv.clientWidth/Height,
-// which returns 0 if 100svh falls back and the element has no layout height.
-const canvas  = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+// ─── Engine Data ──────────────────────────────────────────────────────────────
+const ENGINES = [
+  { name:'HiveClock',      emoji:'🕐', status:'live', tagline:'The world\'s most humane clock.',          url:'https://hiveclock.hive.baby',           keywords:['clock','time','watch','prayer','world','analog','digital'] },
+  { name:'HiveClarity',    emoji:'💬', status:'live', tagline:'Say what you actually mean.',              url:'https://hiveclarity.hive.baby',          keywords:['clarity','words','language','express','communicate','thoughts','articulate'] },
+  { name:'HiveStrength',   emoji:'💪', status:'live', tagline:'Train with intelligence.',                 url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','exercise','lift','weights'] },
+  { name:'HEB',            emoji:'🏗️', status:'live', tagline:'Build Hive engines.',                     url:'https://heb.hive.baby',                  keywords:['build','create','engine','developer','make','builder','tool'] },
+  { name:'HiveField',      emoji:'🎯', status:'live', tagline:'Practice your craft.',                    url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate'] },
+  { name:'HiveWeather',    emoji:'🌤', status:'soon', tagline:'Weather as it feels, not just as it is.', url:null,                                     keywords:['weather','forecast','climate','rain','sun','temperature'] },
+  { name:'HiveConfession', emoji:'🤫', status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                     keywords:['confession','secret','anonymous','truth','share','admit'] },
+];
+
+// ─── Renderer ─────────────────────────────────────────────────────────────────
+// Canvas is position:fixed so window.innerWidth/Height is always correct.
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
-// Use the string constant directly — THREE.SRGBColorSpace is undefined in some CDN builds
-if (renderer.outputColorSpace !== undefined) renderer.outputColorSpace = 'srgb';
 
-const scene = new THREE.Scene();
+const scene  = new THREE.Scene();
 scene.background = new THREE.Color(0x020408);
 
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 100);
-camera.position.set(0, 0, 3.2);
-const BASE_CAM_Z  = 3.2;
-const FOCUS_CAM_Z = 2.3;
+camera.position.z = 3.2;
+const BASE_Z  = 3.2;
+const FOCUS_Z = 2.3;
+let targetCamZ = BASE_Z;
 
 // ─── Stars ────────────────────────────────────────────────────────────────────
-(function () {
-  const count = 2400;
-  const pos = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    const theta = 2 * Math.PI * Math.random();
-    const phi   = Math.acos(2 * Math.random() - 1);
-    const r     = 28 + Math.random() * 22;
-    pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
-    pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-    pos[i*3+2] = r * Math.cos(phi);
+(function(){
+  const n = 2500, p = new Float32Array(n*3);
+  for (let i=0;i<n;i++){
+    const t=2*Math.PI*Math.random(), f=Math.acos(2*Math.random()-1), r=28+Math.random()*22;
+    p[i*3]=r*Math.sin(f)*Math.cos(t); p[i*3+1]=r*Math.sin(f)*Math.sin(t); p[i*3+2]=r*Math.cos(f);
   }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.055, sizeAttenuation: true, transparent: true, opacity: 0.6 })));
-
-  const bpos = new Float32Array(80 * 3);
-  for (let i = 0; i < 80; i++) {
-    const theta = 2 * Math.PI * Math.random();
-    const phi   = Math.acos(2 * Math.random() - 1);
-    const r     = 32 + Math.random() * 14;
-    bpos[i*3] = r*Math.sin(phi)*Math.cos(theta); bpos[i*3+1] = r*Math.sin(phi)*Math.sin(theta); bpos[i*3+2] = r*Math.cos(phi);
-  }
-  const bgeo = new THREE.BufferGeometry();
-  bgeo.setAttribute('position', new THREE.BufferAttribute(bpos, 3));
-  scene.add(new THREE.Points(bgeo, new THREE.PointsMaterial({ color: 0xaaddff, size: 0.11, sizeAttenuation: true, transparent: true, opacity: 0.85 })));
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:.055,sizeAttenuation:true,transparent:true,opacity:.6})));
 })();
 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
@@ -566,430 +441,302 @@ scene.add(new THREE.AmbientLight(0x0a1828, 4));
 const keyLight = new THREE.DirectionalLight(0xfff5e0, 3.5);
 keyLight.position.set(4, 3, 4);
 scene.add(keyLight);
-scene.add(Object.assign(new THREE.DirectionalLight(0x1a3060, 1.5), { position: new THREE.Vector3(-4, -1, -3) }));
+const rimLight = new THREE.DirectionalLight(0x1a3060, 1.5);
+rimLight.position.set(-4, -1, -3);
+scene.add(rimLight);
 
 // ─── Geodesic Dual ────────────────────────────────────────────────────────────
 function buildDual(detail) {
-  const icoGeo = new THREE.IcosahedronGeometry(1, detail);
-  const pos = icoGeo.attributes.position;
-  const idx = icoGeo.index; // null in Three.js r152+ (non-indexed flat geometry)
+  const geo = new THREE.IcosahedronGeometry(1, detail);
+  const pos = geo.attributes.position;
+  const idx = geo.index; // null in Three.js r152+ (non-indexed)
 
-  const SCALE = 100000;
-  const keyMap = new Map();
-  const unique = [];
-  const remap  = new Array(pos.count);
-
+  // Deduplicate vertices
+  const SCALE = 1e5, kmap = new Map(), uniq = [], remap = new Int32Array(pos.count);
   for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    const len = Math.sqrt(x*x + y*y + z*z) || 1;
-    const k = `${Math.round(x/len*SCALE)},${Math.round(y/len*SCALE)},${Math.round(z/len*SCALE)}`;
-    if (keyMap.has(k)) { remap[i] = keyMap.get(k); }
-    else { keyMap.set(k, unique.length); remap[i] = unique.length; unique.push(new THREE.Vector3(x/len, y/len, z/len)); }
+    const x=pos.getX(i), y=pos.getY(i), z=pos.getZ(i);
+    const L=Math.sqrt(x*x+y*y+z*z)||1;
+    const k=`${Math.round(x/L*SCALE)},${Math.round(y/L*SCALE)},${Math.round(z/L*SCALE)}`;
+    if (kmap.has(k)) { remap[i]=kmap.get(k); }
+    else { kmap.set(k,uniq.length); remap[i]=uniq.length; uniq.push(new THREE.Vector3(x/L,y/L,z/L)); }
   }
 
+  // Build face centroids — works whether indexed or flat
+  const triN = idx ? idx.count : pos.count;
+  const getI = idx ? i => idx.getX(i) : i => i;
   const faces = [];
-  const triCount = idx ? idx.count : pos.count;
-  const getVI   = idx ? (i) => idx.getX(i) : (i) => i;
-
-  for (let i = 0; i < triCount; i += 3) {
-    const a = remap[getVI(i)], b = remap[getVI(i+1)], c = remap[getVI(i+2)];
-    if (a === b || b === c || a === c) continue;
-    const centroid = new THREE.Vector3().addVectors(unique[a], unique[b]).add(unique[c]).divideScalar(3).normalize();
-    faces.push({ centroid, verts: [a, b, c] });
+  for (let i = 0; i < triN; i += 3) {
+    const a=remap[getI(i)], b=remap[getI(i+1)], c=remap[getI(i+2)];
+    if (a===b||b===c||a===c) continue;
+    faces.push({ centroid: new THREE.Vector3().addVectors(uniq[a],uniq[b]).add(uniq[c]).divideScalar(3).normalize(), verts:[a,b,c] });
   }
 
-  const vFaces = new Map();
-  for (let fi = 0; fi < faces.length; fi++)
-    for (const vi of faces[fi].verts) {
-      if (!vFaces.has(vi)) vFaces.set(vi, []);
-      vFaces.get(vi).push(fi);
-    }
+  // Vertex → adjacent faces map
+  const vf = new Map();
+  faces.forEach((f,fi) => f.verts.forEach(vi => { if(!vf.has(vi)) vf.set(vi,[]); vf.get(vi).push(fi); }));
 
-  const cells = [];
-  for (let vi = 0; vi < unique.length; vi++) {
-    const fis = vFaces.get(vi) || [];
-    if (fis.length < 3) continue;
-    const center = unique[vi].clone();
-    let up = new THREE.Vector3(0, 1, 0);
-    if (Math.abs(center.dot(up)) > 0.99) up.set(1, 0, 0);
+  // Build dual cells (sorted polygon per vertex)
+  return uniq.map((center, vi) => {
+    const fis = vf.get(vi)||[];
+    if (fis.length < 3) return null;
+    let up = new THREE.Vector3(0,1,0);
+    if (Math.abs(center.dot(up)) > 0.99) up.set(1,0,0);
     const T = new THREE.Vector3().crossVectors(up, center).normalize();
     const B = new THREE.Vector3().crossVectors(center, T);
-    const sorted = fis
-      .map(fi => { const d = faces[fi].centroid.clone().sub(center); return { c: faces[fi].centroid.clone(), a: Math.atan2(d.dot(B), d.dot(T)) }; })
-      .sort((a, b) => a.a - b.a);
-    cells.push({ center, polygon: sorted.map(x => x.c) });
-  }
-  return cells;
+    const poly = fis
+      .map(fi => { const d=faces[fi].centroid.clone().sub(center); return {c:faces[fi].centroid.clone(),a:Math.atan2(d.dot(B),d.dot(T))}; })
+      .sort((a,b) => a.a-b.a)
+      .map(x => x.c);
+    return { center: center.clone(), polygon: poly };
+  }).filter(Boolean);
 }
 
 const cells = buildDual(3);
 
-// ─── Assign Engines to Cells ──────────────────────────────────────────────────
-const cellToEngine = new Map();
-const engineToCell = new Map();
+// ─── Assign engines to cells ──────────────────────────────────────────────────
+const cellToEngine = new Map(), engineToCell = new Map();
 const step = Math.floor(cells.length / ENGINES.length);
-for (let i = 0; i < ENGINES.length; i++) {
-  const ci = 12 + i * step;
-  cellToEngine.set(ci, ENGINES[i]);
-  engineToCell.set(ENGINES[i].name, ci);
-}
+ENGINES.forEach((e, i) => { const ci = 12 + i*step; cellToEngine.set(ci,e); engineToCell.set(e.name,ci); });
 
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-const cellCodes = cells.map(() => ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]);
+const codes = cells.map(() => ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]);
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
-const C_LIVE       = new THREE.Color(0xd4af37);
-const C_LIVE_EM    = new THREE.Color(0xb8920a);
-const C_SOON       = new THREE.Color(0x2a3d52);
-const C_SOON_EM    = new THREE.Color(0x1a2d3e);
-const C_EMPTY      = new THREE.Color(0x080f1c);
-const C_EMPTY_EM   = new THREE.Color(0x030810);
-const C_HOVER_LIVE = new THREE.Color(0xffe066);
-const C_HOVER_SOON = new THREE.Color(0x4a7fa5);
-const C_FOCUS      = new THREE.Color(0xffffff);
+const C = {
+  live:    new THREE.Color(0xd4af37),
+  liveEm:  new THREE.Color(0xb8920a),
+  soon:    new THREE.Color(0x2a3d52),
+  soonEm:  new THREE.Color(0x1a2d3e),
+  empty:   new THREE.Color(0x080f1c),
+  emptyEm: new THREE.Color(0x030810),
+  hoverL:  new THREE.Color(0xffe066),
+  hoverS:  new THREE.Color(0x4a7fa5),
+  focus:   new THREE.Color(0xffffff),
+};
 
-// ─── Build Meshes ─────────────────────────────────────────────────────────────
-const GROUP  = new THREE.Group();
-scene.add(GROUP);
-
-const LIFT = 0.007, GAP = 0.91;
-const meshes   = [];
-const cellInfo = [];
+// ─── Build Cell Meshes ────────────────────────────────────────────────────────
+const GROUP = new THREE.Group(); scene.add(GROUP);
+const LIFT=0.007, GAP=0.91;
+const meshes=[], cellInfo=[];
 
 cells.forEach((cell, ci) => {
-  const engine = cellToEngine.get(ci) || null;
-  const poly = cell.polygon, n = poly.length;
-  const center3 = cell.center.clone().multiplyScalar(1 + LIFT);
-  const verts = [];
-  for (let i = 0; i < n; i++) {
-    const a = poly[i].clone().lerp(cell.center, 1 - GAP).normalize().multiplyScalar(1 + LIFT);
-    const b = poly[(i+1)%n].clone().lerp(cell.center, 1 - GAP).normalize().multiplyScalar(1 + LIFT);
-    verts.push(center3.x, center3.y, center3.z, a.x, a.y, a.z, b.x, b.y, b.z);
+  const engine = cellToEngine.get(ci)||null;
+  const poly=cell.polygon, n=poly.length;
+  const c3=cell.center.clone().multiplyScalar(1+LIFT);
+  const verts=[];
+  for (let i=0;i<n;i++){
+    const a=poly[i].clone().lerp(cell.center,1-GAP).normalize().multiplyScalar(1+LIFT);
+    const b=poly[(i+1)%n].clone().lerp(cell.center,1-GAP).normalize().multiplyScalar(1+LIFT);
+    verts.push(c3.x,c3.y,c3.z, a.x,a.y,a.z, b.x,b.y,b.z);
   }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
   geo.computeVertexNormals();
 
-  let color, emissive, emissiveIntensity, roughness, metalness;
-  if (engine?.status === 'live')  { color = C_LIVE.clone();  emissive = C_LIVE_EM.clone();  emissiveIntensity = 0.4;  roughness = 0.25; metalness = 0.65; }
-  else if (engine?.status === 'soon') { color = C_SOON.clone(); emissive = C_SOON_EM.clone(); emissiveIntensity = 0.08; roughness = 0.75; metalness = 0.1; }
-  else { color = C_EMPTY.clone(); emissive = C_EMPTY_EM.clone(); emissiveIntensity = 0; roughness = 0.95; metalness = 0.05; }
+  let color,emissive,emissiveIntensity,roughness,metalness;
+  if (engine?.status==='live')  { color=C.live.clone();  emissive=C.liveEm.clone();  emissiveIntensity=0.4;  roughness=0.25; metalness=0.65; }
+  else if (engine?.status==='soon') { color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.08; roughness=0.75; metalness=0.1; }
+  else { color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05; }
 
-  const mat  = new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity, roughness, metalness, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(geo, mat);
-  GROUP.add(mesh);
-  meshes.push(mesh);
-  cellInfo.push({ engine, code: cellCodes[ci], mesh, color: color.clone(), emissive: emissive.clone(), emissiveIntensity, center: cell.center.clone() });
+  const mesh=new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide}));
+  GROUP.add(mesh); meshes.push(mesh);
+  cellInfo.push({engine, code:codes[ci], mesh, color:color.clone(), emissive:emissive.clone(), emissiveIntensity, center:cell.center.clone()});
 });
 
 // Sphere base
-GROUP.add(new THREE.Mesh(
-  new THREE.SphereGeometry(0.98, 64, 64),
-  new THREE.MeshStandardMaterial({ color: 0x020810, roughness: 0.95, metalness: 0.05 })
-));
+GROUP.add(new THREE.Mesh(new THREE.SphereGeometry(0.98,64,64), new THREE.MeshStandardMaterial({color:0x020810,roughness:.95,metalness:.05})));
 
 // Point lights on live cells
 cellInfo.forEach(cd => {
-  if (cd.engine?.status === 'live') {
-    const l = new THREE.PointLight(0xd4af37, 1.2, 1.8);
-    l.position.copy(cd.center).multiplyScalar(1.08);
-    GROUP.add(l);
+  if (cd.engine?.status==='live') {
+    const l=new THREE.PointLight(0xd4af37,1.2,1.8); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
   }
 });
 
 // Sprites for named cells
-function makeSprite(text, color, alpha, fontSize) {
-  const c = document.createElement('canvas'); c.width = 256; c.height = 80;
-  const ctx = c.getContext('2d');
-  ctx.clearRect(0, 0, 256, 80);
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = color;
-  ctx.font = `bold ${fontSize}px system-ui`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  if (alpha > 0.5) { ctx.shadowColor = color; ctx.shadowBlur = 10; }
-  ctx.fillText(text, 128, 40);
-  const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, depthTest: false });
-  return new THREE.Sprite(mat);
+function makeSprite(text, color, alpha, fs) {
+  const c=document.createElement('canvas'); c.width=256; c.height=80;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,256,80); ctx.globalAlpha=alpha; ctx.fillStyle=color;
+  ctx.font=`bold ${fs}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  if(alpha>.5){ctx.shadowColor=color; ctx.shadowBlur=10;}
+  ctx.fillText(text,128,40);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false}));
+  return sp;
 }
-
 cellInfo.forEach(cd => {
-  if (!cd.engine) return;
-  const e = cd.engine;
-  const short = e.name.replace('Hive', '').toUpperCase() || e.name;
-  const sp = makeSprite(short, e.status === 'live' ? '#f5d060' : '#3a5a7a', e.status === 'live' ? 0.9 : 0.5, 28);
-  sp.scale.set(0.22, 0.07, 1);
-  sp.position.copy(cd.center).multiplyScalar(1.045);
-  GROUP.add(sp);
-  cd.sprite = sp;
+  if(!cd.engine) return;
+  const short=cd.engine.name.replace('Hive','').toUpperCase()||cd.engine.name;
+  const sp=makeSprite(short, cd.engine.status==='live'?'#f5d060':'#3a5a7a', cd.engine.status==='live'?.9:.5, 28);
+  sp.scale.set(0.22,0.07,1); sp.position.copy(cd.center).multiplyScalar(1.045); GROUP.add(sp);
 });
 
-// ─── Rotation — Quaternion-based ──────────────────────────────────────────────
-const Y_AXIS = new THREE.Vector3(0, 1, 0);
-const X_AXIS = new THREE.Vector3(1, 0, 0);
-let isDragging = false, autoRotate = true;
-let prevX = 0, prevY = 0, downX = 0, downY = 0;
-let velX = 0, velY = 0;
-const DAMP = 0.91;
+// ─── Rotation (quaternion-based) ──────────────────────────────────────────────
+const YA=new THREE.Vector3(0,1,0), XA=new THREE.Vector3(1,0,0);
+let dragging=false, autoRot=true;
+let px=0, py=0, dx=0, dy=0, downX=0, downY=0;
+const DAMP=0.91;
+let focusQ=null, focusedIdx=-1;
 
-// Focus target
-let focusTarget   = null; // THREE.Quaternion | null
-let targetCamZ    = BASE_CAM_Z;
-let focusedCellIdx = -1;
+function focusEngine(eng) {
+  const ci=engineToCell.get(eng.name); if(ci==null) return;
+  restoreFocused();
+  focusedIdx=ci;
+  const cd=cellInfo[ci];
+  cd.mesh.material.color.copy(C.focus); cd.mesh.material.emissive.copy(C.focus); cd.mesh.material.emissiveIntensity=1;
+  focusQ=new THREE.Quaternion().setFromUnitVectors(cd.center.clone().normalize(), new THREE.Vector3(0,0,1));
+  targetCamZ=FOCUS_Z; autoRot=false;
+}
+function restoreFocused() {
+  if(focusedIdx<0) return;
+  const cd=cellInfo[focusedIdx];
+  cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;
+  focusedIdx=-1;
+}
+function clearFocus() { restoreFocused(); focusQ=null; targetCamZ=BASE_Z; }
 
-function focusOnEngine(engine) {
-  const ci = engineToCell.get(engine.name);
-  if (ci === undefined) return;
+canvas.addEventListener('pointerdown', e=>{
+  dragging=true; px=downX=e.clientX; py=downY=e.clientY; dx=dy=0; clearFocus();
+});
+canvas.addEventListener('pointermove', e=>{
+  if(!dragging) return;
+  dx=(e.clientX-px)*.006; dy=(e.clientY-py)*.006;
+  GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(XA,dy)).multiply(new THREE.Quaternion().setFromAxisAngle(YA,dx));
+  px=e.clientX; py=e.clientY;
+});
+canvas.addEventListener('pointerup', e=>{
+  if(!dragging) return; dragging=false;
+  if(Math.hypot(e.clientX-downX,e.clientY-downY)<6) handleClick(e.clientX,e.clientY);
+});
+canvas.addEventListener('pointercancel',()=>{ dragging=false; });
+canvas.addEventListener('wheel', e=>{ targetCamZ=Math.max(1.5,Math.min(6.5,targetCamZ+e.deltaY*.004)); },{passive:true});
 
-  // Restore previous focus highlight
-  clearFocusHighlight();
+let pinch0=null;
+canvas.addEventListener('touchstart',e=>{ if(e.touches.length===2) pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); },{passive:true});
+canvas.addEventListener('touchmove',e=>{ if(e.touches.length!==2||!pinch0) return; const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); targetCamZ=Math.max(1.5,Math.min(6.5,targetCamZ-(d-pinch0)*.012)); pinch0=d; },{passive:true});
+canvas.addEventListener('touchend',()=>{ pinch0=null; });
 
-  focusedCellIdx = ci;
-  const cd = cellInfo[ci];
-  cd.mesh.material.color.copy(C_FOCUS);
-  cd.mesh.material.emissive.copy(C_FOCUS);
-  cd.mesh.material.emissiveIntensity = 1.0;
+// ─── Raycasting ───────────────────────────────────────────────────────────────
+const raycaster=new THREE.Raycaster(), mNDC=new THREE.Vector2();
+const tooltip=document.getElementById('tooltip');
+let hoveredIdx=-1;
 
-  // Rotate GROUP so this cell points toward camera (+Z)
-  focusTarget = new THREE.Quaternion().setFromUnitVectors(
-    cd.center.clone().normalize(),
-    new THREE.Vector3(0, 0, 1)
-  );
-  targetCamZ  = FOCUS_CAM_Z;
-  autoRotate  = false;
+function toNDC(cx,cy){ mNDC.x=(cx/window.innerWidth)*2-1; mNDC.y=-(cy/window.innerHeight)*2+1; }
+
+function handleClick(cx,cy){
+  toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
+  const h=raycaster.intersectObjects(meshes); if(!h.length) return;
+  const cd=cellInfo[meshes.indexOf(h[0].object)];
+  if(cd.engine?.url) window.location.href=cd.engine.url;
 }
 
-function clearFocusHighlight() {
-  if (focusedCellIdx >= 0) {
-    const cd = cellInfo[focusedCellIdx];
-    cd.mesh.material.color.copy(cd.color);
-    cd.mesh.material.emissive.copy(cd.emissive);
-    cd.mesh.material.emissiveIntensity = cd.emissiveIntensity;
-    focusedCellIdx = -1;
+canvas.addEventListener('mousemove',e=>{ if(!dragging) updateHover(e.clientX,e.clientY); });
+canvas.addEventListener('touchstart',e=>{ if(e.touches.length===1) updateHover(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+
+function updateHover(cx,cy){
+  toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
+  const hits=raycaster.intersectObjects(meshes);
+  const newIdx=hits.length?meshes.indexOf(hits[0].object):-1;
+  if(newIdx===hoveredIdx){ if(newIdx>=0) posTip(cx,cy); return; }
+
+  if(hoveredIdx>=0&&hoveredIdx!==focusedIdx){
+    const cd=cellInfo[hoveredIdx]; cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;
   }
+  hoveredIdx=newIdx;
+  if(newIdx>=0){
+    const cd=cellInfo[newIdx];
+    if(cd.engine){
+      const hc=cd.engine.status==='live'?C.hoverL:C.hoverS;
+      cd.mesh.material.color.copy(hc); cd.mesh.material.emissive.copy(hc); cd.mesh.material.emissiveIntensity=0.7;
+      showTip(cd,cx,cy); canvas.style.cursor=cd.engine.url?'pointer':'default';
+    } else { showTip(cd,cx,cy); canvas.style.cursor='default'; }
+  } else { tooltip.style.display='none'; canvas.style.cursor='grab'; }
 }
 
-function clearFocus() {
-  clearFocusHighlight();
-  focusTarget = null;
-  targetCamZ  = BASE_CAM_Z;
-}
-
-// ─── Pointer / Drag ───────────────────────────────────────────────────────────
-canvas.addEventListener('pointerdown', e => {
-  if (e.target !== canvas) return;
-  isDragging = true;
-  prevX = downX = e.clientX; prevY = downY = e.clientY;
-  velX = velY = 0;
-  clearFocus();
-});
-
-canvas.addEventListener('pointermove', e => {
-  if (!isDragging) return;
-  const dx = e.clientX - prevX, dy = e.clientY - prevY;
-  velX = dy * 0.006; velY = dx * 0.006;
-  GROUP.quaternion
-    .multiply(new THREE.Quaternion().setFromAxisAngle(X_AXIS, velX))
-    .multiply(new THREE.Quaternion().setFromAxisAngle(Y_AXIS, velY));
-  prevX = e.clientX; prevY = e.clientY;
-});
-
-canvas.addEventListener('pointerup', e => {
-  if (!isDragging) return;
-  isDragging = false;
-  if (Math.hypot(e.clientX - downX, e.clientY - downY) < 6) handleClick(e.clientX, e.clientY);
-});
-canvas.addEventListener('pointercancel', () => { isDragging = false; });
-
-canvas.addEventListener('wheel', e => {
-  targetCamZ = Math.max(1.5, Math.min(6.5, targetCamZ + e.deltaY * 0.004));
-}, { passive: true });
-
-let pinch0 = null;
-canvas.addEventListener('touchstart', e => {
-  if (e.touches.length === 2) pinch0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-}, { passive: true });
-canvas.addEventListener('touchmove', e => {
-  if (e.touches.length !== 2 || pinch0 === null) return;
-  const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-  targetCamZ = Math.max(1.5, Math.min(6.5, targetCamZ - (d - pinch0) * 0.012));
-  pinch0 = d;
-}, { passive: true });
-canvas.addEventListener('touchend', () => { pinch0 = null; });
-
-// ─── Raycasting / Hover / Click ───────────────────────────────────────────────
-const raycaster = new THREE.Raycaster();
-const mNDC      = new THREE.Vector2();
-const tooltip   = document.getElementById('tooltip');
-let hoveredIdx  = -1;
-
-function setNDC(cx, cy) {
-  const rect = canvas.getBoundingClientRect();
-  mNDC.x =  (cx - rect.left) / rect.width  * 2 - 1;
-  mNDC.y = -((cy - rect.top) / rect.height) * 2 + 1;
-}
-
-function handleClick(cx, cy) {
-  setNDC(cx, cy);
-  raycaster.setFromCamera(mNDC, camera);
-  const hits = raycaster.intersectObjects(meshes);
-  if (!hits.length) return;
-  const cd = cellInfo[meshes.indexOf(hits[0].object)];
-  if (cd.engine?.url) window.location.href = cd.engine.url;
-}
-
-canvas.addEventListener('mousemove', e => { if (!isDragging) updateHover(e.clientX, e.clientY); });
-canvas.addEventListener('touchstart', e => { if (e.touches.length === 1) updateHover(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-
-function updateHover(cx, cy) {
-  setNDC(cx, cy);
-  raycaster.setFromCamera(mNDC, camera);
-  const newIdx = (() => { const h = raycaster.intersectObjects(meshes); return h.length ? meshes.indexOf(h[0].object) : -1; })();
-  if (newIdx === hoveredIdx) { if (newIdx >= 0) positionTooltip(cx, cy); return; }
-
-  // Restore previous hover (but not if it's the focused cell)
-  if (hoveredIdx >= 0 && hoveredIdx !== focusedCellIdx) {
-    const cd = cellInfo[hoveredIdx];
-    cd.mesh.material.color.copy(cd.color);
-    cd.mesh.material.emissive.copy(cd.emissive);
-    cd.mesh.material.emissiveIntensity = cd.emissiveIntensity;
-  }
-
-  hoveredIdx = newIdx;
-
-  if (newIdx >= 0) {
-    const cd = cellInfo[newIdx];
-    if (cd.engine) {
-      const hc = cd.engine.status === 'live' ? C_HOVER_LIVE : C_HOVER_SOON;
-      cd.mesh.material.color.copy(hc);
-      cd.mesh.material.emissive.copy(hc);
-      cd.mesh.material.emissiveIntensity = 0.7;
-      showTooltip(cd, cx, cy);
-      canvas.style.cursor = cd.engine.url ? 'pointer' : 'default';
-    } else {
-      showTooltip(cd, cx, cy);
-      canvas.style.cursor = 'default';
-    }
+function showTip(cd,cx,cy){
+  if(cd.engine){
+    tooltip.className=cd.engine.status==='soon'?'soon-tt':'';
+    tooltip.querySelector('.tt-name').textContent=cd.engine.emoji+'  '+cd.engine.name;
+    tooltip.querySelector('.tt-tagline').textContent=cd.engine.tagline;
+    tooltip.querySelector('.tt-code').textContent='';
+    const a=tooltip.querySelector('.tt-action'); a.textContent=cd.engine.url?'Click to open →':'Coming soon'; a.className='tt-action'+(cd.engine.url?'':' soon-action');
   } else {
-    tooltip.style.display = 'none';
-    canvas.style.cursor = 'grab';
+    tooltip.className='';
+    tooltip.querySelector('.tt-name').textContent=cd.code;
+    tooltip.querySelector('.tt-tagline').textContent=''; tooltip.querySelector('.tt-code').textContent='UNASSIGNED NODE'; tooltip.querySelector('.tt-action').textContent='';
   }
+  tooltip.style.display='block'; posTip(cx,cy);
+}
+function posTip(cx,cy){
+  let tx=cx+18, ty=cy-70;
+  if(tx+240>window.innerWidth-8) tx=cx-258;
+  if(ty<8) ty=cy+18;
+  if(ty+120>window.innerHeight-8) ty=window.innerHeight-128;
+  tooltip.style.left=tx+'px'; tooltip.style.top=ty+'px';
 }
 
-function showTooltip(cd, cx, cy) {
-  if (cd.engine) {
-    tooltip.className = cd.engine.status === 'soon' ? 'soon-tt' : '';
-    tooltip.querySelector('.tt-name').textContent    = cd.engine.emoji + '  ' + cd.engine.name;
-    tooltip.querySelector('.tt-tagline').textContent = cd.engine.tagline;
-    tooltip.querySelector('.tt-code').textContent    = '';
-    const act = tooltip.querySelector('.tt-action');
-    act.textContent  = cd.engine.url ? 'Click to open →' : 'Coming soon';
-    act.className    = 'tt-action' + (cd.engine.url ? '' : ' soon-action');
-  } else {
-    tooltip.className = '';
-    tooltip.querySelector('.tt-name').textContent    = cd.code;
-    tooltip.querySelector('.tt-tagline').textContent = '';
-    tooltip.querySelector('.tt-code').textContent    = 'UNASSIGNED NODE';
-    tooltip.querySelector('.tt-action').textContent  = '';
+// ─── Search ───────────────────────────────────────────────────────────────────
+function scoreEng(q,e){
+  const words=q.toLowerCase().trim().split(/\s+/);
+  const corpus=(e.name+' '+e.tagline+' '+e.keywords.join(' ')).toLowerCase();
+  let t=0;
+  for(const w of words){
+    if(w.length<2) continue;
+    if(e.name.toLowerCase().includes(w)){t+=80;continue;}
+    if(corpus.includes(w)){t+=40;continue;}
+    for(const cw of corpus.split(/\s+/)) if(cw.startsWith(w)&&w.length>=3){t+=20;break;}
   }
-  tooltip.style.display = 'block';
-  positionTooltip(cx, cy);
+  return t;
 }
 
-function positionTooltip(cx, cy) {
-  let tx = cx + 18, ty = cy - 70;
-  if (tx + 240 > window.innerWidth  - 8) tx = cx - 258;
-  if (ty < 8) ty = cy + 18;
-  if (ty + 120 > window.innerHeight - 8) ty = window.innerHeight - 128;
-  tooltip.style.left = tx + 'px';
-  tooltip.style.top  = ty + 'px';
-}
-
-// ─── Fuzzy Search ─────────────────────────────────────────────────────────────
-function scoreEngine(q, eng) {
-  const words  = q.toLowerCase().trim().split(/\s+/);
-  const corpus = (eng.name + ' ' + eng.tagline + ' ' + eng.keywords.join(' ')).toLowerCase();
-  let total = 0;
-  for (const w of words) {
-    if (w.length < 2) continue;
-    if (eng.name.toLowerCase().includes(w)) { total += 80; continue; }
-    if (corpus.includes(w)) { total += 40; continue; }
-    for (const cw of corpus.split(/\s+/))
-      if (cw.startsWith(w) && w.length >= 3) { total += 20; break; }
-  }
-  return total;
-}
-
-const searchEl  = document.getElementById('search');
-const resultsEl = document.getElementById('results');
-
-searchEl.addEventListener('input', () => {
-  const q = searchEl.value.trim();
-  resultsEl.innerHTML = '';
-  if (!q) { clearFocus(); return; }
-
-  const scored = ENGINES
-    .map(e => ({ e, s: scoreEngine(q, e) }))
-    .filter(x => x.s > 0)
-    .sort((a, b) => b.s - a.s)
-    .slice(0, 5);
-
-  // Rotate planet to top match
-  if (scored.length > 0) focusOnEngine(scored[0].e);
-
-  for (const { e } of scored) {
-    const div = document.createElement('div');
-    div.className = 'result-item' + (e.status === 'soon' ? ' soon' : '');
-    div.innerHTML = `<span style="font-size:22px;line-height:1">${e.emoji}</span><div><div class="result-name">${e.name}</div><div class="result-tagline">${e.tagline}</div></div>`;
-    div.addEventListener('mousedown', () => {
-      if (e.url) { window.location.href = e.url; }
-      else { focusOnEngine(e); resultsEl.innerHTML = ''; searchEl.blur(); }
-    });
+const searchEl=document.getElementById('search'), resultsEl=document.getElementById('results');
+searchEl.addEventListener('input',()=>{
+  const q=searchEl.value.trim(); resultsEl.innerHTML='';
+  if(!q){clearFocus();return;}
+  const scored=ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,5);
+  if(scored.length) focusEngine(scored[0].e);
+  for(const {e} of scored){
+    const div=document.createElement('div');
+    div.className='result-item'+(e.status==='soon'?' soon':'');
+    div.innerHTML=`<span style="font-size:22px;line-height:1">${e.emoji}</span><div><div class="result-name">${e.name}</div><div class="result-tagline">${e.tagline}</div></div>`;
+    div.addEventListener('mousedown',()=>{ if(e.url) window.location.href=e.url; else{focusEngine(e);resultsEl.innerHTML='';searchEl.blur();} });
     resultsEl.appendChild(div);
   }
 });
+searchEl.addEventListener('blur',()=>setTimeout(()=>{resultsEl.innerHTML=''},200));
+searchEl.addEventListener('focus',()=>{ autoRot=false; });
 
-searchEl.addEventListener('blur',  () => { setTimeout(() => { resultsEl.innerHTML = ''; }, 200); });
-searchEl.addEventListener('focus', () => { autoRotate = false; });
-
-// ─── Render Loop ──────────────────────────────────────────────────────────────
-const clock = new THREE.Clock();
-
-function animate() {
+// ─── Animate ──────────────────────────────────────────────────────────────────
+const clock=new THREE.Clock();
+function animate(){
   requestAnimationFrame(animate);
-  const t = clock.getElapsedTime();
+  const t=clock.getElapsedTime();
 
-  if (focusTarget && !isDragging) {
-    // Smoothly slerp to focus target
-    GROUP.quaternion.slerp(focusTarget, 0.055);
-  } else if (autoRotate && !isDragging) {
-    GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(Y_AXIS, 0.0007));
-  } else if (!isDragging && (Math.abs(velX) > 1e-5 || Math.abs(velY) > 1e-5)) {
-    GROUP.quaternion
-      .multiply(new THREE.Quaternion().setFromAxisAngle(X_AXIS, velX))
-      .multiply(new THREE.Quaternion().setFromAxisAngle(Y_AXIS, velY));
-    velX *= DAMP; velY *= DAMP;
+  if(focusQ&&!dragging){
+    GROUP.quaternion.slerp(focusQ,.055);
+  } else if(autoRot&&!dragging){
+    GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(YA,.0007));
+  } else if(!dragging&&(Math.abs(dx)>1e-5||Math.abs(dy)>1e-5)){
+    GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(XA,dy)).multiply(new THREE.Quaternion().setFromAxisAngle(YA,dx));
+    dx*=DAMP; dy*=DAMP;
   }
 
-  // Smooth camera zoom
-  camera.position.z += (targetCamZ - camera.position.z) * 0.06;
+  camera.position.z+=(targetCamZ-camera.position.z)*.06;
 
-  // Pulse live cells
-  cellInfo.forEach((cd, i) => {
-    if (cd.engine?.status === 'live' && i !== hoveredIdx && i !== focusedCellIdx) {
-      cd.mesh.material.emissiveIntensity = 0.32 + 0.12 * Math.sin(t * 1.4 + i * 0.9);
-    }
+  cellInfo.forEach((cd,i)=>{
+    if(cd.engine?.status==='live'&&i!==hoveredIdx&&i!==focusedIdx)
+      cd.mesh.material.emissiveIntensity=.32+.12*Math.sin(t*1.4+i*.9);
   });
 
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
-
 animate();
 
 // ─── Resize ───────────────────────────────────────────────────────────────────
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+window.addEventListener('resize',()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(window.innerWidth,window.innerHeight);
 });
 </script>
 </body>
