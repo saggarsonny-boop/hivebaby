@@ -1,4 +1,3 @@
-<!-- deploy: 2026-04-17T21:02:05Z -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -638,15 +637,12 @@ cells.forEach((cell, ci) => {
   else if (engine?.status==='soon') { color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.06; roughness=0.8;  metalness=0.15; }
   else { color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05; }
 
-  const isEmpty=!engine&&!isPatron;
-  const mesh=new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide,transparent:isEmpty,opacity:isEmpty?0:1,depthWrite:!isEmpty}));
+  const mesh=new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide}));
   GROUP.add(mesh); meshes.push(mesh);
   cellInfo.push({engine, code:codes[ci], mesh, color:color.clone(), emissive:emissive.clone(), emissiveIntensity, center:cell.center.clone()});
 });
 
-const earthMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.8,metalness:0.0});
-new THREE.TextureLoader().load('/earth.jpg',t=>{earthMat.map=t;earthMat.needsUpdate=true;});
-GROUP.add(new THREE.Mesh(new THREE.SphereGeometry(0.98,64,64),earthMat));
+GROUP.add(new THREE.Mesh(new THREE.SphereGeometry(0.98,64,64), new THREE.MeshStandardMaterial({color:0x020810,roughness:.95,metalness:.05})));
 
 cellInfo.forEach(cd => {
   if (cd.engine?.status==='live') {
