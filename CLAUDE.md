@@ -379,6 +379,13 @@ Every new engine inherits the entire adoption stack automatically through Queen 
 
 ---
 
+## PIPELINE ENGINES (designed, not yet built)
+
+**HiveBodyLog**
+Single screen health story engine. Captures physical and mental experiences in free text, merges with Apple Health/sleep app data, surfaces patterns over time without diagnosing. Output: structured timeline, pattern view, gentle flags ("this has been going on two weeks - worth a doctor visit"), and a clean one-minute clinician summary exportable as PDF. Optional: photo of supplement packaging with manufacturing quality assessment. Non-diagnostic, non-prescriptive, pattern-literacy only. Enterprise layer: anonymised aggregated population patterns for health systems, pharma, longevity labs, supplement companies.
+
+---
+
 ## Standard New Engine Pattern
 - Next.js + TypeScript
 - Anthropic SDK (claude-opus-4-5)
