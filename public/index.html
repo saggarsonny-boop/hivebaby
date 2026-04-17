@@ -834,45 +834,66 @@ const C={
 };
 
 // ─── Build Cell Meshes ────────────────────────────────────────────────────────
+// Only live/patron cells get filled geometry — empty cells get no mesh,
+// soon cells get only an edge outline. Earth texture visible everywhere else.
 const LIFT=0.022, GAP=0.91;
 const meshes=[], cellInfo=[];
 
 cells.forEach((cell,ci)=>{
   const engine=cellToEngine.get(ci)||null;
   const isPatron=(ci===PATRON_CELL_IDX);
+  const isLive=engine?.status==='live';
+  const isSoon=engine?.status==='soon';
   const poly=cell.polygon, n=poly.length;
-  const c3=cell.center.clone().multiplyScalar(1+LIFT);
-  const verts=[];
+
+  // Build edge vertices (ring around cell perimeter)
+  const edgeVerts=[];
   for(let i=0;i<n;i++){
     const a=poly[i].clone().lerp(cell.center,1-GAP).normalize().multiplyScalar(1+LIFT);
-    const b=poly[(i+1)%n].clone().lerp(cell.center,1-GAP).normalize().multiplyScalar(1+LIFT);
-    verts.push(c3.x,c3.y,c3.z, a.x,a.y,a.z, b.x,b.y,b.z);
+    edgeVerts.push(a.x,a.y,a.z);
   }
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
-  geo.computeVertexNormals();
 
-  let color,emissive,emissiveIntensity,roughness,metalness,opacity,transparent,depthWrite,blending;
-  if(isPatron){
-    color=C.patron.clone(); emissive=C.patronEm.clone(); emissiveIntensity=0.35; roughness=0.3; metalness=0.5;
-    opacity=1; transparent=true; depthWrite=false; blending=THREE.AdditiveBlending;
-  } else if(engine?.status==='live'){
-    color=C.live.clone(); emissive=C.liveEm.clone(); emissiveIntensity=0.4; roughness=0.25; metalness=0.65;
-    opacity=1; transparent=true; depthWrite=false; blending=THREE.AdditiveBlending;
-  } else if(engine?.status==='soon'){
-    color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.06; roughness=0.8; metalness=0.15;
-    opacity=0.45; transparent=true; depthWrite=false; blending=THREE.NormalBlending;
+  let mesh=null;
+
+  if(isLive||isPatron){
+    // Filled polygon — sits ON the Earth surface, additive gold glow
+    const c3=cell.center.clone().multiplyScalar(1+LIFT);
+    const verts=[];
+    for(let i=0;i<n;i++){
+      const a=new THREE.Vector3(edgeVerts[i*3],edgeVerts[i*3+1],edgeVerts[i*3+2]);
+      const b=new THREE.Vector3(edgeVerts[((i+1)%n)*3],edgeVerts[((i+1)%n)*3+1],edgeVerts[((i+1)%n)*3+2]);
+      verts.push(c3.x,c3.y,c3.z, a.x,a.y,a.z, b.x,b.y,b.z);
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+    geo.computeVertexNormals();
+    const color=isPatron?C.patron.clone():C.live.clone();
+    const emissive=isPatron?C.patronEm.clone():C.liveEm.clone();
+    mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+      color,emissive,emissiveIntensity:isPatron?0.35:0.4,
+      roughness:isPatron?0.3:0.25,metalness:isPatron?0.5:0.65,
+      transparent:true,opacity:1,depthWrite:false,blending:THREE.AdditiveBlending,
+      side:THREE.DoubleSide,
+    }));
+    GROUP.add(mesh); meshes.push(mesh);
+    const ci2=cellInfo.length;
+    cellInfo.push({engine,mesh,color:color.clone(),emissive:emissive.clone(),emissiveIntensity:isPatron?0.35:0.4,center:cell.center.clone(),isPatron});
+
+  } else if(isSoon){
+    // Edge outline only — thin line ring, no fill, Earth shows through
+    const lineGeo=new THREE.BufferGeometry();
+    lineGeo.setAttribute('position',new THREE.Float32BufferAttribute(edgeVerts,3));
+    const line=new THREE.LineLoop(lineGeo,new THREE.LineBasicMaterial({
+      color:0x1e4a60,transparent:true,opacity:0.5,depthWrite:false,
+    }));
+    GROUP.add(line);
+    cellInfo.push({engine,mesh:line,color:C.soon.clone(),emissive:C.soonEm.clone(),emissiveIntensity:0,center:cell.center.clone(),isPatron:false});
+
   } else {
-    color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05;
-    opacity=0.08; transparent=true; depthWrite=false; blending=THREE.NormalBlending;
+    // Empty cell — no geometry at all, Earth shows through completely
+    // Still push to cellInfo for hover/tooltip interaction
+    cellInfo.push({engine:null,mesh:null,color:C.empty.clone(),emissive:C.emptyEm.clone(),emissiveIntensity:0,center:cell.center.clone(),isPatron:false});
   }
-
-  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
-    color,emissive,emissiveIntensity,roughness,metalness,opacity,transparent,depthWrite,blending,
-    side:THREE.DoubleSide,
-  }));
-  GROUP.add(mesh); meshes.push(mesh);
-  cellInfo.push({engine,code:codes[ci],mesh,color:color.clone(),emissive:emissive.clone(),emissiveIntensity,center:cell.center.clone(),isPatron});
 });
 
 // Point lights for live + patron cells
@@ -921,14 +942,14 @@ function focusEngine(eng){
   const ci=engineToCell.get(eng.name); if(ci==null) return;
   restoreFocused(); focusedIdx=ci;
   const cd=cellInfo[ci];
-  cd.mesh.material.color.copy(C.focus); cd.mesh.material.emissive.copy(C.focus); cd.mesh.material.emissiveIntensity=1;
+  if(cd.mesh){cd.mesh.material.color.copy(C.focus); cd.mesh.material.emissive.copy(C.focus); cd.mesh.material.emissiveIntensity=1;}
   focusQ=new THREE.Quaternion().setFromUnitVectors(cd.center.clone().normalize(),new THREE.Vector3(0,0,1));
   targetCamZ=FOCUS_Z; autoRot=false;
 }
 function restoreFocused(){
   if(focusedIdx<0) return;
   const cd=cellInfo[focusedIdx];
-  cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;
+  if(cd.mesh){cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;}
   focusedIdx=-1;
 }
 function clearFocus(){ restoreFocused(); focusQ=null; targetCamZ=BASE_Z; }
@@ -984,17 +1005,17 @@ function updateHover(cx,cy){
   const newIdx=hits.length?meshes.indexOf(hits[0].object):-1;
   if(newIdx===hoveredIdx){if(newIdx>=0)posTip(cx,cy);return;}
   if(hoveredIdx>=0&&hoveredIdx!==focusedIdx){
-    const cd=cellInfo[hoveredIdx]; cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;
+    const cd=cellInfo[hoveredIdx]; if(cd.mesh){cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;}
   }
   hoveredIdx=newIdx;
   if(newIdx>=0){
     const cd=cellInfo[newIdx];
     if(cd.isPatron){
-      cd.mesh.material.color.copy(C.hoverP); cd.mesh.material.emissive.copy(C.hoverP); cd.mesh.material.emissiveIntensity=0.7;
+      if(cd.mesh){cd.mesh.material.color.copy(C.hoverP); cd.mesh.material.emissive.copy(C.hoverP); cd.mesh.material.emissiveIntensity=0.7;}
       showTip(cd,cx,cy); canvas.style.cursor='pointer';
     } else if(cd.engine){
       const hc=cd.engine.status==='live'?C.hoverL:C.hoverS;
-      cd.mesh.material.color.copy(hc); cd.mesh.material.emissive.copy(hc); cd.mesh.material.emissiveIntensity=0.7;
+      if(cd.mesh){cd.mesh.material.color.copy(hc); cd.mesh.material.emissive.copy(hc); cd.mesh.material.emissiveIntensity=0.7;}
       showTip(cd,cx,cy); canvas.style.cursor=cd.engine.url?'pointer':'default';
     } else { showTip(cd,cx,cy); canvas.style.cursor='default'; }
   } else { tooltip.style.display='none'; canvas.style.cursor='grab'; }
@@ -1212,12 +1233,11 @@ function animate(){
 
   // Cell pulse animations
   cellInfo.forEach((cd,i)=>{
+    if(!cd.mesh) return;
     if(cd.isPatron&&i!==hoveredIdx)
       cd.mesh.material.emissiveIntensity=.28+.10*Math.sin(t*0.8+i*.7);
     else if(cd.engine?.status==='live'&&i!==hoveredIdx&&i!==focusedIdx)
       cd.mesh.material.emissiveIntensity=.32+.12*Math.sin(t*1.4+i*.9);
-    else if(cd.engine?.status==='soon'&&i!==hoveredIdx)
-      cd.mesh.material.emissiveIntensity=.04+.04*Math.sin(t*.7+i*1.7);
   });
 
   updateConnLine();
