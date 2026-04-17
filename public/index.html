@@ -567,29 +567,38 @@ const GROUP=new THREE.Group(); scene.add(GROUP);
 
 // Earth sphere
 const earthGeo=new THREE.SphereGeometry(0.98,64,64);
-const earthMat=new THREE.MeshStandardMaterial({color:0x1a3a5c, roughness:0.85, metalness:0.0});
+const earthMat=new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.82, metalness:0.0});
 const earthMesh=new THREE.Mesh(earthGeo,earthMat);
 GROUP.add(earthMesh);
 
 // Earth texture loading — local files, no CORS
 (function loadEarthTextures(){
   const loader=new THREE.TextureLoader();
-  loader.load('/earth.jpg', tex=>{
-    tex.wrapS=THREE.RepeatWrapping;
-    earthMat.map=tex;
-    earthMat.color.setHex(0xffffff);
-    earthMat.roughness=0.82;
-    earthMat.needsUpdate=true;
-  });
-  // Cloud layer
-  loader.load('/clouds.png', tex=>{
-    tex.wrapS=THREE.RepeatWrapping;
-    const cloudMesh=new THREE.Mesh(
-      new THREE.SphereGeometry(1.008,64,64),
-      new THREE.MeshStandardMaterial({map:tex,transparent:true,opacity:0.35,depthWrite:false})
-    );
-    GROUP.add(cloudMesh);
-  });
+  loader.load('/earth.jpg',
+    tex=>{
+      tex.wrapS=THREE.RepeatWrapping;
+      tex.wrapT=THREE.RepeatWrapping;
+      earthMat.map=tex;
+      earthMat.needsUpdate=true;
+      console.log('earth.jpg loaded OK');
+    },
+    undefined,
+    err=>{ console.error('earth.jpg FAILED:', err); }
+  );
+  loader.load('/clouds.png',
+    tex=>{
+      tex.wrapS=THREE.RepeatWrapping;
+      tex.wrapT=THREE.RepeatWrapping;
+      const cloudMesh=new THREE.Mesh(
+        new THREE.SphereGeometry(1.008,64,64),
+        new THREE.MeshStandardMaterial({map:tex,transparent:true,opacity:0.35,depthWrite:false})
+      );
+      GROUP.add(cloudMesh);
+      console.log('clouds.png loaded OK');
+    },
+    undefined,
+    err=>{ console.error('clouds.png FAILED:', err); }
+  );
 })();
 
 // Atmosphere — inner glow (blue rim)
