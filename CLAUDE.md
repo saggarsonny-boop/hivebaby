@@ -36,7 +36,8 @@ Account: saggarsonny-boop
 ## Vercel Account
 Account: saggarsonny-3909s-projects (Hobby)
 All projects auto-deploy on git push to main.
-hivebaby deploy hook: curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_abTaG41xhWQ8kCm4dqT44fn6NQY0/hNU7KkMpOW"
+hivebaby deploy hook: BROKEN — use GitHub push to trigger auto-deploy
+hive-body-log deploy hook: curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_ZhRnfMdAJWuBxEKJWHooR6MlfDMc/RqzslhTGkA"
 
 ## Tech Stack
 - Next.js + TypeScript (all engines except hivebaby)
