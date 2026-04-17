@@ -10,19 +10,17 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: #060a14;
+  background: #000005;
   font-family: system-ui, -apple-system, sans-serif;
   color: #e8f4ff;
   overflow: hidden;
   height: 100vh;
 }
 
-/* Canvas: fixed full-viewport, always behind everything */
 #c {
   position: fixed;
   top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100vw; height: 100vh;
   z-index: 0;
   touch-action: none;
   cursor: grab;
@@ -30,18 +28,15 @@ body {
 }
 #c:active { cursor: grabbing; }
 
-/* Planet UI: fixed overlay */
 #planet-ui {
   position: fixed;
   top: 0; left: 0;
-  width: 100%;
-  height: 100vh;
+  width: 100%; height: 100vh;
   z-index: 10;
   pointer-events: none;
 }
 #planet-ui > * { pointer-events: auto; }
 
-/* Connection line SVG — sits between canvas and planet-ui */
 #conn-svg {
   position: fixed;
   top: 0; left: 0;
@@ -63,251 +58,173 @@ body {
   position: absolute;
   top: 24px;
   right: calc(50% - min(220px, calc(50vw - 20px)) - 38px);
-  width: 30px;
-  height: 30px;
-  background: rgba(4, 8, 18, 0.82);
-  border: 1px solid rgba(74, 127, 165, 0.22);
+  width: 30px; height: 30px;
+  background: rgba(4,8,18,0.82);
+  border: 1px solid rgba(74,127,165,0.22);
   border-radius: 50%;
-  color: rgba(74, 127, 165, 0.55);
-  font-size: 13px;
-  font-family: inherit;
+  color: rgba(74,127,165,0.55);
+  font-size: 13px; font-family: inherit;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   transition: border-color 0.2s, color 0.2s;
-  line-height: 1;
-  padding: 0;
+  line-height: 1; padding: 0;
 }
-#help-btn:hover {
-  border-color: rgba(74, 127, 165, 0.55);
-  color: rgba(74, 127, 165, 0.9);
-}
+#help-btn:hover { border-color: rgba(74,127,165,0.55); color: rgba(74,127,165,0.9); }
 
-/* Shared ambient pulse for search + footer */
 @keyframes orb-pulse {
-  0%, 100% {
-    box-shadow:
-      0 0 0 1px rgba(212,175,55,.09),
-      0 0 14px 2px rgba(212,175,55,.05),
-      0 0 36px 6px rgba(212,175,55,.02);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgba(212,175,55,.18),
-      0 0 20px 4px rgba(212,175,55,.10),
-      0 0 48px 8px rgba(212,175,55,.04);
-  }
+  0%,100% { box-shadow: 0 0 0 1px rgba(212,175,55,.09), 0 0 14px 2px rgba(212,175,55,.05), 0 0 36px 6px rgba(212,175,55,.02); }
+  50%      { box-shadow: 0 0 0 1px rgba(212,175,55,.18), 0 0 20px 4px rgba(212,175,55,.10), 0 0 48px 8px rgba(212,175,55,.04); }
 }
 
 #search {
   width: 100%;
-  background: rgba(4, 8, 18, 0.88);
-  border: 1px solid rgba(212, 175, 55, 0.32);
+  background: rgba(4,8,18,0.88);
+  border: 1px solid rgba(212,175,55,0.32);
   border-radius: 28px;
   padding: 13px 22px;
-  color: #e8f4ff;
-  font-size: 15px;
-  outline: none;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  color: #e8f4ff; font-size: 15px; outline: none;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   transition: border-color 0.2s;
   caret-color: #d4af37;
   animation: orb-pulse 4.5s ease-in-out infinite;
 }
-#search::placeholder { color: rgba(74, 127, 165, 0.88); }
+#search::placeholder { color: rgba(74,127,165,0.88); }
 #search:focus {
-  border-color: rgba(212, 175, 55, 0.45);
-  box-shadow:
-    0 0 0 1px rgba(212,175,55,.25),
-    0 0 22px 5px rgba(212,175,55,.13),
-    0 0 50px 10px rgba(212,175,55,.05);
+  border-color: rgba(212,175,55,0.45);
+  box-shadow: 0 0 0 1px rgba(212,175,55,.25), 0 0 22px 5px rgba(212,175,55,.13), 0 0 50px 10px rgba(212,175,55,.05);
   animation: none;
 }
 #results { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
 .result-item {
-  background: rgba(4, 8, 18, 0.92);
-  border: 1px solid rgba(74, 127, 165, 0.25);
-  border-radius: 14px;
-  padding: 11px 16px;
-  cursor: pointer;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  background: rgba(4,8,18,0.92);
+  border: 1px solid rgba(74,127,165,0.25);
+  border-radius: 14px; padding: 11px 16px; cursor: pointer;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  display: flex; align-items: center; gap: 12px;
   transition: border-color 0.15s;
 }
-.result-item:hover { border-color: rgba(212, 175, 55, 0.5); }
+.result-item:hover { border-color: rgba(212,175,55,0.5); }
 .result-item.soon { opacity: 0.6; cursor: default; }
 .result-name  { font-size: 14px; font-weight: 700; color: #e8f4ff; }
 .result-tagline { font-size: 12px; color: #4a7fa5; margin-top: 2px; }
 
-/* Tooltip */
 #tooltip {
-  position: fixed;
-  pointer-events: none;
-  z-index: 20;
-  display: none;
-  background: rgba(4, 8, 18, 0.94);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  border-radius: 14px;
-  padding: 13px 17px;
+  position: fixed; pointer-events: none; z-index: 20; display: none;
+  background: rgba(4,8,18,0.94);
+  border: 1px solid rgba(212,175,55,0.35);
+  border-radius: 14px; padding: 13px 17px;
   min-width: 160px; max-width: 230px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 }
-#tooltip.soon-tt { border-color: rgba(74, 127, 165, 0.3); }
+#tooltip.soon-tt { border-color: rgba(74,127,165,0.3); }
 #tooltip .tt-name    { font-size: 14px; font-weight: 700; color: #e8f4ff; }
 #tooltip .tt-tagline { font-size: 12px; color: #4a7fa5; margin-top: 5px; line-height: 1.5; }
 #tooltip .tt-code    { font-size: 11px; color: rgba(74,127,165,0.4); font-family: monospace; margin-top: 4px; letter-spacing:.1em; }
 #tooltip .tt-action  { font-size: 11px; color: rgba(212,175,55,.65); margin-top: 8px; }
 #tooltip .tt-action.soon-action { color: rgba(74,127,165,.5); }
 
-/* Footer: capsule with matching ambient pulse */
 #footer {
-  position: fixed;
-  bottom: 22px;
-  left: 50%;
+  position: fixed; bottom: 22px; left: 50%;
   transform: translateX(-50%);
-  z-index: 20;
-  white-space: nowrap;
-  font-size: 12px;
-  color: rgba(180, 200, 225, 0.75);
-  letter-spacing: 0.02em;
-  background: rgba(4, 8, 18, 0.72);
-  border: 1px solid rgba(212, 175, 55, 0.22);
-  border-radius: 100px;
-  padding: 8px 20px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  z-index: 20; white-space: nowrap; font-size: 12px;
+  color: rgba(180,200,225,0.75); letter-spacing: 0.02em;
+  background: rgba(4,8,18,0.72);
+  border: 1px solid rgba(212,175,55,0.22);
+  border-radius: 100px; padding: 8px 20px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   animation: orb-pulse 4.5s ease-in-out infinite 1.9s;
 }
 #footer span { pointer-events: none; }
 #footer a, #footer button {
-  color: rgba(180, 200, 225, 0.75);
-  text-decoration: none;
-  background: none;
-  border: none;
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  padding: 0;
-  pointer-events: auto;
-  transition: color 0.2s;
+  color: rgba(180,200,225,0.75); text-decoration: none;
+  background: none; border: none; font-size: 12px;
+  font-family: inherit; cursor: pointer; padding: 0;
+  pointer-events: auto; transition: color 0.2s;
 }
-#footer a:hover, #footer button:hover { color: rgba(180, 200, 225, 0.9); }
+#footer a:hover, #footer button:hover { color: rgba(180,200,225,0.9); }
 
-/* Support modal */
+/* Space HUD: ISS / Moon status */
+#space-hud {
+  position: fixed; top: 24px; left: 24px;
+  z-index: 20; display: flex; flex-direction: column; gap: 6px;
+  pointer-events: none;
+}
+.hud-pill {
+  background: rgba(4,8,18,0.75);
+  border: 1px solid rgba(74,127,165,0.2);
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 11px; color: rgba(74,127,165,0.7);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  letter-spacing: 0.03em; white-space: nowrap;
+}
+.hud-pill span { color: rgba(180,200,225,0.8); }
+
 #support-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(2, 4, 8, 0.75);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  align-items: center;
-  justify-content: center;
+  display: none; position: fixed; inset: 0; z-index: 50;
+  background: rgba(2,4,8,0.75);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  align-items: center; justify-content: center;
 }
 #support-modal.open { display: flex; }
 #support-panel {
-  background: rgba(6, 10, 20, 0.97);
-  border: 1px solid rgba(74, 127, 165, 0.25);
-  border-radius: 20px;
-  padding: 32px 28px 28px;
-  width: min(360px, calc(100vw - 40px));
-  position: relative;
+  background: rgba(6,10,20,0.97);
+  border: 1px solid rgba(74,127,165,0.25);
+  border-radius: 20px; padding: 32px 28px 28px;
+  width: min(360px, calc(100vw - 40px)); position: relative;
 }
 #support-panel p {
-  font-size: 13px;
-  color: rgba(74, 127, 165, 0.7);
-  margin-bottom: 20px;
-  line-height: 1.6;
+  font-size: 13px; color: rgba(74,127,165,0.7);
+  margin-bottom: 20px; line-height: 1.6;
 }
 #support-links { display: flex; flex-direction: column; gap: 10px; }
 .s-btn {
-  display: block;
-  padding: 14px 20px;
-  background: rgba(10, 20, 36, 0.8);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  border-radius: 12px;
-  color: #d4af37;
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  text-align: center;
+  display: block; padding: 14px 20px;
+  background: rgba(10,20,36,0.8);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 12px; color: #d4af37;
+  font-size: 15px; font-weight: 600;
+  text-decoration: none; text-align: center;
   transition: border-color 0.2s, background 0.2s;
 }
-.s-btn:hover { border-color: rgba(212, 175, 55, 0.6); background: rgba(20, 36, 60, 0.9); }
-.s-btn small { display: block; font-size: 11px; color: rgba(212, 175, 55, 0.45); font-weight: 400; margin-top: 2px; }
+.s-btn:hover { border-color: rgba(212,175,55,0.6); background: rgba(20,36,60,0.9); }
+.s-btn small { display: block; font-size: 11px; color: rgba(212,175,55,0.45); font-weight: 400; margin-top: 2px; }
 #support-close {
-  position: absolute;
-  top: 14px; right: 16px;
-  background: none; border: none;
-  color: rgba(74, 127, 165, 0.4);
-  font-size: 20px; cursor: pointer;
-  padding: 4px 8px; line-height: 1;
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; color: rgba(74,127,165,0.4);
+  font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1;
   transition: color 0.2s;
 }
-#support-close:hover { color: rgba(74, 127, 165, 0.8); }
+#support-close:hover { color: rgba(74,127,165,0.8); }
 
-/* First-visit side card */
 #welcome {
   position: fixed;
-  right: clamp(16px, 4vw, 48px);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 60;
+  right: clamp(16px, 4vw, 48px); top: 50%;
+  transform: translateY(-50%); z-index: 60;
   width: min(300px, calc(100vw - 32px));
-  background: rgba(4, 8, 18, 0.88);
-  border: 1px solid rgba(74, 127, 165, 0.22);
-  border-radius: 20px;
-  padding: 28px 26px 24px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  opacity: 1;
-  transition: opacity 0.45s ease, transform 0.45s ease;
+  background: rgba(4,8,18,0.88);
+  border: 1px solid rgba(74,127,165,0.22);
+  border-radius: 20px; padding: 28px 26px 24px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  display: flex; flex-direction: column; gap: 14px;
+  opacity: 1; transition: opacity 0.45s ease, transform 0.45s ease;
   box-shadow: 0 0 60px 0 rgba(0,0,0,0.5);
 }
 #welcome.hide {
-  opacity: 0;
-  transform: translateY(-50%) translateX(18px);
-  pointer-events: none;
+  opacity: 0; transform: translateY(-50%) translateX(18px); pointer-events: none;
 }
-#welcome h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #e8f4ff;
-  letter-spacing: -0.02em;
-}
-#welcome p {
-  font-size: 13px;
-  color: rgba(180, 200, 225, 0.58);
-  line-height: 1.75;
-}
+#welcome h2 { font-size: 18px; font-weight: 700; color: #e8f4ff; letter-spacing: -0.02em; }
+#welcome p  { font-size: 13px; color: rgba(180,200,225,0.58); line-height: 1.75; }
 #welcome-btn {
-  align-self: flex-start;
-  margin-top: 6px;
-  padding: 9px 22px;
-  background: rgba(12, 22, 40, 0.9);
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  border-radius: 100px;
-  color: #d4af37;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
+  align-self: flex-start; margin-top: 6px; padding: 9px 22px;
+  background: rgba(12,22,40,0.9);
+  border: 1px solid rgba(212,175,55,0.28);
+  border-radius: 100px; color: #d4af37;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
   transition: border-color 0.2s, color 0.2s;
 }
-#welcome-btn:hover { border-color: rgba(212, 175, 55, 0.6); color: #f0d060; }
+#welcome-btn:hover { border-color: rgba(212,175,55,0.6); color: #f0d060; }
 
-/* Post-dismissal search pulse */
 @keyframes search-nudge {
   0%   { box-shadow: 0 0 0 1px rgba(212,175,55,.09), 0 0 14px 2px rgba(212,175,55,.05); }
   40%  { box-shadow: 0 0 0 2px rgba(212,175,55,.5),  0 0 28px 8px rgba(212,175,55,.18), 0 0 60px 14px rgba(212,175,55,.08); }
@@ -315,7 +232,6 @@ body {
 }
 #search.nudge { animation: search-nudge 1.1s ease-out 2; }
 
-/* Toast */
 #toast {
   position: fixed; bottom: 52px; left: 50%;
   transform: translateX(-50%) translateY(80px);
@@ -333,24 +249,22 @@ body {
 </head>
 <body>
 
-<!-- Canvas: fixed behind everything -->
 <canvas id="c"></canvas>
-
-<!-- Connection line SVG overlay -->
 <svg id="conn-svg"></svg>
 
-<!-- Planet UI overlay -->
 <div id="planet-ui">
   <div id="search-wrap">
-    <input id="search" type="text"
-      placeholder=""
-      autocomplete="off" spellcheck="false">
+    <input id="search" type="text" placeholder="" autocomplete="off" spellcheck="false">
     <div id="results"></div>
   </div>
   <button id="help-btn" title="How does this work?">?</button>
 </div>
 
-<!-- Tooltip -->
+<div id="space-hud">
+  <div class="hud-pill" id="hud-iss">ISS <span id="iss-status">loading…</span></div>
+  <div class="hud-pill" id="hud-moon">Moon <span id="moon-status">calculating…</span></div>
+</div>
+
 <div id="tooltip">
   <div class="tt-name"></div>
   <div class="tt-tagline"></div>
@@ -358,12 +272,10 @@ body {
   <div class="tt-action"></div>
 </div>
 
-<!-- Footer capsule -->
 <div id="footer">
-  <a href="/about">A social experiment</a><span> · Free forever · </span><button onclick="openSupport()">Support</button><span> · </span><a href="/contribute">Contribute</a>
+  <a href="/about">A social experiment</a><span> · Free forever · </span><button onclick="openSupport()">Support</button><span> · </span><a href="/contribute">Contribute</a><span> · </span><a href="/patrons">Patrons</a>
 </div>
 
-<!-- Support modal -->
 <div id="support-modal" onclick="if(event.target===this)closeSupport()">
   <div id="support-panel">
     <button id="support-close" onclick="closeSupport()">×</button>
@@ -378,7 +290,6 @@ body {
 
 <div id="toast"></div>
 
-<!-- First-visit side card -->
 <div id="welcome">
   <h2>Welcome to Hive</h2>
   <p>Free tools, built by the people who need them. Search for an engine, suggest a new one, or tell us what could be better. The planet grows as the community does.</p>
@@ -387,45 +298,38 @@ body {
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script>
-// ─── First-visit side card ────────────────────────────────────────────────────
+// ─── Welcome card ─────────────────────────────────────────────────────────────
 function showWelcomeCard() {
-  // Re-create card if it was removed
   let card = document.getElementById('welcome');
   if (!card) {
-    card = document.createElement('div');
-    card.id = 'welcome';
+    card = document.createElement('div'); card.id = 'welcome';
     card.innerHTML = `<h2>Welcome to Hive</h2>
   <p>Free tools, built by the people who need them. Search for an engine, suggest a new one, or tell us what could be better. The planet grows as the community does.</p>
   <button id="welcome-btn">Got it</button>`;
     document.body.appendChild(card);
     wireWelcomeBtn(card);
-  } else {
-    card.classList.remove('hide');
-  }
+  } else { card.classList.remove('hide'); }
 }
-
 function wireWelcomeBtn(card) {
   card.querySelector('#welcome-btn').addEventListener('click', () => {
-    localStorage.setItem('hive_welcomed', '1');
+    localStorage.setItem('hive_welcomed','1');
     card.classList.add('hide');
     setTimeout(() => {
       card.remove();
       const s = document.getElementById('search');
       s.classList.add('nudge');
-      s.addEventListener('animationend', () => s.classList.remove('nudge'), { once: true });
+      s.addEventListener('animationend', () => s.classList.remove('nudge'), {once:true});
       setTimeout(() => {
         const f = document.getElementById('footer');
         f.style.transition = 'border-color 0.3s, box-shadow 0.3s';
         f.style.borderColor = 'rgba(212,175,55,0.45)';
         f.style.boxShadow = '0 0 22px 4px rgba(212,175,55,0.12)';
-        setTimeout(() => { f.style.borderColor = ''; f.style.boxShadow = ''; }, 1000);
+        setTimeout(() => { f.style.borderColor=''; f.style.boxShadow=''; }, 1000);
       }, 2400);
     }, 460);
   });
 }
-
 document.getElementById('help-btn').addEventListener('click', showWelcomeCard);
-
 (function(){
   const card = document.getElementById('welcome');
   if (localStorage.getItem('hive_welcomed')) { card.remove(); return; }
@@ -436,194 +340,488 @@ document.getElementById('help-btn').addEventListener('click', showWelcomeCard);
 (function(){
   const el = document.getElementById('search');
   const examples = [
-    "help me practice my job…",
-    "I want to get stronger…",
-    "I need more clarity…",
-    "what time is it in Tokyo?",
-    "I have something to confess…",
-    "train me like a surgeon…",
-    "help me say what I mean…",
+    "help me practice my job…","I want to get stronger…","I need more clarity…",
+    "what time is it in Tokyo?","I have something to confess…","train me like a surgeon…","help me say what I mean…",
   ];
-  let idx = 0, typing = false;
+  let idx=0, typing=false;
   function cycle() {
-    if (typing || document.activeElement === el) return;
-    el.placeholder = '';
-    const text = examples[idx % examples.length]; idx++;
-    let i = 0;
-    const t = setInterval(() => {
-      el.placeholder = text.slice(0, ++i);
-      if (i >= text.length) { clearInterval(t); setTimeout(erase, 2200); }
-    }, 42);
+    if(typing||document.activeElement===el) return;
+    el.placeholder='';
+    const text=examples[idx%examples.length]; idx++;
+    let i=0;
+    const t=setInterval(()=>{el.placeholder=text.slice(0,++i); if(i>=text.length){clearInterval(t);setTimeout(erase,2200);}},42);
   }
   function erase() {
-    if (typing || document.activeElement === el) return;
-    const text = el.placeholder;
-    let i = text.length;
-    const t = setInterval(() => {
-      el.placeholder = text.slice(0, --i);
-      if (i <= 0) { clearInterval(t); setTimeout(cycle, 600); }
-    }, 28);
+    if(typing||document.activeElement===el) return;
+    const text=el.placeholder; let i=text.length;
+    const t=setInterval(()=>{el.placeholder=text.slice(0,--i); if(i<=0){clearInterval(t);setTimeout(cycle,600);}},28);
   }
-  el.addEventListener('focus', () => { typing = true; el.placeholder = ''; });
-  el.addEventListener('blur',  () => { typing = false; setTimeout(cycle, 800); });
-  setTimeout(cycle, 1200);
+  el.addEventListener('focus',()=>{typing=true;el.placeholder='';});
+  el.addEventListener('blur',()=>{typing=false;setTimeout(cycle,800);});
+  setTimeout(cycle,1200);
 })();
 
 // ─── Support modal ────────────────────────────────────────────────────────────
 function openSupport()  { document.getElementById('support-modal').classList.add('open'); }
 function closeSupport() { document.getElementById('support-modal').classList.remove('open'); }
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeSupport(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSupport(); });
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 const toastEl = document.getElementById('toast');
 let toastTimer;
 function showToast(msg) {
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
+  toastEl.textContent=msg; toastEl.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+  toastTimer=setTimeout(()=>toastEl.classList.remove('show'),3200);
 }
 
-// ─── Guard: Three.js CDN ──────────────────────────────────────────────────────
+// ─── Guard ────────────────────────────────────────────────────────────────────
 const canvas = document.getElementById('c');
-if (typeof THREE === 'undefined') {
-  canvas.style.background = '#060a14';
-  document.body.insertAdjacentHTML('beforeend',
-    '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
-    'color:#4a7fa5;text-align:center;font-size:14px;z-index:999">' +
-    '🌐 Loading failed — please refresh.</div>');
+if (typeof THREE==='undefined') {
+  canvas.style.background='#000005';
+  document.body.insertAdjacentHTML('beforeend','<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#4a7fa5;text-align:center;font-size:14px;z-index:999">Loading failed — please refresh.</div>');
   throw new Error('Three.js CDN failed');
 }
 
 // ─── Engine Data ──────────────────────────────────────────────────────────────
 const ENGINES = [
-  { name:'HiveClock',      emoji:'🕐', status:'live', tagline:'The world\'s most humane clock.',          url:'https://hiveclock.hive.baby',           keywords:['clock','time','watch','prayer','world','analog','digital','schedule','timezone','hours','minutes','prayer time'] },
-  { name:'HiveClarity',    emoji:'💬', status:'live', tagline:'Say what you actually mean.',              url:'https://hiveclarity.hive.baby',          keywords:['clarity','clear','words','language','express','communicate','thoughts','articulate','confused','understand','explain','structured','thinking','write','rewrite'] },
-  { name:'HiveStrength',   emoji:'💪', status:'live', tagline:'Train with intelligence.',                 url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','stronger','exercise','lift','weights','muscle','body','health','gains','fit','build','physique'] },
-  { name:'HiveField',      emoji:'🎯', status:'live', tagline:'Practice your craft.',                    url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate','scenario','prepare','professional','nurse','doctor','teacher','coding','sales','presentation','role'] },
-  { name:'HiveBodyLog',   emoji:'🫀', status:'live', tagline:'Your health story. Log anything, find patterns.', url:'https://hivebodylog.hive.baby',  keywords:['health','body','symptoms','log','patterns','doctor','medical','wellness','pain','sleep','mood','medication','symptom','diary','clinical','supplement','energy','digestion'] },
-  { name:'HiveWeather',    emoji:'🌤', status:'soon', tagline:'Weather as it feels, not just as it is.', url:null,                                     keywords:['weather','forecast','climate','rain','sun','temperature','wind','cloudy','storm'] },
-  { name:'HiveConfession', emoji:'🤫', status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                     keywords:['confession','secret','anonymous','truth','share','admit','unsaid','say','burden'] },
+  { name:'HiveClock',    emoji:'🕐', status:'live', tagline:'The world\'s most humane clock.',          url:'https://hiveclock.hive.baby',          keywords:['clock','time','watch','prayer','world','analog','digital','schedule','timezone','hours','minutes','prayer time'] },
+  { name:'HiveClarity',  emoji:'💬', status:'live', tagline:'Say what you actually mean.',              url:'https://hiveclarity.hive.baby',         keywords:['clarity','clear','words','language','express','communicate','thoughts','articulate','confused','understand','explain','structured','thinking','write','rewrite'] },
+  { name:'HiveStrength', emoji:'💪', status:'live', tagline:'Train with intelligence.',                 url:'https://hivestrengthmastery.hive.baby', keywords:['fitness','workout','gym','training','strength','stronger','exercise','lift','weights','muscle','body','health','gains','fit','build','physique'] },
+  { name:'HiveField',    emoji:'🎯', status:'live', tagline:'Practice your craft.',                    url:'https://hivefield.hive.baby',           keywords:['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate','scenario','prepare','professional','nurse','doctor','teacher','coding','sales','presentation','role'] },
+  { name:'HiveBodyLog',  emoji:'🫀', status:'live', tagline:'Your health story. Log anything, find patterns.', url:'https://hivebodylog.hive.baby', keywords:['health','body','symptoms','log','patterns','doctor','medical','wellness','pain','sleep','mood','medication','symptom','diary','clinical','supplement','energy','digestion'] },
+  { name:'HiveWeather',  emoji:'🌤', status:'soon', tagline:'Weather as it feels, not just as it is.', url:null,                                    keywords:['weather','forecast','climate','rain','sun','temperature','wind','cloudy','storm'] },
+  { name:'HiveConfession',emoji:'🤫',status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                    keywords:['confession','secret','anonymous','truth','share','admit','unsaid','say','burden'] },
 ];
 
 // ─── Renderer ─────────────────────────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-const scene  = new THREE.Scene();
-scene.background = new THREE.Color(0x020408);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000005);
 
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 100);
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.01, 2000);
 camera.position.z = 2.4;
-const BASE_Z  = 2.4;
-const FOCUS_Z = 1.8;
-let targetCamZ = BASE_Z;
+const BASE_Z=2.4, FOCUS_Z=1.8;
+let targetCamZ=BASE_Z;
 
-// ─── Stars (with parallax) ────────────────────────────────────────────────────
-let starField;
+// ─── Astronomical Helpers ─────────────────────────────────────────────────────
+function julianDate(d) {
+  return d.getTime()/86400000 + 2440587.5;
+}
+function getSunPosition(jd) {
+  const n = jd - 2451545.0;
+  const L = (280.460 + 0.9856474*n) % 360;
+  const g = (357.528 + 0.9856003*n) * Math.PI/180;
+  const lambda = (L + 1.915*Math.sin(g) + 0.020*Math.sin(2*g)) * Math.PI/180;
+  const epsilon = 23.439 * Math.PI/180;
+  const ra  = Math.atan2(Math.cos(epsilon)*Math.sin(lambda), Math.cos(lambda));
+  const dec = Math.asin(Math.sin(epsilon)*Math.sin(lambda));
+  return {ra, dec};
+}
+function getMoonPosition(jd) {
+  const T = (jd - 2451545.0)/36525;
+  const L0 = (218.316 + 13.176396*T*(jd-2451545.0)) % 360;
+  const M  = (134.963 + 13.064993*(jd-2451545.0)) % 360;
+  const F  = (93.272  + 13.229350*(jd-2451545.0)) % 360;
+  const Mr = M*Math.PI/180, Fr=F*Math.PI/180;
+  const lon = (L0 + 6.289*Math.sin(Mr)) % 360;
+  const lat = 5.128 * Math.sin(Fr);
+  const lonR = lon*Math.PI/180, latR=lat*Math.PI/180;
+  const ra  = Math.atan2(Math.sin(lonR)*Math.cos(0.4090928) - Math.tan(latR)*Math.sin(0.4090928), Math.cos(lonR));
+  const dec = Math.asin(Math.sin(latR)*Math.cos(0.4090928) + Math.cos(latR)*Math.sin(0.4090928)*Math.sin(lonR));
+  const sunLon = (280.460+0.9856474*(jd-2451545.0))*Math.PI/180;
+  const phase = 0.5*(1-Math.cos(lonR-sunLon));
+  return {ra, dec, phase};
+}
+function equatorialToVec3(ra, dec, r) {
+  return new THREE.Vector3(
+    r*Math.cos(dec)*Math.cos(ra),
+    r*Math.sin(dec),
+    -r*Math.cos(dec)*Math.sin(ra)
+  );
+}
+
+// ─── Real Star Field (HYG Database async) ────────────────────────────────────
+let starPoints;
 (function(){
-  const n = 2500, p = new Float32Array(n*3);
-  for (let i=0;i<n;i++){
-    const t=2*Math.PI*Math.random(), f=Math.acos(2*Math.random()-1), r=28+Math.random()*22;
+  const n=3000, p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){
+    const t=2*Math.PI*Math.random(), f=Math.acos(2*Math.random()-1), r=900;
     p[i*3]=r*Math.sin(f)*Math.cos(t); p[i*3+1]=r*Math.sin(f)*Math.sin(t); p[i*3+2]=r*Math.cos(f);
   }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
-  starField = new THREE.Points(g, new THREE.PointsMaterial({color:0xffffff,size:.055,sizeAttenuation:true,transparent:true,opacity:.6}));
-  scene.add(starField);
+  starPoints=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:0.7,sizeAttenuation:true,transparent:true,opacity:0.55}));
+  scene.add(starPoints);
 })();
 
-let mouseNX = 0, mouseNY = 0;
-window.addEventListener('mousemove', e => {
-  mouseNX = (e.clientX / window.innerWidth  - 0.5);
-  mouseNY = (e.clientY / window.innerHeight - 0.5);
-}, { passive: true });
+(async function loadHYG(){
+  try {
+    const r=await fetch('https://raw.githubusercontent.com/astronexus/HYG-Database/master/hyg/v3/hyg.csv');
+    if(!r.ok) return;
+    const txt=await r.text();
+    const lines=txt.split(/\r?\n/);
+    const h=lines[0].split(',');
+    const iRA=h.indexOf('ra'), iDec=h.indexOf('dec'), iMag=h.indexOf('mag'), iCI=h.indexOf('ci');
+    const pos=[], col=[], sz=[];
+    for(let i=1;i<lines.length;i++){
+      const c=lines[i].split(','); if(!c[iMag]) continue;
+      const mag=parseFloat(c[iMag]); if(isNaN(mag)||mag>6.5) continue;
+      const ra=parseFloat(c[iRA])*15, dec=parseFloat(c[iDec]);
+      if(isNaN(ra)||isNaN(dec)) continue;
+      const v=equatorialToVec3(ra*Math.PI/180, dec*Math.PI/180, 900);
+      pos.push(v.x,v.y,v.z);
+      const ci=parseFloat(c[iCI])||0;
+      let r3=1,g3=1,b3=1;
+      if(ci<-0.3){r3=0.7;g3=0.8;b3=1.0;}
+      else if(ci<0.3){r3=0.9;g3=0.95;b3=1.0;}
+      else if(ci<0.8){r3=1.0;g3=0.97;b3=0.85;}
+      else if(ci<1.4){r3=1.0;g3=0.82;b3=0.6;}
+      else{r3=1.0;g3=0.6;b3=0.4;}
+      col.push(r3,g3,b3);
+      sz.push(Math.max(0.35,(7-mag)*0.3));
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+    geo.setAttribute('size',new THREE.Float32BufferAttribute(sz,1));
+    const mat=new THREE.ShaderMaterial({
+      vertexShader:`attribute float size;attribute vec3 color;varying vec3 vColor;
+        void main(){vColor=color;vec4 mv=modelViewMatrix*vec4(position,1.0);
+        gl_PointSize=size*(650.0/-mv.z);gl_Position=projectionMatrix*mv;}`,
+      fragmentShader:`varying vec3 vColor;
+        void main(){vec2 uv=gl_PointCoord-0.5;float r=length(uv)*2.0;
+        if(r>1.0)discard;float a=(1.0-r);a=a*a;gl_FragColor=vec4(vColor,a);}`,
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
+    });
+    const newS=new THREE.Points(geo,mat);
+    scene.remove(starPoints); scene.add(newS); starPoints=newS;
+  } catch(e){ console.warn('HYG load failed:',e); }
+})();
+
+// ─── Constellation Lines (d3-celestial async) ────────────────────────────────
+(async function loadConstellations(){
+  try {
+    const r=await fetch('https://raw.githubusercontent.com/ofrohn/d3-celestial/master/data/constellations.lines.json');
+    if(!r.ok) return;
+    const data=await r.json();
+    const verts=[];
+    for(const f of data.features){
+      if(f.geometry.type!=='MultiLineString') continue;
+      for(const seg of f.geometry.coordinates){
+        for(let i=0;i<seg.length-1;i++){
+          const v1=equatorialToVec3(seg[i][0]*Math.PI/180,   seg[i][1]*Math.PI/180,   880);
+          const v2=equatorialToVec3(seg[i+1][0]*Math.PI/180, seg[i+1][1]*Math.PI/180, 880);
+          verts.push(v1.x,v1.y,v1.z, v2.x,v2.y,v2.z);
+        }
+      }
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+    scene.add(new THREE.LineSegments(geo,new THREE.LineBasicMaterial({
+      color:0x2244aa, transparent:true, opacity:0.18, depthWrite:false, blending:THREE.AdditiveBlending
+    })));
+  } catch(e){ console.warn('Constellations load failed:',e); }
+})();
+
+let mouseNX=0, mouseNY=0;
+window.addEventListener('mousemove',e=>{
+  mouseNX=(e.clientX/window.innerWidth-0.5);
+  mouseNY=(e.clientY/window.innerHeight-0.5);
+},{passive:true});
 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0x0a1828, 4));
-const keyLight = new THREE.DirectionalLight(0xfff5e0, 3.5);
-keyLight.position.set(4, 3, 4);
-scene.add(keyLight);
-const rimLight = new THREE.DirectionalLight(0x1a3060, 1.5);
-rimLight.position.set(-4, -1, -3);
-scene.add(rimLight);
+scene.add(new THREE.AmbientLight(0x0a1828,3));
+const keyLight=new THREE.DirectionalLight(0xfff5e0,3.0);
+keyLight.position.set(4,3,4); scene.add(keyLight);
+const rimLight=new THREE.DirectionalLight(0x1a3060,1.2);
+rimLight.position.set(-4,-1,-3); scene.add(rimLight);
+
+// ─── Planet Group ─────────────────────────────────────────────────────────────
+const GROUP=new THREE.Group(); scene.add(GROUP);
+
+// Earth base sphere (dark ocean, shows while texture loads)
+const earthGeo=new THREE.SphereGeometry(0.98,64,64);
+const earthMat=new THREE.MeshStandardMaterial({color:0x0a1428, roughness:0.85, metalness:0.0});
+const earthMesh=new THREE.Mesh(earthGeo,earthMat);
+GROUP.add(earthMesh);
+
+// NASA GIBS Earth texture (6-hour cache)
+(function loadEarthTexture(){
+  function gibsDate(){
+    const d=new Date(); d.setDate(d.getDate()-2);
+    return d.toISOString().split('T')[0];
+  }
+  const date=gibsDate();
+  const cacheKey='hive_gibs_date';
+  const url=`https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=MODIS_Terra_CorrectedReflectance_TrueColor&CRS=CRS:84&WIDTH=2048&HEIGHT=1024&FORMAT=image/jpeg&BBOX=-180,-90,180,90&TIME=${date}`;
+  const loader=new THREE.TextureLoader();
+  loader.crossOrigin='anonymous';
+  loader.load(url, tex=>{
+    tex.wrapS=THREE.RepeatWrapping;
+    earthMat.map=tex;
+    earthMat.color.setHex(0xffffff);
+    earthMat.roughness=0.78;
+    earthMat.needsUpdate=true;
+    localStorage.setItem(cacheKey,date);
+  }, undefined, err=>console.warn('GIBS texture failed:',err));
+})();
+
+// City lights texture for night side (NASA Black Marble)
+const nightMat=new THREE.MeshStandardMaterial({color:0x000000,roughness:1,metalness:0,emissive:new THREE.Color(0xffd080),emissiveIntensity:0});
+const nightMesh=new THREE.Mesh(new THREE.SphereGeometry(0.979,64,64),nightMat);
+GROUP.add(nightMesh);
+(function loadNightTexture(){
+  const url='https://eoimages.gsfc.nasa.gov/images/imagerecords/79000/79765/dnb_land_ocean_ice.2012.3600x1800_geo.tif';
+  // Use a more reliable smaller version
+  const loader=new THREE.TextureLoader();
+  loader.crossOrigin='anonymous';
+  loader.load(
+    'https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg',
+    tex=>{ nightMat.emissiveMap=tex; nightMat.emissiveIntensity=0.0; nightMat.needsUpdate=true; },
+    undefined, ()=>{}
+  );
+})();
+
+// Atmosphere — inner glow (blue rim)
+GROUP.add(new THREE.Mesh(
+  new THREE.SphereGeometry(1.02,64,64),
+  new THREE.ShaderMaterial({
+    vertexShader:`varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+    fragmentShader:`varying vec3 vNormal;void main(){float i=pow(1.0-abs(dot(vNormal,vec3(0,0,1))),3.5);gl_FragColor=vec4(0.12,0.45,1.0,i*0.6);}`,
+    side:THREE.FrontSide, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false
+  })
+));
+// Atmosphere — outer haze
+GROUP.add(new THREE.Mesh(
+  new THREE.SphereGeometry(1.08,64,64),
+  new THREE.ShaderMaterial({
+    vertexShader:`varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+    fragmentShader:`varying vec3 vNormal;void main(){float i=pow(1.0-abs(dot(vNormal,vec3(0,0,1))),5.5);gl_FragColor=vec4(0.06,0.25,0.85,i*0.28);}`,
+    side:THREE.BackSide, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false
+  })
+));
+
+// ─── Moon ─────────────────────────────────────────────────────────────────────
+let moonMesh;
+(function(){
+  const jd=julianDate(new Date());
+  const mp=getMoonPosition(jd);
+  const moonPos=equatorialToVec3(mp.ra, mp.dec, 8.0);
+  const moonGeo=new THREE.SphereGeometry(0.08,32,32);
+  const moonMat=new THREE.MeshStandardMaterial({color:0xccccaa, roughness:0.9, metalness:0.0});
+  moonMesh=new THREE.Mesh(moonGeo,moonMat);
+  moonMesh.position.copy(moonPos);
+  scene.add(moonMesh);
+
+  // Moon glow
+  const glowMesh=new THREE.Mesh(
+    new THREE.SphereGeometry(0.095,32,32),
+    new THREE.ShaderMaterial({
+      vertexShader:`varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+      fragmentShader:`varying vec3 vNormal;void main(){float i=pow(1.0-abs(dot(vNormal,vec3(0,0,1))),2.5);gl_FragColor=vec4(0.8,0.85,1.0,i*0.3);}`,
+      side:THREE.FrontSide, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false
+    })
+  );
+  glowMesh.position.copy(moonPos);
+  scene.add(glowMesh);
+
+  const phase=mp.phase;
+  const phaseStr=phase<0.05?'New':phase<0.25?'Waxing Crescent':phase<0.55?'Quarter':phase<0.75?'Waxing Gibbous':phase<0.95?'Full':'Waning';
+  document.getElementById('moon-status').textContent=phaseStr+' '+(Math.round(phase*100))+'%';
+})();
+
+// ─── ISS Position (CelesTrak TLE) ────────────────────────────────────────────
+let issMesh=null, issOrbitLine=null;
+const issEl=document.getElementById('iss-status');
+
+function sgp4Simple(tle1, tle2, minsFromEpoch) {
+  // Minimal SGP4 for ISS position estimation
+  // Parse TLE
+  const inc  = parseFloat(tle2.substring(8,16))*Math.PI/180;
+  const raan = parseFloat(tle2.substring(17,25))*Math.PI/180;
+  const eccStr = '0.'+tle2.substring(26,33).trim();
+  const ecc  = parseFloat(eccStr);
+  const argp = parseFloat(tle2.substring(34,42))*Math.PI/180;
+  const M0   = parseFloat(tle2.substring(43,51))*Math.PI/180;
+  const n    = parseFloat(tle2.substring(52,63)); // rev/day
+  const nRad = n*2*Math.PI/1440; // rad/min
+  const a = Math.pow(398600.4418/Math.pow(nRad,2), 1/3); // km
+  const M = M0 + nRad*minsFromEpoch;
+  // Solve Kepler's equation iteratively
+  let E=M;
+  for(let i=0;i<10;i++) E=M+ecc*Math.sin(E);
+  const nu=2*Math.atan2(Math.sqrt(1+ecc)*Math.sin(E/2), Math.sqrt(1-ecc)*Math.cos(E/2));
+  const r=a*(1-ecc*Math.cos(E));
+  // Position in orbital plane
+  const px=r*Math.cos(nu), py=r*Math.sin(nu);
+  // Rotate to ECI
+  const cosO=Math.cos(raan),sinO=Math.sin(raan);
+  const cosW=Math.cos(argp),sinW=Math.sin(argp);
+  const cosI=Math.cos(inc),sinI=Math.sin(inc);
+  const x=px*(cosO*cosW-sinO*sinW*cosI)+py*(-cosO*sinW-sinO*cosW*cosI);
+  const y=px*(sinO*cosW+cosO*sinW*cosI)+py*(-sinO*sinW+cosO*cosW*cosI);
+  const z=px*(sinW*sinI)+py*(cosW*sinI);
+  // ECI to lat/lon (approximate — ignores Earth rotation for simplicity)
+  const rNorm=Math.sqrt(x*x+y*y+z*z);
+  const lat=Math.asin(z/rNorm);
+  const lon=Math.atan2(y,x);
+  return {lat,lon,alt:rNorm-6371};
+}
+
+function issECItoScene(lat, lon, alt) {
+  const r=(6371+alt)/6371*0.98;
+  return new THREE.Vector3(
+    r*Math.cos(lat)*Math.cos(lon),
+    r*Math.sin(lat),
+    -r*Math.cos(lat)*Math.sin(lon)
+  );
+}
+
+async function loadISS(){
+  try {
+    const r=await fetch('https://celestrak.org/SATCAT/query.php?CATNR=25544&FORMAT=TLE');
+    if(!r.ok) throw new Error('ISS TLE fetch failed');
+    const txt=await r.text();
+    const lines=txt.trim().split('\n');
+    if(lines.length<3) throw new Error('Bad TLE');
+    const tle1=lines[1], tle2=lines[2];
+
+    // Parse epoch from TLE line 1
+    const epochStr=tle1.substring(18,32).trim();
+    const epochYear=parseInt(epochStr.substring(0,2));
+    const fullYear=epochYear>57?1900+epochYear:2000+epochYear;
+    const dayOfYear=parseFloat(epochStr.substring(2));
+    const epochDate=new Date(fullYear,0,1);
+    epochDate.setTime(epochDate.getTime()+(dayOfYear-1)*86400000);
+    const minsFromEpoch=(Date.now()-epochDate.getTime())/60000;
+
+    const pos=sgp4Simple(tle1,tle2,minsFromEpoch);
+    const scenePos=issECItoScene(pos.lat,pos.lon,pos.alt);
+
+    if(!issMesh){
+      const issGeo=new THREE.SphereGeometry(0.006,8,8);
+      const issMat=new THREE.MeshBasicMaterial({color:0xffffff});
+      issMesh=new THREE.Mesh(issGeo,issMat);
+      scene.add(issMesh);
+
+      // ISS glow dot
+      const issGlow=new THREE.Mesh(
+        new THREE.SphereGeometry(0.009,8,8),
+        new THREE.ShaderMaterial({
+          vertexShader:`varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+          fragmentShader:`varying vec3 vNormal;void main(){float i=pow(1.0-abs(dot(vNormal,vec3(0,0,1))),2.0);gl_FragColor=vec4(1.0,1.0,0.8,i*0.5);}`,
+          side:THREE.FrontSide, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false
+        })
+      );
+      issMesh.add(issGlow);
+    }
+    issMesh.position.copy(scenePos);
+
+    // Update HUD
+    const latDeg=(pos.lat*180/Math.PI).toFixed(1);
+    const lonDeg=(pos.lon*180/Math.PI).toFixed(1);
+    issEl.textContent=`${latDeg}°, ${lonDeg}° · ${Math.round(pos.alt)}km`;
+  } catch(e){
+    console.warn('ISS load failed:',e);
+    issEl.textContent='unavailable';
+  }
+}
+loadISS();
+setInterval(loadISS,30000);
+
+// ─── Day/Night Terminator ─────────────────────────────────────────────────────
+// Sun directional light position updates to real sun position
+const sunLight=new THREE.DirectionalLight(0xfff8e7,2.2);
+scene.add(sunLight);
+
+function updateSunPosition(){
+  const jd=julianDate(new Date());
+  const sun=getSunPosition(jd);
+  const sv=equatorialToVec3(sun.ra,sun.dec,10);
+  sunLight.position.copy(sv);
+  keyLight.position.copy(sv.clone().multiplyScalar(0.4));
+
+  // Night side city lights: show on hemisphere away from sun
+  if(nightMat.emissiveMap){
+    // emissiveIntensity varies; actual per-fragment terminator is in texture shading
+    nightMat.emissiveIntensity=0.15;
+  }
+}
+updateSunPosition();
+setInterval(updateSunPosition,60000);
 
 // ─── Geodesic Dual ────────────────────────────────────────────────────────────
-function buildDual(detail) {
-  const geo = new THREE.IcosahedronGeometry(1, detail);
-  const pos = geo.attributes.position;
-  const idx = geo.index;
-
-  const SCALE = 1e5, kmap = new Map(), uniq = [], remap = new Int32Array(pos.count);
-  for (let i = 0; i < pos.count; i++) {
-    const x=pos.getX(i), y=pos.getY(i), z=pos.getZ(i);
+function buildDual(detail){
+  const geo=new THREE.IcosahedronGeometry(1,detail);
+  const pos=geo.attributes.position, idx=geo.index;
+  const SCALE=1e5, kmap=new Map(), uniq=[], remap=new Int32Array(pos.count);
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i);
     const L=Math.sqrt(x*x+y*y+z*z)||1;
     const k=`${Math.round(x/L*SCALE)},${Math.round(y/L*SCALE)},${Math.round(z/L*SCALE)}`;
-    if (kmap.has(k)) { remap[i]=kmap.get(k); }
-    else { kmap.set(k,uniq.length); remap[i]=uniq.length; uniq.push(new THREE.Vector3(x/L,y/L,z/L)); }
+    if(kmap.has(k)){remap[i]=kmap.get(k);}
+    else{kmap.set(k,uniq.length);remap[i]=uniq.length;uniq.push(new THREE.Vector3(x/L,y/L,z/L));}
   }
-
-  const triN = idx ? idx.count : pos.count;
-  const getI = idx ? i => idx.getX(i) : i => i;
-  const faces = [];
-  for (let i = 0; i < triN; i += 3) {
-    const a=remap[getI(i)], b=remap[getI(i+1)], c=remap[getI(i+2)];
-    if (a===b||b===c||a===c) continue;
-    faces.push({ centroid: new THREE.Vector3().addVectors(uniq[a],uniq[b]).add(uniq[c]).divideScalar(3).normalize(), verts:[a,b,c] });
+  const triN=idx?idx.count:pos.count;
+  const getI=idx?i=>idx.getX(i):i=>i;
+  const faces=[];
+  for(let i=0;i<triN;i+=3){
+    const a=remap[getI(i)],b=remap[getI(i+1)],c=remap[getI(i+2)];
+    if(a===b||b===c||a===c) continue;
+    faces.push({centroid:new THREE.Vector3().addVectors(uniq[a],uniq[b]).add(uniq[c]).divideScalar(3).normalize(),verts:[a,b,c]});
   }
-
-  const vf = new Map();
-  faces.forEach((f,fi) => f.verts.forEach(vi => { if(!vf.has(vi)) vf.set(vi,[]); vf.get(vi).push(fi); }));
-
-  return uniq.map((center, vi) => {
-    const fis = vf.get(vi)||[];
-    if (fis.length < 3) return null;
-    let up = new THREE.Vector3(0,1,0);
-    if (Math.abs(center.dot(up)) > 0.99) up.set(1,0,0);
-    const T = new THREE.Vector3().crossVectors(up, center).normalize();
-    const B = new THREE.Vector3().crossVectors(center, T);
-    const poly = fis
-      .map(fi => { const d=faces[fi].centroid.clone().sub(center); return {c:faces[fi].centroid.clone(),a:Math.atan2(d.dot(B),d.dot(T))}; })
-      .sort((a,b) => a.a-b.a)
-      .map(x => x.c);
-    return { center: center.clone(), polygon: poly };
+  const vf=new Map();
+  faces.forEach((f,fi)=>f.verts.forEach(vi=>{if(!vf.has(vi))vf.set(vi,[]);vf.get(vi).push(fi);}));
+  return uniq.map((center,vi)=>{
+    const fis=vf.get(vi)||[];
+    if(fis.length<3) return null;
+    let up=new THREE.Vector3(0,1,0);
+    if(Math.abs(center.dot(up))>0.99) up.set(1,0,0);
+    const T=new THREE.Vector3().crossVectors(up,center).normalize();
+    const B=new THREE.Vector3().crossVectors(center,T);
+    const poly=fis.map(fi=>{const d=faces[fi].centroid.clone().sub(center);return{c:faces[fi].centroid.clone(),a:Math.atan2(d.dot(B),d.dot(T))};}).sort((a,b)=>a.a-b.a).map(x=>x.c);
+    return{center:center.clone(),polygon:poly};
   }).filter(Boolean);
 }
 
-const cells = buildDual(3);
+const cells=buildDual(3);
 
-// ─── Assign engines to cells ──────────────────────────────────────────────────
-const cellToEngine = new Map(), engineToCell = new Map();
-const step = Math.floor(cells.length / ENGINES.length);
-ENGINES.forEach((e, i) => { const ci = 12 + i*step; cellToEngine.set(ci,e); engineToCell.set(e.name,ci); });
+// ─── Cell Assignment ──────────────────────────────────────────────────────────
+const cellToEngine=new Map(), engineToCell=new Map();
+const step=Math.floor(cells.length/ENGINES.length);
+ENGINES.forEach((e,i)=>{const ci=12+i*step; cellToEngine.set(ci,e); engineToCell.set(e.name,ci);});
 
-const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-const codes = cells.map(() => ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]);
+// Patronage cell — last engine slot + offset
+const PATRON_CELL_IDX = 12 + ENGINES.length*step + Math.floor(step*0.5);
+
+const ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ';
+const codes=cells.map(()=>ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]);
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
-const C = {
-  live:    new THREE.Color(0xd4af37),
-  liveEm:  new THREE.Color(0xb8920a),
-  soon:    new THREE.Color(0x1e3a4a),
-  soonEm:  new THREE.Color(0x0d2535),
-  empty:   new THREE.Color(0x080f1c),
-  emptyEm: new THREE.Color(0x030810),
-  hoverL:  new THREE.Color(0xffe066),
-  hoverS:  new THREE.Color(0x4a9fbf),
-  focus:   new THREE.Color(0xffffff),
+const C={
+  live:   new THREE.Color(0xd4af37), liveEm:  new THREE.Color(0xb8920a),
+  soon:   new THREE.Color(0x1e3a4a), soonEm:  new THREE.Color(0x0d2535),
+  empty:  new THREE.Color(0x060d18), emptyEm: new THREE.Color(0x020810),
+  patron: new THREE.Color(0xc87f2a), patronEm:new THREE.Color(0x8a4a0a),
+  hoverL: new THREE.Color(0xffe066), hoverS:  new THREE.Color(0x4a9fbf),
+  hoverP: new THREE.Color(0xffaa44),
+  focus:  new THREE.Color(0xffffff),
 };
 
 // ─── Build Cell Meshes ────────────────────────────────────────────────────────
-const GROUP = new THREE.Group(); scene.add(GROUP);
-const LIFT=0.007, GAP=0.91;
+const LIFT=0.022, GAP=0.91;
 const meshes=[], cellInfo=[];
 
-cells.forEach((cell, ci) => {
-  const engine = cellToEngine.get(ci)||null;
+cells.forEach((cell,ci)=>{
+  const engine=cellToEngine.get(ci)||null;
+  const isPatron=(ci===PATRON_CELL_IDX);
   const poly=cell.polygon, n=poly.length;
   const c3=cell.center.clone().multiplyScalar(1+LIFT);
   const verts=[];
-  for (let i=0;i<n;i++){
+  for(let i=0;i<n;i++){
     const a=poly[i].clone().lerp(cell.center,1-GAP).normalize().multiplyScalar(1+LIFT);
     const b=poly[(i+1)%n].clone().lerp(cell.center,1-GAP).normalize().multiplyScalar(1+LIFT);
     verts.push(c3.x,c3.y,c3.z, a.x,a.y,a.z, b.x,b.y,b.z);
@@ -633,119 +831,141 @@ cells.forEach((cell, ci) => {
   geo.computeVertexNormals();
 
   let color,emissive,emissiveIntensity,roughness,metalness;
-  if (engine?.status==='live')  { color=C.live.clone();  emissive=C.liveEm.clone();  emissiveIntensity=0.4;  roughness=0.25; metalness=0.65; }
-  else if (engine?.status==='soon') { color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.06; roughness=0.8;  metalness=0.15; }
-  else { color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05; }
+  if(isPatron){
+    color=C.patron.clone(); emissive=C.patronEm.clone(); emissiveIntensity=0.35; roughness=0.3; metalness=0.5;
+  } else if(engine?.status==='live'){
+    color=C.live.clone(); emissive=C.liveEm.clone(); emissiveIntensity=0.4; roughness=0.25; metalness=0.65;
+  } else if(engine?.status==='soon'){
+    color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.06; roughness=0.8; metalness=0.15;
+  } else {
+    color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness:0.95; metalness=0.05;
+  }
 
-  const mesh=new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide}));
+  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+    color,emissive,emissiveIntensity,roughness,metalness,
+    side:THREE.DoubleSide,
+    blending: (engine?.status==='live'||isPatron)?THREE.AdditiveBlending:THREE.NormalBlending,
+    transparent: (engine?.status==='live'||isPatron),
+    depthWrite: !(engine?.status==='live'||isPatron),
+  }));
   GROUP.add(mesh); meshes.push(mesh);
-  cellInfo.push({engine, code:codes[ci], mesh, color:color.clone(), emissive:emissive.clone(), emissiveIntensity, center:cell.center.clone()});
+  cellInfo.push({engine,code:codes[ci],mesh,color:color.clone(),emissive:emissive.clone(),emissiveIntensity,center:cell.center.clone(),isPatron});
 });
 
-GROUP.add(new THREE.Mesh(new THREE.SphereGeometry(0.98,64,64), new THREE.MeshStandardMaterial({color:0x020810,roughness:.95,metalness:.05})));
-
-cellInfo.forEach(cd => {
-  if (cd.engine?.status==='live') {
-    const l=new THREE.PointLight(0xd4af37,1.2,1.8); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
+// Point lights for live + patron cells
+cellInfo.forEach(cd=>{
+  if(cd.engine?.status==='live'){
+    const l=new THREE.PointLight(0xd4af37,0.9,1.6); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
+  }
+  if(cd.isPatron){
+    const l=new THREE.PointLight(0xc87f2a,0.7,1.4); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
   }
 });
 
-function makeSprite(text, color, alpha, fs) {
+// Cell label sprites
+function makeSprite(text,color,alpha,fs){
   const c=document.createElement('canvas'); c.width=256; c.height=80;
-  const ctx=c.getContext('2d');
-  ctx.clearRect(0,0,256,80); ctx.globalAlpha=alpha; ctx.fillStyle=color;
+  const ctx=c.getContext('2d'); ctx.clearRect(0,0,256,80);
+  ctx.globalAlpha=alpha; ctx.fillStyle=color;
   ctx.font=`bold ${fs}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
   if(alpha>.5){ctx.shadowColor=color; ctx.shadowBlur=10;}
   ctx.fillText(text,128,40);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false}));
   return sp;
 }
-cellInfo.forEach(cd => {
-  if(!cd.engine) return;
-  const short=cd.engine.name.replace('Hive','').toUpperCase()||cd.engine.name;
-  const sp=makeSprite(short, cd.engine.status==='live'?'#f5d060':'#2a6a88', cd.engine.status==='live'?.9:.55, 28);
-  sp.scale.set(0.22,0.07,1); sp.position.copy(cd.center).multiplyScalar(1.045); GROUP.add(sp);
+cellInfo.forEach(cd=>{
+  if(cd.isPatron){
+    const sp=makeSprite('PATRONS','#c87f2a',0.85,22);
+    sp.scale.set(0.22,0.07,1); sp.position.copy(cd.center).multiplyScalar(1.045); GROUP.add(sp);
+  } else if(cd.engine){
+    const short=cd.engine.name.replace('Hive','').toUpperCase()||cd.engine.name;
+    const sp=makeSprite(short,cd.engine.status==='live'?'#f5d060':'#2a6a88',cd.engine.status==='live'?.9:.55,28);
+    sp.scale.set(0.22,0.07,1); sp.position.copy(cd.center).multiplyScalar(1.045); GROUP.add(sp);
+  }
 });
 
-// ─── Rotation ─────────────────────────────────────────────────────────────────
+// ─── Breathing animation ──────────────────────────────────────────────────────
+// GROUP scale will pulse 0.2% every 4 seconds in animate()
+
+// ─── Rotation & Interaction ───────────────────────────────────────────────────
 const YA=new THREE.Vector3(0,1,0), XA=new THREE.Vector3(1,0,0);
 let dragging=false, autoRot=true;
 let px=0, py=0, dx=0, dy=0, downX=0, downY=0;
 const DAMP=0.91;
 let focusQ=null, focusedIdx=-1;
 
-function focusEngine(eng) {
+function focusEngine(eng){
   const ci=engineToCell.get(eng.name); if(ci==null) return;
-  restoreFocused();
-  focusedIdx=ci;
+  restoreFocused(); focusedIdx=ci;
   const cd=cellInfo[ci];
   cd.mesh.material.color.copy(C.focus); cd.mesh.material.emissive.copy(C.focus); cd.mesh.material.emissiveIntensity=1;
-  focusQ=new THREE.Quaternion().setFromUnitVectors(cd.center.clone().normalize(), new THREE.Vector3(0,0,1));
+  focusQ=new THREE.Quaternion().setFromUnitVectors(cd.center.clone().normalize(),new THREE.Vector3(0,0,1));
   targetCamZ=FOCUS_Z; autoRot=false;
 }
-function restoreFocused() {
+function restoreFocused(){
   if(focusedIdx<0) return;
   const cd=cellInfo[focusedIdx];
   cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;
   focusedIdx=-1;
 }
-function clearFocus() { restoreFocused(); focusQ=null; targetCamZ=BASE_Z; }
+function clearFocus(){ restoreFocused(); focusQ=null; targetCamZ=BASE_Z; }
 
-canvas.addEventListener('pointerdown', e=>{
-  dragging=true; px=downX=e.clientX; py=downY=e.clientY; dx=dy=0; clearFocus();
-});
-canvas.addEventListener('pointermove', e=>{
+canvas.addEventListener('pointerdown',e=>{dragging=true;px=downX=e.clientX;py=downY=e.clientY;dx=dy=0;clearFocus();});
+canvas.addEventListener('pointermove',e=>{
   if(!dragging) return;
   dx=(e.clientX-px)*.006; dy=(e.clientY-py)*.006;
   GROUP.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(XA,dy)).multiply(new THREE.Quaternion().setFromAxisAngle(YA,dx));
   px=e.clientX; py=e.clientY;
 });
-canvas.addEventListener('pointerup', e=>{
+canvas.addEventListener('pointerup',e=>{
   if(!dragging) return; dragging=false;
   if(Math.hypot(e.clientX-downX,e.clientY-downY)<6) handleClick(e.clientX,e.clientY);
 });
-canvas.addEventListener('pointercancel',()=>{ dragging=false; });
-canvas.addEventListener('wheel', e=>{ targetCamZ=Math.max(1.2,Math.min(5.0,targetCamZ+e.deltaY*.004)); },{passive:true});
+canvas.addEventListener('pointercancel',()=>{dragging=false;});
+canvas.addEventListener('wheel',e=>{targetCamZ=Math.max(1.2,Math.min(5.0,targetCamZ+e.deltaY*.004));},{passive:true});
 
 let pinch0=null;
-canvas.addEventListener('touchstart',e=>{ if(e.touches.length===2) pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); },{passive:true});
-canvas.addEventListener('touchmove',e=>{ if(e.touches.length!==2||!pinch0) return; const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); targetCamZ=Math.max(1.5,Math.min(6.5,targetCamZ-(d-pinch0)*.012)); pinch0=d; },{passive:true});
-canvas.addEventListener('touchend',()=>{ pinch0=null; });
+canvas.addEventListener('touchstart',e=>{if(e.touches.length===2)pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);},{passive:true});
+canvas.addEventListener('touchmove',e=>{if(e.touches.length!==2||!pinch0)return;const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);targetCamZ=Math.max(1.5,Math.min(6.5,targetCamZ-(d-pinch0)*.012));pinch0=d;},{passive:true});
+canvas.addEventListener('touchend',()=>{pinch0=null;});
 
-// ─── Raycasting & hover ───────────────────────────────────────────────────────
+// ─── Raycasting & Hover ───────────────────────────────────────────────────────
 const raycaster=new THREE.Raycaster(), mNDC=new THREE.Vector2();
 const tooltip=document.getElementById('tooltip');
 let hoveredIdx=-1;
 
-function toNDC(cx,cy){ mNDC.x=(cx/window.innerWidth)*2-1; mNDC.y=-(cy/window.innerHeight)*2+1; }
+function toNDC(cx,cy){mNDC.x=(cx/window.innerWidth)*2-1;mNDC.y=-(cy/window.innerHeight)*2+1;}
 
-// Click with zoom-in animation before navigation
 function handleClick(cx,cy){
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
   const h=raycaster.intersectObjects(meshes); if(!h.length) return;
   const cd=cellInfo[meshes.indexOf(h[0].object)];
-  if(cd.engine?.url) {
-    targetCamZ = 0.95;
-    setTimeout(() => { window.location.href = cd.engine.url; }, 580);
+  if(cd.isPatron){
+    window.location.href='/patrons';
+  } else if(cd.engine?.url){
+    targetCamZ=0.95;
+    setTimeout(()=>{ window.location.href=cd.engine.url; },580);
   }
 }
 
-canvas.addEventListener('mousemove',e=>{ if(!dragging) updateHover(e.clientX,e.clientY); });
-canvas.addEventListener('touchstart',e=>{ if(e.touches.length===1) updateHover(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+canvas.addEventListener('mousemove',e=>{if(!dragging)updateHover(e.clientX,e.clientY);});
+canvas.addEventListener('touchstart',e=>{if(e.touches.length===1)updateHover(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
 
 function updateHover(cx,cy){
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
   const hits=raycaster.intersectObjects(meshes);
   const newIdx=hits.length?meshes.indexOf(hits[0].object):-1;
-  if(newIdx===hoveredIdx){ if(newIdx>=0) posTip(cx,cy); return; }
-
+  if(newIdx===hoveredIdx){if(newIdx>=0)posTip(cx,cy);return;}
   if(hoveredIdx>=0&&hoveredIdx!==focusedIdx){
     const cd=cellInfo[hoveredIdx]; cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;
   }
   hoveredIdx=newIdx;
   if(newIdx>=0){
     const cd=cellInfo[newIdx];
-    if(cd.engine){
+    if(cd.isPatron){
+      cd.mesh.material.color.copy(C.hoverP); cd.mesh.material.emissive.copy(C.hoverP); cd.mesh.material.emissiveIntensity=0.7;
+      showTip(cd,cx,cy); canvas.style.cursor='pointer';
+    } else if(cd.engine){
       const hc=cd.engine.status==='live'?C.hoverL:C.hoverS;
       cd.mesh.material.color.copy(hc); cd.mesh.material.emissive.copy(hc); cd.mesh.material.emissiveIntensity=0.7;
       showTip(cd,cx,cy); canvas.style.cursor=cd.engine.url?'pointer':'default';
@@ -754,7 +974,13 @@ function updateHover(cx,cy){
 }
 
 function showTip(cd,cx,cy){
-  if(cd.engine){
+  if(cd.isPatron){
+    tooltip.className='';
+    tooltip.querySelector('.tt-name').textContent='✦  Support Hive';
+    tooltip.querySelector('.tt-tagline').textContent='The community keeping Hive free. See our patrons.';
+    tooltip.querySelector('.tt-code').textContent='';
+    const a=tooltip.querySelector('.tt-action'); a.textContent='View patrons →'; a.className='tt-action';
+  } else if(cd.engine){
     tooltip.className=cd.engine.status==='soon'?'soon-tt':'';
     tooltip.querySelector('.tt-name').textContent=cd.engine.emoji+'  '+cd.engine.name;
     tooltip.querySelector('.tt-tagline').textContent=cd.engine.tagline;
@@ -768,7 +994,7 @@ function showTip(cd,cx,cy){
   tooltip.style.display='block'; posTip(cx,cy);
 }
 function posTip(cx,cy){
-  let tx=cx+18, ty=cy-70;
+  let tx=cx+18,ty=cy-70;
   if(tx+240>window.innerWidth-8) tx=cx-258;
   if(ty<8) ty=cy+18;
   if(ty+120>window.innerHeight-8) ty=window.innerHeight-128;
@@ -776,102 +1002,76 @@ function posTip(cx,cy){
 }
 
 // ─── Search-to-cell connection line ──────────────────────────────────────────
-const connSvg = document.getElementById('conn-svg');
+const connSvg=document.getElementById('conn-svg');
 let connLine=null, connDot=null, connGrad=null;
-
-function initConnLine() {
+function initConnLine(){
   const ns='http://www.w3.org/2000/svg';
   const defs=document.createElementNS(ns,'defs');
   connGrad=document.createElementNS(ns,'linearGradient');
   connGrad.id='conn-grad'; connGrad.setAttribute('gradientUnits','userSpaceOnUse');
-  const s1=document.createElementNS(ns,'stop'); s1.setAttribute('offset','0%');   s1.setAttribute('stop-color','rgba(212,175,55,0)');
+  const s1=document.createElementNS(ns,'stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color','rgba(212,175,55,0)');
   const s2=document.createElementNS(ns,'stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','rgba(212,175,55,0.28)');
   connGrad.append(s1,s2); defs.appendChild(connGrad); connSvg.appendChild(defs);
-
   connLine=document.createElementNS(ns,'line');
-  connLine.setAttribute('stroke','url(#conn-grad)');
-  connLine.setAttribute('stroke-width','1');
-  connLine.setAttribute('stroke-dasharray','3 8');
-  connLine.setAttribute('stroke-linecap','round');
-  connLine.style.display='none';
-  connSvg.appendChild(connLine);
-
-  connDot=document.createElementNS(ns,'circle');
-  connDot.setAttribute('r','2.5');
-  connDot.setAttribute('fill','rgba(212,175,55,0.2)');
-  connDot.setAttribute('stroke','rgba(212,175,55,0.45)');
-  connDot.setAttribute('stroke-width','0.5');
-  connDot.style.display='none';
-  connSvg.appendChild(connDot);
+  connLine.setAttribute('stroke','url(#conn-grad)'); connLine.setAttribute('stroke-width','1');
+  connLine.setAttribute('stroke-dasharray','3 8'); connLine.setAttribute('stroke-linecap','round');
+  connLine.style.display='none'; connSvg.appendChild(connLine);
+  connDot=document.createElementNS(ns,'circle'); connDot.setAttribute('r','2.5');
+  connDot.setAttribute('fill','rgba(212,175,55,0.2)'); connDot.setAttribute('stroke','rgba(212,175,55,0.45)');
+  connDot.setAttribute('stroke-width','0.5'); connDot.style.display='none'; connSvg.appendChild(connDot);
 }
-
-function updateConnLine() {
+function updateConnLine(){
   if(!connLine) initConnLine();
-  if(focusedIdx<0 || !searchEl.value.trim()) {
-    connLine.style.display='none'; connDot.style.display='none'; return;
-  }
+  if(focusedIdx<0||!searchEl.value.trim()){connLine.style.display='none';connDot.style.display='none';return;}
   const cd=cellInfo[focusedIdx];
   const wp=cd.center.clone().applyQuaternion(GROUP.quaternion);
-  if(wp.z<0) { connLine.style.display='none'; connDot.style.display='none'; return; }
-
+  if(wp.z<0){connLine.style.display='none';connDot.style.display='none';return;}
   const proj=wp.clone().project(camera);
-  const cx=(proj.x+1)/2*window.innerWidth;
-  const cy=(-proj.y+1)/2*window.innerHeight;
+  const cx=(proj.x+1)/2*window.innerWidth, cy=(-proj.y+1)/2*window.innerHeight;
   const sr=searchEl.getBoundingClientRect();
   const sx=sr.left+sr.width/2, sy=sr.bottom+2;
-
-  connGrad.setAttribute('x1',sx); connGrad.setAttribute('y1',sy);
-  connGrad.setAttribute('x2',cx); connGrad.setAttribute('y2',cy);
-  connLine.setAttribute('x1',sx); connLine.setAttribute('y1',sy);
-  connLine.setAttribute('x2',cx); connLine.setAttribute('y2',cy);
-  connDot.setAttribute('cx',cx);  connDot.setAttribute('cy',cy);
-  connLine.style.display=''; connDot.style.display='';
+  connGrad.setAttribute('x1',sx);connGrad.setAttribute('y1',sy);connGrad.setAttribute('x2',cx);connGrad.setAttribute('y2',cy);
+  connLine.setAttribute('x1',sx);connLine.setAttribute('y1',sy);connLine.setAttribute('x2',cx);connLine.setAttribute('y2',cy);
+  connDot.setAttribute('cx',cx);connDot.setAttribute('cy',cy);
+  connLine.style.display='';connDot.style.display='';
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 function scoreEng(q,e){
   const words=q.toLowerCase().trim().split(/\s+/).filter(w=>w.length>=3);
   const corpus=(e.name+' '+e.tagline+' '+e.keywords.join(' ')).toLowerCase();
-  const corpusWords=corpus.split(/\s+/);
+  const cw=corpus.split(/\s+/);
   let t=0;
   for(const w of words){
     if(e.name.toLowerCase().includes(w)){t+=80;continue;}
     if(corpus.includes(w)){t+=40;continue;}
-    if(corpusWords.some(cw=>cw.startsWith(w))){t+=20;continue;}
-    if(corpusWords.some(cw=>w.startsWith(cw)&&cw.length>=4)){t+=20;continue;}
+    if(cw.some(c=>c.startsWith(w))){t+=20;continue;}
+    if(cw.some(c=>w.startsWith(c)&&c.length>=4)){t+=20;continue;}
   }
   return t;
 }
-function getBestMatch(q){
-  return ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s)[0];
-}
+function getBestMatch(q){ return ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s)[0]; }
 
 const searchEl=document.getElementById('search'), resultsEl=document.getElementById('results');
 searchEl.addEventListener('input',()=>{
   const q=searchEl.value.trim(); resultsEl.innerHTML='';
-  if(!q){ clearFocus(); autoRot=true; return; }
+  if(!q){clearFocus();autoRot=true;return;}
   const all=ENGINES.map(e=>({e,s:scoreEng(q,e)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
   if(all.length) focusEngine(all[0].e);
   for(const {e} of all.slice(0,5)){
     const div=document.createElement('div');
     div.className='result-item'+(e.status==='soon'?' soon':'');
     div.innerHTML=`<span style="font-size:22px;line-height:1">${e.emoji}</span><div><div class="result-name">${e.name}</div><div class="result-tagline">${e.tagline}</div></div>`;
-    div.addEventListener('mousedown',()=>{ if(e.url) window.location.href=e.url; else{focusEngine(e);resultsEl.innerHTML='';searchEl.blur();} });
+    div.addEventListener('mousedown',()=>{if(e.url)window.location.href=e.url;else{focusEngine(e);resultsEl.innerHTML='';searchEl.blur();}});
     resultsEl.appendChild(div);
   }
 });
 searchEl.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    const best=getBestMatch(searchEl.value.trim());
-    if(best?.e.url) window.location.href=best.e.url;
-  }
-  if(e.key==='Escape'){ searchEl.value=''; clearFocus(); autoRot=true; searchEl.blur(); }
+  if(e.key==='Enter'){const best=getBestMatch(searchEl.value.trim());if(best?.e.url)window.location.href=best.e.url;}
+  if(e.key==='Escape'){searchEl.value='';clearFocus();autoRot=true;searchEl.blur();}
 });
-searchEl.addEventListener('blur',()=>{
-  setTimeout(()=>{ resultsEl.innerHTML=''; },200);
-  if(!searchEl.value.trim()){ clearFocus(); autoRot=true; }
-});
-searchEl.addEventListener('focus',()=>{ autoRot=false; });
+searchEl.addEventListener('blur',()=>{setTimeout(()=>{resultsEl.innerHTML='';},200);if(!searchEl.value.trim()){clearFocus();autoRot=true;}});
+searchEl.addEventListener('focus',()=>{autoRot=false;});
 
 // ─── Animate ──────────────────────────────────────────────────────────────────
 const clock=new THREE.Clock();
@@ -879,6 +1079,7 @@ function animate(){
   requestAnimationFrame(animate);
   const t=clock.getElapsedTime();
 
+  // Rotation
   if(focusQ&&!dragging){
     GROUP.quaternion.slerp(focusQ,.055);
   } else if(autoRot&&!dragging){
@@ -890,21 +1091,27 @@ function animate(){
 
   camera.position.z+=(targetCamZ-camera.position.z)*.06;
 
-  // Star parallax — subtle depth shift on mouse move
-  starField.position.x += (mouseNX*0.38 - starField.position.x) * 0.04;
-  starField.position.y += (-mouseNY*0.38 - starField.position.y) * 0.04;
+  // Breathing planet (0.2% scale pulse every 4 seconds)
+  const breathe=1+0.002*Math.sin(t*Math.PI*0.5);
+  GROUP.scale.setScalar(breathe);
 
+  // Star parallax
+  if(starPoints){
+    starPoints.position.x+=(mouseNX*0.3-starPoints.position.x)*0.03;
+    starPoints.position.y+=(-mouseNY*0.3-starPoints.position.y)*0.03;
+  }
+
+  // Cell pulse animations
   cellInfo.forEach((cd,i)=>{
-    if(cd.engine?.status==='live' && i!==hoveredIdx && i!==focusedIdx)
-      cd.mesh.material.emissiveIntensity = .32+.12*Math.sin(t*1.4+i*.9);
-    // Coming soon: slow deep-teal pulse
-    else if(cd.engine?.status==='soon' && i!==hoveredIdx)
-      cd.mesh.material.emissiveIntensity = .04+.04*Math.sin(t*.7+i*1.7);
+    if(cd.isPatron&&i!==hoveredIdx)
+      cd.mesh.material.emissiveIntensity=.28+.10*Math.sin(t*0.8+i*.7);
+    else if(cd.engine?.status==='live'&&i!==hoveredIdx&&i!==focusedIdx)
+      cd.mesh.material.emissiveIntensity=.32+.12*Math.sin(t*1.4+i*.9);
+    else if(cd.engine?.status==='soon'&&i!==hoveredIdx)
+      cd.mesh.material.emissiveIntensity=.04+.04*Math.sin(t*.7+i*1.7);
   });
 
-  // Connection line from search box to focused cell
   updateConnLine();
-
   renderer.render(scene,camera);
 }
 animate();
