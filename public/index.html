@@ -160,6 +160,7 @@ body {
   -webkit-backdrop-filter: blur(16px);
 }
 #tooltip.soon-tt { border-color: rgba(74, 127, 165, 0.3); }
+#tooltip.patron-tt { border-color: rgba(184, 115, 51, 0.5); }
 #tooltip .tt-name    { font-size: 14px; font-weight: 700; color: #e8f4ff; }
 #tooltip .tt-tagline { font-size: 12px; color: #4a7fa5; margin-top: 5px; line-height: 1.5; }
 #tooltip .tt-code    { font-size: 11px; color: rgba(74,127,165,0.4); font-family: monospace; margin-top: 4px; letter-spacing:.1em; }
@@ -360,7 +361,7 @@ body {
 
 <!-- Footer capsule -->
 <div id="footer">
-  <a href="/about">A social experiment</a><span> · Free forever · </span><button onclick="openSupport()">Support</button><span> · </span><a href="/contribute">Contribute</a>
+  <a href="/about">A social experiment</a><span> · </span><a href="/contribute">Contribute</a><span> · </span><a href="/patrons">Patrons</a><span> · </span><a href="/privacy">Privacy</a>
 </div>
 
 <!-- Support modal -->
@@ -504,6 +505,7 @@ const ENGINES = [
   { name:'HiveBodyLog',   emoji:'🫀', status:'live', tagline:'Your health story. Log anything, find patterns.', url:'https://hivebodylog.hive.baby',  keywords:['health','body','symptoms','log','patterns','doctor','medical','wellness','pain','sleep','mood','medication','symptom','diary','clinical','supplement','energy','digestion'] },
   { name:'HiveWeather',    emoji:'🌤', status:'soon', tagline:'Weather as it feels, not just as it is.', url:null,                                     keywords:['weather','forecast','climate','rain','sun','temperature','wind','cloudy','storm'] },
   { name:'HiveConfession', emoji:'🤫', status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                     keywords:['confession','secret','anonymous','truth','share','admit','unsaid','say','burden'] },
+  { name:'Patrons',        emoji:'🐝', status:'patron', tagline:'The people who keep Hive free.',         url:'https://hive.baby/patrons',              keywords:['support','patron','donate','contribute','fund','community'] },
 ];
 
 // ─── Renderer ────────────────────────────────────────────────────────────────
@@ -861,6 +863,8 @@ const C = {
   hoverL:  new THREE.Color(0xffe066),
   hoverS:  new THREE.Color(0x4a9fbf),
   focus:   new THREE.Color(0xffffff),
+  patron:  new THREE.Color(0xb87333),
+  patronEm:new THREE.Color(0x7a3808),
 };
 
 // ─── Build Cell Meshes ────────────────────────────────────────────────────────
@@ -882,8 +886,9 @@ cells.forEach((cell, ci) => {
   geo.computeVertexNormals();
 
   let color,emissive,emissiveIntensity,roughness,metalness;
-  if (engine?.status==='live')  { color=C.live.clone();  emissive=C.liveEm.clone();  emissiveIntensity=0.4;  roughness=0.25; metalness=0.65; }
-  else if (engine?.status==='soon') { color=C.soon.clone(); emissive=C.soonEm.clone(); emissiveIntensity=0.06; roughness=0.8;  metalness=0.15; }
+  if (engine?.status==='live')    { color=C.live.clone();   emissive=C.liveEm.clone();   emissiveIntensity=0.4;  roughness=0.25; metalness=0.65; }
+  else if (engine?.status==='soon')   { color=C.soon.clone();   emissive=C.soonEm.clone();   emissiveIntensity=0.06; roughness=0.8;  metalness=0.15; }
+  else if (engine?.status==='patron') { color=C.patron.clone(); emissive=C.patronEm.clone(); emissiveIntensity=0.55; roughness=0.3;  metalness=0.6;  }
   else { color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05; }
 
   const isEmpty = !engine;
@@ -900,6 +905,9 @@ cellInfo.forEach(cd => {
   if (cd.engine?.status==='live') {
     const l=new THREE.PointLight(0xd4af37,1.2,1.8); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
   }
+  if (cd.engine?.status==='patron') {
+    const l=new THREE.PointLight(0xb87333,1.0,1.6); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
+  }
 });
 
 function makeSprite(text, color, alpha, fs) {
@@ -914,8 +922,11 @@ function makeSprite(text, color, alpha, fs) {
 }
 cellInfo.forEach(cd => {
   if(!cd.engine) return;
-  const short=cd.engine.name.replace('Hive','').toUpperCase()||cd.engine.name;
-  const sp=makeSprite(short, cd.engine.status==='live'?'#f5d060':'#2a6a88', cd.engine.status==='live'?.9:.55, 28);
+  let label, color, alpha;
+  if (cd.engine.status==='patron') { label='PATRONS'; color='#c8822a'; alpha=0.95; }
+  else if (cd.engine.status==='live') { label=cd.engine.name.replace('Hive','').toUpperCase(); color='#f5d060'; alpha=0.9; }
+  else { label=cd.engine.name.replace('Hive','').toUpperCase(); color='#2a6a88'; alpha=0.55; }
+  const sp=makeSprite(label, color, alpha, 28);
   sp.scale.set(0.22,0.07,1); sp.position.copy(cd.center).multiplyScalar(1.045); GROUP.add(sp);
 });
 
@@ -1007,8 +1018,8 @@ function updateHover(cx,cy){
 
 function showTip(cd,cx,cy){
   if(cd.engine){
-    tooltip.className=cd.engine.status==='soon'?'soon-tt':'';
-    tooltip.querySelector('.tt-name').textContent=cd.engine.emoji+'  '+cd.engine.name;
+    tooltip.className=cd.engine.status==='soon'?'soon-tt':cd.engine.status==='patron'?'patron-tt':'';
+    tooltip.querySelector('.tt-name').textContent=cd.engine.emoji+'  '+(cd.engine.status==='patron'?'Support Hive':cd.engine.name);
     tooltip.querySelector('.tt-tagline').textContent=cd.engine.tagline;
     tooltip.querySelector('.tt-code').textContent='';
     const a=tooltip.querySelector('.tt-action'); a.textContent=cd.engine.url?'Click to open →':'Coming soon'; a.className='tt-action'+(cd.engine.url?'':' soon-action');
@@ -1175,6 +1186,8 @@ function animate(){
       cd.mesh.material.emissiveIntensity = .32+.12*Math.sin(t*1.4+i*.9);
     else if(cd.engine?.status==='soon' && i!==hoveredIdx)
       cd.mesh.material.emissiveIntensity = .04+.04*Math.sin(t*.7+i*1.7);
+    else if(cd.engine?.status==='patron' && i!==hoveredIdx)
+      cd.mesh.material.emissiveIntensity = .40+.20*Math.sin(t*0.5);  // slow, warm pulse
   });
 
   updateConnLine();
