@@ -111,9 +111,15 @@ On first visit (localStorage, never repeats), after welcome card:
 
 ### II. Document & Knowledge Engines
 
-**Universal Document (UD)** — Next-gen document format replacing PDF. AI-native, semantic, revocable, expiring, multilingual (MLLR), audience-adaptive clarity layers, chain of custody, provenance. NOT executable. Repo: universal-document. Domain: ud.hive.baby. iSDK: free <400KB embeddable reader.
+**Universal Document (UD)** — Next-gen document format replacing PDF. AI-native, semantic, revocable, expiring, multilingual (MLLR), audience-adaptive clarity layers, chain of custody, provenance. NOT executable. Repo: universal-document. Domain: ud.hive.baby (landing BUILT, awaiting deploy — Vercel daily limit hit 2026-04-18, auto-deploys on reset). iSDK: free <400KB embeddable reader. Planet cell: single "Universal Document" gold cell → ud.hive.baby. Whitepapers: 3 .uds files in repo/whitepapers/.
 
-**UD Converter** — LIVE at converter.hive.baby. Converts DOCX, TXT, MD → .uds (iSDF v0.1.0). Stateless, no storage, instant download. Repo: universal-document/apps/converter. HivePlanetButton + HiveFooter deployed. Planet cell added. DNS: converter.hive.baby CNAME → cname.vercel-dns.com.
+**UD Ecosystem — app status (2026-04-18):**
+- **UD Hub (ud.hive.baby)** — Landing built (apps/landing). CNAME live. Deploy pending Vercel limit reset.
+- **UD Converter (converter.hive.baby)** — LIVE. Converts DOCX/TXT/MD → .uds (iSDF v0.1.0). CNAME confirmed.
+- **UD Reader** — LIVE at universal-document.vercel.app. Cross-linked to converter.
+- **UD Creator (creator.hive.baby)** — BUILT (apps/creator). Rich-text block editor, exports .uds with metadata/expiry/auth. CNAME live. Deploy pending.
+- **UD Validator (validator.hive.baby)** — BUILT (apps/validator). Upload .uds → verify structure, show schema version/encryption/expiry/signature/language count/word count. CNAME live. Deploy pending.
+- **UD Signer** — PLANNED (iSDF v0.2). Cryptographic signing, tamper-evident revocation.
 
 **MLLR (Multilingual Language Ribbon)** — Enterprise translation layer in UD. One document, any language. NOT "Machine Learning Legal Reasoner" — naming error, ignore that.
 
