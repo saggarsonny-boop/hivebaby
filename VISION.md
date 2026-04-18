@@ -159,11 +159,12 @@ On first visit (localStorage, never repeats), after welcome card:
 
 ### IMMEDIATE — THIS WEEK
 - [ ] WY C Corp formation (Sonny action — online via Wyoming Secretary of State, ~$100)
-- [ ] IP Agreement: Sonny personally licenses all UD IP to WY C Corp. Reference: UD specification, GitHub repos, USPTO filings. One-page document, attorney optional.
-- [ ] USPTO trademark: "Universal Document" wordmark + UD logo, class 42. File in Sonny's name. Assign to Corp after formation.
-- [ ] USPTO certification mark: "UD Certified" mark. Same visual as trademark. Additional statement of compliance standards.
+- [ ] IP Agreement: Sonny personally licenses all UD IP to WY C Corp. One-page document. Attorney-as-correspondent approach: attorney's details on cover letter only — Sonny signs everything directly. USPTO allows this. Keeps filing costs low.
+- [ ] USPTO trademark: "Universal Document" wordmark + UD logo, class 42. File in Sonny's name. WY C Corp listed as exclusive licensee. Assign to Corp post-formation.
+- [ ] USPTO certification mark: "UD Certified" mark. Attorney-as-correspondent. Compliance standards statement drafted by Sonny, reviewed by attorney.
+- [ ] IP licensing: WY C Corp licenses UD IP to Sonny (UAE entity) for international use. UAE entity collects international revenue. Transfer TM + CM registrations to UAE entity on expatriation (target 2028).
 - [ ] Apache 2.0 license + NOTICE file applied to iSDK repo. NOTICE text: "Implements the Universal Document specification. Specification by Sonny Saggar MD. ud.hive.baby"
-- [ ] UD logo SVG (Option A: Playfair Display, #1e2d3d slate, white letterforms) deployed to all UD properties
+- [x] UD logo SVG (#1e2d3d slate, white Georgia serif letterforms) deployed to all UD properties — converter, reader, creator, validator, landing
 - [ ] Add IP/TM footnote to white paper final version
 - [ ] Stripe products created for Converter Pro ($29/mo, $249/yr)
 - [ ] Converter Vercel env vars added after quota reset 15:20 UTC Apr 19
@@ -177,6 +178,7 @@ On first visit (localStorage, never repeats), after welcome card:
 - [ ] Quiet deploys only — no announcements
 - [ ] UD ecosystem fully live: Reader, Converter (with Pro tier), Validator, Creator (on deck messaging)
 - [ ] Converter Pro Stripe fully wired
+- [ ] ud.hive.baby/certified — live page: explains UD Certified mark, shows badge SVG + download link, QB auto-responds with badge files + PDF compliance checklist, logs applicant email to Neon
 
 ### WEEK 2 — WHITE PAPER LAUNCH
 - [ ] White paper final version complete
