@@ -1,4 +1,5 @@
 node_modules
 .next
 .env
-*.nodehive-strength-mastery/
+*.node
+hive-strength-mastery/
