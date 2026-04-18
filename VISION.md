@@ -1,21 +1,44 @@
 # HIVE VISION — Full Ecosystem Reference
 
-## Space Station — Priority Build (after current sprint)
+## Space Station — LIVE at station.hive.baby
 
-A password-protected orbital hub visible on the planet homepage as a small orbiting space station. Clicking it prompts password entry.
+A password-protected internal ops hub. Password: hivebees. Dark space aesthetic, twinkling stars.
 
-**Domain:** station.hive.baby (or mission-control.hive.baby)
-**Auth:** Single shared password for now, proper auth later
-**Repo:** hive-station (new)
-**Contains:**
-- Creator Console (engine management, live deploys)
-- Queen Bee dashboard (governance monitoring)
-- HiveEngineBuilder
-- Admin stats (user counts, active engines, DB health, per-engine metrics)
-- Deployment controls (one-click redeploy any engine)
-- VISION.md and CLAUDE.md viewer/editor
+**Domain:** station.hive.baby — CNAME live, Vercel project deployed
+**Repo:** hive-station (saggarsonny-boop/hive-station)
+**Auth:** Session-storage password gate (hivebees)
+**Contains (v1):**
+- Creator Console → creator-console-steel.vercel.app
+- Queen Bee → queen-bee-v1.vercel.app
+- Hive Engine Builder → heb.hive.baby
+- Stats → creator-console-steel.vercel.app/dashboard
+- LOCK button to re-secure
 
-**Planet integration:** Small ISS-style station mesh in orbit, permanently visible, clicking it opens password modal rather than fly-through.
+**Planet integration (planned):** Small ISS-style station mesh in orbit, clicking opens password modal rather than fly-through.
+
+---
+
+## HiveAdminSupport — BUILT, awaiting deploy
+
+Auto-acknowledge + Claude-generated reply to all inbound support email.
+
+**Domain:** support.hive.baby — CNAME live, Vercel project created, **deploy pending quota reset 2026-04-19 15:20 UTC**
+**Repo:** hive-support (saggarsonny-boop/hive-support)
+**Webhook endpoint:** POST /api/inbound (Resend inbound email webhook)
+**Flow:**
+1. Email arrives at hive@hive.baby or press@hive.baby
+2. Resend forwards to support.hive.baby/api/inbound
+3. Enterprise keywords detected (NHS, government, procurement, ministry, contract, etc) → holding response: "This has been noted and will receive personal attention."
+4. All other emails → Claude claude-opus-4-5 generates warm, Hive-voice response (3-5 sentences)
+5. Reply sent via Resend from hive@hive.baby
+6. Logged to Neon DB: sender, subject, body_preview, response_sent, flagged, flag_keywords
+
+**Required Vercel env vars (add to hive-support project):**
+- ANTHROPIC_API_KEY
+- RESEND_API_KEY
+- DATABASE_URL (Neon)
+
+**Required Resend config:** Set up Resend inbound email routing → support.hive.baby/api/inbound
 
 ---
 
