@@ -31,8 +31,10 @@ Account: saggarsonny-boop
 | hive-engine-builder | heb.hive.baby | LIVE | Next.js + Anthropic |
 | queen-bee | queen-bee-v1.vercel.app | IN PROGRESS | Next.js + Anthropic |
 | creator-console | creator-console-steel.vercel.app | LIVE | Next.js |
-| secret-box | secret-box-vert.vercel.app | LIVE | HTML |
+| secret-box | secret-box-vert.vercel.app | LIVE | Next.js |
 | universal-document | universal-document.vercel.app | IN PROGRESS | Next.js + Anthropic |
+| whotextedme | whotextedme.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/converter | converter.hive.baby | LIVE | Next.js + Anthropic |
 | whotexted | standalone | LIVE | JavaScript |
 
 ## Vercel
@@ -47,6 +49,11 @@ hive-moon deploy: `cd /workspaces/hive-moon && npx vercel --prod --yes` (project
 - Tailwind CSS (check package.json — not universal)
 - Neon PostgreSQL (connection string in Vercel env vars)
 - Stripe (payments), Cloudflare (DNS), Vercel (hosting)
+
+## Cloudflare DNS
+- CF_API_TOKEN: stored in Codespace secret (use `$CF_API_TOKEN`)
+- CLOUDFLARE_ZONE_ID: `31a6ab4af182c6db3d73cbce12807f23` (hive.baby zone)
+- Add CNAME: `curl -s -X POST "https://api.cloudflare.com/client/v4/zones/31a6ab4af182c6db3d73cbce12807f23/dns_records" -H "Authorization: Bearer ${CF_API_TOKEN}" -H "Content-Type: application/json" --data '{"type":"CNAME","name":"SUBDOMAIN","content":"cname.vercel-dns.com","ttl":1,"proxied":false}'`
 
 ## DNS Pattern
 All engines: enginename.hive.baby — Cloudflare CNAME → cname.vercel-dns.com
