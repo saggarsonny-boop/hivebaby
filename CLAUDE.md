@@ -36,7 +36,7 @@ Account: saggarsonny-boop
 ## Vercel Account
 Account: saggarsonny-3909s-projects (Hobby)
 All projects auto-deploy on git push to main.
-hivebaby deploy hook: curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_abTaG41xhWQ8kCm4dqT44fn6NQY0/GMNUh8m6a3"
+hivebaby deploy hook: curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_Mj8SJS4gAlrG2PCXdUCUMmoAQAA3/CfgdTZ1r50"
 hive-body-log deploy hook: curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_ZhRnfMdAJWuBxEKJWHooR6MlfDMc/RqzslhTGkA"
 
 ## Tech Stack
@@ -905,7 +905,7 @@ These signals feed the Global Early Warning Meta-Engine — the crown jewel of t
 ## How to Work Across Repos from This Codespace
 Use GitHub API with the token to read/write/commit to any repo.
 For hivebaby after any change, also trigger:
-curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_abTaG41xhWQ8kCm4dqT44fn6NQY0/hNU7KkMpOW"
+curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_Mj8SJS4gAlrG2PCXdUCUMmoAQAA3/CfgdTZ1r50"
 
 ## Philosophy
 - No ads, no investors, no agenda

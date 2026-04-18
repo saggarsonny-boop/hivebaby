@@ -565,7 +565,8 @@ const GROUP = new THREE.Group();
 scene.add(GROUP);
 
 // ─── Earth: day/night shader ──────────────────────────────────────────────────
-const earthUniforms = { uDay: { value: null }, uSunDir: { value: new THREE.Vector3(1,0,0) } };
+const _placeholder = new THREE.DataTexture(new Uint8Array([30,50,80,255]),1,1,THREE.RGBAFormat); _placeholder.needsUpdate = true;
+const earthUniforms = { uDay: { value: _placeholder }, uSunDir: { value: new THREE.Vector3(1,0,0) } };
 const earthMat = new THREE.ShaderMaterial({
   uniforms: earthUniforms,
   vertexShader: `
