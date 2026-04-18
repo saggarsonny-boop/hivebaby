@@ -153,6 +153,59 @@ On first visit (localStorage, never repeats), after welcome card:
 - **UD Validator (validator.hive.baby)** — BUILT (apps/validator). Upload .uds → verify structure, show schema version/encryption/expiry/signature/language count/word count. CNAME live. Deploy pending.
 - **UD Signer** — PLANNED (iSDF v0.2). Cryptographic signing, tamper-evident revocation.
 
+---
+
+## UD LAUNCH ITINERARY
+
+### IMMEDIATE (this week)
+- WY C Corp formation (Sonny action — online, ~$100)
+- USPTO trademark filing: "Universal Document" wordmark, class 42
+- USPTO certification mark filing: "UD Certified"
+- Apply Apache 2.0 license with NOTICE file to iSDK repo
+- UD logo SVG deployed to all UD properties (A option, slate blue)
+- Converter Pro tier built and deployed (free/pro/enterprise tiers)
+- Stripe pricing integrated on converter.hive.baby/pricing
+- UDZ spec added to VISION.md and white paper
+- HiveAdminSupport live after quota reset (15:20 UTC Apr 19)
+- Add env vars and Resend inbound routing after deploy
+
+### WEEK 1 (engines before launch)
+- Target 20 live engines on planet before white paper publish
+- Quiet deploys: no announcement, just gold cells appearing
+- Each engine gets HiveFooter + HivePlanetButton
+- UD ecosystem: Reader, Converter, Creator (on deck), Validator live
+
+### WEEK 2 (white paper launch)
+- White paper final version published to SSRN with DOI
+- Deposited at Internet Archive (archive.org)
+- ud.hive.baby/whitepaper page live with download + Reader embed
+- LinkedIn post: white paper announcement (Sonny Saggar MD)
+
+### WEEK 3 (sectoral briefs)
+- Healthcare brief: LinkedIn day 1
+- Judicial brief: LinkedIn day 2
+- Mobile/OEM brief: LinkedIn day 3
+- Enterprise brief: LinkedIn day 4
+- Government brief: LinkedIn day 5
+- Archive/preservation brief: LinkedIn day 6
+- All briefs on Medium and Substack simultaneously
+- Press release issued via SSRN and LinkedIn
+
+### WEEK 4 (outreach)
+- Siim Sikkut private note sent
+- iSDK download page live at ud.hive.baby/isdk
+- OEM outreach email template ready
+- Enterprise pricing page live
+- UD Creator full launch
+
+### ONGOING
+- Stripe Pro/Enterprise revenue to WY C Corp
+- IP agreement: Sonny personally licenses to WY C Corp
+- Trademark/certification mark: file in personal name, assign to Corp
+- 2028: transfer to UAE entity when supervised release ends
+
+---
+
 **MLLR (Multilingual Language Ribbon)** — Enterprise translation layer in UD. One document, any language. NOT "Machine Learning Legal Reasoner" — naming error, ignore that.
 
 **OKSign** — Governed signing with audit trails, chain-of-custody, multilingual compliance.
