@@ -139,6 +139,15 @@ On first visit (localStorage, never repeats), after welcome card:
 **UD Ecosystem — app status (2026-04-18):**
 - **UD Hub (ud.hive.baby)** — Landing built (apps/landing). CNAME live. Deploy pending Vercel limit reset.
 - **UD Converter (converter.hive.baby)** — LIVE. Converts DOCX/TXT/MD → .uds (iSDF v0.1.0). CNAME confirmed.
+  **Pro tier scaffold BUILT (deploy pending Vercel quota reset 2026-04-19 15:20 UTC):**
+  - Free: 5 files/day (IP-rate-limited in Neon), 10MB max
+  - Pro ($29/mo, $249/yr via Stripe): unlimited, batch ZIP, API key, chain of custody
+  - Enterprise: contact form → hive@hive.baby
+  - Pages: /pricing, /pro (API key dashboard)
+  - APIs: /api/checkout, /api/webhook, /api/api-key, /api/batch, /api/convert (updated)
+  - Required Vercel env vars: STRIPE_SECRET_KEY, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_YEARLY, STRIPE_WEBHOOK_SECRET, DATABASE_URL
+  - Stripe webhook endpoint: https://converter.hive.baby/api/webhook
+  - Stripe customer portal link in /pro (update the billing.stripe.com URL once you have a live Stripe account)
 - **UD Reader** — LIVE at universal-document.vercel.app. Cross-linked to converter.
 - **UD Creator (creator.hive.baby)** — BUILT (apps/creator). Rich-text block editor, exports .uds with metadata/expiry/auth. CNAME live. Deploy pending.
 - **UD Validator (validator.hive.baby)** — BUILT (apps/validator). Upload .uds → verify structure, show schema version/encryption/expiry/signature/language count/word count. CNAME live. Deploy pending.
