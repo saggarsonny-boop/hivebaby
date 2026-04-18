@@ -598,26 +598,47 @@ const rimLight = new THREE.DirectionalLight(0x1a3060, 1.5);
 rimLight.position.set(-4, -1, -3);
 scene.add(rimLight);
 
-// ─── Moon ─────────────────────────────────────────────────────────────────────
-const moonMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.10, 24, 24),
-  new THREE.MeshStandardMaterial({ color: 0xcccbb8, roughness: 0.9, metalness: 0.0,
-    emissive: new THREE.Color(0x9988aa), emissiveIntensity: 0.18 })
+// ─── Moon (sprite so it stays perfectly circular regardless of FOV/position) ──
+(function() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+  const ctx = c.getContext('2d');
+  // Glow halo
+  const glow = ctx.createRadialGradient(64,64,28,64,64,62);
+  glow.addColorStop(0,'rgba(170,187,210,0.22)');
+  glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0,0,128,128);
+  // Moon disc
+  const disc = ctx.createRadialGradient(58,58,0,64,64,28);
+  disc.addColorStop(0,'rgba(225,222,205,1)');
+  disc.addColorStop(0.6,'rgba(204,203,184,1)');
+  disc.addColorStop(1,'rgba(160,158,140,0.9)');
+  ctx.fillStyle = disc;
+  ctx.beginPath(); ctx.arc(64,64,28,0,Math.PI*2); ctx.fill();
+  // Subtle craters
+  [[50,52,5,0.07],[72,70,4,0.06],[60,74,3,0.05],[44,66,6,0.05]].forEach(([cx,cy,r,a]) => {
+    ctx.fillStyle = `rgba(0,0,0,${a})`;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+  });
+  window._moonTex = new THREE.CanvasTexture(c);
+})();
+const moonSprite = new THREE.Sprite(
+  new THREE.SpriteMaterial({ map: window._moonTex, transparent: true, depthWrite: false })
 );
-scene.add(moonMesh);
-// Soft glow halo around moon
-const moonGlow = new THREE.Mesh(
-  new THREE.SphereGeometry(0.14, 16, 16),
-  new THREE.MeshBasicMaterial({ color: 0xaabbcc, transparent: true, opacity: 0.06, side: THREE.BackSide, depthWrite: false })
+moonSprite.scale.set(0.32, 0.32, 1);
+scene.add(moonSprite);
+// Glow sprite behind moon
+const moonGlowSprite = new THREE.Sprite(
+  new THREE.SpriteMaterial({ color: 0xaabbdd, transparent: true, opacity: 0.10, depthWrite: false })
 );
-moonMesh.add(moonGlow);
+moonGlowSprite.scale.set(0.52, 0.52, 1);
+scene.add(moonGlowSprite);
 const MOON_DIST = 4.2;
-let moonTimer = 0;
 function updateMoon() {
   const m = calcMoonPos(jdNow());
-  moonMesh.position.set(m.x * MOON_DIST, m.y * MOON_DIST, m.z * MOON_DIST);
+  moonSprite.position.set(m.x * MOON_DIST, m.y * MOON_DIST, m.z * MOON_DIST);
+  moonGlowSprite.position.copy(moonSprite.position);
 }
-updateMoon();
 
 // ─── ISS (approximate 51.6° inclined orbit) ───────────────────────────────────
 const issMesh = new THREE.Mesh(
@@ -985,6 +1006,13 @@ function toNDC(cx,cy){ mNDC.x=(cx/window.innerWidth)*2-1; mNDC.y=-(cy/window.inn
 // Click with zoom-in animation before navigation
 function handleClick(cx,cy){
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
+  // Check moon sprite first
+  const moonHits = raycaster.intersectObject(moonSprite);
+  if(moonHits.length){
+    targetCamZ = 0.95;
+    setTimeout(() => { window.location.href = 'https://hivemoon.hive.baby'; }, 580);
+    return;
+  }
   const h=raycaster.intersectObjects(meshes); if(!h.length) return;
   const cd=cellInfo[meshes.indexOf(h[0].object)];
   if(cd.engine?.url) {
@@ -998,6 +1026,20 @@ canvas.addEventListener('touchstart',e=>{ if(e.touches.length===1) updateHover(e
 
 function updateHover(cx,cy){
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
+  // Moon hover
+  const moonHits=raycaster.intersectObject(moonSprite);
+  if(moonHits.length){
+    tooltip.className='';
+    tooltip.querySelector('.tt-name').textContent='🌙  HiveMoon';
+    tooltip.querySelector('.tt-tagline').textContent='Does the moon affect you? Find out.';
+    tooltip.querySelector('.tt-code').textContent='';
+    tooltip.querySelector('.tt-action').textContent='Click to open →';
+    tooltip.querySelector('.tt-action').className='tt-action';
+    tooltip.style.display='block'; posTip(cx,cy);
+    canvas.style.cursor='pointer';
+    if(hoveredIdx>=0){ const cd=cellInfo[hoveredIdx]; cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity; hoveredIdx=-1; }
+    return;
+  }
   const hits=raycaster.intersectObjects(meshes);
   const newIdx=hits.length?meshes.indexOf(hits[0].object):-1;
   if(newIdx===hoveredIdx){ if(newIdx>=0) posTip(cx,cy); return; }
