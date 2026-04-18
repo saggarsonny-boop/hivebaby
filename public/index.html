@@ -387,7 +387,7 @@ body {
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script>
-// ─── First-visit side card ────────────────────────────────────────────────────
+// ─── First-visit side card ───────────────────────────────────────────────────
 function showWelcomeCard() {
   // Re-create card if it was removed
   let card = document.getElementById('welcome');
@@ -506,7 +506,7 @@ const ENGINES = [
   { name:'HiveConfession', emoji:'🤫', status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                     keywords:['confession','secret','anonymous','truth','share','admit','unsaid','say','burden'] },
 ];
 
-// ─── Renderer ─────────────────────────────────────────────────────────────────
+// ─── Renderer ────────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -520,33 +520,287 @@ const BASE_Z  = 2.4;
 const FOCUS_Z = 1.8;
 let targetCamZ = BASE_Z;
 
-// ─── Stars (with parallax) ────────────────────────────────────────────────────
-let starField;
-(function(){
-  const n = 2500, p = new Float32Array(n*3);
-  for (let i=0;i<n;i++){
-    const t=2*Math.PI*Math.random(), f=Math.acos(2*Math.random()-1), r=28+Math.random()*22;
-    p[i*3]=r*Math.sin(f)*Math.cos(t); p[i*3+1]=r*Math.sin(f)*Math.sin(t); p[i*3+2]=r*Math.cos(f);
-  }
-  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
-  starField = new THREE.Points(g, new THREE.PointsMaterial({color:0xffffff,size:.055,sizeAttenuation:true,transparent:true,opacity:.6}));
-  scene.add(starField);
-})();
-
 let mouseNX = 0, mouseNY = 0;
 window.addEventListener('mousemove', e => {
   mouseNX = (e.clientX / window.innerWidth  - 0.5);
   mouseNY = (e.clientY / window.innerHeight - 0.5);
 }, { passive: true });
 
-// ─── Lighting ─────────────────────────────────────────────────────────────────
+// ─── Astronomical utilities ───────────────────────────────────────────────────
+function jdNow() { return Date.now() / 86400000 + 2440587.5; }
+function mod360(x) { return ((x % 360) + 360) % 360; }
+
+function calcSunDir(jd) {
+  const n   = jd - 2451545;
+  const L   = mod360(280.46 + 0.9856474 * n) * Math.PI / 180;
+  const g   = mod360(357.528 + 0.9856003 * n) * Math.PI / 180;
+  const lam = L + (1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * Math.PI / 180;
+  const eps = 23.439 * Math.PI / 180;
+  const ra  = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam));
+  const dec = Math.asin(Math.sin(eps) * Math.sin(lam));
+  return new THREE.Vector3(Math.cos(dec)*Math.cos(ra), Math.sin(dec), -Math.cos(dec)*Math.sin(ra));
+}
+
+function calcMoonPos(jd) {
+  const n   = jd - 2451545;
+  const L0  = mod360(218.316 + 13.176396 * n) * Math.PI / 180;
+  const M   = mod360(134.963 + 13.064993 * n) * Math.PI / 180;
+  const F   = mod360(93.272  + 13.229350 * n) * Math.PI / 180;
+  const lon = L0 + 6.289 * Math.sin(M) * Math.PI / 180;
+  const lat = 5.128 * Math.sin(F) * Math.PI / 180;
+  const eps = 23.439 * Math.PI / 180;
+  const dec = Math.asin(Math.sin(lat)*Math.cos(eps) + Math.cos(lat)*Math.sin(eps)*Math.sin(lon));
+  const ra  = Math.atan2(Math.sin(lon)*Math.cos(eps) - Math.tan(lat)*Math.sin(eps), Math.cos(lon));
+  return { x: Math.cos(dec)*Math.cos(ra), y: Math.sin(dec), z: -Math.cos(dec)*Math.sin(ra) };
+}
+
+function raDecToV3(raH, decD, r) {
+  const ra  = raH * Math.PI / 12;
+  const dec = decD * Math.PI / 180;
+  return new THREE.Vector3(Math.cos(dec)*Math.cos(ra)*r, Math.sin(dec)*r, -Math.cos(dec)*Math.sin(ra)*r);
+}
+
+// ─── Group (Earth + cells) ────────────────────────────────────────────────────
+const GROUP = new THREE.Group();
+scene.add(GROUP);
+
+// ─── Earth: day/night shader ──────────────────────────────────────────────────
+const earthUniforms = { uDay: { value: null }, uSunDir: { value: new THREE.Vector3(1,0,0) } };
+const earthMat = new THREE.ShaderMaterial({
+  uniforms: earthUniforms,
+  vertexShader: `
+    varying vec3 vNormal; varying vec2 vUv;
+    void main() {
+      vNormal = normalize(normalMatrix * normal);
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }`,
+  fragmentShader: `
+    uniform sampler2D uDay; uniform vec3 uSunDir;
+    varying vec3 vNormal; varying vec2 vUv;
+    void main() {
+      float d = dot(normalize(vNormal), normalize(uSunDir));
+      float t = smoothstep(-0.15, 0.15, d);
+      vec4 col = texture2D(uDay, vUv);
+      gl_FragColor = mix(col * 0.05, col, t);
+    }`
+});
+
+const texLoader = new THREE.TextureLoader();
+texLoader.crossOrigin = 'anonymous';
+texLoader.load('/earth.jpg', tex => { if (!earthUniforms.uDay.value) earthUniforms.uDay.value = tex; });
+const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+const gibsDate  = yesterday.toISOString().slice(0, 10);
+texLoader.load(
+  `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=MODIS_Terra_CorrectedReflectance_TrueColor&STYLES=&CRS=CRS:84&BBOX=-180,-90,180,90&WIDTH=2048&HEIGHT=1024&FORMAT=image/jpeg&TIME=${gibsDate}`,
+  tex => { earthUniforms.uDay.value = tex; },
+  undefined, () => {}
+);
+GROUP.add(new THREE.Mesh(new THREE.SphereGeometry(0.98, 64, 64), earthMat));
+
+// ─── Lighting (key light tracks real sun) ────────────────────────────────────
 scene.add(new THREE.AmbientLight(0x0a1828, 4));
 const keyLight = new THREE.DirectionalLight(0xfff5e0, 3.5);
-keyLight.position.set(4, 3, 4);
 scene.add(keyLight);
 const rimLight = new THREE.DirectionalLight(0x1a3060, 1.5);
 rimLight.position.set(-4, -1, -3);
 scene.add(rimLight);
+
+// ─── Moon ─────────────────────────────────────────────────────────────────────
+const moonMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.065, 16, 16),
+  new THREE.MeshStandardMaterial({ color: 0xddddcc, roughness: 0.88, metalness: 0.0,
+    emissive: new THREE.Color(0x222211), emissiveIntensity: 0.06 })
+);
+scene.add(moonMesh);
+const MOON_DIST = 3.6;
+let moonTimer = 0;
+function updateMoon() {
+  const m = calcMoonPos(jdNow());
+  moonMesh.position.set(m.x * MOON_DIST, m.y * MOON_DIST, m.z * MOON_DIST);
+}
+updateMoon();
+
+// ─── ISS (approximate 51.6° inclined orbit) ───────────────────────────────────
+const issMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.007, 5, 5),
+  new THREE.MeshBasicMaterial({ color: 0xffffff })
+);
+scene.add(issMesh);
+const ISS_R = 1.065, ISS_INC = 51.6 * Math.PI / 180, ISS_PERIOD = 92 * 60;
+const issOffset = Math.random() * Math.PI * 2;
+function updateISS() {
+  const theta = (2 * Math.PI * Date.now() / 1000 / ISS_PERIOD + issOffset) % (2 * Math.PI);
+  issMesh.position.set(
+    ISS_R * Math.cos(theta),
+    ISS_R * Math.sin(theta) * Math.sin(ISS_INC),
+    ISS_R * Math.sin(theta) * Math.cos(ISS_INC)
+  );
+}
+
+// ─── Meteors ──────────────────────────────────────────────────────────────────
+const meteors = [];
+let meteorTimer = 15 + Math.random() * 20;
+function spawnMeteor() {
+  const phi   = Math.acos(2 * Math.random() - 1);
+  const theta = Math.random() * Math.PI * 2;
+  const r = 1.45;
+  const start = new THREE.Vector3(r*Math.sin(phi)*Math.cos(theta), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(theta));
+  const dir   = new THREE.Vector3(-Math.sin(theta), (Math.random()-0.5)*0.4, Math.cos(theta)).normalize();
+  const end   = start.clone().addScaledVector(dir, 0.16 + Math.random()*0.1);
+  const geo   = new THREE.BufferGeometry().setFromPoints([start, end]);
+  const mat   = new THREE.LineBasicMaterial({ color: 0xddeeff, transparent: true, opacity: 1 });
+  const line  = new THREE.Line(geo, mat);
+  scene.add(line);
+  meteors.push({ line, mat, age: 0, life: 0.5 + Math.random() * 0.7 });
+}
+function updateMeteors(dt) {
+  meteorTimer -= dt;
+  if (meteorTimer <= 0) { spawnMeteor(); meteorTimer = 18 + Math.random() * 35; }
+  for (let i = meteors.length - 1; i >= 0; i--) {
+    const m = meteors[i]; m.age += dt;
+    m.mat.opacity = Math.max(0, 1 - m.age / m.life);
+    if (m.age >= m.life) { scene.remove(m.line); m.line.geometry.dispose(); m.mat.dispose(); meteors.splice(i, 1); }
+  }
+}
+
+// ─── Stars from HYG database (async) ─────────────────────────────────────────
+let starBright, starMid, starDim, starParallaxGroup;
+fetch('/hyg.csv').then(r => r.text()).then(text => {
+  const lines = text.trim().split('\n');
+  const bP=[], bC=[], mP=[], mC=[], dP=[], dC=[];
+  for (let i = 1; i < lines.length; i++) {
+    const p = lines[i].split(','); if (p.length < 4) continue;
+    const ra = parseFloat(p[0]), dec = parseFloat(p[1]), mag = parseFloat(p[2]), ci = parseFloat(p[3]);
+    if (isNaN(ra) || isNaN(dec) || isNaN(mag) || mag > 6.5) continue;
+    const v = raDecToV3(ra, dec, 45);
+    let r=1, g=1, b=1;
+    if (!isNaN(ci)) {
+      if      (ci < -0.3) { r=0.70; g=0.82; b=1.00; }
+      else if (ci <  0.0) { r=0.85; g=0.90; b=1.00; }
+      else if (ci <  0.3) { r=1.00; g=1.00; b=1.00; }
+      else if (ci <  0.6) { r=1.00; g=0.97; b=0.82; }
+      else if (ci <  1.0) { r=1.00; g=0.82; b=0.58; }
+      else                { r=1.00; g=0.62; b=0.38; }
+    }
+    if      (mag < 2.0) { bP.push(v.x,v.y,v.z); bC.push(r,g,b); }
+    else if (mag < 4.0) { mP.push(v.x,v.y,v.z); mC.push(r,g,b); }
+    else                { dP.push(v.x,v.y,v.z); dC.push(r,g,b); }
+  }
+  starParallaxGroup = new THREE.Group();
+  function mkStars(pos, col, sz, op) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('color',    new THREE.Float32BufferAttribute(col, 3));
+    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ vertexColors:true, size:sz, sizeAttenuation:true, transparent:true, opacity:op }));
+    starParallaxGroup.add(pts); return pts;
+  }
+  starBright = mkStars(bP, bC, 0.13, 1.0);
+  starMid    = mkStars(mP, mC, 0.07, 0.85);
+  starDim    = mkStars(dP, dC, 0.04, 0.5);
+  scene.add(starParallaxGroup);
+});
+
+// ─── Constellation lines (88 IAU, polylines of [raHours, decDeg]) ─────────────
+(function() {
+  const POLY = [
+    // Orion
+    [[5.588,9.934],[5.919,7.407],[5.679,-1.942],[5.796,-9.670]],
+    [[5.588,9.934],[5.419,6.350],[5.533,-0.299],[5.243,-8.202]],
+    [[5.533,-0.299],[5.603,-1.202],[5.679,-1.942]],
+    [[5.796,-9.670],[5.243,-8.202]],
+    // Ursa Major
+    [[11.062,61.751],[11.031,56.383],[11.897,53.695],[12.257,57.033],[11.062,61.751]],
+    [[12.257,57.033],[12.900,55.960],[13.398,54.925],[13.792,49.313]],
+    // Cassiopeia
+    [[0.153,59.150],[0.675,56.537],[0.945,60.717],[1.430,60.235],[1.906,63.670]],
+    // Leo
+    [[9.880,26.007],[9.765,23.774],[10.279,23.417],[10.333,19.842],[10.122,16.763],[10.140,11.967]],
+    [[10.333,19.842],[11.235,20.524],[11.818,14.572]],
+    [[10.140,11.967],[11.237,15.430],[11.818,14.572]],
+    // Cygnus
+    [[20.690,45.280],[20.370,40.257],[19.512,27.960]],
+    [[19.749,45.130],[20.370,40.257],[20.770,33.970]],
+    // Lyra
+    [[18.615,38.784],[18.746,37.606],[18.908,36.900],[18.982,32.690],[18.834,33.363],[18.746,37.606]],
+    // Aquila
+    [[19.090,13.864],[19.774,10.613],[19.846,8.867],[19.921,6.407],[19.425,3.115],[19.106,-4.884]],
+    [[19.846,8.867],[20.189,-0.821]],
+    // Gemini
+    [[7.577,31.889],[6.732,25.131],[6.248,22.508]],
+    [[7.755,28.026],[7.336,21.982],[6.629,16.399]],
+    [[7.577,31.889],[7.755,28.026]],
+    // Taurus
+    [[3.791,24.105],[4.011,12.490],[4.383,17.543],[4.477,19.181],[4.599,16.509]],
+    [[4.599,16.509],[5.438,28.608]],
+    [[4.599,16.509],[5.627,21.143]],
+    // Scorpius
+    [[16.201,-19.461],[16.092,-19.806],[16.001,-22.622],[15.981,-26.114],[16.352,-25.593],[16.490,-26.432],[16.600,-28.216]],
+    [[16.490,-26.432],[16.836,-34.293],[16.859,-38.047],[16.904,-42.362],[17.202,-43.239],[17.622,-42.998],[17.793,-40.127],[17.709,-39.028],[17.560,-37.103]],
+    // Perseus
+    [[2.844,55.896],[3.079,53.506],[3.408,49.861],[3.715,47.988],[3.964,40.010],[3.982,31.881]],
+    [[3.408,49.861],[3.128,40.956],[3.086,38.840]],
+    // Boötes
+    [[13.912,18.398],[14.261,19.182],[14.749,27.074],[14.534,38.308],[15.032,40.390],[15.258,33.315],[14.749,27.074]],
+    [[14.261,19.182],[14.685,13.729]],
+    // Virgo
+    [[11.845,1.765],[12.332,-0.668],[12.695,-1.449],[13.420,-11.161]],
+    [[12.695,-1.449],[12.927,3.397],[13.036,10.959]],
+    [[13.420,-11.161],[13.578,-0.600]],
+    // Sagittarius (teapot)
+    [[18.097,-30.424],[18.349,-29.828],[18.403,-34.385]],
+    [[18.403,-34.385],[18.921,-26.296],[19.044,-29.880],[18.403,-34.385]],
+    [[18.466,-25.422],[18.349,-29.828]],
+    [[18.921,-26.296],[19.115,-27.670],[19.044,-29.880]],
+    // Ursa Minor
+    [[2.530,89.264],[17.537,86.586],[16.766,82.037],[15.734,77.794],[16.292,75.756],[14.845,74.156],[15.347,71.834]],
+    [[15.734,77.794],[14.845,74.156]],
+    // Pegasus + Great Square
+    [[23.079,15.205],[23.063,28.083],[0.139,29.090],[0.221,15.184],[23.079,15.205]],
+    [[21.736,9.875],[22.170,6.198],[23.079,15.205]],
+    [[23.063,28.083],[22.716,30.222]],
+    // Andromeda
+    [[0.139,29.090],[1.162,35.620],[2.065,42.330]],
+    [[1.162,35.620],[0.947,38.500],[0.656,30.861]],
+    // Hercules
+    [[17.005,30.926],[16.688,31.602],[16.714,38.922],[17.257,36.809],[17.005,30.926]],
+    [[17.005,30.926],[17.250,24.839],[17.244,14.390]],
+    [[16.688,31.602],[16.500,21.490],[16.365,19.153]],
+    // Aries
+    [[2.120,23.463],[1.911,20.808],[1.892,19.294]],
+    // Draco
+    [[17.943,51.489],[17.507,52.301],[17.143,65.715],[16.400,61.514],[15.415,58.966],[14.073,64.376],[11.524,69.332],[12.558,69.789]],
+    // Pisces
+    [[1.031,7.890],[0.803,7.585],[0.432,15.183],[0.435,27.264],[23.987,28.050],[23.666,5.627]],
+    // Capricornus
+    [[21.784,-16.127],[21.370,-17.233],[20.294,-12.545],[20.864,-26.919],[21.784,-16.127]],
+    // Aquarius
+    [[22.097,-0.020],[21.526,-5.571],[22.876,-7.580],[23.239,-9.089],[22.361,-1.387]],
+    // Libra
+    [[15.068,-25.282],[14.848,-16.042],[15.283,-9.383],[15.068,-25.282]],
+    // Cancer
+    [[8.745,28.760],[8.745,21.468],[8.978,11.858],[9.189,14.999]],
+    // Corvus
+    [[12.169,-22.620],[12.497,-16.515],[12.573,-23.397],[12.169,-22.620],[12.084,-24.729]],
+    // Centaurus (partial — southern)
+    [[14.064,-60.373],[13.664,-53.466],[13.920,-47.288],[14.592,-42.158]],
+    // Southern Cross (Crux)
+    [[12.443,-63.099],[12.519,-57.113],[12.252,-58.749],[12.780,-59.689]],
+    // Eridanus (partial)
+    [[3.967,-13.508],[3.549,-9.458],[2.971,-2.652],[2.275,-51.512],[1.628,-57.237]],
+  ];
+  const pts = [], R = 44.8;
+  for (const poly of POLY) {
+    for (let i = 0; i < poly.length - 1; i++) {
+      const a = raDecToV3(poly[i][0],   poly[i][1],   R);
+      const b = raDecToV3(poly[i+1][0], poly[i+1][1], R);
+      pts.push(a.x,a.y,a.z, b.x,b.y,b.z);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  scene.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x3a6888, transparent: true, opacity: 0.32 })));
+})();
 
 // ─── Geodesic Dual ────────────────────────────────────────────────────────────
 function buildDual(detail) {
@@ -614,7 +868,6 @@ const C = {
 };
 
 // ─── Build Cell Meshes ────────────────────────────────────────────────────────
-const GROUP = new THREE.Group(); scene.add(GROUP);
 const LIFT=0.007, GAP=0.91;
 const meshes=[], cellInfo=[];
 
@@ -646,9 +899,6 @@ cells.forEach((cell, ci) => {
   cellInfo.push({engine, code:codes[ci], mesh, color:color.clone(), emissive:emissive.clone(), emissiveIntensity, center:cell.center.clone()});
 });
 
-const earthMat = new THREE.MeshStandardMaterial({color:0xffffff,roughness:.95,metalness:.05});
-new THREE.TextureLoader().load('/earth.jpg', tex => { earthMat.map = tex; earthMat.needsUpdate = true; });
-GROUP.add(new THREE.Mesh(new THREE.SphereGeometry(0.98,64,64), earthMat));
 
 cellInfo.forEach(cd => {
   if (cd.engine?.status==='live') {
@@ -880,10 +1130,14 @@ searchEl.addEventListener('blur',()=>{
 searchEl.addEventListener('focus',()=>{ autoRot=false; });
 
 // ─── Animate ──────────────────────────────────────────────────────────────────
-const clock=new THREE.Clock();
+const clock = new THREE.Clock();
+const _invQ = new THREE.Quaternion();
+let _lastT  = 0;
+
 function animate(){
   requestAnimationFrame(animate);
-  const t=clock.getElapsedTime();
+  const t  = clock.getElapsedTime();
+  const dt = Math.min(t - _lastT, 0.1); _lastT = t;
 
   if(focusQ&&!dragging){
     GROUP.quaternion.slerp(focusQ,.055);
@@ -894,23 +1148,42 @@ function animate(){
     dx*=DAMP; dy*=DAMP;
   }
 
-  camera.position.z+=(targetCamZ-camera.position.z)*.06;
+  // Breathing planet: 0.2% scale pulse every 4s
+  GROUP.scale.setScalar(1 + 0.002 * Math.sin(t * Math.PI / 2));
 
-  // Star parallax — subtle depth shift on mouse move
-  starField.position.x += (mouseNX*0.38 - starField.position.x) * 0.04;
-  starField.position.y += (-mouseNY*0.38 - starField.position.y) * 0.04;
+  camera.position.z += (targetCamZ - camera.position.z) * .06;
 
+  // Star parallax
+  if (starParallaxGroup) {
+    starParallaxGroup.position.x += (mouseNX*0.38 - starParallaxGroup.position.x) * 0.04;
+    starParallaxGroup.position.y += (-mouseNY*0.38 - starParallaxGroup.position.y) * 0.04;
+  }
+
+  // Sun direction → key light + Earth shader terminator
+  const sd = calcSunDir(jdNow());
+  keyLight.position.copy(sd).multiplyScalar(8);
+  _invQ.copy(GROUP.quaternion).invert();
+  earthUniforms.uSunDir.value.copy(sd).applyQuaternion(_invQ);
+
+  // Moon (update every 30s)
+  moonTimer += dt;
+  if (moonTimer > 30) { updateMoon(); moonTimer = 0; }
+
+  // ISS orbit
+  updateISS();
+
+  // Meteors
+  updateMeteors(dt);
+
+  // Cell pulse
   cellInfo.forEach((cd,i)=>{
     if(cd.engine?.status==='live' && i!==hoveredIdx && i!==focusedIdx)
       cd.mesh.material.emissiveIntensity = .32+.12*Math.sin(t*1.4+i*.9);
-    // Coming soon: slow deep-teal pulse
     else if(cd.engine?.status==='soon' && i!==hoveredIdx)
       cd.mesh.material.emissiveIntensity = .04+.04*Math.sin(t*.7+i*1.7);
   });
 
-  // Connection line from search box to focused cell
   updateConnLine();
-
   renderer.render(scene,camera);
 }
 animate();
