@@ -600,11 +600,17 @@ scene.add(rimLight);
 
 // ─── Moon ─────────────────────────────────────────────────────────────────────
 const moonMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.10, 32, 32),
+  new THREE.SphereGeometry(0.10, 24, 24),
   new THREE.MeshStandardMaterial({ color: 0xcccbb8, roughness: 0.9, metalness: 0.0,
     emissive: new THREE.Color(0x9988aa), emissiveIntensity: 0.18 })
 );
 scene.add(moonMesh);
+// Soft glow halo around moon
+const moonGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(0.14, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0xaabbcc, transparent: true, opacity: 0.06, side: THREE.BackSide, depthWrite: false })
+);
+moonMesh.add(moonGlow);
 const MOON_DIST = 4.2;
 let moonTimer = 0;
 function updateMoon() {
@@ -978,13 +984,12 @@ function toNDC(cx,cy){ mNDC.x=(cx/window.innerWidth)*2-1; mNDC.y=-(cy/window.inn
 
 // Click with zoom-in animation before navigation
 function handleClick(cx,cy){
-  // Moon click — screen-space check
-  const moonProj = moonMesh.position.clone().project(camera);
-  const moonSX = (moonProj.x * 0.5 + 0.5) * window.innerWidth;
-  const moonSY = (-moonProj.y * 0.5 + 0.5) * window.innerHeight;
-  if(moonProj.z < 1 && Math.hypot(cx - moonSX, cy - moonSY) < 22){
+  // Moon click — project moon to screen, check proximity
+  const mp = moonMesh.position.clone().project(camera);
+  const msx = (mp.x*0.5+0.5)*window.innerWidth, msy = (-mp.y*0.5+0.5)*window.innerHeight;
+  if(mp.z > -1 && mp.z < 1 && Math.hypot(cx-msx, cy-msy) < 24){
     targetCamZ = 0.95;
-    setTimeout(() => { window.location.href = 'https://hivemoon.hive.baby'; }, 580);
+    setTimeout(()=>{ window.location.href='https://hivemoon.hive.baby'; }, 580);
     return;
   }
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
@@ -1001,22 +1006,6 @@ canvas.addEventListener('touchstart',e=>{ if(e.touches.length===1) updateHover(e
 
 function updateHover(cx,cy){
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
-  // Moon hover — screen-space distance check to avoid giant invisible hit area
-  const moonProj = moonMesh.position.clone().project(camera);
-  const moonSX = (moonProj.x * 0.5 + 0.5) * window.innerWidth;
-  const moonSY = (-moonProj.y * 0.5 + 0.5) * window.innerHeight;
-  if(moonProj.z < 1 && Math.hypot(cx - moonSX, cy - moonSY) < 22){
-    tooltip.className='';
-    tooltip.querySelector('.tt-name').textContent='🌙  HiveMoon';
-    tooltip.querySelector('.tt-tagline').textContent='Does the moon affect you? Find out.';
-    tooltip.querySelector('.tt-code').textContent='';
-    tooltip.querySelector('.tt-action').textContent='Click to open →';
-    tooltip.querySelector('.tt-action').className='tt-action';
-    tooltip.style.display='block'; posTip(cx,cy);
-    canvas.style.cursor='pointer';
-    if(hoveredIdx>=0){ const cd=cellInfo[hoveredIdx]; cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity; hoveredIdx=-1; }
-    return;
-  }
   const hits=raycaster.intersectObjects(meshes);
   const newIdx=hits.length?meshes.indexOf(hits[0].object):-1;
   if(newIdx===hoveredIdx){ if(newIdx>=0) posTip(cx,cy); return; }
