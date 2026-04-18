@@ -88,6 +88,8 @@ On first visit (localStorage, never repeats), after welcome card:
 
 **Universal Document (UD)** — Next-gen document format replacing PDF. AI-native, semantic, revocable, expiring, multilingual (MLLR), audience-adaptive clarity layers, chain of custody, provenance. NOT executable. Repo: universal-document. Domain: ud.hive.baby. iSDK: free <400KB embeddable reader.
 
+**UD Converter** — LIVE at converter.hive.baby. Converts DOCX, TXT, MD → .uds (iSDF v0.1.0). Stateless, no storage, instant download. Repo: universal-document/apps/converter.
+
 **MLLR (Multilingual Language Ribbon)** — Enterprise translation layer in UD. One document, any language. NOT "Machine Learning Legal Reasoner" — naming error, ignore that.
 
 **OKSign** — Governed signing with audit trails, chain-of-custody, multilingual compliance.
@@ -182,7 +184,9 @@ On first visit (localStorage, never repeats), after welcome card:
 
 **Hive Engine Builder (HEB)** — LIVE at heb.hive.baby. Designs and deploys new engines.
 
-**WhoTexted** — LIVE. Free reverse phone number lookup.
+**WhoTexted** — LIVE (original standalone JS).
+
+**WhoTextedMe** — LIVE at whotextedme.hive.baby. Rebuilt as Next.js. Free reverse phone lookup: carrier, line type, location via AbstractAPI (free tier) with libphonenumber-js local fallback. Repo: whotextedme. Env var: ABSTRACTAPI_KEY.
 
 **HiveAdmin** — Admin control panel for enterprise operators.
 
