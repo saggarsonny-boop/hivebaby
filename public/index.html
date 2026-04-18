@@ -634,11 +634,13 @@ const moonGlowSprite = new THREE.Sprite(
 moonGlowSprite.scale.set(0.52, 0.52, 1);
 scene.add(moonGlowSprite);
 const MOON_DIST = 4.2;
+let moonTimer = 0;
 function updateMoon() {
   const m = calcMoonPos(jdNow());
   moonSprite.position.set(m.x * MOON_DIST, m.y * MOON_DIST, m.z * MOON_DIST);
   moonGlowSprite.position.copy(moonSprite.position);
 }
+updateMoon();
 
 // ─── ISS (approximate 51.6° inclined orbit) ───────────────────────────────────
 const issMesh = new THREE.Mesh(
