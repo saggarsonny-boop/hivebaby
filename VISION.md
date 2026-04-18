@@ -157,52 +157,58 @@ On first visit (localStorage, never repeats), after welcome card:
 
 ## UD LAUNCH ITINERARY
 
-### IMMEDIATE (this week)
-- WY C Corp formation (Sonny action — online, ~$100)
-- USPTO trademark filing: "Universal Document" wordmark, class 42
-- USPTO certification mark filing: "UD Certified"
-- Apply Apache 2.0 license with NOTICE file to iSDK repo
-- UD logo SVG deployed to all UD properties (A option, slate blue)
-- Converter Pro tier built and deployed (free/pro/enterprise tiers)
-- Stripe pricing integrated on converter.hive.baby/pricing
-- UDZ spec added to VISION.md and white paper
-- HiveAdminSupport live after quota reset (15:20 UTC Apr 19)
-- Add env vars and Resend inbound routing after deploy
+### IMMEDIATE — THIS WEEK
+- [ ] WY C Corp formation (Sonny action — online via Wyoming Secretary of State, ~$100)
+- [ ] IP Agreement: Sonny personally licenses all UD IP to WY C Corp. Reference: UD specification, GitHub repos, USPTO filings. One-page document, attorney optional.
+- [ ] USPTO trademark: "Universal Document" wordmark + UD logo, class 42. File in Sonny's name. Assign to Corp after formation.
+- [ ] USPTO certification mark: "UD Certified" mark. Same visual as trademark. Additional statement of compliance standards.
+- [ ] Apache 2.0 license + NOTICE file applied to iSDK repo. NOTICE text: "Implements the Universal Document specification. Specification by Sonny Saggar MD. ud.hive.baby"
+- [ ] UD logo SVG (Option A: Playfair Display, #1e2d3d slate, white letterforms) deployed to all UD properties
+- [ ] Add IP/TM footnote to white paper final version
+- [ ] Stripe products created for Converter Pro ($29/mo, $249/yr)
+- [ ] Converter Vercel env vars added after quota reset 15:20 UTC Apr 19
+- [ ] HiveAdminSupport env vars + Resend inbound routing after quota reset
+- [ ] UDZ spec paragraph added to white paper section 3.2
+- [ ] Blockchain provenance paragraph added to white paper section 3.2
+- [ ] Document Formatology sentence added to white paper closing
 
-### WEEK 1 (engines before launch)
-- Target 20 live engines on planet before white paper publish
-- Quiet deploys: no announcement, just gold cells appearing
-- Each engine gets HiveFooter + HivePlanetButton
-- UD ecosystem: Reader, Converter, Creator (on deck), Validator live
+### WEEK 1 — ENGINES BEFORE LAUNCH
+- [ ] Target 20 live engines on planet, all with HiveFooter + HivePlanetButton
+- [ ] Quiet deploys only — no announcements
+- [ ] UD ecosystem fully live: Reader, Converter (with Pro tier), Validator, Creator (on deck messaging)
+- [ ] Converter Pro Stripe fully wired
 
-### WEEK 2 (white paper launch)
-- White paper final version published to SSRN with DOI
-- Deposited at Internet Archive (archive.org)
-- ud.hive.baby/whitepaper page live with download + Reader embed
-- LinkedIn post: white paper announcement (Sonny Saggar MD)
+### WEEK 2 — WHITE PAPER LAUNCH
+- [ ] White paper final version complete
+- [ ] Published to SSRN (Sonny Saggar MD, DOI assigned)
+- [ ] Deposited at Internet Archive
+- [ ] ud.hive.baby/whitepaper — live page with Reader embed + UDS download of the white paper itself
+- [ ] LinkedIn announcement post
 
-### WEEK 3 (sectoral briefs)
-- Healthcare brief: LinkedIn day 1
-- Judicial brief: LinkedIn day 2
-- Mobile/OEM brief: LinkedIn day 3
-- Enterprise brief: LinkedIn day 4
-- Government brief: LinkedIn day 5
-- Archive/preservation brief: LinkedIn day 6
-- All briefs on Medium and Substack simultaneously
-- Press release issued via SSRN and LinkedIn
+### WEEK 3 — SECTORAL BRIEFS
+- [ ] Healthcare brief — LinkedIn day 1
+- [ ] Judicial brief — LinkedIn day 2
+- [ ] Mobile/OEM brief — LinkedIn day 3
+- [ ] Enterprise brief — LinkedIn day 4
+- [ ] Government brief — LinkedIn day 5
+- [ ] Archive/preservation brief — LinkedIn day 6
+- [ ] All briefs simultaneously on Medium and Substack
+- [ ] Press release on SSRN and LinkedIn
 
-### WEEK 4 (outreach)
-- Siim Sikkut private note sent
-- iSDK download page live at ud.hive.baby/isdk
-- OEM outreach email template ready
-- Enterprise pricing page live
-- UD Creator full launch
+### WEEK 4 — OUTREACH
+- [ ] Siim Sikkut private note sent
+- [ ] iSDK download page live: ud.hive.baby/isdk
+- [ ] OEM outreach email template finalized
+- [ ] Enterprise pricing page live
+- [ ] UD Creator full launch
 
 ### ONGOING
-- Stripe Pro/Enterprise revenue to WY C Corp
-- IP agreement: Sonny personally licenses to WY C Corp
-- Trademark/certification mark: file in personal name, assign to Corp
-- 2028: transfer to UAE entity when supervised release ends
+- [ ] Stripe revenue routed to WY C Corp bank account
+- [ ] IP agreement maintained and updated as new IP created
+- [ ] Trademark renewals: USPTO requires maintenance filings
+- [ ] 2028: transfer TM + CM registrations to UAE entity
+- [ ] Planet DAU data wired to cell pulse animation
+- [ ] Space Station expanded as admin tools grow
 
 ---
 
