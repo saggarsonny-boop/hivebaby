@@ -52,8 +52,8 @@ hive-moon deploy: `cd /workspaces/hive-moon && npx vercel --prod --yes` (project
 
 ## Cloudflare DNS
 - CF_API_TOKEN: stored in Codespace secret (use `$CF_API_TOKEN`)
-- CLOUDFLARE_ZONE_ID: `31a6ab4af182c6db3d73cbce12807f23` (hive.baby zone)
-- Add CNAME: `curl -s -X POST "https://api.cloudflare.com/client/v4/zones/31a6ab4af182c6db3d73cbce12807f23/dns_records" -H "Authorization: Bearer ${CF_API_TOKEN}" -H "Content-Type: application/json" --data '{"type":"CNAME","name":"SUBDOMAIN","content":"cname.vercel-dns.com","ttl":1,"proxied":false}'`
+- CLOUDFLARE_ZONE_ID: `bcb5522993ecf90a4f1d5dfe101e5a5c` (hive.baby zone — verified correct)
+- Add CNAME: `curl -s -X POST "https://api.cloudflare.com/client/v4/zones/bcb5522993ecf90a4f1d5dfe101e5a5c/dns_records" -H "Authorization: Bearer ${CF_API_TOKEN}" -H "Content-Type: application/json" --data '{"type":"CNAME","name":"SUBDOMAIN","content":"cname.vercel-dns.com","ttl":1,"proxied":false}'`
 
 ## DNS Pattern
 All engines: enginename.hive.baby — Cloudflare CNAME → cname.vercel-dns.com
