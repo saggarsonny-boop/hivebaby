@@ -149,7 +149,8 @@ On first visit (localStorage, never repeats), after welcome card:
   - Stripe webhook endpoint: https://converter.hive.baby/api/webhook
   - Stripe customer portal link in /pro (update the billing.stripe.com URL once you have a live Stripe account)
 - **UD Reader** — LIVE at universal-document.vercel.app. Cross-linked to converter.
-- **UD Creator (creator.hive.baby)** — BUILT (apps/creator). Rich-text block editor, exports .uds with metadata/expiry/auth. CNAME live. Deploy pending.
+- **UD Creator (creator.hive.baby)** — BUILT v0.2 (apps/creator). Contenteditable rich text (Bold/Italic/Link toolbar, execCommand), cloud save via magic-link auth (Neon: creator_sessions, creator_magic_links, creator_documents), My Documents panel (load/delete/new). Exports valid iSDF v0.1.0 with html+text fallback in base_content. CNAME live. Deploy pending Vercel quota reset.
+  - v0.2 roadmap (pending deploy confirm): Pro tier Stripe gating, UDZ export, Early Access banner, planet cell
 - **UD Validator (validator.hive.baby)** — BUILT (apps/validator). Upload .uds → verify structure, show schema version/encryption/expiry/signature/language count/word count. CNAME live. Deploy pending.
 - **UD Signer** — PLANNED (iSDF v0.2). Cryptographic signing, tamper-evident revocation.
 
