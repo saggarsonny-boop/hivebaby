@@ -1,5 +1,11 @@
 # HIVE VISION — Full Ecosystem Reference
 
+## Shared UI Components (deployed to all live engines)
+
+**HivePlanetButton** — Rotating 🌍 emoji (22px, 12s spin) in top-left nav, links to hive.baby. CSS: `@keyframes hive-planet-spin` + `.hive-planet` class in globals.css. Deployed: hivefield, hiveclock, hiveclarity, hivestrengthmastery, hivebodylog, hivemoon, whotextedme, converter, secret-box.
+
+**HiveFooter** — Tagline: "Free forever. No ads. No investors. You are the investor." Links: hive.baby | Patronage | Feedback (mailto:hive@hive.baby). Deployed to all above engines.
+
 This file is the source of truth for engine specs, pipeline designs, adoption architecture, revenue model, and future build plans. Claude reads this when context is needed beyond daily execution.
 
 ---
@@ -88,7 +94,7 @@ On first visit (localStorage, never repeats), after welcome card:
 
 **Universal Document (UD)** — Next-gen document format replacing PDF. AI-native, semantic, revocable, expiring, multilingual (MLLR), audience-adaptive clarity layers, chain of custody, provenance. NOT executable. Repo: universal-document. Domain: ud.hive.baby. iSDK: free <400KB embeddable reader.
 
-**UD Converter** — LIVE at converter.hive.baby. Converts DOCX, TXT, MD → .uds (iSDF v0.1.0). Stateless, no storage, instant download. Repo: universal-document/apps/converter.
+**UD Converter** — LIVE at converter.hive.baby. Converts DOCX, TXT, MD → .uds (iSDF v0.1.0). Stateless, no storage, instant download. Repo: universal-document/apps/converter. HivePlanetButton + HiveFooter deployed. Planet cell added. DNS: converter.hive.baby CNAME → cname.vercel-dns.com.
 
 **MLLR (Multilingual Language Ribbon)** — Enterprise translation layer in UD. One document, any language. NOT "Machine Learning Legal Reasoner" — naming error, ignore that.
 
@@ -134,7 +140,7 @@ On first visit (localStorage, never repeats), after welcome card:
 
 **Taboo Cluster (8 Engines)** — Highest NOI-per-hour: Confession, Secret, Shame, Desire, Regret, Forgiveness, Boundary, Emotional Debris. Viral, universal, low friction.
 
-**Secret Box** — LIVE at secret-box-vert.vercel.app. Live Secret engine instance.
+**Secret Box** — LIVE at secret-box-vert.vercel.app. Live Secret engine instance. HivePlanetButton + HiveFooter deployed.
 
 **Universal Family** — 12 universal engines as tiles on home screen. Baseline engagement.
 
@@ -186,7 +192,7 @@ On first visit (localStorage, never repeats), after welcome card:
 
 **WhoTexted** — LIVE (original standalone JS).
 
-**WhoTextedMe** — LIVE at whotextedme.hive.baby. Rebuilt as Next.js. Free reverse phone lookup: carrier, line type, location via AbstractAPI (free tier) with libphonenumber-js local fallback. Repo: whotextedme. Env var: ABSTRACTAPI_KEY.
+**WhoTextedMe** — LIVE at whotextedme.hive.baby. Rebuilt as Next.js. Free reverse phone lookup: carrier, line type, location via AbstractAPI (free tier) with libphonenumber-js local fallback. Repo: whotextedme. Env var: ABSTRACTAPI_KEY. HivePlanetButton + HiveFooter deployed. Planet cell added.
 
 **HiveAdmin** — Admin control panel for enterprise operators.
 
@@ -283,7 +289,7 @@ Each follows the standard engine pattern. Pro tier adds amplification; safety in
 
 **HiveWeatherHealth** — Met Office DataPoint (UK), NOAA (US), OpenAQ. Location-based health weather: pollen, UV, air quality, pressure, humidity. Free: daily summary, 3-day. Pro: personalised alerts from HiveBodyLog.
 
-**HiveBodyLog** — LIVE at hivebodylog.hive.baby. Single screen health story. Free text symptoms, patterns surfaced over time without diagnosing. Structured timeline, gentle flags, one-minute clinician summary PDF. Non-diagnostic, non-prescriptive.
+**HiveBodyLog** — LIVE at hivebodylog.hive.baby. Single screen health story. HivePlanetButton + HiveFooter deployed. Free text symptoms, patterns surfaced over time without diagnosing. Structured timeline, gentle flags, one-minute clinician summary PDF. Non-diagnostic, non-prescriptive.
 
 ### Financial Intelligence
 
