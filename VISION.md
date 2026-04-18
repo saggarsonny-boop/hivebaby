@@ -1,5 +1,24 @@
 # HIVE VISION — Full Ecosystem Reference
 
+## Space Station — Priority Build (after current sprint)
+
+A password-protected orbital hub visible on the planet homepage as a small orbiting space station. Clicking it prompts password entry.
+
+**Domain:** station.hive.baby (or mission-control.hive.baby)
+**Auth:** Single shared password for now, proper auth later
+**Repo:** hive-station (new)
+**Contains:**
+- Creator Console (engine management, live deploys)
+- Queen Bee dashboard (governance monitoring)
+- HiveEngineBuilder
+- Admin stats (user counts, active engines, DB health, per-engine metrics)
+- Deployment controls (one-click redeploy any engine)
+- VISION.md and CLAUDE.md viewer/editor
+
+**Planet integration:** Small ISS-style station mesh in orbit, permanently visible, clicking it opens password modal rather than fly-through.
+
+---
+
 ## Shared UI Components (deployed to all live engines)
 
 **HivePlanetButton** — Rotating 🌍 emoji (22px, 12s spin) in top-left nav, links to hive.baby. CSS: `@keyframes hive-planet-spin` + `.hive-planet` class in globals.css. Deployed: hivefield, hiveclock, hiveclarity, hivestrengthmastery, hivebodylog, hivemoon, whotextedme, converter, secret-box.
@@ -290,6 +309,12 @@ Each follows the standard engine pattern. Pro tier adds amplification; safety in
 **HiveWeatherHealth** — Met Office DataPoint (UK), NOAA (US), OpenAQ. Location-based health weather: pollen, UV, air quality, pressure, humidity. Free: daily summary, 3-day. Pro: personalised alerts from HiveBodyLog.
 
 **HiveBodyLog** — LIVE at hivebodylog.hive.baby. Single screen health story. HivePlanetButton + HiveFooter deployed. Free text symptoms, patterns surfaced over time without diagnosing. Structured timeline, gentle flags, one-minute clinician summary PDF. Non-diagnostic, non-prescriptive.
+
+**HiveBodyLog Free (forever):** Unlimited personal logging, magic link auth, basic AI pattern analysis, share function, export.
+
+**HiveBodyLog Pro ($9/month or $90/year):** Family profiles (multiple people under one account), Apple Health + Google Fit import, wearable sync, community anonymised pattern benchmarking, advanced AI coaching, clinician-grade export in UD format, custom sharing templates, priority support.
+
+**Trisense Calculator** — Pipeline: trisense.hive.baby. BMI/body composition viral loop that feeds into HiveBodyLog. Google Fit OAuth integration buildable now (no Mac required).
 
 ### Financial Intelligence
 
