@@ -1,5 +1,5 @@
 # DAILY STATUS — 2026-04-19
-Generated: 11:10 AM CDT | CC + PA Dual-Agent Session
+Generated: 11:45 AM CDT | CC + PA Dual-Agent Session
 
 ---
 
@@ -8,133 +8,74 @@ Generated: 11:10 AM CDT | CC + PA Dual-Agent Session
 | Metric | Count |
 |--------|-------|
 | Total Engines | 14 |
-| Live | 11 |
-| Building | 2 |
-| Planned | 1 |
+| Live | 13 |
+| Building | 1 |
+| Planned | 0 |
 | ENGINE_GRAMMAR.md | 14/14 ✓ |
 | GrapplerHook | 14/14 ✓ |
 | AutoDemo | 13/14 engines ✓ |
 | FirstVisitCard | 13/14 engines ✓ |
-| dev branches | 14/14 ✓ |
+| Multilingual ribbon | 5/14 (Clarity, Clock, Field, BodyLog, Moon) |
 | Domains Live | 13/14 |
-| Domains Pending Deploy | 1 (support.hive.baby — quota reset tomorrow 09:48 CDT) |
+| Domains Issue | 1 (support.hive.baby — DEPLOYMENT_NOT_FOUND, needs manual Vercel first-deploy) |
 
 ---
 
 ## ENGINE SCORES
 
-| Engine | Domain | Status | Score | Missing |
-|--------|--------|--------|-------|---------|
-| HiveClock | hiveclock.hive.baby | live | 82% | Multilingual ribbon |
-| HiveClarity | hiveclarity.hive.baby | live | 82% | Multilingual ribbon |
-| HiveField | hivefield.hive.baby | live | 82% | Multilingual ribbon |
-| HiveStrength | hivestrength.hive.baby | live | 80% | Multilingual ribbon |
-| HiveBodyLog | hivebodylog.hive.baby | live | 82% | Multilingual ribbon |
-| HiveMoon | hivemoon.hive.baby | live | 84% | Multilingual ribbon |
-| WhoTextedMe | whotextedme.hive.baby | live | 80% | Multilingual ribbon |
-| HiveEngineBuilder | hiveenginebuilder.hive.baby | live | 80% | Multilingual ribbon |
-| UDConverter | converter.hive.baby | live | 78% | Multilingual ribbon, /pricing needs quota deploy |
-| HiveAdminSupport | support.hive.baby | building | 58% | Quota deploy pending (09:48 CDT tomorrow) |
-| HiveSecretBox | secretbox.hive.baby | live | 72% | Multilingual ribbon |
-| QueenBee | queenbee.hive.baby | building | 48% | Governance engine, Multilingual |
-| UniversalDocument | ud.hive.baby | building | 55% | AutoDemo, FirstVisitCard, Multilingual |
-| HiveCreatorConsole | creatorconsole.hive.baby | live | 70% | Multilingual |
+| Engine | Domain | HTTP | Status | Score | Notes |
+|--------|--------|------|--------|-------|-------|
+| HiveClarity | hiveclarity.hive.baby | 200 | live | 90% | Multilingual ✓ |
+| HiveField | hivefield.hive.baby | 200 | live | 90% | Multilingual ✓ |
+| HiveClock | hiveclock.hive.baby | 200 | live | 90% | Multilingual ✓ |
+| HiveBodyLog | hivebodylog.hive.baby | 200 | live | 90% | Multilingual ✓ |
+| HiveMoon | hivemoon.hive.baby | 200 | live | 92% | Multilingual + full i18n (9 langs, RTL) ✓ |
+| HiveStrength | hivestrength.hive.baby | 200 | live | 80% | No multilingual |
+| HiveEngineBuilder | heb.hive.baby | 200 | live | 88% | HEB 2.0 — /build pipeline, dark UI, VERCEL_TOKEN set |
+| QueenBee | queenbee.hive.baby | 200 | live | 72% | v0.2.0 — governance, audit, health endpoints live |
+| WhoTextedMe | whotextedme.hive.baby | 200 | live | 80% | No multilingual |
+| UDConverter | converter.hive.baby | 200 | live | 78% | No multilingual |
+| UniversalDocument | ud.hive.baby | 200 | live | 60% | No AutoDemo, no FirstVisitCard |
+| HiveSecretBox | secretbox.hive.baby | 200 | live | 72% | No multilingual |
+| HiveCreatorConsole | creatorconsole.hive.baby | 307 | live | 70% | Deployment Protection ON — turn off in Vercel |
+| HiveAdminSupport | support.hive.baby | 404 | building | 55% | DEPLOYMENT_NOT_FOUND — needs manual Vercel first-deploy |
 
 ---
 
-## FIXED THIS SESSION (CC — auto)
+## COMPLETED THIS SESSION (CC)
 
 | Item | Action |
 |------|--------|
-| dev branches | 14/14 repos — dev branch created + pushed |
-| AutoDemo — HiveEngineBuilder | ✓ pushed |
-| AutoDemo — UDConverter | ✓ pushed |
-| AutoDemo — HiveSecretBox | ✓ pushed via GitHub API |
-| FirstVisitCard — HiveEngineBuilder | ✓ pushed |
-| FirstVisitCard — UDConverter | ✓ pushed |
-| FirstVisitCard — HiveSecretBox | ✓ pushed via GitHub API |
-| Domain migrations x6 | All live (hivestrength/hiveenginebuilder/queenbee/creatorconsole/secretbox/ud) |
-| FirstVisitCard x6 | Field, Clarity, Strength, BodyLog, Clock, WhoTextedMe |
-| Dashboard live clock | Auto-fetch + local timezone clock |
-| hive-support env vars | ANTHROPIC_API_KEY + RESEND_API_KEY + DATABASE_URL already set ✓ |
+| Multilingual ribbon | Shipped to HiveClarity, HiveClock, HiveField, HiveBodyLog |
+| HiveMoon full i18n | lib/i18n.ts (33 keys x 9 langs) + useTranslation hook + RTL support |
+| HEB 2.0 | /build pipeline, /api/build-engine (SSE), /api/list-engines, /api/delete-engine |
+| HEB system prompt | Rewritten — CC role, full ecosystem context, governance-aware |
+| VERCEL_TOKEN | Set on HEB Vercel project — enables full engine provisioning |
+| HEB domains | Both heb.hive.baby + hiveenginebuilder.hive.baby confirmed on same project |
+| Deploy hooks fired | hivebaby + hive-body-log |
+| LanguageSelector | Shipped to all 5 multilingual engines + HiveMoon |
 
 ---
 
-## BLOCKED — VERCEL QUOTA
+## OUTSTANDING
 
-| Item | Status | Unblocks |
-|------|--------|----------|
-| support.hive.baby live deploy | Code pushed, env vars set | Tomorrow 09:48 CDT (auto-deploys on quota reset) |
-| converter.hive.baby/pricing | Code exists in repo | Tomorrow 09:48 CDT |
-| converter.hive.baby/api/checkout | Code exists in repo | Tomorrow 09:48 CDT |
-
----
-
-## REQUIRES USER APPROVAL
-
-| Item | Why |
-|------|-----|
-| Multilingual ribbon | Largest remaining gap — blocks 90%+ on all engines |
-| QB governance engine | Shell only — no actual schema validation/safety enforcement |
-| UD landing (ud.hive.baby) | Currently routes to universal-document hub — confirm intended content |
-| HiveCreatorConsole AutoDemo | Internal dashboard — confirm if AutoDemo is appropriate |
+| Item | Owner | Notes |
+|------|-------|-------|
+| support.hive.baby | PA | Manual Vercel first-deploy needed (code + env vars ready) |
+| creatorconsole.hive.baby 307 | PA | Deployment Protection ON — disable in Vercel settings |
+| HiveStrength multilingual | CC | Not yet wired |
+| WhoTextedMe multilingual | CC | Not yet wired |
+| UD multilingual | CC | Not yet wired |
+| HiveSecretBox multilingual | CC | Not yet wired |
+| Tooltip Tour | CC | 0/14 engines — blocks 95%+ scores |
+| UniversalDocument AutoDemo + FirstVisitCard | CC | Hub page missing onboarding |
 
 ---
 
-## DOMAIN STATUS
+## KNOWN ISSUES
 
-| Domain | HTTP | Notes |
-|--------|------|-------|
-| hive.baby | 307 | → www.hive.baby ✓ |
-| hiveclock.hive.baby | 200 | ✓ |
-| hiveclarity.hive.baby | 200 | ✓ |
-| hivefield.hive.baby | 200 | ✓ |
-| hivestrength.hive.baby | 200 | ✓ |
-| hivebodylog.hive.baby | 200 | ✓ |
-| hivemoon.hive.baby | 200 | ✓ |
-| whotextedme.hive.baby | 200 | ✓ |
-| hiveenginebuilder.hive.baby | 200 | ✓ |
-| queenbee.hive.baby | 200 | ✓ |
-| creatorconsole.hive.baby | 307 | ✓ redirect normal |
-| secretbox.hive.baby | 200 | ✓ |
-| ud.hive.baby | 200 | ✓ |
-| converter.hive.baby | 200 | ✓ |
-| support.hive.baby | 404 | ⚠ quota-blocked — auto-deploys tomorrow 09:48 CDT |
-
----
-
-## GOVERNANCE
-
-| Check | Status |
+| Issue | Detail |
 |-------|--------|
-| ENGINE_GRAMMAR.md | 14/14 ✓ |
-| GrapplerHook | 14/14 ✓ |
-| Naming standards | ✓ canonical |
-| dev branches | 14/14 ✓ |
-| Onboarding — AutoDemo | 13/14 ✓ (CreatorConsole: internal, N/A) |
-| Onboarding — FirstVisitCard | 13/14 ✓ (Moon: inline equivalent) |
-| Onboarding — Tooltip Tour | 0/14 — not built |
-| Onboarding — Rotating Placeholders | Partial |
-| Multilingual ribbon | 0/14 — not built |
-| QB governance engine | Shell only |
-
----
-
-## CHANGES TODAY
-
-| Repo | Change |
-|------|--------|
-| hivebaby | CLAUDE.md naming standards; domain table |
-| queen-bee | Registry naming; 6 domain migrations |
-| hive-station | Dashboard live clock + auto-fetch; canonical links |
-| hive-clock | FirstVisitCard |
-| whotextedme | FirstVisitCard |
-| hive-field | FirstVisitCard |
-| hive-clarity | FirstVisitCard |
-| hive-strength-mastery | FirstVisitCard |
-| hive-body-log | FirstVisitCard |
-| hive-engine-builder | AutoDemo + FirstVisitCard |
-| universal-document | AutoDemo + FirstVisitCard for UDConverter |
-| secret-box | AutoDemo + FirstVisitCard (via GitHub API) |
-| hive-support | Force redeploy; env vars confirmed |
-| All 14 repos | dev branch created |
+| support.hive.baby | Vercel project not linked to GitHub repo. Domain resolves but returns DEPLOYMENT_NOT_FOUND. Fix: Vercel Settings > Git > connect saggarsonny-boop/hive-support > deploy once |
+| creatorconsole.hive.baby | 307 redirect with no target. Deployment Protection likely ON. Fix: Vercel Settings > Deployment Protection > None |
+| QueenBee audit panel | Shows "Audit not loaded" on page load — client-side fetch, works after browser renders |
