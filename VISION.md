@@ -56,6 +56,26 @@ Auto-acknowledge + Claude-generated reply to all inbound support email.
 
 ---
 
+## Typography Standard (all engines)
+
+- **Display/headings:** Syne 600, 700 — engine names, hero text, nav wordmarks
+- **Body:** DM Sans 300, 400, 500 — paragraphs, descriptions, UI text
+- **Monospace/data:** DM Mono 400, 500 — labels, badges, code, stats, metadata
+
+Google Fonts: `family=Syne:wght@600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500`
+
+CSS variables (in globals.css of every engine):
+```css
+--font-display: 'Syne', sans-serif;
+--font-body: 'DM Sans', sans-serif;
+--font-mono: 'DM Mono', monospace;
+```
+
+Deployed: hivefield, hiveclock, hiveclarity, hivestrengthmastery, hivebodylog, hivemoon, whotextedme, queen-bee, creator-console, station, converter, creator, validator, ud-landing, ud-reader.
+Not yet deployed: secret-box (no globals.css — uses inline styles), hive-strength-mastery (already had Syne).
+
+---
+
 ## Shared UI Components (deployed to all live engines)
 
 **HivePlanetButton** — Rotating 🌍 emoji (22px, 12s spin) in top-left nav, links to hive.baby. CSS: `@keyframes hive-planet-spin` + `.hive-planet` class in globals.css. Deployed: hivefield, hiveclock, hiveclarity, hivestrengthmastery, hivebodylog, hivemoon, whotextedme, converter, secret-box.
