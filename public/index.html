@@ -497,18 +497,49 @@ if (typeof THREE === 'undefined') {
 }
 
 // ─── Engine Data ──────────────────────────────────────────────────────────────
+// tier: 0=Queen Bee, 1=Live, 2=Building, 3=Planned. status drives visual tier.
 const ENGINES = [
-  { name:'HiveClock',      emoji:'🕐', status:'live', tagline:'The world\'s most humane clock.',          url:'https://hiveclock.hive.baby',           keywords:['clock','time','watch','prayer','world','analog','digital','schedule','timezone','hours','minutes','prayer time'] },
-  { name:'HiveClarity',    emoji:'💬', status:'live', tagline:'Say what you actually mean.',              url:'https://hiveclarity.hive.baby',          keywords:['clarity','clear','words','language','express','communicate','thoughts','articulate','confused','understand','explain','structured','thinking','write','rewrite'] },
-  { name:'HiveStrength',   emoji:'💪', status:'live', tagline:'Train with intelligence.',                 url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','stronger','exercise','lift','weights','muscle','body','health','gains','fit','build','physique'] },
-  { name:'HiveField',      emoji:'🎯', status:'live', tagline:'Practice your craft.',                    url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','craft','career','rehearse','work','simulate','scenario','prepare','professional','nurse','doctor','teacher','coding','sales','presentation','role'] },
-  { name:'HiveBodyLog',   emoji:'🫀', status:'live', tagline:'Your health story. Log anything, find patterns.', url:'https://hivebodylog.hive.baby',  keywords:['health','body','symptoms','log','patterns','doctor','medical','wellness','pain','sleep','mood','medication','symptom','diary','clinical','supplement','energy','digestion'] },
-  { name:'HiveMoon',      emoji:'🌙', status:'live', tagline:'Does the moon affect you? Find out.',           url:'https://hivemoon.hive.baby',            keywords:['moon','lunar','cycle','affect','mood','sleep','phase','full moon','new moon','pattern','rhythm','nature'] },
-  { name:'WhoTextedMe',   emoji:'📱', status:'live', tagline:'Free reverse phone lookup.',                   url:'https://whotextedme.hive.baby',          keywords:['phone','number','lookup','who called','reverse','caller','text','unknown','carrier','mobile','landline'] },
-  { name:'Universal Document', emoji:'📄', status:'live', tagline:'The document format built for intelligence.', url:'https://ud.hive.baby', keywords:['universal','document','ud','convert','format','pdf','docx','reader','validator','creator','signer','intelligence','multilingual','expiry','ai'] },
-  { name:'HiveWeather',    emoji:'🌤', status:'soon', tagline:'Weather as it feels, not just as it is.', url:null,                                     keywords:['weather','forecast','climate','rain','sun','temperature','wind','cloudy','storm'] },
-  { name:'HiveConfession', emoji:'🤫', status:'soon', tagline:'Say the thing you haven\'t said.',        url:null,                                     keywords:['confession','secret','anonymous','truth','share','admit','unsaid','say','burden'] },
-  { name:'Patrons',        emoji:'🐝', status:'patron', tagline:'The people who keep Hive free.',         url:'https://hive.baby/patrons',              keywords:['support','patron','donate','contribute','fund','community'] },
+  // QUEEN BEE — center cell
+  { name:'Queen Bee',          emoji:'👑', status:'queen',    tier:0, tagline:'The sovereign engine. Powers all of Hive.',              url:'https://queen-bee-v1.vercel.app',        keywords:['queen','bee','governance','master','sovereign'] },
+  // TIER 1 — LIVE
+  { name:'HiveClock',          emoji:'🕐', status:'live',     tier:1, tagline:'The world\'s most humane clock.',                        url:'https://hiveclock.hive.baby',            keywords:['clock','time','watch','prayer','world','timezone'] },
+  { name:'HiveClarity',        emoji:'💬', status:'live',     tier:1, tagline:'Say what you actually mean.',                           url:'https://hiveclarity.hive.baby',          keywords:['clarity','words','language','express','communicate','rewrite'] },
+  { name:'HiveStrength',       emoji:'💪', status:'live',     tier:1, tagline:'Train with intelligence.',                              url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','exercise'] },
+  { name:'HiveField',          emoji:'🎯', status:'live',     tier:1, tagline:'Practice your craft.',                                 url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','simulate'] },
+  { name:'HiveBodyLog',        emoji:'🫀', status:'live',     tier:1, tagline:'Your health story. Log anything.',                      url:'https://hivebodylog.hive.baby',          keywords:['health','body','symptoms','log','patterns','medical'] },
+  { name:'HiveMoon',           emoji:'🌙', status:'live',     tier:1, tagline:'Does the moon affect you?',                            url:'https://hivemoon.hive.baby',             keywords:['moon','lunar','cycle','mood','sleep','phase'] },
+  { name:'Secret Box',         emoji:'🤫', status:'live',     tier:1, tagline:'Say the thing you haven\'t said.',                     url:'https://secret-box-vert.vercel.app',     keywords:['secret','confession','anonymous','share','unsaid'] },
+  { name:'HiveEngine Builder', emoji:'⚙️', status:'live',    tier:1, tagline:'Design and deploy new engines.',                       url:'https://heb.hive.baby',                  keywords:['build','engine','deploy','create','design','new'] },
+  { name:'UD Reader',          emoji:'📖', status:'live',     tier:1, tagline:'Read Universal Documents.',                            url:'https://universal-document.vercel.app',  keywords:['reader','document','ud','universal','read'] },
+  { name:'UD Converter',       emoji:'🔄', status:'live',     tier:1, tagline:'Convert any file to Universal Document.',              url:'https://converter.hive.baby',            keywords:['convert','converter','docx','pdf','ud','format'] },
+  { name:'Patrons',            emoji:'🐝', status:'patron',   tier:1, tagline:'The people who keep Hive free.',                       url:'https://hive.baby/patrons',              keywords:['patron','support','donate','fund','community'] },
+  // TIER 2 — BUILDING
+  { name:'Universal Document', emoji:'📄', status:'building', tier:2, tagline:'The next-gen document format. Deploying soon.',         url:null,                                     keywords:['universal','document','ud','format','intelligence'] },
+  { name:'UD Creator',         emoji:'✏️', status:'building', tier:2, tagline:'Create Universal Documents. In development.',           url:null,                                     keywords:['creator','write','create','document','ud'] },
+  { name:'UD Validator',       emoji:'✅', status:'building', tier:2, tagline:'Validate .uds files. Deploy pending.',                  url:null,                                     keywords:['validator','validate','check','document','ud'] },
+  { name:'WhoTextedMe',        emoji:'📱', status:'building', tier:2, tagline:'Free reverse phone lookup.',                           url:'https://whotextedme.hive.baby',          keywords:['phone','number','lookup','caller','reverse','text'] },
+  { name:'Space Station',      emoji:'🛸', status:'building', tier:2, tagline:'Internal ops hub.',                                    url:'https://station.hive.baby',              keywords:['station','ops','admin','internal','hub'] },
+  { name:'HiveAdminSupport',   emoji:'📧', status:'building', tier:2, tagline:'Auto-acknowledge support emails. Deploying.',           url:null,                                     keywords:['support','email','admin','auto','acknowledge'] },
+  // TIER 3 — PLANNED
+  { name:'HiveTV',             emoji:'📺', status:'planned',  tier:3, tagline:'AI broadcast platform. Gary Gansson.',                 url:null, keywords:['tv','broadcast','gary','show','media'] },
+  { name:'Trust Mesh',         emoji:'🕸️', status:'planned', tier:3, tagline:'Universal matching and micro-contract.',               url:null, keywords:['trust','mesh','match','contract','social'] },
+  { name:'Meme Engine',        emoji:'😂', status:'planned',  tier:3, tagline:'Viral memes, cultural loops.',                         url:null, keywords:['meme','viral','culture','content'] },
+  { name:'Confession',         emoji:'🙏', status:'planned',  tier:3, tagline:'Say it anonymously.',                                 url:null, keywords:['confession','anonymous','say','share'] },
+  { name:'Desire',             emoji:'💫', status:'planned',  tier:3, tagline:'What do you really want?',                            url:null, keywords:['desire','want','wish','dream'] },
+  { name:'Regret',             emoji:'😔', status:'planned',  tier:3, tagline:'Process what you carry.',                             url:null, keywords:['regret','process','emotion','carry'] },
+  { name:'Forgiveness',        emoji:'💚', status:'planned',  tier:3, tagline:'Let it go with intention.',                           url:null, keywords:['forgiveness','let go','heal'] },
+  { name:'HiveMic',            emoji:'🎙️', status:'planned', tier:3, tagline:'Your voice, amplified.',                              url:null, keywords:['mic','voice','speak','audio'] },
+  { name:'HiveSign',           emoji:'✍️', status:'planned', tier:3, tagline:'Sign anything, everywhere.',                           url:null, keywords:['sign','signature','signing'] },
+  { name:'HiveFocus',          emoji:'🎯', status:'planned',  tier:3, tagline:'Cognitive performance engine.',                       url:null, keywords:['focus','cognitive','attention','productivity'] },
+  { name:'HiveImagine',        emoji:'🎨', status:'planned',  tier:3, tagline:'Generate and dream.',                                 url:null, keywords:['imagine','generate','art','creative'] },
+  { name:'HiveHomeSense',      emoji:'🏠', status:'planned',  tier:3, tagline:'Home environment intelligence.',                      url:null, keywords:['home','environment','safety','sense'] },
+  { name:'HiveAirSense',       emoji:'💨', status:'planned',  tier:3, tagline:'Air quality sensing.',                                url:null, keywords:['air','quality','voc','environment'] },
+  { name:'HiveAlmanac',        emoji:'📅', status:'planned',  tier:3, tagline:'The living almanac.',                                 url:null, keywords:['almanac','calendar','seasonal','nature'] },
+  { name:'HivePictures',       emoji:'🖼️', status:'planned', tier:3, tagline:'Visual intelligence.',                                url:null, keywords:['pictures','images','visual','gallery'] },
+  { name:'HiveWeather',        emoji:'🌤', status:'planned',  tier:3, tagline:'Weather as it feels, not just as it is.',             url:null, keywords:['weather','forecast','climate','rain'] },
+  { name:'HiveMessage',        emoji:'💌', status:'planned',  tier:3, tagline:'Governed messaging.',                                 url:null, keywords:['message','chat','communicate'] },
+  { name:'UD Signer',          emoji:'🔏', status:'planned',  tier:3, tagline:'Cryptographic document signing.',                     url:null, keywords:['signer','sign','crypto','document','ud'] },
+  { name:'EarthSense',         emoji:'🌿', status:'planned',  tier:3, tagline:'Nature literacy. ID any organism.',                   url:null, keywords:['nature','earth','mushrooms','wildlife','ecology'] },
 ];
 
 // ─── Renderer ────────────────────────────────────────────────────────────────
@@ -842,88 +873,201 @@ const cells = buildDual(3);
 
 // ─── Assign engines to cells ──────────────────────────────────────────────────
 const cellToEngine = new Map(), engineToCell = new Map();
+
+// Queen Bee at the front-facing cell (highest z at load time)
+let qbCellIdx = 0;
+for (let i = 1; i < cells.length; i++) {
+  if (cells[i].center.z > cells[qbCellIdx].center.z) qbCellIdx = i;
+}
+cellToEngine.set(qbCellIdx, ENGINES[0]);
+engineToCell.set(ENGINES[0].name, qbCellIdx);
+
+// Distribute remaining engines evenly, skipping QB slot
 const step = Math.floor(cells.length / ENGINES.length);
-ENGINES.forEach((e, i) => { const ci = 12 + i*step; cellToEngine.set(ci,e); engineToCell.set(e.name,ci); });
+ENGINES.slice(1).forEach((e, i) => {
+  let ci = 8 + (i + 1) * step;
+  while (cellToEngine.has(ci % cells.length)) ci++;
+  ci = ci % cells.length;
+  cellToEngine.set(ci, e);
+  engineToCell.set(e.name, ci);
+});
+
+// QB neighbours for radiating lines
+const qbNeighbours = cells
+  .map((cell, ci) => ({ ci, d: cell.center.distanceTo(cells[qbCellIdx].center) }))
+  .filter(x => x.ci !== qbCellIdx).sort((a,b) => a.d-b.d).slice(0,6).map(x=>x.ci);
 
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const codes = cells.map(() => ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]);
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
 const C = {
-  live:    new THREE.Color(0xd4af37),
-  liveEm:  new THREE.Color(0xb8920a),
-  soon:    new THREE.Color(0x1e3a4a),
-  soonEm:  new THREE.Color(0x0d2535),
-  empty:   new THREE.Color(0x080f1c),
-  emptyEm: new THREE.Color(0x030810),
-  hoverL:  new THREE.Color(0xffe066),
-  hoverS:  new THREE.Color(0x4a9fbf),
-  focus:   new THREE.Color(0xffffff),
-  patron:  new THREE.Color(0xb87333),
-  patronEm:new THREE.Color(0x7a3808),
+  queenBorder: new THREE.Color(0xffd700), queenEm: new THREE.Color(0xd4a000),
+  t1Border:    new THREE.Color(0xc8960a), t1Em:    new THREE.Color(0x9a7008),
+  t2Border:    new THREE.Color(0x7a5c18), t2Em:    new THREE.Color(0x3a2c08),
+  t3Border:    new THREE.Color(0x2e2208), t3Em:    new THREE.Color(0x120e04),
+  patronBorder:new THREE.Color(0xb87333), patronEm:new THREE.Color(0x7a3808),
+  fill:        new THREE.Color(0x0d1117), fillEm:  new THREE.Color(0x050810),
+  hoverL:      new THREE.Color(0xffe066),
+  hoverS:      new THREE.Color(0x5a9faf),
+  focus:       new THREE.Color(0xffffff),
 };
 
-// ─── Build Cell Meshes ────────────────────────────────────────────────────────
-const LIFT=0.007, GAP=0.91;
-const meshes=[], cellInfo=[];
+// ─── Cell geometry helpers ────────────────────────────────────────────────────
+const LIFT = 0.007;
+const OUTER_GAP = 0.91;   // full hex boundary
+const INNER_GAP = 0.85;   // inner boundary of border ring (= outer boundary of fill)
+const QB_GAP    = 0.80;   // QB is larger
 
-cells.forEach((cell, ci) => {
-  const engine = cellToEngine.get(ci)||null;
-  const poly=cell.polygon, n=poly.length;
-  const c3=cell.center.clone().multiplyScalar(1+LIFT);
-  const verts=[];
-  for (let i=0;i<n;i++){
-    const a=poly[i].clone().lerp(cell.center,1-GAP).normalize().multiplyScalar(1+LIFT);
-    const b=poly[(i+1)%n].clone().lerp(cell.center,1-GAP).normalize().multiplyScalar(1+LIFT);
-    verts.push(c3.x,c3.y,c3.z, a.x,a.y,a.z, b.x,b.y,b.z);
+function makeFillGeo(cell, gap, liftOff) {
+  const poly=cell.polygon, n=poly.length, lv=1+liftOff;
+  const c3=cell.center.clone().multiplyScalar(lv), verts=[];
+  for(let i=0;i<n;i++){
+    const a=poly[i].clone().lerp(cell.center,1-gap).normalize().multiplyScalar(lv);
+    const b=poly[(i+1)%n].clone().lerp(cell.center,1-gap).normalize().multiplyScalar(lv);
+    verts.push(c3.x,c3.y,c3.z,a.x,a.y,a.z,b.x,b.y,b.z);
   }
   const geo=new THREE.BufferGeometry();
   geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
-  geo.computeVertexNormals();
-
-  let color,emissive,emissiveIntensity,roughness,metalness;
-  if (engine?.status==='live')    { color=C.live.clone();   emissive=C.liveEm.clone();   emissiveIntensity=0.4;  roughness=0.25; metalness=0.65; }
-  else if (engine?.status==='soon')   { color=C.soon.clone();   emissive=C.soonEm.clone();   emissiveIntensity=0.06; roughness=0.8;  metalness=0.15; }
-  else if (engine?.status==='patron') { color=C.patron.clone(); emissive=C.patronEm.clone(); emissiveIntensity=0.55; roughness=0.3;  metalness=0.6;  }
-  else { color=C.empty.clone(); emissive=C.emptyEm.clone(); emissiveIntensity=0; roughness=0.95; metalness=0.05; }
-
-  const isEmpty = !engine;
-  const mat = isEmpty
-    ? new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide,transparent:true,opacity:0,depthWrite:false})
-    : new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity,roughness,metalness,side:THREE.DoubleSide});
-  const mesh=new THREE.Mesh(geo, mat);
-  GROUP.add(mesh); meshes.push(mesh);
-  cellInfo.push({engine, code:codes[ci], mesh, color:color.clone(), emissive:emissive.clone(), emissiveIntensity, center:cell.center.clone()});
-});
-
-
-cellInfo.forEach(cd => {
-  if (cd.engine?.status==='live') {
-    const l=new THREE.PointLight(0xd4af37,1.2,1.8); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
-  }
-  if (cd.engine?.status==='patron') {
-    const l=new THREE.PointLight(0xb87333,1.0,1.6); l.position.copy(cd.center).multiplyScalar(1.08); GROUP.add(l);
-  }
-});
-
-function makeSprite(text, color, alpha, fs) {
-  const c=document.createElement('canvas'); c.width=256; c.height=80;
-  const ctx=c.getContext('2d');
-  ctx.clearRect(0,0,256,80); ctx.globalAlpha=alpha; ctx.fillStyle=color;
-  ctx.font=`bold ${fs}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
-  if(alpha>.5){ctx.shadowColor=color; ctx.shadowBlur=10;}
-  ctx.fillText(text,128,40);
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false}));
-  return sp;
+  geo.computeVertexNormals(); return geo;
 }
-cellInfo.forEach(cd => {
-  if(!cd.engine) return;
-  let label, color, alpha;
-  if (cd.engine.status==='patron') { label='PATRONS'; color='#c8822a'; alpha=0.95; }
-  else if (cd.engine.status==='live') { label=cd.engine.name.replace('Hive','').toUpperCase(); color='#f5d060'; alpha=0.9; }
-  else { label=cd.engine.name.replace('Hive','').toUpperCase(); color='#2a6a88'; alpha=0.55; }
-  const sp=makeSprite(label, color, alpha, 28);
-  sp.scale.set(0.22,0.07,1); sp.position.copy(cd.center).multiplyScalar(1.045); GROUP.add(sp);
+
+function makeBorderGeo(cell, outerGap, innerGap, liftOff) {
+  const poly=cell.polygon, n=poly.length, lv=1+liftOff+0.001, verts=[];
+  for(let i=0;i<n;i++){
+    const ao=poly[i].clone().lerp(cell.center,1-outerGap).normalize().multiplyScalar(lv);
+    const bo=poly[(i+1)%n].clone().lerp(cell.center,1-outerGap).normalize().multiplyScalar(lv);
+    const ai=poly[i].clone().lerp(cell.center,1-innerGap).normalize().multiplyScalar(lv);
+    const bi=poly[(i+1)%n].clone().lerp(cell.center,1-innerGap).normalize().multiplyScalar(lv);
+    verts.push(ao.x,ao.y,ao.z,ai.x,ai.y,ai.z,bo.x,bo.y,bo.z);
+    verts.push(ai.x,ai.y,ai.z,bi.x,bi.y,bi.z,bo.x,bo.y,bo.z);
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.computeVertexNormals(); return geo;
+}
+
+// ─── Build Cell Meshes ────────────────────────────────────────────────────────
+const meshes=[];
+const cellMeshMap=new Map(); // mesh → cell index
+const cellInfo=new Array(cells.length).fill(null).map((_,ci)=>({
+  engine:null, ci, mesh:null, borderMesh:null, fillMesh:null,
+  borderColor:new THREE.Color(0), borderEm:new THREE.Color(0), borderEmInt:0,
+  center: cells[ci].center.clone(), isQB:false, code:codes[ci]
+}));
+
+cells.forEach((cell, ci) => {
+  const engine = cellToEngine.get(ci)||null;
+  if (!engine) return; // empty cells invisible
+  const tier=engine.tier??1, status=engine.status;
+  const isQB = status==='queen';
+
+  let bColor, bEm, bEmInt, transparent=false, opacity=1;
+  if (isQB)            { bColor=C.queenBorder.clone(); bEm=C.queenEm.clone();    bEmInt=1.8; }
+  else if (status==='patron') { bColor=C.patronBorder.clone(); bEm=C.patronEm.clone(); bEmInt=0.75; }
+  else if (tier===1)   { bColor=C.t1Border.clone();    bEm=C.t1Em.clone();       bEmInt=0.65; }
+  else if (tier===2)   { bColor=C.t2Border.clone();    bEm=C.t2Em.clone();       bEmInt=0.28; }
+  else                 { bColor=C.t3Border.clone();    bEm=C.t3Em.clone();       bEmInt=0.08; transparent=true; opacity=0.45; }
+
+  if (isQB) {
+    // QB: single solid gold hex, larger
+    const geo=makeFillGeo(cell, QB_GAP, LIFT);
+    const mat=new THREE.MeshStandardMaterial({color:C.queenBorder.clone(),emissive:C.queenEm.clone(),
+      emissiveIntensity:bEmInt,roughness:0.12,metalness:0.88,side:THREE.DoubleSide});
+    const mesh=new THREE.Mesh(geo,mat);
+    GROUP.add(mesh); meshes.push(mesh); cellMeshMap.set(mesh,ci);
+    Object.assign(cellInfo[ci],{engine,mesh,borderMesh:mesh,fillMesh:null,isQB:true,
+      borderColor:C.queenBorder.clone(),borderEm:C.queenEm.clone(),borderEmInt:bEmInt});
+    const l=new THREE.PointLight(0xffd700,2.8,2.2); l.position.copy(cell.center).multiplyScalar(1.1); GROUP.add(l);
+    return;
+  }
+
+  // Non-QB: border ring + dark fill
+  const borderMesh=new THREE.Mesh(makeBorderGeo(cell,OUTER_GAP,INNER_GAP,LIFT),
+    new THREE.MeshStandardMaterial({color:bColor,emissive:bEm,emissiveIntensity:bEmInt,
+      roughness:0.2,metalness:0.75,side:THREE.DoubleSide,transparent,opacity,depthWrite:!transparent}));
+  GROUP.add(borderMesh); meshes.push(borderMesh); cellMeshMap.set(borderMesh,ci);
+
+  const fillMesh=new THREE.Mesh(makeFillGeo(cell,INNER_GAP,LIFT),
+    new THREE.MeshStandardMaterial({color:C.fill.clone(),emissive:C.fillEm.clone(),emissiveIntensity:0.04,
+      roughness:0.88,metalness:0.08,side:THREE.DoubleSide,transparent,opacity:transparent?0.28:0.88,depthWrite:!transparent}));
+  GROUP.add(fillMesh); meshes.push(fillMesh); cellMeshMap.set(fillMesh,ci);
+
+  Object.assign(cellInfo[ci],{engine,mesh:borderMesh,borderMesh,fillMesh,isQB:false,
+    borderColor:bColor.clone(),borderEm:bEm.clone(),borderEmInt:bEmInt});
+
+  if (tier===1) { const l=new THREE.PointLight(0xc8960a,0.7,1.6); l.position.copy(cell.center).multiplyScalar(1.08); GROUP.add(l); }
+  if (status==='patron') { const l=new THREE.PointLight(0xb87333,0.9,1.5); l.position.copy(cell.center).multiplyScalar(1.08); GROUP.add(l); }
+});
+
+// ─── QB Radiating Lines ───────────────────────────────────────────────────────
+{
+  const qbC = cells[qbCellIdx].center;
+  qbNeighbours.forEach(ni => {
+    const nc=cells[ni].center;
+    const geo=new THREE.BufferGeometry().setFromPoints([
+      qbC.clone().multiplyScalar(1.025), nc.clone().multiplyScalar(1.025)
+    ]);
+    GROUP.add(new THREE.Line(geo,
+      new THREE.LineBasicMaterial({color:0xd4a000,transparent:true,opacity:0.38})));
+    // Dot at neighbour end
+    const dotGeo=new THREE.SphereGeometry(0.006,5,5);
+    const dot=new THREE.Mesh(dotGeo,new THREE.MeshBasicMaterial({color:0xd4a000,transparent:true,opacity:0.5}));
+    dot.position.copy(nc).multiplyScalar(1.025); GROUP.add(dot);
+  });
+}
+
+// ─── Sprites: icon + label ────────────────────────────────────────────────────
+function makeIconSprite(emoji, alpha, size) {
+  const c=document.createElement('canvas'); c.width=128; c.height=128;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,128,128); ctx.globalAlpha=alpha;
+  ctx.font=`${size}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(emoji,64,64);
+  return new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false}));
+}
+function makeLabelSprite(text, color, alpha, fs) {
+  const c=document.createElement('canvas'); c.width=256; c.height=64;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,256,64); ctx.globalAlpha=alpha; ctx.fillStyle=color;
+  ctx.font=`600 ${fs}px system-ui,-apple-system,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  if(alpha>0.5){ctx.shadowColor=color; ctx.shadowBlur=8;}
+  ctx.fillText(text,128,32);
+  return new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false}));
+}
+
+cells.forEach((cell, ci) => {
+  const engine=cellToEngine.get(ci); if(!engine) return;
+  const tier=engine.tier??1, status=engine.status;
+
+  let lColor,lAlpha,iAlpha;
+  if (status==='queen')   { lColor='#ffd700'; lAlpha=1.0; iAlpha=1.0; }
+  else if(status==='patron') { lColor='#c8822a'; lAlpha=0.95; iAlpha=0.9; }
+  else if(tier===1)       { lColor='#ffffff'; lAlpha=0.9; iAlpha=0.88; }
+  else if(tier===2)       { lColor='rgba(255,255,255,0.65)'; lAlpha=0.65; iAlpha=0.55; }
+  else                    { lColor='rgba(180,155,110,0.38)'; lAlpha=0.35; iAlpha=0.28; }
+
+  const raw=engine.name.replace(/^Hive/,'').replace('Queen Bee','QUEEN BEE').replace('Engine Builder','Engine Bld').replace('Universal Document','UD Hub').replace('WhoTextedMe','WhoTexted').replace('Space Station','Station').replace('HiveAdminSupport','Admin Support');
+  const label=status==='patron'?'PATRONS':status==='queen'?'QUEEN BEE':raw.toUpperCase();
+
+  const cPos=cell.center.clone().multiplyScalar(1.06);
+  const up=cell.center.clone().normalize();
+
+  const iSize=status==='queen'?68:tier===1?50:tier===2?40:30;
+  const iScale=status==='queen'?0.10:tier===1?0.076:tier===2?0.064:0.050;
+  const icon=makeIconSprite(engine.emoji,iAlpha,iSize);
+  icon.scale.set(iScale,iScale,1);
+  icon.position.copy(cPos).addScaledVector(up,0.013);
+  GROUP.add(icon);
+
+  const fs=status==='queen'?20:tier===1?17:tier===2?15:12;
+  const lScaleX=status==='queen'?0.19:tier===1?0.15:tier===2?0.13:0.11;
+  const lScaleY=status==='queen'?0.048:tier===1?0.040:0.034;
+  const lbl=makeLabelSprite(label,lColor,lAlpha,fs);
+  lbl.scale.set(lScaleX,lScaleY,1);
+  lbl.position.copy(cPos).addScaledVector(up,-0.010);
+  GROUP.add(lbl);
 });
 
 // ─── Rotation ─────────────────────────────────────────────────────────────────
@@ -937,15 +1081,15 @@ function focusEngine(eng) {
   const ci=engineToCell.get(eng.name); if(ci==null) return;
   restoreFocused();
   focusedIdx=ci;
-  const cd=cellInfo[ci];
-  cd.mesh.material.color.copy(C.focus); cd.mesh.material.emissive.copy(C.focus); cd.mesh.material.emissiveIntensity=1;
+  const cd=cellInfo[ci]; if(!cd||!cd.borderMesh) return;
+  cd.borderMesh.material.color.copy(C.focus); cd.borderMesh.material.emissive.copy(C.focus); cd.borderMesh.material.emissiveIntensity=1;
   focusQ=new THREE.Quaternion().setFromUnitVectors(cd.center.clone().normalize(), new THREE.Vector3(0,0,1));
   targetCamZ=FOCUS_Z; autoRot=false;
 }
 function restoreFocused() {
   if(focusedIdx<0) return;
   const cd=cellInfo[focusedIdx];
-  cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;
+  if(cd&&cd.borderMesh){ cd.borderMesh.material.color.copy(cd.borderColor); cd.borderMesh.material.emissive.copy(cd.borderEm); cd.borderMesh.material.emissiveIntensity=cd.borderEmInt; }
   focusedIdx=-1;
 }
 function clearFocus() { restoreFocused(); focusQ=null; targetCamZ=BASE_Z; }
@@ -980,21 +1124,19 @@ function toNDC(cx,cy){ mNDC.x=(cx/window.innerWidth)*2-1; mNDC.y=-(cy/window.inn
 
 // Click with zoom-in animation before navigation
 function handleClick(cx,cy){
-  // Moon click — project moon to screen, check proximity
-  const mp = moonMesh.position.clone().project(camera);
-  const msx = (mp.x*0.5+0.5)*window.innerWidth, msy = (-mp.y*0.5+0.5)*window.innerHeight;
-  if(mp.z > -1 && mp.z < 1 && Math.hypot(cx-msx, cy-msy) < 24){
-    targetCamZ = 0.95;
-    setTimeout(()=>{ window.location.href='https://hivemoon.hive.baby'; }, 580);
-    return;
+  const mp=moonMesh.position.clone().project(camera);
+  const msx=(mp.x*0.5+0.5)*window.innerWidth, msy=(-mp.y*0.5+0.5)*window.innerHeight;
+  if(mp.z>-1&&mp.z<1&&Math.hypot(cx-msx,cy-msy)<24){
+    targetCamZ=0.95; setTimeout(()=>{ window.location.href='https://hivemoon.hive.baby'; },580); return;
   }
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
   const h=raycaster.intersectObjects(meshes); if(!h.length) return;
-  const cd=cellInfo[meshes.indexOf(h[0].object)];
-  if(cd.engine?.url) {
-    targetCamZ = 0.95;
-    setTimeout(() => { window.location.href = cd.engine.url; }, 580);
-  }
+  const ci=cellMeshMap.get(h[0].object); if(ci===undefined) return;
+  const cd=cellInfo[ci]; if(!cd||!cd.engine) return;
+  const tier=cd.engine.tier??1;
+  if(cd.engine.url){ targetCamZ=0.95; setTimeout(()=>{ window.location.href=cd.engine.url; },580); }
+  else if(tier===2) showToast('Coming soon — in development');
+  else if(tier===3) showToast('Planned — vote for this engine');
 }
 
 canvas.addEventListener('mousemove',e=>{ if(!dragging) updateHover(e.clientX,e.clientY); });
@@ -1003,33 +1145,40 @@ canvas.addEventListener('touchstart',e=>{ if(e.touches.length===1) updateHover(e
 function updateHover(cx,cy){
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
   const hits=raycaster.intersectObjects(meshes);
-  const newIdx=hits.length?meshes.indexOf(hits[0].object):-1;
+  const newCi=hits.length?cellMeshMap.get(hits[0].object):undefined;
+  const newIdx=newCi!==undefined?newCi:-1;
   if(newIdx===hoveredIdx){ if(newIdx>=0) posTip(cx,cy); return; }
 
   if(hoveredIdx>=0&&hoveredIdx!==focusedIdx){
-    const cd=cellInfo[hoveredIdx]; cd.mesh.material.color.copy(cd.color); cd.mesh.material.emissive.copy(cd.emissive); cd.mesh.material.emissiveIntensity=cd.emissiveIntensity;
+    const cd=cellInfo[hoveredIdx];
+    if(cd&&cd.borderMesh){ cd.borderMesh.material.color.copy(cd.borderColor); cd.borderMesh.material.emissive.copy(cd.borderEm); cd.borderMesh.material.emissiveIntensity=cd.borderEmInt; }
   }
   hoveredIdx=newIdx;
   if(newIdx>=0){
     const cd=cellInfo[newIdx];
-    if(cd.engine){
-      const hc=cd.engine.status==='live'?C.hoverL:C.hoverS;
-      cd.mesh.material.color.copy(hc); cd.mesh.material.emissive.copy(hc); cd.mesh.material.emissiveIntensity=0.7;
+    if(cd&&cd.engine){
+      const tier=cd.engine.tier??1;
+      const hc=tier<=1?C.hoverL:tier===2?C.hoverS:new THREE.Color(0x6a5020);
+      if(cd.borderMesh){ cd.borderMesh.material.color.copy(hc); cd.borderMesh.material.emissive.copy(hc); cd.borderMesh.material.emissiveIntensity=0.7; }
       showTip(cd,cx,cy); canvas.style.cursor=cd.engine.url?'pointer':'default';
     } else { showTip(cd,cx,cy); canvas.style.cursor='default'; }
   } else { tooltip.style.display='none'; canvas.style.cursor='grab'; }
 }
 
 function showTip(cd,cx,cy){
-  if(cd.engine){
-    tooltip.className=cd.engine.status==='soon'?'soon-tt':cd.engine.status==='patron'?'patron-tt':'';
-    tooltip.querySelector('.tt-name').textContent=cd.engine.emoji+'  '+(cd.engine.status==='patron'?'Support Hive':cd.engine.name);
+  if(cd&&cd.engine){
+    const tier=cd.engine.tier??1, status=cd.engine.status;
+    tooltip.className=tier>=2?'soon-tt':status==='patron'?'patron-tt':'';
+    tooltip.querySelector('.tt-name').textContent=cd.engine.emoji+'  '+(status==='patron'?'Support Hive':cd.engine.name);
     tooltip.querySelector('.tt-tagline').textContent=cd.engine.tagline;
     tooltip.querySelector('.tt-code').textContent='';
-    const a=tooltip.querySelector('.tt-action'); a.textContent=cd.engine.url?'Click to open →':'Coming soon'; a.className='tt-action'+(cd.engine.url?'':' soon-action');
+    const a=tooltip.querySelector('.tt-action');
+    if(cd.engine.url){ a.textContent='Click to open →'; a.className='tt-action'; }
+    else if(tier===2){ a.textContent='Coming soon — in development'; a.className='tt-action soon-action'; }
+    else { a.textContent='Planned — vote for this engine'; a.className='tt-action soon-action'; }
   } else {
     tooltip.className='';
-    tooltip.querySelector('.tt-name').textContent=cd.code;
+    tooltip.querySelector('.tt-name').textContent=(cd&&cd.code)||'???';
     tooltip.querySelector('.tt-tagline').textContent=''; tooltip.querySelector('.tt-code').textContent='UNASSIGNED NODE'; tooltip.querySelector('.tt-action').textContent='';
   }
   tooltip.style.display='block'; posTip(cx,cy);
@@ -1121,7 +1270,7 @@ searchEl.addEventListener('input',()=>{
   if(all.length) focusEngine(all[0].e);
   for(const {e} of all.slice(0,5)){
     const div=document.createElement('div');
-    div.className='result-item'+(e.status==='soon'?' soon':'');
+    div.className='result-item'+((e.tier??1)>=2?' soon':'');
     div.innerHTML=`<span style="font-size:22px;line-height:1">${e.emoji}</span><div><div class="result-name">${e.name}</div><div class="result-tagline">${e.tagline}</div></div>`;
     div.addEventListener('mousedown',()=>{ if(e.url) window.location.href=e.url; else{focusEngine(e);resultsEl.innerHTML='';searchEl.blur();} });
     resultsEl.appendChild(div);
@@ -1184,14 +1333,20 @@ function animate(){
   // Meteors
   updateMeteors(dt);
 
-  // Cell pulse
-  cellInfo.forEach((cd,i)=>{
-    if(cd.engine?.status==='live' && i!==hoveredIdx && i!==focusedIdx)
-      cd.mesh.material.emissiveIntensity = .32+.12*Math.sin(t*1.4+i*.9);
-    else if(cd.engine?.status==='soon' && i!==hoveredIdx)
-      cd.mesh.material.emissiveIntensity = .04+.04*Math.sin(t*.7+i*1.7);
-    else if(cd.engine?.status==='patron' && i!==hoveredIdx)
-      cd.mesh.material.emissiveIntensity = .40+.20*Math.sin(t*0.5);  // slow, warm pulse
+  // Cell pulse — three-tier system
+  cellInfo.forEach((cd,ci)=>{
+    if(!cd||!cd.engine||!cd.borderMesh) return;
+    if(ci===hoveredIdx||ci===focusedIdx) return;
+    const mat=cd.borderMesh.material, tier=cd.engine.tier??1, status=cd.engine.status;
+    if(status==='queen')
+      mat.emissiveIntensity=1.6+0.2*Math.sin(t*0.9+ci*0.5);           // QB: gentle shimmer, always bright
+    else if(tier===1)
+      mat.emissiveIntensity=cd.borderEmInt*(0.72+0.38*Math.sin(t*(Math.PI/1.7)+ci*0.8));  // ~3.4s cycle
+    else if(tier===2)
+      mat.emissiveIntensity=cd.borderEmInt*(0.58+0.42*Math.sin(t*(Math.PI/3.2)+ci*1.1));  // ~6.4s cycle
+    else if(status==='patron')
+      mat.emissiveIntensity=cd.borderEmInt*(0.7+0.4*Math.sin(t*0.5));
+    // Tier 3: static, no pulse
   });
 
   updateConnLine();
