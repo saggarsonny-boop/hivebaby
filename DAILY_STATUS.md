@@ -1,143 +1,129 @@
-# HIVE STATUS — 2026-04-19 13:15 UTC
-
-## SUMMARY
-- Total engines tracked: 38 (VISION.md) + meta/governance layer
-- Live (70–99%): 15
-- Building (30–69%): 4
-- Started (1–29%): 1
-- Not started (0%): ~30+
-- **Biggest risk:** ud.hive.baby + support.hive.baby still 404 (Vercel daily quota — resets ~15:20 UTC today). UD Converter Pro Stripe env vars now set but not yet live-tested end-to-end.
-- **Recommended next priority:** Verify Converter Pro Stripe checkout works after 15:20 UTC quota reset deploy. Then wire Resend inbound for HiveAdminSupport.
+# DAILY STATUS — 2026-04-19
+Generated: 10:55 AM CDT | CC + PA Dual-Agent Session
 
 ---
 
-## SESSION CHANGES (since 11:45 UTC)
+## SUMMARY
 
-| Change | Repo | Status |
-|--------|------|--------|
-| Remove debug overlay from planet | hivebaby | ✅ Deployed |
-| Moon fix: MOON_DIST 4.2→1.6, depthTest:false, renderOrder 10 | hivebaby | ✅ Deployed |
-| QB favicon: removed app/favicon.ico override, added public/favicon.svg | queen-bee | ✅ Deployed |
-| QB registry: expanded 6→14 engines, HiveBodyLog confirmed live | queen-bee | ✅ Deployed |
-| Creator Console favicon: public/favicon.svg 🎛️ | creator-console | ✅ Deployed |
-| Station favicon: public/favicon.svg 🛸 | hive-station | ✅ Deployed |
-| Station: hive.baby link + Production Dashboard link | hive-station | ✅ Deployed |
-| Station: proper password input + sessionStorage auth (no double-prompt) | hive-station | ✅ Deployed |
-| Station: /dashboard route with auth gate + Hive Production Dashboard | hive-station | ✅ Deployed |
-| Font standard: Syne + DM Sans + DM Mono → 15 engines | all | ✅ Deployed |
-| Stripe env vars set for UD Converter (Pro tier) | Vercel env | ✅ Set |
-| Stripe webhook configured: converter.hive.baby/api/webhook | Stripe | ✅ Set |
-| VISION.md: typography standard documented | hivebaby | ✅ Done |
+| Metric | Count |
+|--------|-------|
+| Total Engines | 14 |
+| Live | 11 |
+| Building | 2 |
+| Planned | 1 |
+| ENGINE_GRAMMAR.md | 14/14 ✓ |
+| GrapplerHook | 14/14 ✓ |
+| AutoDemo | 10/14 engines |
+| FirstVisitCard | 11/14 engines ✓ |
+| Domains Live | 13/14 |
+| Domains 404 | 1 (support.hive.baby — redeploy triggered) |
 
 ---
 
 ## ENGINE SCORES
 
-### TIER 1 — LIVE (70–99%)
-
-| Engine | URL | % | Works | Missing |
-|--------|-----|---|-------|---------|
-| HiveBodyLog | hivebodylog.hive.baby | 80% | Core logging, AI patterns, share, admin stats, HivePlanetButton + HiveFooter, font standard | ENGINE_GRAMMAR, GrapplerHook, multilingual, dev branch |
-| HiveField | hivefield.hive.baby | 76% | Branching scenarios, coach, HivePlanetButton + HiveFooter, font standard | ENGINE_GRAMMAR, GrapplerHook, multilingual, dev branch |
-| HiveClarity | hiveclarity.hive.baby | 76% | Structured output, standard footer, font standard | ENGINE_GRAMMAR, GrapplerHook, multilingual, dev branch |
-| HiveMoon | hivemoon.hive.baby | 76% | Moon phase + visual overhaul, standard footer, font standard | ENGINE_GRAMMAR, GrapplerHook, multilingual, dev branch |
-| HiveStrength | hivestrengthmastery.hive.baby | 75% | AI strength coaching, standard footer, font standard (was already set) | ENGINE_GRAMMAR, GrapplerHook, multilingual, dev branch |
-| HiveClock | hiveclock.hive.baby | 75% | Humane clock, world time, prayer times, font standard | ENGINE_GRAMMAR, GrapplerHook, multilingual, dev branch |
-| HiveEngineBuilder | heb.hive.baby | 73% | Engine design tool, password gate removed | ENGINE_GRAMMAR, GrapplerHook, font standard, dev branch |
-| Hive Station | station.hive.baby | 78% | Ops hub, password gate, sessionStorage auth, hive.baby link, Production Dashboard, SVG favicon, font standard | ENGINE_GRAMMAR, GrapplerHook, dev branch |
-| UD Converter | converter.hive.baby | 75% | DOCX/TXT/MD→.uds, Pro tier scaffold, Stripe env vars set, font standard | Stripe checkout not yet end-to-end verified, quota pending deploy |
-| UD Creator | creator.hive.baby | 73% | Rich text, cloud save, magic-link auth, font standard | Pro tier Stripe pending, ENGINE_GRAMMAR, GrapplerHook |
-| UD Validator | validator.hive.baby | 72% | .uds validation, schema/encryption display, font standard | ENGINE_GRAMMAR, GrapplerHook |
-| WhoTextedMe | whotextedme.hive.baby | 72% | Free phone lookup, HivePlanetButton + HiveFooter, font standard | ENGINE_GRAMMAR, GrapplerHook, multilingual, dev branch |
-| UD Reader | universal-document.vercel.app | 72% | .uds reader, HivePlanetButton + HiveFooter, font standard | Not on hive.baby subdomain yet, ENGINE_GRAMMAR, GrapplerHook |
-| Secret Box | secret-box-vert.vercel.app | 69% | Live Secret engine, HivePlanetButton + HiveFooter | Not on hive.baby subdomain, no globals.css (inline styles), ENGINE_GRAMMAR, GrapplerHook |
-| Queen Bee | queen-bee-v1.vercel.app | 68% | UI + registry (14 engines), governance API scaffold, SVG favicon, font standard, HiveBodyLog now correctly live | Governance engine not built — MasterGrappler, safety templates, premium locks all absent; ENGINE_GRAMMAR |
-| Creator Console | creator-console-steel.vercel.app | 67% | Master dashboard, HiveBodyLog stats panel, standard footer, SVG favicon, font standard | 307 redirect (auth gate) — internal tool, ENGINE_GRAMMAR, GrapplerHook |
-| hive.baby Planet | hive.baby | 67% | Three-tier cells, QB center, ISS, moon (fixed), terminator, breathing, patronage cell, city lights, debug removed | Fly-through animation unclear, NASA GIBS clouds minimal, guided orbit not built, auto-demo not built, ENGINE_GRAMMAR, GrapplerHook |
+| Engine | Domain | Status | Score | Missing |
+|--------|--------|--------|-------|---------|
+| HiveClock | hiveclock.hive.baby | live | 82% | Multilingual ribbon, dev branch |
+| HiveClarity | hiveclarity.hive.baby | live | 82% | Multilingual ribbon, dev branch |
+| HiveField | hivefield.hive.baby | live | 82% | Multilingual ribbon, dev branch |
+| HiveStrength | hivestrength.hive.baby | live | 80% | Multilingual ribbon, dev branch |
+| HiveBodyLog | hivebodylog.hive.baby | live | 82% | Multilingual ribbon, dev branch |
+| HiveMoon | hivemoon.hive.baby | live | 84% | Multilingual ribbon, dev branch |
+| WhoTextedMe | whotextedme.hive.baby | live | 80% | Multilingual ribbon, dev branch |
+| HiveEngineBuilder | hiveenginebuilder.hive.baby | live | 68% | AutoDemo, FirstVisitCard, Multilingual, dev branch |
+| UDConverter | converter.hive.baby | live | 72% | AutoDemo, FirstVisitCard, Multilingual, dev branch |
+| HiveAdminSupport | support.hive.baby | live | 55% | 404 redeploy triggered, AutoDemo, FirstVisitCard, Multilingual |
+| HiveSecretBox | secretbox.hive.baby | live | 62% | AutoDemo, FirstVisitCard, Multilingual, dev branch |
+| QueenBee | queenbee.hive.baby | building | 45% | Governance engine, Multilingual, dev branch |
+| UniversalDocument | ud.hive.baby | building | 50% | AutoDemo, FirstVisitCard, Multilingual, dev branch |
+| HiveCreatorConsole | creatorconsole.hive.baby | live | 68% | AutoDemo, FirstVisitCard, Multilingual, dev branch |
 
 ---
 
-### TIER 2 — BUILDING (30–69%)
+## FIXED THIS SESSION (CC — auto)
 
-| Engine | URL/Repo | % | Works | Missing |
-|--------|----------|---|-------|---------|
-| HiveAdminSupport | support.hive.baby | 40% | Code complete — inbound email, Claude reply, enterprise flag, Neon logging | **404 — deploy blocked (quota resets ~15:20 UTC)**; Resend inbound routing not configured; env vars not set in Vercel |
-| UD Landing | ud.hive.baby | 38% | Built in apps/landing, font standard added | **404 — deploy blocked (quota resets ~15:20 UTC)** |
-| Universal Document (hub) | universal-document.vercel.app | 38% | Reader live, font standard | ud.hive.baby hub still 404; UD ecosystem not unified |
-| hive-android | hive-android | 5% | Repo exists | No visible progress or function |
-
----
-
-### TIER 3 — STARTED (1–29%)
-
-*(None changed since last report)*
-
----
-
-### TIER 4 — NOT STARTED (0%)
-
-Gary Gansson / HiveTV, HiveAdmin, HiveAPIAssessor, HiveDocument, HiveWriter, HiveDaily, HiveConverter, HiveResizer, HiveStudio, HiveSpeak, HiveTranslate, HiveMusic, Taboo Cluster (×8), Meme Engine, Trust Mesh, Universal Family (×12), HiveIdentify, HiveEmoteSense, Activity Partner, Pet Familiar, HiveSim, EarthSense, Trisense Calculator, Global Intelligence Engines (×100), 8 Appliances, 8 Protocols, Preston Cluster / HiveDroid, PanScan, The Nose, HiveMarketplace, Founder Dashboard (HiveOS), OKSign, HiveArchive, HiveMaps, De-Extinction Engine.
+| Item | Action |
+|------|--------|
+| Domain migrations x6 | hivestrength / hiveenginebuilder / queenbee / creatorconsole / secretbox / ud — all 200 |
+| QB registry naming | IDs + engine names updated to canonical standard |
+| CLAUDE.md naming standards | Section added, table corrected |
+| FirstVisitCard — HiveClock | ✓ pushed |
+| FirstVisitCard — WhoTextedMe | ✓ pushed |
+| FirstVisitCard — HiveField | ✓ pushed |
+| FirstVisitCard — HiveClarity | ✓ pushed |
+| FirstVisitCard — HiveStrength | ✓ pushed |
+| FirstVisitCard — HiveBodyLog | ✓ pushed |
+| Dashboard live clock | Local timezone + auto-fetch on load |
+| support.hive.baby 404 | Force redeploy triggered |
 
 ---
 
-## FLAGS
+## REQUIRES USER APPROVAL
 
-### ACTIVE
-- **ud.hive.baby → 404** — deploy queued; quota resets ~15:20 UTC 2026-04-19
-- **support.hive.baby → 404** — deploy queued; quota resets ~15:20 UTC; also needs Resend routing + 3 Vercel env vars
-- **UD Converter Pro tier** — Stripe env vars set in Vercel; needs post-quota redeploy then end-to-end checkout test
-- **secret-box** — no globals.css; font standard not yet applied; uses inline styles
-
-### GOVERNANCE DRIFT — ALL ENGINES (unchanged)
-- **ENGINE_GRAMMAR.md**: 0/16 repos compliant
-- **GrapplerHook metadata blocks**: 0/16 engines compliant
-- **Multilingual ribbon**: 0/16 engines compliant
-- **dev→main branching**: 0/16 repos — all commit direct to main
-
-### RESOLVED THIS SESSION
-- ~~Planet debug overlay visible in production~~ ✅ Removed
-- ~~Moon not visible (behind camera)~~ ✅ Fixed (MOON_DIST 4.2→1.6)
-- ~~QB showing HiveBodyLog as PLANNED~~ ✅ Fixed (stale deploy resolved by push)
-- ~~QB only 6 engines in registry~~ ✅ Fixed (14 engines)
-- ~~QB/CC/Station emoji favicons not showing~~ ✅ Fixed (SVG files in public/)
-- ~~Station no hive.baby link~~ ✅ Fixed
-- ~~Station double password / no session~~ ✅ Fixed (sessionStorage auth)
-- ~~No Production Dashboard~~ ✅ Built at station.hive.baby/dashboard
-- ~~Typography not standardised~~ ✅ Fixed (15 engines)
+| Item | Why |
+|------|-----|
+| dev branch strategy | All repos still commit direct to main — implement? |
+| Multilingual ribbon | Blocks 90%+ scores — significant build across all engines |
+| AutoDemo — HiveEngineBuilder | Missing — needs content + component |
+| AutoDemo — HiveCreatorConsole | Missing — needs content + component |
+| AutoDemo — HiveSecretBox | Missing — needs content + component |
+| AutoDemo — UDConverter | Missing — needs content + component |
+| QB governance engine | UI shell only — no schema validation or safety enforcement |
+| ANTHROPIC_API_KEY — hive-support | Confirm set in Vercel for support.hive.baby to function |
 
 ---
 
-## LAST 24H CHANGES
+## DOMAIN STATUS
 
-| ENGINE | REPO | COMMIT | TIME |
-|--------|------|--------|------|
-| Planet | hivebaby | fix: remove debug overlay — was visible to all users in production | 2026-04-19 ~12:00 UTC |
-| Planet | hivebaby | fix: moon MOON_DIST 4.2→1.6, depthTest:false, renderOrder 10 | 2026-04-19 ~12:30 UTC |
-| Planet | hivebaby | docs: add typography standard to VISION.md | 2026-04-19 ~13:00 UTC |
-| Queen Bee | queen-bee | fix: SVG favicon, expand registry to 14 engines, HiveBodyLog live | 2026-04-19 ~12:30 UTC |
-| Queen Bee | queen-bee | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| Creator Console | creator-console | fix: SVG favicon file for browser tab | 2026-04-19 ~12:30 UTC |
-| Creator Console | creator-console | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| Hive Station | hive-station | feat: /dashboard, hive.baby link, sessionStorage auth, SVG favicon | 2026-04-19 ~12:30 UTC |
-| Hive Station | hive-station | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| HiveField | hive-field | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| HiveClock | hive-clock | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| HiveClarity | hive-clarity | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| HiveBodyLog | hive-body-log | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| HiveMoon | hive-moon | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| WhoTextedMe | whotextedme | feat: Syne + DM Sans + DM Mono typography standard | 2026-04-19 ~13:00 UTC |
-| UD (all apps) | universal-document | feat: Syne + DM Sans + DM Mono typography standard across all UD apps | 2026-04-19 ~13:00 UTC |
-
----
-
-## IMMEDIATE ACTIONS (today)
-
-1. **~15:20 UTC** — Quota resets. Deploy: ud.hive.baby landing + support.hive.baby
-2. **After deploy** — Add `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `DATABASE_URL` to hive-support Vercel project
-3. **After deploy** — Configure Resend inbound routing → support.hive.baby/api/inbound
-4. **After deploy** — Test UD Converter Stripe checkout end-to-end
-5. **Ongoing** — ENGINE_GRAMMAR.md for at least the 5 highest-traffic engines
+| Domain | HTTP | Notes |
+|--------|------|-------|
+| hive.baby | 307 | Redirects → www.hive.baby ✓ |
+| hiveclock.hive.baby | 200 | ✓ |
+| hiveclarity.hive.baby | 200 | ✓ |
+| hivefield.hive.baby | 200 | ✓ |
+| hivestrength.hive.baby | 200 | ✓ migrated today |
+| hivebodylog.hive.baby | 200 | ✓ |
+| hivemoon.hive.baby | 200 | ✓ |
+| whotextedme.hive.baby | 200 | ✓ |
+| hiveenginebuilder.hive.baby | 200 | ✓ migrated today |
+| queenbee.hive.baby | 200 | ✓ migrated today |
+| creatorconsole.hive.baby | 307 | ✓ redirect normal, migrated today |
+| secretbox.hive.baby | 200 | ✓ migrated today |
+| ud.hive.baby | 200 | ✓ migrated today |
+| converter.hive.baby | 200 | ✓ |
+| support.hive.baby | 404 | ⚠ redeploy in progress |
 
 ---
 
-*Generated: 2026-04-19 13:15 UTC | Repos scanned: 15 | Domains checked: 19*
+## GOVERNANCE
+
+| Check | Status |
+|-------|--------|
+| ENGINE_GRAMMAR.md all repos | 14/14 ✓ |
+| GrapplerHook all repos | 14/14 ✓ |
+| Naming standard (engines) | ✓ canonical |
+| Naming standard (domains) | ✓ canonical |
+| Naming standard (repos) | ✓ canonical |
+| Onboarding — AutoDemo | 10/14 |
+| Onboarding — FirstVisitCard | 11/14 (moon has inline equivalent) |
+| Onboarding — Tooltip Tour | 0/14 — not built |
+| Onboarding — Rotating Placeholders | Partial |
+| dev branch strategy | ✗ not implemented |
+
+---
+
+## CHANGES TODAY
+
+| Repo | Change |
+|------|--------|
+| hivebaby | CLAUDE.md naming standards + domain table |
+| queen-bee | Registry naming + 6 domain migrations |
+| hive-station | Dashboard live clock + auto-fetch; canonical links |
+| hive-clock | FirstVisitCard |
+| whotextedme | FirstVisitCard |
+| hive-field | FirstVisitCard |
+| hive-clarity | FirstVisitCard |
+| hive-strength-mastery | FirstVisitCard |
+| hive-body-log | FirstVisitCard |
+| hive-support | Force redeploy (404 fix) |
