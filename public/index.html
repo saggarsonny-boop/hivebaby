@@ -990,8 +990,9 @@ scene.add(rimLight);
 const moonMesh = new THREE.Mesh(
   new THREE.SphereGeometry(0.10, 24, 24),
   new THREE.MeshStandardMaterial({ color: 0xcccbb8, roughness: 0.9, metalness: 0.0,
-    emissive: new THREE.Color(0x9988aa), emissiveIntensity: 0.18 })
+    emissive: new THREE.Color(0x9988aa), emissiveIntensity: 0.18, depthTest: false })
 );
+moonMesh.renderOrder = 10;
 scene.add(moonMesh);
 // Soft glow halo around moon
 const moonGlow = new THREE.Mesh(
@@ -999,7 +1000,7 @@ const moonGlow = new THREE.Mesh(
   new THREE.MeshBasicMaterial({ color: 0xaabbcc, transparent: true, opacity: 0.06, side: THREE.BackSide, depthWrite: false })
 );
 moonMesh.add(moonGlow);
-const MOON_DIST = 4.2;
+const MOON_DIST = 1.6;
 let moonTimer = 0;
 function updateMoon() {
   const m = calcMoonPos(jdNow());
