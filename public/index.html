@@ -1098,6 +1098,27 @@ scene.add(stationGroup);
 
 // Collect all station meshes for raycasting
 const stationMeshes = [hab, truss, panelP, panelS, dock, navLightG, navLightR, hexQB, hexHEB, hexCC];
+const stationHexCells = [hexQB, hexHEB, hexCC];
+let hoveredStationMesh = null;
+
+function setStationHover(mesh) {
+  if (mesh === hoveredStationMesh) return;
+  // Restore previous
+  if (hoveredStationMesh && stationHexCells.includes(hoveredStationMesh)) {
+    hoveredStationMesh.material.emissiveIntensity = 0.55;
+    hoveredStationMesh.scale.set(1, 1, 1);
+  }
+  hoveredStationMesh = mesh;
+  // Highlight new
+  if (mesh && stationHexCells.includes(mesh)) {
+    mesh.material.emissiveIntensity = 1.6;
+    mesh.scale.set(1.18, 1.18, 1.18);
+  }
+}
+
+function clearStationHover() {
+  setStationHover(null);
+}
 
 // Orbit params — visible equatorial-ish orbit, ~40s period
 const SS_R    = 1.38;
@@ -1657,7 +1678,9 @@ function updateHover(cx,cy){
   // Space Station hover tooltip
   const ssHits=raycaster.intersectObjects(stationMeshes);
   if(ssHits.length){
-    const hitLabel = ssHits[0].object.userData.stationLabel;
+    const hitMesh = ssHits[0].object;
+    const hitLabel = hitMesh.userData.stationLabel;
+    setStationHover(hitMesh);
     tooltip.className='';
     tooltip.querySelector('.tt-name').textContent = hitLabel ? '🛸  ' + hitLabel : '🛸  Space Station';
     tooltip.querySelector('.tt-tagline').textContent = hitLabel ? 'Hidden engine. Password protected.' : 'Internal hub. Password protected.';
@@ -1668,6 +1691,7 @@ function updateHover(cx,cy){
     canvas.style.cursor='pointer';
     return;
   }
+  clearStationHover();
 
   const hits=raycaster.intersectObjects(meshes);
   const newCi=hits.length?cellMeshMap.get(hits[0].object):undefined;
