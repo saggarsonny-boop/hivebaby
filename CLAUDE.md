@@ -27,13 +27,13 @@ Account: saggarsonny-boop
 | hive-field | HiveField | hivefield.hive.baby | LIVE | Next.js + Anthropic |
 | hive-clock | HiveClock | hiveclock.hive.baby | LIVE | Next.js + Anthropic |
 | hive-clarity | HiveClarity | hiveclarity.hive.baby | LIVE | Next.js + Anthropic |
-| hive-strength-mastery | HiveStrength | hivestrength.hive.baby ⚠️ pending DNS | LIVE | Next.js + Anthropic |
+| hive-strength-mastery | HiveStrength | hivestrength.hive.baby | LIVE | Next.js + Anthropic |
 | hive-body-log | HiveBodyLog | hivebodylog.hive.baby | LIVE | Next.js + Anthropic |
-| hive-engine-builder | HiveEngineBuilder | hiveenginebuilder.hive.baby ⚠️ pending DNS | LIVE | Next.js + Anthropic |
-| queen-bee | QueenBee | queenbee.hive.baby ⚠️ pending DNS | IN PROGRESS | Next.js + Anthropic |
-| creator-console | HiveCreatorConsole | creatorconsole.hive.baby ⚠️ pending DNS | LIVE | Next.js |
-| secret-box | HiveSecretBox | secretbox.hive.baby ⚠️ pending DNS | LIVE | Next.js |
-| universal-document | UniversalDocument | ud.hive.baby ⚠️ pending DNS | IN PROGRESS | Next.js + Anthropic |
+| hive-engine-builder | HiveEngineBuilder | hiveenginebuilder.hive.baby | LIVE | Next.js + Anthropic |
+| queen-bee | QueenBee | queenbee.hive.baby | IN PROGRESS | Next.js + Anthropic |
+| creator-console | HiveCreatorConsole | creatorconsole.hive.baby | LIVE | Next.js |
+| secret-box | HiveSecretBox | secretbox.hive.baby | LIVE | Next.js |
+| universal-document | UniversalDocument | ud.hive.baby | IN PROGRESS | Next.js + Anthropic |
 | whotextedme | WhoTextedMe | whotextedme.hive.baby | LIVE | Next.js + Anthropic |
 | universal-document/apps/converter | UDConverter | converter.hive.baby | LIVE | Next.js + Anthropic |
 | hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic |
