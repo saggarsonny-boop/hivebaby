@@ -1652,7 +1652,7 @@ function updateHover(cx,cy){
   const hits=raycaster.intersectObjects(meshes);
   const newCi=hits.length?cellMeshMap.get(hits[0].object):undefined;
   const newIdx=newCi!==undefined?newCi:-1;
-  if(newIdx===hoveredIdx){ if(newIdx>=0) posTip(cx,cy); return; }
+  if(newIdx===hoveredIdx){ if(newIdx>=0) posTip(cx,cy); else { tooltip.style.display='none'; canvas.style.cursor='grab'; } return; }
 
   if(hoveredIdx>=0&&hoveredIdx!==focusedIdx){
     const cd=cellInfo[hoveredIdx];
