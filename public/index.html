@@ -330,9 +330,138 @@ body {
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ─── Reset / Home button ──────────────────────────────────── */
+#reset-btn {
+  position: fixed;
+  top: 18px; left: 18px;
+  z-index: 22;
+  width: 34px; height: 34px;
+  background: rgba(4,8,18,0.85);
+  border: 1px solid rgba(212,175,55,0.32);
+  border-radius: 50%;
+  color: rgba(212,175,55,0.75);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  line-height:1; padding:0;
+}
+#reset-btn:hover {
+  border-color: rgba(212,175,55,0.65);
+  color: rgba(212,175,55,1);
+  box-shadow: 0 0 14px 3px rgba(212,175,55,0.14);
+}
+
+/* ─── LCARS Sidebar ────────────────────────────────────────── */
+#lcars {
+  position: fixed;
+  left: 0; top: 0;
+  height: 100vh;
+  width: 196px;
+  z-index: 15;
+  display: flex;
+  pointer-events: none;
+  transition: width 0.22s ease;
+}
+#lcars.lc-collapsed { width: 10px; }
+#lcars-bar {
+  width: 6px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(212,175,55,0.75) 0%, rgba(180,100,50,0.5) 60%, rgba(212,175,55,0.3) 100%);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.2s;
+}
+#lcars-bar:hover { background: linear-gradient(180deg, rgba(212,175,55,1) 0%, rgba(180,100,50,0.7) 60%, rgba(212,175,55,0.5) 100%); }
+#lcars-panel {
+  flex: 1;
+  background: rgba(4,7,16,0.92);
+  border-right: 1px solid rgba(212,175,55,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: opacity 0.18s;
+}
+#lcars.lc-collapsed #lcars-panel { opacity: 0; pointer-events: none; }
+.lc-head {
+  padding: 56px 10px 8px 10px;
+  font-size: 9px; letter-spacing: 0.15em; font-weight: 700;
+  color: rgba(212,175,55,0.5); text-transform: uppercase;
+  border-bottom: 1px solid rgba(212,175,55,0.13);
+  flex-shrink: 0;
+  font-family: 'SF Mono','Fira Code',monospace;
+}
+.lc-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,175,55,0.18) transparent;
+}
+.lc-scroll::-webkit-scrollbar { width: 3px; }
+.lc-scroll::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.2); border-radius:2px; }
+.lc-row {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 10px; cursor: default;
+  transition: background 0.1s;
+}
+.lc-row.lc-link { cursor: pointer; }
+.lc-row:hover, .lc-row.lc-hl { background: rgba(212,175,55,0.08); }
+.lc-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.lc-name {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+  color: rgba(210,190,145,0.62); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  text-transform: uppercase;
+  font-family: 'SF Mono','Fira Code',monospace;
+  transition: color 0.1s;
+}
+.lc-row:hover .lc-name, .lc-row.lc-hl .lc-name { color: rgba(255,220,100,0.95); }
+/* Dot tier colors */
+.dot-t1 { background:#c8960a; box-shadow:0 0 4px rgba(200,150,10,0.7); }
+.dot-t2 { background:#6a5018; }
+.dot-t3 { background:#222008; border:1px solid rgba(90,72,24,0.5); }
+.dot-pa { background:#b87333; box-shadow:0 0 3px rgba(184,115,51,0.6); }
+.dot-adm{ background:rgba(180,80,40,0.8); }
+.lc-sep { height:1px; background:rgba(212,175,55,0.12); margin:5px 8px; flex-shrink:0; }
+.lc-adm-head {
+  padding: 5px 10px 3px; flex-shrink:0;
+  font-size: 8px; letter-spacing: 0.16em; font-weight:700;
+  color: rgba(180,80,40,0.55); text-transform:uppercase;
+  font-family:'SF Mono','Fira Code',monospace;
+}
+.lc-adm-note {
+  padding: 2px 10px 6px;
+  font-size: 9px; color: rgba(180,80,40,0.38);
+  font-family:'SF Mono',monospace; flex-shrink:0; letter-spacing:0.03em;
+}
+@media (max-width: 680px) { #lcars { display:none; } #reset-btn { left:12px; top:12px; } }
 </style>
 </head>
 <body>
+
+<!-- Reset / Home button -->
+<button id="reset-btn" title="Reset to home">⬡</button>
+
+<!-- LCARS Sidebar -->
+<div id="lcars">
+  <div id="lcars-bar" title="Toggle engine list"></div>
+  <div id="lcars-panel">
+    <div class="lc-head">Hive Engines</div>
+    <div class="lc-scroll" id="lc-list"></div>
+    <div class="lc-sep"></div>
+    <div class="lc-adm-head">Administrative</div>
+    <div class="lc-adm-note">Access via Space Station</div>
+    <div id="lc-admin"></div>
+    <div style="height:8px;flex-shrink:0"></div>
+  </div>
+</div>
 
 <!-- Canvas: fixed behind everything -->
 <canvas id="c"></canvas>
@@ -485,6 +614,24 @@ function showToast(msg) {
   toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
 }
 
+// ─── Reset Button ────────────────────────────────────────────────────────────
+document.getElementById('reset-btn').addEventListener('click', () => {
+  window.location.reload();
+});
+
+// ─── LCARS Sidebar ────────────────────────────────────────────────────────────
+(function() {
+  const lcars = document.getElementById('lcars');
+  const bar   = document.getElementById('lcars-bar');
+  const list  = document.getElementById('lc-list');
+  const admin = document.getElementById('lc-admin');
+
+  bar.addEventListener('click', () => lcars.classList.toggle('lc-collapsed'));
+
+  // Will be populated after ENGINES is defined — see initLCARS() below
+  window._lcarsRows = new Map(); // engineName → row element
+})();
+
 // ─── Guard: Three.js CDN ──────────────────────────────────────────────────────
 const canvas = document.getElementById('c');
 if (typeof THREE === 'undefined') {
@@ -497,10 +644,16 @@ if (typeof THREE === 'undefined') {
 }
 
 // ─── Engine Data ──────────────────────────────────────────────────────────────
-// tier: 0=Queen Bee, 1=Live, 2=Building, 3=Planned. status drives visual tier.
+// Admin/private engines — shown only in LCARS sidebar, NOT on planet surface
+const ADMIN_ENGINES = [
+  { name:'Queen Bee',          emoji:'👑', url:'https://queen-bee-v1.vercel.app',               tagline:'Sovereign governance engine' },
+  { name:'HiveEngine Builder', emoji:'⚙️', url:'https://heb.hive.baby',                         tagline:'Design and deploy engines' },
+  { name:'Creator Console',    emoji:'🎛️', url:'https://creator-console-steel.vercel.app',      tagline:'Private ops dashboard' },
+  { name:'Space Station',      emoji:'🛸', url:'https://station.hive.baby',                      tagline:'Internal hub — password: HiveBees' },
+];
+
+// tier: 1=Live, 2=Building, 3=Planned. status drives visual tier.
 const ENGINES = [
-  // QUEEN BEE — center cell
-  { name:'Queen Bee',          emoji:'👑', status:'queen',    tier:0, tagline:'The sovereign engine. Powers all of Hive.',              url:'https://queen-bee-v1.vercel.app',        keywords:['queen','bee','governance','master','sovereign'] },
   // TIER 1 — LIVE
   { name:'HiveClock',          emoji:'🕐', status:'live',     tier:1, tagline:'The world\'s most humane clock.',                        url:'https://hiveclock.hive.baby',            keywords:['clock','time','watch','prayer','world','timezone'] },
   { name:'HiveClarity',        emoji:'💬', status:'live',     tier:1, tagline:'Say what you actually mean.',                           url:'https://hiveclarity.hive.baby',          keywords:['clarity','words','language','express','communicate','rewrite'] },
@@ -509,7 +662,6 @@ const ENGINES = [
   { name:'HiveBodyLog',        emoji:'🫀', status:'live',     tier:1, tagline:'Your health story. Log anything.',                      url:'https://hivebodylog.hive.baby',          keywords:['health','body','symptoms','log','patterns','medical'] },
   { name:'HiveMoon',           emoji:'🌙', status:'live',     tier:1, tagline:'Does the moon affect you?',                            url:'https://hivemoon.hive.baby',             keywords:['moon','lunar','cycle','mood','sleep','phase'] },
   { name:'Secret Box',         emoji:'🤫', status:'live',     tier:1, tagline:'Say the thing you haven\'t said.',                     url:'https://secret-box-vert.vercel.app',     keywords:['secret','confession','anonymous','share','unsaid'] },
-  { name:'HiveEngine Builder', emoji:'⚙️', status:'live',    tier:1, tagline:'Design and deploy new engines.',                       url:'https://heb.hive.baby',                  keywords:['build','engine','deploy','create','design','new'] },
   { name:'UD Reader',          emoji:'📖', status:'live',     tier:1, tagline:'Read Universal Documents.',                            url:'https://universal-document.vercel.app',  keywords:['reader','document','ud','universal','read'] },
   { name:'UD Converter',       emoji:'🔄', status:'live',     tier:1, tagline:'Convert any file to Universal Document.',              url:'https://converter.hive.baby',            keywords:['convert','converter','docx','pdf','ud','format'] },
   { name:'Patrons',            emoji:'🐝', status:'patron',   tier:1, tagline:'The people who keep Hive free.',                       url:'https://hive.baby/patrons',              keywords:['patron','support','donate','fund','community'] },
@@ -518,7 +670,6 @@ const ENGINES = [
   { name:'UD Creator',         emoji:'✏️', status:'building', tier:2, tagline:'Create Universal Documents. In development.',           url:null,                                     keywords:['creator','write','create','document','ud'] },
   { name:'UD Validator',       emoji:'✅', status:'building', tier:2, tagline:'Validate .uds files. Deploy pending.',                  url:null,                                     keywords:['validator','validate','check','document','ud'] },
   { name:'WhoTextedMe',        emoji:'📱', status:'building', tier:2, tagline:'Free reverse phone lookup.',                           url:'https://whotextedme.hive.baby',          keywords:['phone','number','lookup','caller','reverse','text'] },
-  { name:'Space Station',      emoji:'🛸', status:'building', tier:2, tagline:'Internal ops hub.',                                    url:'https://station.hive.baby',              keywords:['station','ops','admin','internal','hub'] },
   { name:'HiveAdminSupport',   emoji:'📧', status:'building', tier:2, tagline:'Auto-acknowledge support emails. Deploying.',           url:null,                                     keywords:['support','email','admin','auto','acknowledge'] },
   // TIER 3 — PLANNED
   { name:'HiveTV',             emoji:'📺', status:'planned',  tier:3, tagline:'AI broadcast platform. Gary Gansson.',                 url:null, keywords:['tv','broadcast','gary','show','media'] },
@@ -874,28 +1025,15 @@ const cells = buildDual(3);
 // ─── Assign engines to cells ──────────────────────────────────────────────────
 const cellToEngine = new Map(), engineToCell = new Map();
 
-// Queen Bee at the front-facing cell (highest z at load time)
-let qbCellIdx = 0;
-for (let i = 1; i < cells.length; i++) {
-  if (cells[i].center.z > cells[qbCellIdx].center.z) qbCellIdx = i;
-}
-cellToEngine.set(qbCellIdx, ENGINES[0]);
-engineToCell.set(ENGINES[0].name, qbCellIdx);
-
-// Distribute remaining engines evenly, skipping QB slot
+// Distribute engines evenly across cells
 const step = Math.floor(cells.length / ENGINES.length);
-ENGINES.slice(1).forEach((e, i) => {
-  let ci = 8 + (i + 1) * step;
+ENGINES.forEach((e, i) => {
+  let ci = 8 + i * step;
   while (cellToEngine.has(ci % cells.length)) ci++;
   ci = ci % cells.length;
   cellToEngine.set(ci, e);
   engineToCell.set(e.name, ci);
 });
-
-// QB neighbours for radiating lines
-const qbNeighbours = cells
-  .map((cell, ci) => ({ ci, d: cell.center.distanceTo(cells[qbCellIdx].center) }))
-  .filter(x => x.ci !== qbCellIdx).sort((a,b) => a.d-b.d).slice(0,6).map(x=>x.ci);
 
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const codes = cells.map(() => ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]+ALPHA[Math.random()*ALPHA.length|0]);
@@ -917,7 +1055,6 @@ const C = {
 const LIFT = 0.007;
 const OUTER_GAP = 0.91;   // full hex boundary
 const INNER_GAP = 0.85;   // inner boundary of border ring (= outer boundary of fill)
-const QB_GAP    = 0.80;   // QB is larger
 
 function makeFillGeo(cell, gap, liftOff) {
   const poly=cell.polygon, n=poly.length, lv=1+liftOff;
@@ -1000,22 +1137,6 @@ cells.forEach((cell, ci) => {
   if (status==='patron') { const l=new THREE.PointLight(0xb87333,0.9,1.5); l.position.copy(cell.center).multiplyScalar(1.08); GROUP.add(l); }
 });
 
-// ─── QB Radiating Lines ───────────────────────────────────────────────────────
-{
-  const qbC = cells[qbCellIdx].center;
-  qbNeighbours.forEach(ni => {
-    const nc=cells[ni].center;
-    const geo=new THREE.BufferGeometry().setFromPoints([
-      qbC.clone().multiplyScalar(1.025), nc.clone().multiplyScalar(1.025)
-    ]);
-    GROUP.add(new THREE.Line(geo,
-      new THREE.LineBasicMaterial({color:0xd4a000,transparent:true,opacity:0.38})));
-    // Dot at neighbour end
-    const dotGeo=new THREE.SphereGeometry(0.006,5,5);
-    const dot=new THREE.Mesh(dotGeo,new THREE.MeshBasicMaterial({color:0xd4a000,transparent:true,opacity:0.5}));
-    dot.position.copy(nc).multiplyScalar(1.025); GROUP.add(dot);
-  });
-}
 
 // ─── Sprites: icon + label ────────────────────────────────────────────────────
 function makeIconSprite(emoji, alpha, size) {
@@ -1069,6 +1190,62 @@ cells.forEach((cell, ci) => {
   lbl.position.copy(cPos).addScaledVector(up,-0.010);
   GROUP.add(lbl);
 });
+
+// ─── LCARS Init ───────────────────────────────────────────────────────────────
+(function initLCARS() {
+  const list  = document.getElementById('lc-list');
+  const admin = document.getElementById('lc-admin');
+  const rows  = window._lcarsRows;
+
+  function dotClass(e) {
+    if(e.status==='patron') return 'dot-pa';
+    if(e.tier===1) return 'dot-t1';
+    if(e.tier===2) return 'dot-t2';
+    return 'dot-t3';
+  }
+
+  ENGINES.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'lc-row' + (e.url ? ' lc-link' : '');
+    row.innerHTML = `<span class="lc-dot ${dotClass(e)}"></span><span class="lc-name">${e.name}</span>`;
+    // Hover → highlight planet cell
+    row.addEventListener('mouseenter', () => {
+      const ci = engineToCell.get(e.name);
+      if (ci === undefined) return;
+      // Simulate planet hover highlight
+      if (hoveredIdx >= 0 && hoveredIdx !== focusedIdx) {
+        const cd = cellInfo[hoveredIdx];
+        if(cd&&cd.borderMesh){ cd.borderMesh.material.color.copy(cd.borderColor); cd.borderMesh.material.emissive.copy(cd.borderEm); cd.borderMesh.material.emissiveIntensity=cd.borderEmInt; }
+      }
+      hoveredIdx = ci;
+      const cd = cellInfo[ci];
+      if(cd&&cd.borderMesh){ cd.borderMesh.material.color.copy(C.hoverL); cd.borderMesh.material.emissive.copy(C.hoverL); cd.borderMesh.material.emissiveIntensity=0.7; }
+    });
+    row.addEventListener('mouseleave', () => {
+      const ci = engineToCell.get(e.name);
+      if(ci !== undefined && ci === hoveredIdx && ci !== focusedIdx) {
+        const cd = cellInfo[ci];
+        if(cd&&cd.borderMesh){ cd.borderMesh.material.color.copy(cd.borderColor); cd.borderMesh.material.emissive.copy(cd.borderEm); cd.borderMesh.material.emissiveIntensity=cd.borderEmInt; }
+        hoveredIdx = -1;
+      }
+    });
+    row.addEventListener('click', () => {
+      if(e.url) window.location.href = e.url;
+    });
+    list.appendChild(row);
+    rows.set(e.name, row);
+  });
+
+  // Admin engines
+  ADMIN_ENGINES.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'lc-row lc-link';
+    row.innerHTML = `<span class="lc-dot dot-adm"></span><span class="lc-name">${e.name}</span>`;
+    row.title = e.tagline;
+    row.addEventListener('click', () => { if(e.url) window.location.href = e.url; });
+    admin.appendChild(row);
+  });
+})();
 
 // ─── Rotation ─────────────────────────────────────────────────────────────────
 const YA=new THREE.Vector3(0,1,0), XA=new THREE.Vector3(1,0,0);
@@ -1154,6 +1331,9 @@ function updateHover(cx,cy){
     if(cd&&cd.borderMesh){ cd.borderMesh.material.color.copy(cd.borderColor); cd.borderMesh.material.emissive.copy(cd.borderEm); cd.borderMesh.material.emissiveIntensity=cd.borderEmInt; }
   }
   hoveredIdx=newIdx;
+  // Update LCARS highlight
+  if(hoveredIdx>=0) { const pr=window._lcarsRows?.get(cellInfo[hoveredIdx]?.engine?.name); if(pr) pr.classList.remove('lc-hl'); }
+
   if(newIdx>=0){
     const cd=cellInfo[newIdx];
     if(cd&&cd.engine){
@@ -1161,6 +1341,9 @@ function updateHover(cx,cy){
       const hc=tier<=1?C.hoverL:tier===2?C.hoverS:new THREE.Color(0x6a5020);
       if(cd.borderMesh){ cd.borderMesh.material.color.copy(hc); cd.borderMesh.material.emissive.copy(hc); cd.borderMesh.material.emissiveIntensity=0.7; }
       showTip(cd,cx,cy); canvas.style.cursor=cd.engine.url?'pointer':'default';
+      // Highlight LCARS row
+      const lr = window._lcarsRows?.get(cd.engine.name);
+      if(lr){ lr.classList.add('lc-hl'); lr.scrollIntoView({block:'nearest',behavior:'smooth'}); }
     } else { showTip(cd,cx,cy); canvas.style.cursor='default'; }
   } else { tooltip.style.display='none'; canvas.style.cursor='grab'; }
 }
