@@ -1027,58 +1027,77 @@ function updateISS() {
 // ─── Space Station ────────────────────────────────────────────────────────────
 const stationGroup = new THREE.Group();
 
-// Central hab module
+// Central hab module (scaled 2.2× for visibility)
 const habMat = new THREE.MeshStandardMaterial({ color:0xc8d4e0, roughness:0.35, metalness:0.82, emissive:0x203060, emissiveIntensity:0.25 });
-const hab = new THREE.Mesh(new THREE.BoxGeometry(0.055,0.018,0.018), habMat);
+const hab = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.04,0.04), habMat);
 stationGroup.add(hab);
 
 // Truss arm (spine running through)
 const trussMat = new THREE.MeshStandardMaterial({ color:0xa8b8c8, roughness:0.5, metalness:0.75 });
-const truss = new THREE.Mesh(new THREE.BoxGeometry(0.13,0.005,0.005), trussMat);
+const truss = new THREE.Mesh(new THREE.BoxGeometry(0.29,0.011,0.011), trussMat);
 stationGroup.add(truss);
 
 // Solar panels (port & starboard)
 const panelMat = new THREE.MeshStandardMaterial({ color:0x0a2060, roughness:0.25, metalness:0.55, emissive:0x0a2060, emissiveIntensity:0.45 });
-const panelP = new THREE.Mesh(new THREE.BoxGeometry(0.048,0.028,0.002), panelMat);
-panelP.position.y = 0.033;
+const panelP = new THREE.Mesh(new THREE.BoxGeometry(0.10,0.06,0.004), panelMat);
+panelP.position.y = 0.072;
 stationGroup.add(panelP);
-const panelS = new THREE.Mesh(new THREE.BoxGeometry(0.048,0.028,0.002), panelMat);
-panelS.position.y = -0.033;
+const panelS = new THREE.Mesh(new THREE.BoxGeometry(0.10,0.06,0.004), panelMat);
+panelS.position.y = -0.072;
 stationGroup.add(panelS);
 
 // Struts connecting panels to truss
 const strutMat = new THREE.MeshStandardMaterial({ color:0x8898a8, roughness:0.6, metalness:0.7 });
-const strutP = new THREE.Mesh(new THREE.BoxGeometry(0.003,0.022,0.003), strutMat);
-strutP.position.y = 0.022;
+const strutP = new THREE.Mesh(new THREE.BoxGeometry(0.006,0.048,0.006), strutMat);
+strutP.position.y = 0.048;
 stationGroup.add(strutP);
-const strutS = new THREE.Mesh(new THREE.BoxGeometry(0.003,0.022,0.003), strutMat);
-strutS.position.y = -0.022;
+const strutS = new THREE.Mesh(new THREE.BoxGeometry(0.006,0.048,0.006), strutMat);
+strutS.position.y = -0.048;
 stationGroup.add(strutS);
 
 // Docking node at front
 const dockMat = new THREE.MeshStandardMaterial({ color:0xd8e0e8, roughness:0.3, metalness:0.85 });
-const dock = new THREE.Mesh(new THREE.SphereGeometry(0.010,8,6), dockMat);
-dock.position.x = 0.038;
+const dock = new THREE.Mesh(new THREE.SphereGeometry(0.022,8,6), dockMat);
+dock.position.x = 0.084;
 stationGroup.add(dock);
 
 // Running lights (tiny spheres, animated)
 const lightGreenMat = new THREE.MeshBasicMaterial({ color:0x00ff88 });
 const lightRedMat   = new THREE.MeshBasicMaterial({ color:0xff4422 });
-const navLightG = new THREE.Mesh(new THREE.SphereGeometry(0.003,4,4), lightGreenMat);
-navLightG.position.set(0.07, 0, 0);
+const navLightG = new THREE.Mesh(new THREE.SphereGeometry(0.006,4,4), lightGreenMat);
+navLightG.position.set(0.154, 0, 0);
 stationGroup.add(navLightG);
-const navLightR = new THREE.Mesh(new THREE.SphereGeometry(0.003,4,4), lightRedMat);
-navLightR.position.set(-0.07, 0, 0);
+const navLightR = new THREE.Mesh(new THREE.SphereGeometry(0.006,4,4), lightRedMat);
+navLightR.position.set(-0.154, 0, 0);
 stationGroup.add(navLightR);
 
+// Mini hex cells for QB / HEB / CC — flat CylinderGeometry(r,r,h,6) on top of station
+// These are the discovery points for the three hidden engines
+const qbMat  = new THREE.MeshStandardMaterial({ color:0xffc832, roughness:0.3, metalness:0.6, emissive:0xffc832, emissiveIntensity:0.55 });
+const hebMat = new THREE.MeshStandardMaterial({ color:0x4488ff, roughness:0.3, metalness:0.6, emissive:0x2255cc, emissiveIntensity:0.55 });
+const ccMat  = new THREE.MeshStandardMaterial({ color:0x22d4a8, roughness:0.3, metalness:0.6, emissive:0x11aa80, emissiveIntensity:0.55 });
+const hexGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.006, 6);
+const hexQB  = new THREE.Mesh(hexGeo, qbMat);
+const hexHEB = new THREE.Mesh(hexGeo, hebMat);
+const hexCC  = new THREE.Mesh(hexGeo, ccMat);
+hexQB.position.set(-0.09, 0.048, 0);
+hexHEB.position.set(0,    0.048, 0);
+hexCC.position.set( 0.09, 0.048, 0);
+hexQB.userData.stationLabel  = 'Queen Bee 👑';
+hexHEB.userData.stationLabel = 'Engine Builder ⚙️';
+hexCC.userData.stationLabel  = 'Creator Console 🎛️';
+stationGroup.add(hexQB);
+stationGroup.add(hexHEB);
+stationGroup.add(hexCC);
+
 // Soft blue-white glow around station
-const ssLight = new THREE.PointLight(0x6090ff, 2.2, 0.7);
+const ssLight = new THREE.PointLight(0x6090ff, 2.2, 1.5);
 stationGroup.add(ssLight);
 
 scene.add(stationGroup);
 
-// Collect all station meshes for raycasting (slightly enlarged hit target)
-const stationMeshes = [hab, truss, panelP, panelS, dock, navLightG, navLightR];
+// Collect all station meshes for raycasting
+const stationMeshes = [hab, truss, panelP, panelS, dock, navLightG, navLightR, hexQB, hexHEB, hexCC];
 
 // Orbit params — visible equatorial-ish orbit, ~40s period
 const SS_R    = 1.38;
@@ -1638,9 +1657,10 @@ function updateHover(cx,cy){
   // Space Station hover tooltip
   const ssHits=raycaster.intersectObjects(stationMeshes);
   if(ssHits.length){
+    const hitLabel = ssHits[0].object.userData.stationLabel;
     tooltip.className='';
-    tooltip.querySelector('.tt-name').textContent='🛸  Space Station';
-    tooltip.querySelector('.tt-tagline').textContent='Internal hub. Password protected.';
+    tooltip.querySelector('.tt-name').textContent = hitLabel ? '🛸  ' + hitLabel : '🛸  Space Station';
+    tooltip.querySelector('.tt-tagline').textContent = hitLabel ? 'Hidden engine. Password protected.' : 'Internal hub. Password protected.';
     tooltip.querySelector('.tt-code').textContent='';
     tooltip.querySelector('.tt-action').textContent='Click to enter →';
     tooltip.querySelector('.tt-action').className='tt-action';
