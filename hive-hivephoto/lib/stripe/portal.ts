@@ -1,6 +1,5 @@
 import { getStripe } from './client'
 import { getOrCreateSubscription } from '../db/subscriptions'
-import { env } from '../env'
 
 export async function createBillingPortalSession(
   userId: string,

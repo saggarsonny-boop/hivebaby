@@ -2,11 +2,21 @@
 
 import { useEffect, useState } from 'react'
 
+interface PhotoDetail {
+  id: string
+  thumbUrl: string
+  aiTitle: string | null
+  userTitle: string | null
+  aiDescription: string | null
+}
+
 export default function PhotoDetailPage({ params }: { params: { id: string } }) {
-  const [photo, setPhoto] = useState<any>(null)
+  const [photo, setPhoto] = useState<PhotoDetail | null>(null)
 
   useEffect(() => {
-    fetch(`/api/photos/${params.id}`).then(r => r.json()).then(setPhoto)
+    fetch(`/api/photos/${params.id}`)
+      .then(r => r.json() as Promise<PhotoDetail>)
+      .then(setPhoto)
   }, [params.id])
 
   if (!photo) return <p className="text-zinc-400">Loading...</p>

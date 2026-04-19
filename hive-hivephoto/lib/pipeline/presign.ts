@@ -1,5 +1,5 @@
 import { insertProvisionalPhoto, findExactDuplicate } from '../db/photos'
-import { getOrCreateSubscription, checkStorageAvailable } from '../db/subscriptions'
+import { getOrCreateSubscription } from '../db/subscriptions'
 import { createPresignedPutUrl } from '../storage/r2'
 import { originalKey, extFromMime, isAllowedContentType, MAX_FILE_SIZE_BYTES } from '../storage/keys'
 import type { PresignRequest, PresignResponse } from '../types/photo'

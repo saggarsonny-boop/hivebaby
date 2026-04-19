@@ -2,13 +2,19 @@
 
 import { useState } from 'react'
 
-export default function SearchBar({ onResults }: { onResults: (results: any[]) => void }) {
+export interface SearchPhotoResult {
+  id: string
+  thumbUrl: string
+  aiTitle?: string | null
+}
+
+export default function SearchBar({ onResults }: { onResults: (results: SearchPhotoResult[]) => void }) {
   const [q, setQ] = useState('')
   const [busy, setBusy] = useState(false)
 
   async function runSearch() {
     setBusy(true)
-    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json())
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json() as Promise<{ results?: SearchPhotoResult[] }>)
     onResults(res.results || [])
     setBusy(false)
   }

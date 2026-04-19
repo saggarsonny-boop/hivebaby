@@ -15,7 +15,7 @@ export async function syncSubscription(stripeSubId: string): Promise<void> {
   const stripe = getStripe()
   const stripeSub = await stripe.subscriptions.retrieve(stripeSubId, {
     expand: ['items.data.price'],
-  }) as any
+  }) as Stripe.Subscription
 
   const userId = stripeSub.metadata?.userId
   if (!userId) {

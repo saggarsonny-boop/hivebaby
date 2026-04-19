@@ -1,5 +1,4 @@
 import { getStripe } from './client'
-import { env } from '../env'
 import { getTierById, getOrCreateSubscription } from '../db/subscriptions'
 
 export async function createCheckoutSession(

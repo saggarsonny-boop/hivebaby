@@ -2,11 +2,23 @@
 
 import { useEffect, useState } from 'react'
 
+interface DuplicatePhoto {
+  id: string
+  thumbUrl: string
+}
+
+interface DuplicateItem {
+  photo: DuplicatePhoto
+  original: DuplicatePhoto | null
+}
+
 export default function DuplicatesPage() {
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<DuplicateItem[]>([])
 
   useEffect(() => {
-    fetch('/api/duplicates').then(r => r.json()).then(d => setItems(d.duplicates || []))
+    fetch('/api/duplicates')
+      .then(r => r.json() as Promise<{ duplicates?: DuplicateItem[] }>)
+      .then(d => setItems(d.duplicates || []))
   }, [])
 
   async function action(id: string, mode: 'keep-new' | 'keep-original' | 'keep-both') {
@@ -18,7 +30,7 @@ export default function DuplicatesPage() {
     <section className="space-y-4">
       <h1 className="text-3xl font-semibold text-amber-400">Duplicate Review</h1>
       {items.length === 0 && <p className="text-zinc-400">No pending near-duplicates.</p>}
-      {items.map((item: any) => (
+      {items.map((item) => (
         <article key={item.photo.id} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
           <div className="grid grid-cols-2 gap-3">
             <img src={item.photo.thumbUrl} className="aspect-square w-full rounded object-cover" alt="candidate" />

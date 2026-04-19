@@ -49,30 +49,42 @@ function tryFilenameDate(fileName: string): Date | null {
 }
 
 function parseGps(
-  val: any,
-  ref: any
+  val: unknown,
+  ref: unknown
 ): number | null {
   if (!val) return null
   try {
-    const desc = typeof val === 'object' && 'description' in val ? String(val.description) : ''
+    const desc = typeof val === 'object' && val !== null && 'description' in val
+      ? String((val as { description: unknown }).description)
+      : ''
     const degrees = parseFloat(desc)
     if (isNaN(degrees)) return null
-    const direction = ref && 'value' in ref ? String(ref.value) : ''
+    const direction = typeof ref === 'object' && ref !== null && 'value' in ref
+      ? String((ref as { value: unknown }).value)
+      : ''
     return (direction === 'S' || direction === 'W') ? -degrees : degrees
   } catch {
     return null
   }
 }
 
-function tagString(tag: any): string | null {
+function tagString(tag: unknown): string | null {
   if (!tag) return null
-  const v = 'description' in tag ? String(tag.description) : 'value' in tag ? String(tag.value) : null
+  const v = typeof tag === 'object' && tag !== null
+    ? ('description' in tag
+      ? String((tag as { description: unknown }).description)
+      : 'value' in tag
+        ? String((tag as { value: unknown }).value)
+        : null)
+    : null
   return v?.trim() || null
 }
 
-function tagNumber(tag: any): number | null {
+function tagNumber(tag: unknown): number | null {
   if (!tag) return null
-  const v = 'value' in tag ? tag.value : null
+  const v = typeof tag === 'object' && tag !== null && 'value' in tag
+    ? (tag as { value: unknown }).value
+    : null
   if (v === null || v === undefined) return null
   if (Array.isArray(v)) return typeof v[0] === 'number' ? v[0] : null
   const n = Number(v)
