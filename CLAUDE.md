@@ -20,22 +20,46 @@ Token: [stored in Codespace secret / ask Sonny]
 Account: saggarsonny-boop
 
 ## Repos, Domains & Status
-| Repo | Domain | Status | Stack |
-|------|--------|--------|-------|
-| hivebaby | hive.baby | LIVE | Static HTML |
-| hive-moon | hivemoon.hive.baby | LIVE | Next.js (client-only) |
-| hive-field | hivefield.hive.baby | LIVE | Next.js + Anthropic |
-| hive-clock | hiveclock.hive.baby | LIVE | Next.js + Anthropic |
-| hive-clarity | hiveclarity.hive.baby | LIVE | Next.js + Anthropic |
-| hive-strength-mastery | hivestrengthmastery.hive.baby | LIVE | Next.js + Anthropic |
-| hive-engine-builder | heb.hive.baby | LIVE | Next.js + Anthropic |
-| queen-bee | queen-bee-v1.vercel.app | IN PROGRESS | Next.js + Anthropic |
-| creator-console | creator-console-steel.vercel.app | LIVE | Next.js |
-| secret-box | secret-box-vert.vercel.app | LIVE | Next.js |
-| universal-document | universal-document.vercel.app | IN PROGRESS | Next.js + Anthropic |
-| whotextedme | whotextedme.hive.baby | LIVE | Next.js + Anthropic |
-| universal-document/apps/converter | converter.hive.baby | LIVE | Next.js + Anthropic |
-| whotexted | standalone | LIVE | JavaScript |
+| Repo | Engine Name | Domain | Status | Stack |
+|------|------------|--------|--------|-------|
+| hivebaby | — | hive.baby | LIVE | Static HTML |
+| hive-moon | HiveMoon | hivemoon.hive.baby | LIVE | Next.js (client-only) |
+| hive-field | HiveField | hivefield.hive.baby | LIVE | Next.js + Anthropic |
+| hive-clock | HiveClock | hiveclock.hive.baby | LIVE | Next.js + Anthropic |
+| hive-clarity | HiveClarity | hiveclarity.hive.baby | LIVE | Next.js + Anthropic |
+| hive-strength-mastery | HiveStrength | hivestrength.hive.baby ⚠️ pending DNS | LIVE | Next.js + Anthropic |
+| hive-body-log | HiveBodyLog | hivebodylog.hive.baby | LIVE | Next.js + Anthropic |
+| hive-engine-builder | HiveEngineBuilder | hiveenginebuilder.hive.baby ⚠️ pending DNS | LIVE | Next.js + Anthropic |
+| queen-bee | QueenBee | queenbee.hive.baby ⚠️ pending DNS | IN PROGRESS | Next.js + Anthropic |
+| creator-console | HiveCreatorConsole | creatorconsole.hive.baby ⚠️ pending DNS | LIVE | Next.js |
+| secret-box | HiveSecretBox | secretbox.hive.baby ⚠️ pending DNS | LIVE | Next.js |
+| universal-document | UniversalDocument | ud.hive.baby ⚠️ pending DNS | IN PROGRESS | Next.js + Anthropic |
+| whotextedme | WhoTextedMe | whotextedme.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/converter | UDConverter | converter.hive.baby | LIVE | Next.js + Anthropic |
+| hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic |
+
+## Naming Standards (canonical — all future engines must follow)
+
+### Engine Names
+- Format: `HiveEnginename` — PascalCase after Hive prefix (e.g., `HiveBodyLog`, `HiveClarity`)
+- Multi-word: PascalCase (e.g., `HiveEngineBuilder`, `HiveAdminSupport`)
+- UD ecosystem: `UniversalDocument` hub, sub-engines as `UDConverter`, `UDCreator`, `UDReader`, `UDValidator`
+- Exception: `WhoTextedMe`, `QueenBee`, `HiveSecretBox` — established names, keep as-is
+
+### Repos
+- Format: `enginename` lowercase hyphen-separated (e.g., `hive-body-log`, `hive-strength-mastery`)
+
+### Domains
+- Format: `enginename.hive.baby` — all lowercase, no hyphens (e.g., `hiveclarity.hive.baby`, `hivebodylog.hive.baby`)
+- UD hub: `ud.hive.baby`
+- Internal tools: may use temp Vercel URLs until DNS migration confirmed
+
+### Git Branches
+- `dev` — feature work
+- `main` — deployment only (ops commits direct to main are acceptable)
+
+### Required per Repo
+- `ENGINE_GRAMMAR.md` in repo root with GrapplerHook metadata block
 
 ## Vercel
 Account: saggarsonny-3909s-projects (Hobby). All projects auto-deploy on git push to main.
