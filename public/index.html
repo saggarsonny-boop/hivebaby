@@ -430,17 +430,19 @@ body {
 .dot-pa { background:#b87333; box-shadow:0 0 3px rgba(184,115,51,0.6); }
 .dot-adm{ background:rgba(180,80,40,0.8); }
 .lc-sep { height:1px; background:rgba(212,175,55,0.12); margin:5px 8px; flex-shrink:0; }
-.lc-adm-head {
+.lc-stats-head {
   padding: 5px 10px 3px; flex-shrink:0;
   font-size: 8px; letter-spacing: 0.16em; font-weight:700;
-  color: rgba(180,80,40,0.55); text-transform:uppercase;
+  color: rgba(74,127,165,0.5); text-transform:uppercase;
   font-family:'SF Mono','Fira Code',monospace;
 }
-.lc-adm-note {
-  padding: 2px 10px 6px;
-  font-size: 9px; color: rgba(180,80,40,0.38);
-  font-family:'SF Mono',monospace; flex-shrink:0; letter-spacing:0.03em;
+.lc-stat {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 3px 10px;
+  font-size: 9px; font-family:'SF Mono',monospace; flex-shrink:0;
+  color: rgba(180,200,225,0.35);
 }
+.lc-stat-val { color: rgba(212,175,55,0.65); font-weight:700; letter-spacing:0.05em; }
 /* ─── Mobile list view ──────────────────────────────────────── */
 #mobile-toggle {
   display: none;
@@ -579,8 +581,7 @@ body {
 <div id="mobile-list">
   <div class="ml-head">Hive Engines</div>
   <div id="ml-engines"></div>
-  <div class="ml-adm-head">Administrative — Space Station</div>
-  <div id="ml-admin"></div>
+  <div style="height:16px;flex-shrink:0"></div>
 </div>
 
 <!-- Password modal -->
@@ -602,9 +603,8 @@ body {
     <div class="lc-head">Hive Engines</div>
     <div class="lc-scroll" id="lc-list"></div>
     <div class="lc-sep"></div>
-    <div class="lc-adm-head">Administrative</div>
-    <div class="lc-adm-note">Access via Space Station</div>
-    <div id="lc-admin"></div>
+    <div class="lc-stats-head">Live Metrics</div>
+    <div id="lc-stats"></div>
     <div style="height:8px;flex-shrink:0"></div>
   </div>
 </div>
@@ -796,7 +796,6 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closePwModal();
 // ─── Mobile List ──────────────────────────────────────────────────────────────
 (function initMobileList() {
   const enginesEl = document.getElementById('ml-engines');
-  const adminEl   = document.getElementById('ml-admin');
   const toggle    = document.getElementById('mobile-toggle');
   const list      = document.getElementById('mobile-list');
   const closeBtn  = document.getElementById('mobile-close');
@@ -815,14 +814,6 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closePwModal();
     if (e.url) row.addEventListener('click', () => { window.location.href = e.url; });
     else row.addEventListener('click', () => { showToast(e.tier===2 ? 'Coming soon — in development' : 'Planned — vote for this engine'); });
     enginesEl.appendChild(row);
-  });
-
-  ADMIN_ENGINES.forEach(e => {
-    const row = document.createElement('div');
-    row.className = 'ml-row ml-link';
-    row.innerHTML = `<span class="ml-dot dot-adm"></span><div><div class="ml-name">${e.emoji} ${e.name}</div><div class="ml-tagline">Space Station access required</div></div>`;
-    row.addEventListener('click', () => { closeMobileList(); openPwModal(); });
-    adminEl.appendChild(row);
   });
 
   toggle.addEventListener('click', () => {
@@ -1031,6 +1022,93 @@ function updateISS() {
     ISS_R * Math.sin(theta) * Math.sin(ISS_INC),
     ISS_R * Math.sin(theta) * Math.cos(ISS_INC)
   );
+}
+
+// ─── Space Station ────────────────────────────────────────────────────────────
+const stationGroup = new THREE.Group();
+
+// Central hab module
+const habMat = new THREE.MeshStandardMaterial({ color:0xc8d4e0, roughness:0.35, metalness:0.82, emissive:0x203060, emissiveIntensity:0.25 });
+const hab = new THREE.Mesh(new THREE.BoxGeometry(0.055,0.018,0.018), habMat);
+stationGroup.add(hab);
+
+// Truss arm (spine running through)
+const trussMat = new THREE.MeshStandardMaterial({ color:0xa8b8c8, roughness:0.5, metalness:0.75 });
+const truss = new THREE.Mesh(new THREE.BoxGeometry(0.13,0.005,0.005), trussMat);
+stationGroup.add(truss);
+
+// Solar panels (port & starboard)
+const panelMat = new THREE.MeshStandardMaterial({ color:0x0a2060, roughness:0.25, metalness:0.55, emissive:0x0a2060, emissiveIntensity:0.45 });
+const panelP = new THREE.Mesh(new THREE.BoxGeometry(0.048,0.028,0.002), panelMat);
+panelP.position.y = 0.033;
+stationGroup.add(panelP);
+const panelS = new THREE.Mesh(new THREE.BoxGeometry(0.048,0.028,0.002), panelMat);
+panelS.position.y = -0.033;
+stationGroup.add(panelS);
+
+// Struts connecting panels to truss
+const strutMat = new THREE.MeshStandardMaterial({ color:0x8898a8, roughness:0.6, metalness:0.7 });
+const strutP = new THREE.Mesh(new THREE.BoxGeometry(0.003,0.022,0.003), strutMat);
+strutP.position.y = 0.022;
+stationGroup.add(strutP);
+const strutS = new THREE.Mesh(new THREE.BoxGeometry(0.003,0.022,0.003), strutMat);
+strutS.position.y = -0.022;
+stationGroup.add(strutS);
+
+// Docking node at front
+const dockMat = new THREE.MeshStandardMaterial({ color:0xd8e0e8, roughness:0.3, metalness:0.85 });
+const dock = new THREE.Mesh(new THREE.SphereGeometry(0.010,8,6), dockMat);
+dock.position.x = 0.038;
+stationGroup.add(dock);
+
+// Running lights (tiny spheres, animated)
+const lightGreenMat = new THREE.MeshBasicMaterial({ color:0x00ff88 });
+const lightRedMat   = new THREE.MeshBasicMaterial({ color:0xff4422 });
+const navLightG = new THREE.Mesh(new THREE.SphereGeometry(0.003,4,4), lightGreenMat);
+navLightG.position.set(0.07, 0, 0);
+stationGroup.add(navLightG);
+const navLightR = new THREE.Mesh(new THREE.SphereGeometry(0.003,4,4), lightRedMat);
+navLightR.position.set(-0.07, 0, 0);
+stationGroup.add(navLightR);
+
+// Soft blue-white glow around station
+const ssLight = new THREE.PointLight(0x6090ff, 2.2, 0.7);
+stationGroup.add(ssLight);
+
+scene.add(stationGroup);
+
+// Collect all station meshes for raycasting (slightly enlarged hit target)
+const stationMeshes = [hab, truss, panelP, panelS, dock, navLightG, navLightR];
+
+// Orbit params — visible equatorial-ish orbit, ~40s period
+const SS_R    = 1.38;
+const SS_PERIOD = 40;
+const SS_INC  = 18 * Math.PI / 180; // slight inclination for visibility
+
+function updateSpaceStation(t) {
+  const theta = (t * 2 * Math.PI / SS_PERIOD) % (2 * Math.PI);
+  stationGroup.position.set(
+    SS_R * Math.cos(theta),
+    SS_R * Math.sin(theta) * Math.sin(SS_INC),
+    SS_R * Math.sin(theta) * Math.cos(SS_INC)
+  );
+  // Orient: face direction of travel along orbit
+  const nx = -Math.sin(theta);
+  const ny = Math.cos(theta) * Math.sin(SS_INC);
+  const nz = Math.cos(theta) * Math.cos(SS_INC);
+  const vel = new THREE.Vector3(nx, ny, nz);
+  const up  = stationGroup.position.clone().normalize();
+  const side = new THREE.Vector3().crossVectors(vel, up).normalize();
+  const fwd  = new THREE.Vector3().crossVectors(up, side).normalize();
+  stationGroup.matrix.makeBasis(fwd, up, side.negate());
+  stationGroup.rotation.setFromRotationMatrix(stationGroup.matrix);
+
+  // Blink nav lights
+  const blink = Math.sin(t * Math.PI * 2) > 0;
+  navLightG.visible = blink;
+  navLightR.visible = !blink;
+  navLightG.material.color.setHex(0x00ff88);
+  navLightR.material.color.setHex(0xff4422);
 }
 
 // ─── Meteors ──────────────────────────────────────────────────────────────────
@@ -1456,14 +1534,21 @@ cells.forEach((cell, ci) => {
     rows.set(e.name, row);
   });
 
-  // Admin engines — password gated
-  ADMIN_ENGINES.forEach(e => {
-    const row = document.createElement('div');
-    row.className = 'lc-row lc-link';
-    row.innerHTML = `<span class="lc-dot dot-adm"></span><span class="lc-name">${e.emoji} ${e.name}</span>`;
-    row.title = 'Space Station access required';
-    row.addEventListener('click', () => openPwModal());
-    admin.appendChild(row);
+  // Live metrics stats
+  const statsEl = document.getElementById('lc-stats');
+  const live     = ENGINES.filter(e => e.tier===1).length;
+  const building = ENGINES.filter(e => e.tier===2).length;
+  const planned  = ENGINES.filter(e => e.tier===3).length;
+  [
+    ['Engines live',     live],
+    ['In development',   building],
+    ['Planned',          planned],
+    ['Total nodes',      ENGINES.length],
+  ].forEach(([label, val]) => {
+    const d = document.createElement('div');
+    d.className = 'lc-stat';
+    d.innerHTML = `<span>${label}</span><span class="lc-stat-val">${val}</span>`;
+    statsEl.appendChild(d);
   });
 })();
 
@@ -1521,12 +1606,20 @@ function toNDC(cx,cy){ mNDC.x=(cx/window.innerWidth)*2-1; mNDC.y=-(cy/window.inn
 
 // Click with zoom-in animation before navigation
 function handleClick(cx,cy){
+  toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
+
+  // Check Space Station first
+  const ssHits=raycaster.intersectObjects(stationMeshes);
+  if(ssHits.length){ openPwModal(); return; }
+
+  // Check Moon
   const mp=moonMesh.position.clone().project(camera);
   const msx=(mp.x*0.5+0.5)*window.innerWidth, msy=(-mp.y*0.5+0.5)*window.innerHeight;
   if(mp.z>-1&&mp.z<1&&Math.hypot(cx-msx,cy-msy)<24){
     targetCamZ=0.95; setTimeout(()=>{ window.location.href='https://hivemoon.hive.baby'; },580); return;
   }
-  toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
+
+  // Check planet cells
   const h=raycaster.intersectObjects(meshes); if(!h.length) return;
   const ci=cellMeshMap.get(h[0].object); if(ci===undefined) return;
   const cd=cellInfo[ci]; if(!cd||!cd.engine) return;
@@ -1541,6 +1634,21 @@ canvas.addEventListener('touchstart',e=>{ if(e.touches.length===1) updateHover(e
 
 function updateHover(cx,cy){
   toNDC(cx,cy); raycaster.setFromCamera(mNDC,camera);
+
+  // Space Station hover tooltip
+  const ssHits=raycaster.intersectObjects(stationMeshes);
+  if(ssHits.length){
+    tooltip.className='';
+    tooltip.querySelector('.tt-name').textContent='🛸  Space Station';
+    tooltip.querySelector('.tt-tagline').textContent='Internal hub. Password protected.';
+    tooltip.querySelector('.tt-code').textContent='';
+    tooltip.querySelector('.tt-action').textContent='Click to enter →';
+    tooltip.querySelector('.tt-action').className='tt-action';
+    tooltip.style.display='block'; posTip(cx,cy);
+    canvas.style.cursor='pointer';
+    return;
+  }
+
   const hits=raycaster.intersectObjects(meshes);
   const newCi=hits.length?cellMeshMap.get(hits[0].object):undefined;
   const newIdx=newCi!==undefined?newCi:-1;
@@ -1732,6 +1840,9 @@ function animate(){
 
   // ISS orbit
   updateISS();
+
+  // Space Station orbit
+  updateSpaceStation(t);
 
   // Meteors
   updateMeteors(dt);
