@@ -569,7 +569,7 @@ body {
 <body>
 
 <!-- Debug: test element to confirm HTML loads -->
-<div id="debug-test" style="position:fixed;top:10px;left:10px;color:#0f0;font-size:10px;z-index:1000;background:#000;padding:4px;">HTML loaded</div>
+<div id="debug-test" style="position:fixed;top:10px;left:10px;color:#0f0;font-size:10px;z-index:1000;background:#000;padding:4px;">Planet loaded ✓</div>
 
 <!-- Reset / Home button -->
 <button id="reset-btn" title="Reset to home">⬡</button>
@@ -797,6 +797,56 @@ document.getElementById('pw-input').addEventListener('keydown', e => {
 });
 document.addEventListener('keydown', e => { if(e.key==='Escape') closePwModal(); });
 
+// ─── Engine Data ──────────────────────────────────────────────────────────────
+// Admin/private engines — shown only in LCARS sidebar, NOT on planet surface
+const ADMIN_ENGINES = [
+  { name:'Queen Bee',          emoji:'👑', url:'https://queen-bee-v1.vercel.app',               tagline:'Sovereign governance engine' },
+  { name:'HiveEngine Builder', emoji:'⚙️', url:'https://heb.hive.baby',                         tagline:'Design and deploy engines' },
+  { name:'Creator Console',    emoji:'🎛️', url:'https://creator-console-steel.vercel.app',      tagline:'Private ops dashboard' },
+  { name:'Space Station',      emoji:'🛸', url:'https://station.hive.baby',                      tagline:'Internal hub — password: HiveBees' },
+];
+
+// tier: 1=Live, 2=Building, 3=Planned. status drives visual tier.
+const ENGINES = [
+  // TIER 1 — LIVE
+  { name:'HiveClock',          emoji:'🕐', status:'live',     tier:1, tagline:'The world\'s most humane clock.',                        url:'https://hiveclock.hive.baby',            keywords:['clock','time','watch','prayer','world','timezone'] },
+  { name:'HiveClarity',        emoji:'💬', status:'live',     tier:1, tagline:'Say what you actually mean.',                           url:'https://hiveclarity.hive.baby',          keywords:['clarity','words','language','express','communicate','rewrite'] },
+  { name:'HiveStrength',       emoji:'💪', status:'live',     tier:1, tagline:'Train with intelligence.',                              url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','exercise'] },
+  { name:'HiveField',          emoji:'🎯', status:'live',     tier:1, tagline:'Practice your craft.',                                 url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','simulate'] },
+  { name:'HiveBodyLog',        emoji:'🫀', status:'live',     tier:1, tagline:'Your health story. Log anything.',                      url:'https://hivebodylog.hive.baby',          keywords:['health','body','symptoms','log','patterns','medical'] },
+  { name:'HiveMoon',           emoji:'🌙', status:'live',     tier:1, tagline:'Does the moon affect you?',                            url:'https://hivemoon.hive.baby',             keywords:['moon','lunar','cycle','mood','sleep','phase'] },
+  { name:'Secret Box',         emoji:'🤫', status:'live',     tier:1, tagline:'Say the thing you haven\'t said.',                     url:'https://secret-box-vert.vercel.app',     keywords:['secret','confession','anonymous','share','unsaid'] },
+  { name:'UD Reader',          emoji:'📖', status:'live',     tier:1, tagline:'Read Universal Documents.',                            url:'https://universal-document.vercel.app',  keywords:['reader','document','ud','universal','read'] },
+  { name:'UD Converter',       emoji:'🔄', status:'live',     tier:1, tagline:'Convert any file to Universal Document.',              url:'https://converter.hive.baby',            keywords:['convert','converter','docx','pdf','ud','format'] },
+  { name:'Patrons',            emoji:'🐝', status:'patron',   tier:1, tagline:'The people who keep Hive free.',                       url:'https://hive.baby/patrons',              keywords:['patron','support','donate','fund','community'] },
+  // TIER 2 — BUILDING
+  { name:'Universal Document', emoji:'📄', status:'building', tier:2, tagline:'The next-gen document format. Deploying soon.',         url:null,                                     keywords:['universal','document','ud','format','intelligence'] },
+  { name:'UD Creator',         emoji:'✏️', status:'building', tier:2, tagline:'Create Universal Documents. In development.',           url:null,                                     keywords:['creator','write','create','document','ud'] },
+  { name:'UD Validator',       emoji:'✅', status:'building', tier:2, tagline:'Validate .uds files. Deploy pending.',                  url:null,                                     keywords:['validator','validate','check','document','ud'] },
+  { name:'WhoTextedMe',        emoji:'📱', status:'building', tier:2, tagline:'Free reverse phone lookup.',                           url:'https://whotextedme.hive.baby',          keywords:['phone','number','lookup','caller','reverse','text'] },
+  { name:'HiveAdminSupport',   emoji:'📧', status:'building', tier:2, tagline:'Auto-acknowledge support emails. Deploying.',           url:null,                                     keywords:['support','email','admin','auto','acknowledge'] },
+  // TIER 3 — PLANNED
+  { name:'HiveTV',             emoji:'📺', status:'planned',  tier:3, tagline:'AI broadcast platform. Gary Gansson.',                 url:null, keywords:['tv','broadcast','gary','show','media'] },
+  { name:'Trust Mesh',         emoji:'🕸️', status:'planned', tier:3, tagline:'Universal matching and micro-contract.',               url:null, keywords:['trust','mesh','match','contract','social'] },
+  { name:'Meme Engine',        emoji:'😂', status:'planned',  tier:3, tagline:'Viral memes, cultural loops.',                         url:null, keywords:['meme','viral','culture','content'] },
+  { name:'Confession',         emoji:'🙏', status:'planned',  tier:3, tagline:'Say it anonymously.',                                 url:null, keywords:['confession','anonymous','say','share'] },
+  { name:'Desire',             emoji:'💫', status:'planned',  tier:3, tagline:'What do you really want?',                            url:null, keywords:['desire','want','wish','dream'] },
+  { name:'Regret',             emoji:'😔', status:'planned',  tier:3, tagline:'Process what you carry.',                             url:null, keywords:['regret','process','emotion','carry'] },
+  { name:'Forgiveness',        emoji:'💚', status:'planned',  tier:3, tagline:'Let it go with intention.',                           url:null, keywords:['forgiveness','let go','heal'] },
+  { name:'HiveMic',            emoji:'🎙️', status:'planned', tier:3, tagline:'Your voice, amplified.',                              url:null, keywords:['mic','voice','speak','audio'] },
+  { name:'HiveSign',           emoji:'✍️', status:'planned', tier:3, tagline:'Sign anything, everywhere.',                           url:null, keywords:['sign','signature','signing'] },
+  { name:'HiveFocus',          emoji:'🎯', status:'planned',  tier:3, tagline:'Cognitive performance engine.',                       url:null, keywords:['focus','cognitive','attention','productivity'] },
+  { name:'HiveImagine',        emoji:'🎨', status:'planned',  tier:3, tagline:'Generate and dream.',                                 url:null, keywords:['imagine','generate','art','creative'] },
+  { name:'HiveHomeSense',      emoji:'🏠', status:'planned',  tier:3, tagline:'Home environment intelligence.',                      url:null, keywords:['home','environment','safety','sense'] },
+  { name:'HiveAirSense',       emoji:'💨', status:'planned',  tier:3, tagline:'Air quality sensing.',                                url:null, keywords:['air','quality','voc','environment'] },
+  { name:'HiveAlmanac',        emoji:'📅', status:'planned',  tier:3, tagline:'The living almanac.',                                 url:null, keywords:['almanac','calendar','seasonal','nature'] },
+  { name:'HivePictures',       emoji:'🖼️', status:'planned', tier:3, tagline:'Visual intelligence.',                                url:null, keywords:['pictures','images','visual','gallery'] },
+  { name:'HiveWeather',        emoji:'🌤', status:'planned',  tier:3, tagline:'Weather as it feels, not just as it is.',             url:null, keywords:['weather','forecast','climate','rain'] },
+  { name:'HiveMessage',        emoji:'💌', status:'planned',  tier:3, tagline:'Governed messaging.',                                 url:null, keywords:['message','chat','communicate'] },
+  { name:'UD Signer',          emoji:'🔏', status:'planned',  tier:3, tagline:'Cryptographic document signing.',                     url:null, keywords:['signer','sign','crypto','document','ud'] },
+  { name:'EarthSense',         emoji:'🌿', status:'planned',  tier:3, tagline:'Nature literacy. ID any organism.',                   url:null, keywords:['nature','earth','mushrooms','wildlife','ecology'] },
+];
+
 // ─── Mobile List ──────────────────────────────────────────────────────────────
 (function initMobileList() {
   const enginesEl = document.getElementById('ml-engines');
@@ -858,56 +908,6 @@ if (typeof THREE === 'undefined') {
   throw new Error('Three.js CDN failed');
 }
 document.getElementById('debug-test').innerHTML = 'Three.js loaded ✓';
-
-// ─── Engine Data ──────────────────────────────────────────────────────────────
-// Admin/private engines — shown only in LCARS sidebar, NOT on planet surface
-const ADMIN_ENGINES = [
-  { name:'Queen Bee',          emoji:'👑', url:'https://queen-bee-v1.vercel.app',               tagline:'Sovereign governance engine' },
-  { name:'HiveEngine Builder', emoji:'⚙️', url:'https://heb.hive.baby',                         tagline:'Design and deploy engines' },
-  { name:'Creator Console',    emoji:'🎛️', url:'https://creator-console-steel.vercel.app',      tagline:'Private ops dashboard' },
-  { name:'Space Station',      emoji:'🛸', url:'https://station.hive.baby',                      tagline:'Internal hub — password: HiveBees' },
-];
-
-// tier: 1=Live, 2=Building, 3=Planned. status drives visual tier.
-const ENGINES = [
-  // TIER 1 — LIVE
-  { name:'HiveClock',          emoji:'🕐', status:'live',     tier:1, tagline:'The world\'s most humane clock.',                        url:'https://hiveclock.hive.baby',            keywords:['clock','time','watch','prayer','world','timezone'] },
-  { name:'HiveClarity',        emoji:'💬', status:'live',     tier:1, tagline:'Say what you actually mean.',                           url:'https://hiveclarity.hive.baby',          keywords:['clarity','words','language','express','communicate','rewrite'] },
-  { name:'HiveStrength',       emoji:'💪', status:'live',     tier:1, tagline:'Train with intelligence.',                              url:'https://hivestrengthmastery.hive.baby',  keywords:['fitness','workout','gym','training','strength','exercise'] },
-  { name:'HiveField',          emoji:'🎯', status:'live',     tier:1, tagline:'Practice your craft.',                                 url:'https://hivefield.hive.baby',            keywords:['practice','job','interview','skill','profession','simulate'] },
-  { name:'HiveBodyLog',        emoji:'🫀', status:'live',     tier:1, tagline:'Your health story. Log anything.',                      url:'https://hivebodylog.hive.baby',          keywords:['health','body','symptoms','log','patterns','medical'] },
-  { name:'HiveMoon',           emoji:'🌙', status:'live',     tier:1, tagline:'Does the moon affect you?',                            url:'https://hivemoon.hive.baby',             keywords:['moon','lunar','cycle','mood','sleep','phase'] },
-  { name:'Secret Box',         emoji:'🤫', status:'live',     tier:1, tagline:'Say the thing you haven\'t said.',                     url:'https://secret-box-vert.vercel.app',     keywords:['secret','confession','anonymous','share','unsaid'] },
-  { name:'UD Reader',          emoji:'📖', status:'live',     tier:1, tagline:'Read Universal Documents.',                            url:'https://universal-document.vercel.app',  keywords:['reader','document','ud','universal','read'] },
-  { name:'UD Converter',       emoji:'🔄', status:'live',     tier:1, tagline:'Convert any file to Universal Document.',              url:'https://converter.hive.baby',            keywords:['convert','converter','docx','pdf','ud','format'] },
-  { name:'Patrons',            emoji:'🐝', status:'patron',   tier:1, tagline:'The people who keep Hive free.',                       url:'https://hive.baby/patrons',              keywords:['patron','support','donate','fund','community'] },
-  // TIER 2 — BUILDING
-  { name:'Universal Document', emoji:'📄', status:'building', tier:2, tagline:'The next-gen document format. Deploying soon.',         url:null,                                     keywords:['universal','document','ud','format','intelligence'] },
-  { name:'UD Creator',         emoji:'✏️', status:'building', tier:2, tagline:'Create Universal Documents. In development.',           url:null,                                     keywords:['creator','write','create','document','ud'] },
-  { name:'UD Validator',       emoji:'✅', status:'building', tier:2, tagline:'Validate .uds files. Deploy pending.',                  url:null,                                     keywords:['validator','validate','check','document','ud'] },
-  { name:'WhoTextedMe',        emoji:'📱', status:'building', tier:2, tagline:'Free reverse phone lookup.',                           url:'https://whotextedme.hive.baby',          keywords:['phone','number','lookup','caller','reverse','text'] },
-  { name:'HiveAdminSupport',   emoji:'📧', status:'building', tier:2, tagline:'Auto-acknowledge support emails. Deploying.',           url:null,                                     keywords:['support','email','admin','auto','acknowledge'] },
-  // TIER 3 — PLANNED
-  { name:'HiveTV',             emoji:'📺', status:'planned',  tier:3, tagline:'AI broadcast platform. Gary Gansson.',                 url:null, keywords:['tv','broadcast','gary','show','media'] },
-  { name:'Trust Mesh',         emoji:'🕸️', status:'planned', tier:3, tagline:'Universal matching and micro-contract.',               url:null, keywords:['trust','mesh','match','contract','social'] },
-  { name:'Meme Engine',        emoji:'😂', status:'planned',  tier:3, tagline:'Viral memes, cultural loops.',                         url:null, keywords:['meme','viral','culture','content'] },
-  { name:'Confession',         emoji:'🙏', status:'planned',  tier:3, tagline:'Say it anonymously.',                                 url:null, keywords:['confession','anonymous','say','share'] },
-  { name:'Desire',             emoji:'💫', status:'planned',  tier:3, tagline:'What do you really want?',                            url:null, keywords:['desire','want','wish','dream'] },
-  { name:'Regret',             emoji:'😔', status:'planned',  tier:3, tagline:'Process what you carry.',                             url:null, keywords:['regret','process','emotion','carry'] },
-  { name:'Forgiveness',        emoji:'💚', status:'planned',  tier:3, tagline:'Let it go with intention.',                           url:null, keywords:['forgiveness','let go','heal'] },
-  { name:'HiveMic',            emoji:'🎙️', status:'planned', tier:3, tagline:'Your voice, amplified.',                              url:null, keywords:['mic','voice','speak','audio'] },
-  { name:'HiveSign',           emoji:'✍️', status:'planned', tier:3, tagline:'Sign anything, everywhere.',                           url:null, keywords:['sign','signature','signing'] },
-  { name:'HiveFocus',          emoji:'🎯', status:'planned',  tier:3, tagline:'Cognitive performance engine.',                       url:null, keywords:['focus','cognitive','attention','productivity'] },
-  { name:'HiveImagine',        emoji:'🎨', status:'planned',  tier:3, tagline:'Generate and dream.',                                 url:null, keywords:['imagine','generate','art','creative'] },
-  { name:'HiveHomeSense',      emoji:'🏠', status:'planned',  tier:3, tagline:'Home environment intelligence.',                      url:null, keywords:['home','environment','safety','sense'] },
-  { name:'HiveAirSense',       emoji:'💨', status:'planned',  tier:3, tagline:'Air quality sensing.',                                url:null, keywords:['air','quality','voc','environment'] },
-  { name:'HiveAlmanac',        emoji:'📅', status:'planned',  tier:3, tagline:'The living almanac.',                                 url:null, keywords:['almanac','calendar','seasonal','nature'] },
-  { name:'HivePictures',       emoji:'🖼️', status:'planned', tier:3, tagline:'Visual intelligence.',                                url:null, keywords:['pictures','images','visual','gallery'] },
-  { name:'HiveWeather',        emoji:'🌤', status:'planned',  tier:3, tagline:'Weather as it feels, not just as it is.',             url:null, keywords:['weather','forecast','climate','rain'] },
-  { name:'HiveMessage',        emoji:'💌', status:'planned',  tier:3, tagline:'Governed messaging.',                                 url:null, keywords:['message','chat','communicate'] },
-  { name:'UD Signer',          emoji:'🔏', status:'planned',  tier:3, tagline:'Cryptographic document signing.',                     url:null, keywords:['signer','sign','crypto','document','ud'] },
-  { name:'EarthSense',         emoji:'🌿', status:'planned',  tier:3, tagline:'Nature literacy. ID any organism.',                   url:null, keywords:['nature','earth','mushrooms','wildlife','ecology'] },
-];
 
 // ─── Renderer ────────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
