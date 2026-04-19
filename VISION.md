@@ -1,5 +1,19 @@
 # HIVE VISION — Full Ecosystem Reference
 
+## Planet Cell System — Redesigned 2026-04-19
+
+**Status:** DEPLOYED — hive.baby
+
+Three-tier hex cell system live on planet:
+- **Tier 1 (Live):** Full gold border ring + dark fill + emoji icon + white label. 3.4s pulse. Click navigates. 12 engines including QB surrounds.
+- **Tier 2 (Building):** 50% gold border, 6.4s pulse, "Coming soon" tooltip on click. 6 engines.
+- **Tier 3 (Planned):** Dark gold outline, no pulse, "Vote for this engine" tooltip. 20 engines.
+- **Queen Bee:** Center front-facing cell, larger hex, constant bright gold shimmer, gold radiating lines + dots to 6 neighbours.
+- Each cell: two-mesh architecture (border ring + dark fill #0d1117) matching reference image.
+- 38 total engines mapped from VISION.md.
+
+---
+
 ## Space Station — LIVE at station.hive.baby
 
 A password-protected internal ops hub. Password: hivebees. Dark space aesthetic, twinkling stars.
