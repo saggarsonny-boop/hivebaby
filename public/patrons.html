@@ -267,7 +267,7 @@ document.getElementById('patron-form').addEventListener('submit', async function
 
   try {
     // Submit to contribute endpoint (same Neon DB used by contribute.html)
-    await fetch('https://creator-console-steel.vercel.app/api/idea', {
+    await fetch('https://creatorconsole.hive.baby/api/idea', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({

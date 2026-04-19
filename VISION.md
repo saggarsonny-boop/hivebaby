@@ -22,10 +22,10 @@ A password-protected internal ops hub. Password: hivebees. Dark space aesthetic,
 **Repo:** hive-station (saggarsonny-boop/hive-station)
 **Auth:** Session-storage password gate (hivebees)
 **Contains (v1):**
-- Creator Console → creator-console-steel.vercel.app
-- Queen Bee → queen-bee-v1.vercel.app
-- Hive Engine Builder → heb.hive.baby
-- Stats → creator-console-steel.vercel.app/dashboard
+- Creator Console → creatorconsole.hive.baby
+- Queen Bee → queenbee.hive.baby
+- Hive Engine Builder → hiveenginebuilder.hive.baby
+- Stats → creatorconsole.hive.baby/dashboard
 - LOCK button to re-secure
 
 **Planet integration (planned):** Small ISS-style station mesh in orbit, clicking opens password modal rather than fly-through.
@@ -162,7 +162,7 @@ On first visit (localStorage, never repeats), after welcome card:
 
 **HiveCustomerSupport** — Governed support engine. Consistent, emotionally safe, multilingual.
 
-**Creator Console** — Private master dashboard for Sonny. Live at creator-console-steel.vercel.app.
+**Creator Console** — Private master dashboard for Sonny. Live at creatorconsole.hive.baby.
 
 ---
 
@@ -182,7 +182,7 @@ On first visit (localStorage, never repeats), after welcome card:
   - Required Vercel env vars: STRIPE_SECRET_KEY, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_YEARLY, STRIPE_WEBHOOK_SECRET, DATABASE_URL
   - Stripe webhook endpoint: https://converter.hive.baby/api/webhook
   - Stripe customer portal link in /pro (update the billing.stripe.com URL once you have a live Stripe account)
-- **UD Reader** — LIVE at universal-document.vercel.app. Cross-linked to converter.
+- **UD Reader** — LIVE at ud.hive.baby. Cross-linked to converter.
 - **UD Creator (creator.hive.baby)** — BUILT v0.2 (apps/creator). Contenteditable rich text (Bold/Italic/Link toolbar, execCommand), cloud save via magic-link auth (Neon: creator_sessions, creator_magic_links, creator_documents), My Documents panel (load/delete/new). Exports valid iSDF v0.1.0 with html+text fallback in base_content. CNAME live. Deploy pending Vercel quota reset.
   - v0.2 roadmap (pending deploy confirm): Pro tier Stripe gating, UDZ export, Early Access banner, planet cell
 - **UD Validator (validator.hive.baby)** — BUILT (apps/validator). Upload .uds → verify structure, show schema version/encryption/expiry/signature/language count/word count. CNAME live. Deploy pending.
@@ -293,7 +293,7 @@ On first visit (localStorage, never repeats), after welcome card:
 
 **Taboo Cluster (8 Engines)** — Highest NOI-per-hour: Confession, Secret, Shame, Desire, Regret, Forgiveness, Boundary, Emotional Debris. Viral, universal, low friction.
 
-**Secret Box** — LIVE at secret-box-vert.vercel.app. Live Secret engine instance. HivePlanetButton + HiveFooter deployed.
+**Secret Box** — LIVE at secretbox.hive.baby. Live Secret engine instance. HivePlanetButton + HiveFooter deployed.
 
 **Universal Family** — 12 universal engines as tiles on home screen. Baseline engagement.
 
@@ -315,7 +315,7 @@ On first visit (localStorage, never repeats), after welcome card:
 
 **HiveSim** — Simulation for training, modeling, scenarios.
 
-**HiveStrength** — LIVE at hivestrengthmastery.hive.baby. AI strength and fitness coaching.
+**HiveStrength** — LIVE at hivestrength.hive.baby. AI strength and fitness coaching.
 
 ---
 
@@ -341,7 +341,7 @@ On first visit (localStorage, never repeats), after welcome card:
 
 ### VII. Enterprise, Compliance & Industry Engines
 
-**Hive Engine Builder (HEB)** — LIVE at heb.hive.baby. Designs and deploys new engines.
+**Hive Engine Builder (HEB)** — LIVE at hiveenginebuilder.hive.baby. Designs and deploys new engines.
 
 **WhoTexted** — LIVE (original standalone JS).
 
@@ -573,3 +573,25 @@ Every engine while serving users simultaneously builds anonymised global signal 
 After 2–3 years: world's most sensitive pandemic early warning system, most comprehensive ecological health monitor. Publishable in Nature, Lancet, Science. Licensable to WHO, CDC, ECDC.
 
 The Hive is not a collection of engines. It is a living planetary sensor.
+
+## Typography Standard
+
+Display/headings: Syne (600, 700) 
+- Used for: engine names, hero text, nav wordmarks
+- Google Fonts: family=Syne:wght@600;700
+
+Body: DM Sans (300, 400, 500)
+- Used for: paragraphs, descriptions, UI text
+
+Monospace/data: DM Mono (400, 500)  
+- Used for: labels, badges, code, stats, metadata
+
+Implementation: Add to globals.css in each engine:
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+Add CSS variables:
+--font-display: 'Syne', sans-serif;
+--font-body: 'DM Sans', sans-serif;
+--font-mono: 'DM Mono', monospace;
+
+Applied to all engines: hivefield, hiveclock, hiveclarity, hivestrengthmastery, hivebodylog, hivemoon, secret-box, whotextedme, converter, creator, validator, ud-landing, station.hive.baby, queen-bee
