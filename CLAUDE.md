@@ -37,6 +37,7 @@ Account: saggarsonny-boop
 | whotextedme | WhoTextedMe | whotextedme.hive.baby | LIVE | Next.js + Anthropic |
 | universal-document/apps/converter | UDConverter | converter.hive.baby | LIVE | Next.js + Anthropic |
 | hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic |
+| hive-hivememe | HiveMeme | hivememe.hive.baby | BUILDING | Next.js + Anthropic |
 
 ## Naming Standards (canonical — all future engines must follow)
 
