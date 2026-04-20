@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hive Production Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--surface:#0f1318;--surface2:#141920;
+  --border:#1e2830;--border2:#2a3540;
+  --gold:#c8960a;--gold2:#e8b420;--gold3:#fff3cc;
+  --live:#1D9E75;--live-bg:#0a2018;
+  --build:#BA7517;--build-bg:#1a1200;
+  --start:#185FA5;--start-bg:#0a1520;
+  --plan:#4a5568;--plan-bg:#0f1318;
+  --text:#e2e8f0;--muted:#64748b;--dim:#334155;
+  --red:#e24b4a;--red-bg:#1a0808;
+}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:1.5rem}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.header-left{display:flex;align-items:center;gap:12px}
+.hive-mark{width:36px;height:36px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#0a0c10}
+.title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text)}
+.subtitle{font-size:11px;color:var(--muted);margin-top:2px}
+.timestamp{font-size:11px;color:var(--muted);text-align:right}
+.fetch-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;margin-top:6px}
+.fetch-btn:hover{border-color:var(--gold);background:var(--bg)}
+.fetch-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* SUMMARY CARDS */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.stat-n{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;line-height:1}
+.stat-l{font-size:10px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.08em}
+.stat-card.live .stat-n{color:var(--live)}
+.stat-card.build .stat-n{color:var(--build)}
+.stat-card.start .stat-n{color:var(--start)}
+.stat-card.plan .stat-n{color:var(--muted)}
+.stat-card.total .stat-n{color:var(--gold)}
+
+/* ALERTS */
+.alert{border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:12px;line-height:1.5;border:1px solid}
+.alert.risk{background:var(--red-bg);border-color:var(--red);color:#f09595}
+.alert.priority{background:var(--live-bg);border-color:var(--live);color:#9FE1CB}
+.alert-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;font-weight:500}
+
+/* ENGINE TABLE */
+.section{margin-bottom:1.5rem}
+.section-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.section-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.section-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600}
+.section-count{font-size:11px;color:var(--muted);margin-left:auto}
+
+.engine-row{display:grid;grid-template-columns:180px 60px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:6px;margin-bottom:4px;background:var(--surface);border:1px solid var(--border);transition:border-color 0.15s}
+.engine-row:hover{border-color:var(--border2)}
+.engine-name{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.engine-url{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.engine-score-wrap{display:flex;align-items:center;gap:8px}
+.engine-bar-bg{flex:1;height:4px;background:var(--border2);border-radius:2px;overflow:hidden}
+.engine-bar{height:100%;border-radius:2px;transition:width 0.5s ease}
+.engine-pct{font-size:11px;font-weight:500;min-width:32px;text-align:right}
+.engine-missing{font-size:10px;color:var(--muted);text-align:right;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Score colors */
+.s90{background:#1D9E75}.c90{color:#1D9E75}
+.s70{background:#2a8a60}.c70{color:#2a8a60}
+.s50{background:#BA7517}.c50{color:#BA7517}
+.s30{background:#8a5510}.c30{color:#8a5510}
+.s10{background:#185FA5}.c10{color:#185FA5}
+.s0{background:#4a5568}.c0{color:#4a5568}
+
+/* FLAGS */
+.flag-row{background:var(--red-bg);border:1px solid #5a1a1a;border-radius:6px;padding:8px 12px;margin-bottom:4px;font-size:11px;color:#f09595;line-height:1.5}
+
+/* CHANGES */
+.change-row{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:4px;font-size:11px;color:var(--muted);line-height:1.5}
+.change-engine{color:var(--gold);margin-right:6px}
+
+/* LOADING */
+.loading{text-align:center;padding:3rem;color:var(--muted);font-size:13px}
+.loading-dot{display:inline-block;animation:blink 1s infinite}
+.loading-dot:nth-child(2){animation-delay:0.2s}
+.loading-dot:nth-child(3){animation-delay:0.4s}
+@keyframes blink{0%,100%{opacity:0.2}50%{opacity:1}}
+
+/* EMPTY */
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:12px;border:1px dashed var(--border);border-radius:8px}
+
+/* RAW TOGGLE */
+.raw-toggle{font-size:10px;color:var(--muted);cursor:pointer;text-decoration:underline;margin-top:1rem;display:inline-block}
+.raw-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:8px;font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.6;max-height:300px;overflow-y:auto}
+.raw-panel.visible{display:block}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="hive-mark">H</div>
+    <div>
+      <div class="title">Hive Production</div>
+      <div class="subtitle">Daily engine status dashboard</div>
+    </div>
+  </div>
+  <div class="timestamp">
+    <div id="report-date">No report loaded</div>
+    <button class="fetch-btn" onclick="fetchReport()" id="fetch-btn">
+      Fetch latest from GitHub
+    </button>
+  </div>
+</div>
+
+<div id="dashboard">
+  <div class="empty">
+    Click "Fetch latest from GitHub" to load today's status report.<br>
+    CC generates DAILY_STATUS.md automatically each session.
+  </div>
+</div>
+
+<span class="raw-toggle" onclick="toggleRaw()" id="raw-toggle" style="display:none">Show raw markdown</span>
+<div class="raw-panel" id="raw-panel"></div>
+
+<script>
+const GITHUB_RAW = 'https://raw.githubusercontent.com/saggarsonny-boop/hivebaby/main/DAILY_STATUS.md';
+
+let rawContent = '';
+
+async function fetchReport() {
+  const btn = document.getElementById('fetch-btn');
+  btn.disabled = true;
+  btn.textContent = 'Fetching...';
+  document.getElementById('dashboard').innerHTML = `
+    <div class="loading">
+      <span class="loading-dot">.</span>
+      <span class="loading-dot">.</span>
+      <span class="loading-dot">.</span>
+      &nbsp; Loading from GitHub
+    </div>`;
+
+  try {
+    const res = await fetch(GITHUB_RAW + '?t=' + Date.now());
+    if (!res.ok) throw new Error('Not found — has CC generated DAILY_STATUS.md yet?');
+    const text = await res.text();
+    rawContent = text;
+    document.getElementById('raw-panel').textContent = text;
+    document.getElementById('raw-toggle').style.display = 'inline-block';
+    parseAndRender(text);
+  } catch(e) {
+    document.getElementById('dashboard').innerHTML = `
+      <div class="empty">${e.message}<br><br>
+      Tell CC: "Generate DAILY_STATUS.md now using the audit prompt in CLAUDE.md"
+      </div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Refresh';
+}
+
+function toggleRaw() {
+  const p = document.getElementById('raw-panel');
+  const t = document.getElementById('raw-toggle');
+  p.classList.toggle('visible');
+  t.textContent = p.classList.contains('visible') ? 'Hide raw markdown' : 'Show raw markdown';
+}
+
+function scoreClass(pct) {
+  if (pct >= 90) return '90';
+  if (pct >= 70) return '70';
+  if (pct >= 50) return '50';
+  if (pct >= 30) return '30';
+  if (pct >= 10) return '10';
+  return '0';
+}
+
+function parseAndRender(md) {
+  const lines = md.split('\n');
+  let date = '', summary = {total:0,live:0,build:0,start:0,plan:0};
+  let risk = '', priority = '';
+  let tiers = {1:[],2:[],3:[],4:[]};
+  let flags = [], changes = [];
+  let section = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim();
+
+    if (l.startsWith('# HIVE STATUS')) {
+      date = l.replace('# HIVE STATUS —', '').trim();
+      document.getElementById('report-date').textContent = date;
+    }
+
+    if (l.includes('Total engines')) summary.total = parseInt(l.match(/\d+/) || [0]);
+    if (l.includes('Live and working')) summary.live = parseInt(l.match(/\d+/) || [0]);
+    if (l.includes('Building')) summary.build = parseInt(l.match(/\d+/) || [0]);
+    if (l.includes('Started')) summary.start = parseInt(l.match(/\d+/) || [0]);
+    if (l.includes('Not started')) summary.plan = parseInt(l.match(/\d+/) || [0]);
+    if (l.startsWith('- Biggest risk:')) risk = l.replace('- Biggest risk:', '').trim();
+    if (l.startsWith('- Recommended')) priority = l.replace('- Recommended next priority:', '').trim();
+
+    if (l.includes('TIER 1')) section = '1';
+    else if (l.includes('TIER 2')) section = '2';
+    else if (l.includes('TIER 3')) section = '3';
+    else if (l.includes('TIER 4')) section = '4';
+    else if (l.includes('## FLAGS')) section = 'flags';
+    else if (l.includes('## LAST 24H')) section = 'changes';
+
+    // Parse table rows (skip header and separator)
+    if (l.startsWith('|') && !l.includes('---') && !l.includes('Engine') && !l.includes('Works')) {
+      const cols = l.split('|').map(c => c.trim()).filter(Boolean);
+      if (section === '1' || section === '2' || section === '3') {
+        if (cols.length >= 4) {
+          const pct = parseInt(cols[2].replace('%','')) || 0;
+          tiers[parseInt(section)].push({
+            name: cols[0],
+            url: cols[1],
+            pct,
+            works: cols[3] || '',
+            missing: cols[4] || ''
+          });
+        }
+      } else if (section === '4') {
+        if (cols.length >= 2) {
+          tiers[4].push({ name: cols[0], spec: cols[1], quality: cols[2] || '' });
+        }
+      }
+    }
+
+    if (section === 'flags' && l.length > 2 && !l.startsWith('#') && !l.startsWith('|')) {
+      flags.push(l.replace(/^[-*]\s*/,''));
+    }
+    if (section === 'changes' && l.length > 2 && !l.startsWith('#') && !l.startsWith('|')) {
+      changes.push(l.replace(/^[-*]\s*/,''));
+    }
+  }
+
+  let html = '';
+
+  // Summary cards
+  html += `<div class="summary-grid">
+    <div class="stat-card total"><div class="stat-n">${summary.total}</div><div class="stat-l">Total engines</div></div>
+    <div class="stat-card live"><div class="stat-n">${summary.live}</div><div class="stat-l">Live</div></div>
+    <div class="stat-card build"><div class="stat-n">${summary.build}</div><div class="stat-l">Building</div></div>
+    <div class="stat-card start"><div class="stat-n">${summary.start}</div><div class="stat-l">Started</div></div>
+    <div class="stat-card plan"><div class="stat-n">${summary.plan}</div><div class="stat-l">Planned</div></div>
+  </div>`;
+
+  // Alerts
+  if (risk) html += `<div class="alert risk"><div class="alert-label">Biggest risk</div>${risk}</div>`;
+  if (priority) html += `<div class="alert priority"><div class="alert-label">Next priority</div>${priority}</div>`;
+
+  // Tier 1
+  if (tiers[1].length > 0) {
+    html += `<div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:var(--live)"></div>
+        <div class="section-title">Live and working</div>
+        <div class="section-count">${tiers[1].length} engines</div>
+      </div>`;
+    tiers[1].forEach(e => {
+      const sc = scoreClass(e.pct);
+      html += `<div class="engine-row">
+        <div><div class="engine-name">${e.name}</div><div class="engine-url">${e.url}</div></div>
+        <div class="engine-pct c${sc}">${e.pct}%</div>
+        <div class="engine-score-wrap"><div class="engine-bar-bg"><div class="engine-bar s${sc}" style="width:${e.pct}%"></div></div></div>
+        <div class="engine-missing">${e.missing}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Tier 2
+  if (tiers[2].length > 0) {
+    html += `<div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:var(--build)"></div>
+        <div class="section-title">Building</div>
+        <div class="section-count">${tiers[2].length} engines</div>
+      </div>`;
+    tiers[2].forEach(e => {
+      const sc = scoreClass(e.pct);
+      html += `<div class="engine-row">
+        <div><div class="engine-name">${e.name}</div><div class="engine-url">${e.url}</div></div>
+        <div class="engine-pct c${sc}">${e.pct}%</div>
+        <div class="engine-score-wrap"><div class="engine-bar-bg"><div class="engine-bar s${sc}" style="width:${e.pct}%"></div></div></div>
+        <div class="engine-missing">${e.missing}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Tier 3
+  if (tiers[3].length > 0) {
+    html += `<div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:var(--start)"></div>
+        <div class="section-title">Started</div>
+        <div class="section-count">${tiers[3].length} engines</div>
+      </div>`;
+    tiers[3].forEach(e => {
+      const sc = scoreClass(e.pct);
+      html += `<div class="engine-row">
+        <div><div class="engine-name">${e.name}</div><div class="engine-url">${e.url}</div></div>
+        <div class="engine-pct c${sc}">${e.pct}%</div>
+        <div class="engine-score-wrap"><div class="engine-bar-bg"><div class="engine-bar s${sc}" style="width:${e.pct}%"></div></div></div>
+        <div class="engine-missing">${e.missing}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Tier 4
+  if (tiers[4].length > 0) {
+    html += `<div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:var(--plan)"></div>
+        <div class="section-title">Not started</div>
+        <div class="section-count">${tiers[4].length} engines</div>
+      </div>`;
+    tiers[4].forEach(e => {
+      html += `<div class="engine-row">
+        <div><div class="engine-name">${e.name}</div><div class="engine-url">${e.spec}</div></div>
+        <div class="engine-pct c0">0%</div>
+        <div class="engine-score-wrap"><div class="engine-bar-bg"><div class="engine-bar s0" style="width:2%"></div></div></div>
+        <div class="engine-missing">${e.quality}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Flags
+  if (flags.length > 0) {
+    html += `<div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:var(--red)"></div>
+        <div class="section-title">Sync flags — VISION.md vs actual code</div>
+        <div class="section-count">${flags.length}</div>
+      </div>`;
+    flags.forEach(f => { html += `<div class="flag-row">${f}</div>`; });
+    html += `</div>`;
+  }
+
+  // Changes
+  if (changes.length > 0) {
+    html += `<div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:var(--gold)"></div>
+        <div class="section-title">Last 24h changes</div>
+        <div class="section-count">${changes.length}</div>
+      </div>`;
+    changes.forEach(c => {
+      const parts = c.split(':');
+      html += `<div class="change-row"><span class="change-engine">${parts[0] || ''}</span>${parts.slice(1).join(':')}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!html.includes('engine-row')) {
+    html += `<div class="empty">Report loaded but no engine data parsed.<br>CC may need to regenerate using the exact format in CLAUDE.md.</div>`;
+  }
+
+  document.getElementById('dashboard').innerHTML = html;
+}
+</script>
+</body>
+</html>

@@ -1,27 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { handlePresign, ValidationError, DuplicateError, StorageLimitError } from '@/lib/pipeline/presign'
-import type { PresignRequest } from '@/lib/types/photo'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { presignUpload } from '@/lib/pipeline/presign'
+import type { PresignRequest } from '@/lib/types/pipeline'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const userId = await requireAuth()
-    const body = await req.json() as PresignRequest
-
-    if (!body.fileName || !body.contentType || !body.fileSizeBytes || !body.sha256Hash) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
-
-    const result = await handlePresign(userId, body)
-    return NextResponse.json(result, { status: 201 })
+    const userId = await requireUser()
+    const body = (await req.json()) as PresignRequest
+    const result = await presignUpload(userId, body)
+    return NextResponse.json(result)
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (err instanceof DuplicateError) {
-      return NextResponse.json({ error: 'Duplicate', existingPhotoId: err.existingPhotoId }, { status: 409 })
+    if (err instanceof Response) return err
+    const message = err instanceof Error ? err.message : String(err)
+    const code = (err as { code?: string }).code
+    if (code === 'STORAGE_LIMIT') {
+      return NextResponse.json({ error: 'Storage limit exceeded', code: 'STORAGE_LIMIT' }, { status: 402 })
     }
-    if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 })
-    if (err instanceof StorageLimitError) return NextResponse.json({ error: err.message }, { status: 402 })
-    console.error('[presign]', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

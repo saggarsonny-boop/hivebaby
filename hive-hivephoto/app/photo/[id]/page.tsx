@@ -1,32 +1,70 @@
 'use client'
-
 import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { Nav } from '@/components/layout/Nav'
+import { PhotoDetail } from '@/components/photo/PhotoDetail'
+import { PhotoModal } from '@/components/photo/PhotoModal'
+import type { Photo, PhotoFace } from '@/lib/types/photo'
 
-interface PhotoDetail {
-  id: string
-  thumbUrl: string
-  aiTitle: string | null
-  userTitle: string | null
-  aiDescription: string | null
-}
-
-export default function PhotoDetailPage({ params }: { params: { id: string } }) {
-  const [photo, setPhoto] = useState<PhotoDetail | null>(null)
+export default function PhotoPage() {
+  const { id } = useParams<{ id: string }>()
+  const router = useRouter()
+  const [photo, setPhoto] = useState<Photo | null>(null)
+  const [faces, setFaces] = useState<PhotoFace[]>([])
+  const [signedUrl, setSignedUrl] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/photos/${params.id}`)
-      .then(r => r.json() as Promise<PhotoDetail>)
-      .then(setPhoto)
-  }, [params.id])
+    if (!id) return
+    Promise.all([
+      fetch(`/api/photos/${id}`).then((r) => r.json()),
+      fetch(`/api/photos/${id}/signed-url`).then((r) => r.json()),
+    ]).then(([photoData, urlData]: [Photo, { url: string }]) => {
+      setPhoto(photoData)
+      setSignedUrl(urlData.url ?? null)
+    }).finally(() => setLoading(false))
+  }, [id])
 
-  if (!photo) return <p className="text-zinc-400">Loading...</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white">
+        <Nav />
+        <div className="flex items-center justify-center py-24">
+          <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!photo) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white">
+        <Nav />
+        <div className="text-center py-24 text-zinc-400">Photo not found</div>
+      </div>
+    )
+  }
 
   return (
-    <section className="space-y-4">
-      <h1 className="text-3xl font-semibold text-amber-400">Photo Detail</h1>
-      <img src={photo.thumbUrl} alt={photo.aiTitle || 'Photo'} className="max-h-[70vh] w-full rounded-xl object-contain" />
-      <p className="text-zinc-200">{photo.userTitle || photo.aiTitle || 'Untitled'}</p>
-      <p className="text-zinc-400">{photo.aiDescription}</p>
-    </section>
+    <div className="min-h-screen bg-zinc-950 text-white">
+      <Nav />
+      <main className="max-w-5xl mx-auto px-4 py-8">
+        <PhotoDetail
+          photo={photo}
+          faces={faces}
+          signedUrl={signedUrl}
+          onViewFull={() => setShowModal(true)}
+          onPhotoUpdate={setPhoto}
+        />
+      </main>
+      {showModal && signedUrl && (
+        <PhotoModal
+          src={signedUrl}
+          alt={photo.aiTitle ?? photo.userTitle ?? 'Photo'}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
   )
 }

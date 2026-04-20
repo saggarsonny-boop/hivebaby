@@ -1,47 +1,47 @@
-import { applyAiEnrichment, markAnalysisFailed } from '../db/photos'
-import { insertFaces } from '../db/faces'
-import { downloadObject } from '../storage/r2'
-import { analyzePhoto } from '../ai/analyze-photo'
-import type { Photo } from '../types/photo'
+import { getObjectBuffer, getSignedGetUrl } from '@/lib/storage/r2'
+import { analyzePhoto } from '@/lib/ai/analyze-photo'
+import { updatePhotoAiResults, markPhotoProcessingError, getPhotoById } from '@/lib/db/photos'
+import { insertFaces } from '@/lib/db/faces'
+import { env } from '@/lib/env'
 
-export async function analyzePhotoJob(photo: Photo): Promise<void> {
-  if (!photo.originalKey || !photo.format) {
-    await markAnalysisFailed(photo.id, 'Missing original key or format')
-    return
+export async function analyzePhotoById(photoId: string, userId: string): Promise<void> {
+  const photo = await getPhotoById(photoId, userId)
+  if (!photo?.originalKey) {
+    throw new Error(`Photo ${photoId} has no storage key`)
   }
 
   try {
-    const buffer = await downloadObject(photo.originalKey)
+    const buffer = await getObjectBuffer(env.R2_BUCKET_ORIGINALS, photo.originalKey)
+    const result = await analyzePhoto(buffer)
 
-    // Map format to MIME type for Anthropic
-    const mimeMap: Record<string, string> = {
-      jpeg: 'image/jpeg', jpg: 'image/jpeg', png: 'image/png',
-      webp: 'image/webp', gif: 'image/gif', heic: 'image/jpeg',
-      heif: 'image/jpeg', tiff: 'image/jpeg',
-    }
-    const mimeType = mimeMap[photo.format.toLowerCase()] ?? 'image/jpeg'
-
-    const result = await analyzePhoto(buffer, mimeType)
-
-    await applyAiEnrichment({
-      photoId: photo.id,
-      aiTitle: result.title,
-      aiDescription: result.description,
+    await updatePhotoAiResults({
+      id: photoId,
+      title: result.title,
+      description: result.description,
       objects: result.objects,
       scenes: result.scenes,
       emotions: result.emotions,
       actions: result.actions,
       colors: result.colors,
       dominantColor: result.dominantColor,
-      locationName: result.locationName,
+      locationName: result.locationName ?? null,
+      faces: result.faces,
     })
 
     if (result.faces.length > 0) {
-      await insertFaces(photo.id, result.faces)
+      await insertFaces(
+        photoId,
+        result.faces.map((f) => ({
+          boundingBox: f.boundingBox,
+          emotion: f.emotion,
+          isLookingAtCamera: f.isLookingAtCamera,
+          estimatedAgeGroup: f.estimatedAgeGroup,
+        }))
+      )
     }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    await markAnalysisFailed(photo.id, message)
-    throw err
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    await markPhotoProcessingError(photoId, message)
+    throw error
   }
 }

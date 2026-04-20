@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { getOrCreateSubscription } from '@/lib/db/subscriptions'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { getTier, getStorageUsed } from '@/lib/pricing/gates'
 
-export async function GET(_req: NextRequest) {
+export async function GET(_req: Request) {
   try {
-    const userId = await requireAuth()
-    const subscription = await getOrCreateSubscription(userId)
-    return NextResponse.json(subscription)
+    const userId = await requireUser()
+    const [tier, storageUsed] = await Promise.all([getTier(userId), getStorageUsed(userId)])
+    return NextResponse.json({ tier, storageUsed: storageUsed.toString() })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

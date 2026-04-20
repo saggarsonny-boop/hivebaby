@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(curl *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(node *)",
+      "Bash(jq *)",
+      "Bash(cd *)",
+      "Bash(true)",
+      "Bash(yarn *)",
+      "Bash(pnpm *)"
+    ]
+  }
+}

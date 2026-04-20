@@ -1,28 +1,44 @@
 'use client'
-
 import { useState } from 'react'
 
-export interface SearchPhotoResult {
-  id: string
-  thumbUrl: string
-  aiTitle?: string | null
+const PLACEHOLDERS = [
+  'Photos of my dog at the beach',
+  'Birthday party 2023',
+  'Sunset photos from last summer',
+  'Photos with John smiling',
+  'Mountain hike photos',
+  'Food photos from Italy',
+]
+
+interface Props {
+  onSearch: (query: string) => void
+  loading?: boolean
 }
 
-export default function SearchBar({ onResults }: { onResults: (results: SearchPhotoResult[]) => void }) {
-  const [q, setQ] = useState('')
-  const [busy, setBusy] = useState(false)
+export function SearchBar({ onSearch, loading }: Props) {
+  const [query, setQuery] = useState('')
+  const [placeholderIdx] = useState(() => Math.floor(Math.random() * PLACEHOLDERS.length))
 
-  async function runSearch() {
-    setBusy(true)
-    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json() as Promise<{ results?: SearchPhotoResult[] }>)
-    onResults(res.results || [])
-    setBusy(false)
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (query.trim()) onSearch(query.trim())
   }
 
   return (
-    <div className="flex gap-2">
-      <input value={q} onChange={e => setQ(e.target.value)} className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100" placeholder="Search: 'beach sunset with dad 2022'" />
-      <button onClick={runSearch} disabled={busy} className="rounded bg-amber-500 px-4 py-2 text-zinc-950">Search</button>
-    </div>
+    <form onSubmit={handleSubmit} className="flex gap-3 mb-6">
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={PLACEHOLDERS[placeholderIdx]}
+        className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 text-sm"
+      />
+      <button
+        type="submit"
+        disabled={loading || !query.trim()}
+        className="bg-amber-400 hover:bg-amber-300 text-zinc-950 px-6 py-3 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50"
+      >
+        {loading ? '...' : 'Search'}
+      </button>
+    </form>
   )
 }

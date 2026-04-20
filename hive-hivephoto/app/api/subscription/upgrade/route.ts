@@ -1,24 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { getAuthUser } from '@/lib/auth/user'
 import { createCheckoutSession } from '@/lib/stripe/checkout'
+import { getTierById } from '@/lib/pricing/tiers'
+import { env } from '@/lib/env'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const userId = await requireAuth()
-    const body = await req.json() as { tierId: string; email: string }
-    if (!body.tierId || !body.email) {
-      return NextResponse.json({ error: 'tierId and email required' }, { status: 400 })
+    const userId = await requireUser()
+    const user = await getAuthUser()
+    const body = (await req.json()) as { tierId: string }
+    const tier = await getTierById(body.tierId)
+    if (!tier?.stripePriceId) {
+      return NextResponse.json({ error: 'Invalid tier' }, { status: 400 })
     }
-
-    const origin = new URL(req.url).origin
-    const successUrl = `${origin}/account/billing?status=success`
-    const cancelUrl = `${origin}/pricing?status=cancel`
-
-    const checkoutUrl = await createCheckoutSession(userId, body.email, body.tierId, successUrl, cancelUrl)
-    return NextResponse.json({ checkoutUrl })
+    const url = await createCheckoutSession({
+      userId,
+      email: user?.email ?? '',
+      stripePriceId: tier.stripePriceId,
+      successUrl: `${env.NEXT_PUBLIC_APP_URL}/account/billing?success=1`,
+      cancelUrl: `${env.NEXT_PUBLIC_APP_URL}/pricing`,
+    })
+    return NextResponse.json({ url })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const msg = err instanceof Error ? err.message : 'Internal server error'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

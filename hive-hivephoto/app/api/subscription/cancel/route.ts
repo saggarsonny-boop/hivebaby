@@ -1,26 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { getOrCreateSubscription } from '@/lib/db/subscriptions'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { sql } from '@/lib/db/client'
 import { getStripe } from '@/lib/stripe/client'
 
-export async function POST(_req: NextRequest) {
+export async function POST(_req: Request) {
   try {
-    const userId = await requireAuth()
-    const sub = await getOrCreateSubscription(userId)
-
-    if (!sub.stripeSubscriptionId) {
-      return NextResponse.json({ canceled: false, reason: 'No active Stripe subscription' }, { status: 400 })
+    const userId = await requireUser()
+    const rows = await sql`
+      SELECT stripe_subscription_id FROM user_subscriptions
+      WHERE user_id = ${userId} AND stripe_subscription_id IS NOT NULL
+      LIMIT 1
+    `
+    if (!rows.length) {
+      return NextResponse.json({ error: 'No active subscription' }, { status: 400 })
     }
-
+    const subId = (rows[0] as { stripe_subscription_id: string }).stripe_subscription_id
     const stripe = getStripe()
-    await stripe.subscriptions.update(sub.stripeSubscriptionId, {
-      cancel_at_period_end: true,
-    })
-
-    return NextResponse.json({ canceled: true, atPeriodEnd: true })
+    await stripe.subscriptions.update(subId, { cancel_at_period_end: true })
+    return NextResponse.json({ success: true })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const msg = err instanceof Error ? err.message : 'Internal server error'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

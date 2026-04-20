@@ -1,62 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { getPhotoById, softDeletePhoto, updateUserTitle } from '@/lib/db/photos'
-import { getFacesForPhoto } from '@/lib/db/faces'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { getPhotoById, updateUserTitle, softDeletePhoto } from '@/lib/db/photos'
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const userId = await requireAuth()
+    const userId = await requireUser()
     const { id } = await params
     const photo = await getPhotoById(id, userId)
     if (!photo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
-    const faces = await getFacesForPhoto(id)
-    return NextResponse.json({ ...photo, faces })
+    return NextResponse.json(photo)
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    console.error('[photos/[id] GET]', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const userId = await requireAuth()
+    const userId = await requireUser()
     const { id } = await params
-    const body = await req.json() as { userTitle?: string }
-
-    if (body.userTitle !== undefined) {
-      await updateUserTitle(id, userId, body.userTitle)
+    const body = (await req.json()) as { title?: string }
+    if (body.title !== undefined) {
+      await updateUserTitle(id, userId, body.title)
     }
-
-    const updated = await getPhotoById(id, userId)
-    return NextResponse.json(updated)
+    const photo = await getPhotoById(id, userId)
+    return NextResponse.json(photo)
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const userId = await requireAuth()
+    const userId = await requireUser()
     const { id } = await params
-    const photo = await getPhotoById(id, userId)
-    if (!photo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
     await softDeletePhoto(id, userId)
-    return NextResponse.json({ deleted: true })
+    return NextResponse.json({ success: true })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

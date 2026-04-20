@@ -1,27 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { getPeople, upsertPerson } from '@/lib/db/people'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { getPeopleByUser, createPerson } from '@/lib/db/people'
 
-export async function GET(_req: NextRequest) {
+export async function GET(_req: Request) {
   try {
-    const userId = await requireAuth()
-    const people = await getPeople(userId)
+    const userId = await requireUser()
+    const people = await getPeopleByUser(userId)
     return NextResponse.json({ people })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const userId = await requireAuth()
-    const body = await req.json() as { name: string }
-    if (!body.name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 })
-    const person = await upsertPerson(userId, body.name.trim())
+    const userId = await requireUser()
+    const body = (await req.json()) as { name: string }
+    const person = await createPerson(userId, body.name)
     return NextResponse.json(person, { status: 201 })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

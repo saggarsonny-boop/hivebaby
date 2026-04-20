@@ -1,32 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { constructWebhookEvent, syncSubscription } from '@/lib/stripe/webhooks'
+import { NextResponse } from 'next/server'
+import { handleStripeWebhook } from '@/lib/stripe/webhooks'
 
-export async function POST(req: NextRequest) {
-  const body = await req.text()
-  const signature = req.headers.get('stripe-signature')
-  if (!signature) {
-    return NextResponse.json({ error: 'Missing stripe-signature' }, { status: 400 })
-  }
-
+export async function POST(req: Request) {
   try {
-    const event = await constructWebhookEvent(body, signature)
-
-    switch (event.type) {
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted': {
-        const sub = event.data.object as { id: string }
-        await syncSubscription(sub.id)
-        break
-      }
-      default:
-        break
-    }
-
+    await handleStripeWebhook(req)
     return NextResponse.json({ received: true })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Webhook error'
-    console.error('[stripe webhook]', err)
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[webhook/stripe]', message)
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }

@@ -1,8 +1,7 @@
-import { parseSearchQuery as aiParse } from '../ai/parse-search'
-import { executeSearch } from './query'
-import type { PhotoSummary } from '../types/photo'
+import { parseSearchQuery } from '@/lib/ai/parse-search'
+import type { SearchFilters } from '@/lib/types/search'
 
-export async function search(userId: string, rawQuery: string): Promise<PhotoSummary[]> {
-  const parsed = await aiParse(rawQuery)
-  return executeSearch(userId, parsed)
+export async function parseQuery(query: string): Promise<SearchFilters> {
+  if (!query.trim()) return {}
+  return parseSearchQuery(query)
 }

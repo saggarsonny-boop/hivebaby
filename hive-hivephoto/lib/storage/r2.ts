@@ -1,94 +1,84 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { env } from '../env'
+import { env } from '@/lib/env'
 
-function getR2Client() {
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${env.r2AccountId}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: env.r2AccessKeyId,
-      secretAccessKey: env.r2SecretAccessKey,
-    },
-  })
+let _client: S3Client | null = null
+
+function getClient(): S3Client {
+  if (!_client) {
+    _client = new S3Client({
+      region: 'auto',
+      endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: env.R2_ACCESS_KEY_ID,
+        secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+      },
+    })
+  }
+  return _client
 }
 
-// ─── Presigned PUT URL (direct browser upload) ────────────────────────────────
-
-export async function createPresignedPutUrl(
+export async function getPresignedPutUrl(
+  bucket: string,
   key: string,
-  contentType: string,
-  expiresInSeconds = 900 // 15 min
+  mimeType: string,
+  expiresIn = 3600
 ): Promise<string> {
-  const client = getR2Client()
-  const cmd = new PutObjectCommand({
-    Bucket: env.r2BucketPrivate,
+  const command = new PutObjectCommand({
+    Bucket: bucket,
     Key: key,
-    ContentType: contentType,
+    ContentType: mimeType,
   })
-  return getSignedUrl(client, cmd, { expiresIn: expiresInSeconds })
+  return getSignedUrl(getClient(), command, { expiresIn })
 }
 
-// ─── Signed GET URL for originals (1 hour) ───────────────────────────────────
-
-export async function createSignedGetUrl(
+export async function getSignedGetUrl(
+  bucket: string,
   key: string,
-  expiresInSeconds = 3600
+  expiresIn = 3600
 ): Promise<string> {
-  const client = getR2Client()
-  const cmd = new GetObjectCommand({
-    Bucket: env.r2BucketPrivate,
-    Key: key,
-  })
-  return getSignedUrl(client, cmd, { expiresIn: expiresInSeconds })
+  const command = new GetObjectCommand({ Bucket: bucket, Key: key })
+  return getSignedUrl(getClient(), command, { expiresIn })
 }
 
-// ─── Download object as Buffer (for server-side processing) ──────────────────
+export async function objectExists(bucket: string, key: string): Promise<boolean> {
+  try {
+    await getClient().send(new HeadObjectCommand({ Bucket: bucket, Key: key }))
+    return true
+  } catch {
+    return false
+  }
+}
 
-export async function downloadObject(key: string): Promise<Buffer> {
-  const client = getR2Client()
-  const cmd = new GetObjectCommand({ Bucket: env.r2BucketPrivate, Key: key })
-  const res = await client.send(cmd)
-  if (!res.Body) throw new Error(`R2 object not found: ${key}`)
+export async function getObjectBuffer(bucket: string, key: string): Promise<Buffer> {
+  const response = await getClient().send(
+    new GetObjectCommand({ Bucket: bucket, Key: key })
+  )
+  if (!response.Body) throw new Error('Empty body from R2')
   const chunks: Uint8Array[] = []
-  for await (const chunk of res.Body as AsyncIterable<Uint8Array>) {
+  for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
     chunks.push(chunk)
   }
   return Buffer.concat(chunks)
 }
 
-// ─── Upload thumbnail to public bucket ───────────────────────────────────────
-
-export async function uploadThumbnail(
+export async function putObject(
+  bucket: string,
   key: string,
-  buffer: Buffer
+  body: Buffer,
+  contentType: string
 ): Promise<void> {
-  const client = getR2Client()
-  await client.send(new PutObjectCommand({
-    Bucket: env.r2BucketPublic,
-    Key: key,
-    Body: buffer,
-    ContentType: 'image/webp',
-    CacheControl: 'public, max-age=31536000, immutable',
-  }))
-}
-
-// ─── Delete original from private bucket ─────────────────────────────────────
-
-export async function deleteOriginal(key: string): Promise<void> {
-  const client = getR2Client()
-  await client.send(new DeleteObjectCommand({
-    Bucket: env.r2BucketPrivate,
-    Key: key,
-  }))
-}
-
-// ─── Delete thumbnail from public bucket ─────────────────────────────────────
-
-export async function deleteThumbnail(key: string): Promise<void> {
-  const client = getR2Client()
-  await client.send(new DeleteObjectCommand({
-    Bucket: env.r2BucketPublic,
-    Key: key,
-  }))
+  await getClient().send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    })
+  )
 }

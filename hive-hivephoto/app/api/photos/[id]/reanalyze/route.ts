@@ -1,18 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { resetAnalysis } from '@/lib/db/photos'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { analyzePhotoById } from '@/lib/pipeline/analyze-photo'
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const userId = await requireAuth()
+    const userId = await requireUser()
     const { id } = await params
-    await resetAnalysis(id, userId)
-    return NextResponse.json({ queued: true })
+    await analyzePhotoById(id, userId)
+    return NextResponse.json({ success: true })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

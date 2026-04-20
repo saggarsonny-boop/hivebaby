@@ -1,16 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { createBillingPortalSession } from '@/lib/stripe/portal'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { createPortalSession } from '@/lib/stripe/portal'
+import { env } from '@/lib/env'
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: Request) {
   try {
-    const userId = await requireAuth()
-    const origin = new URL(req.url).origin
-    const portalUrl = await createBillingPortalSession(userId, `${origin}/account/billing`)
-    return NextResponse.json({ portalUrl })
+    const userId = await requireUser()
+    const url = await createPortalSession(userId, `${env.NEXT_PUBLIC_APP_URL}/account/billing`)
+    return NextResponse.json({ url })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const msg = err instanceof Error ? err.message : 'Internal server error'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

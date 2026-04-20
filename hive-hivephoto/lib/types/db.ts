@@ -1,19 +1,17 @@
-// Raw DB row types (snake_case matching Postgres column names)
-
-export interface PhotoRow {
+export interface DbPhoto {
   id: string
   user_id: string
   original_key: string | null
   thumb_key: string | null
   thumb_url: string | null
   format: string | null
-  file_size_bytes: number | null
+  file_size_bytes: bigint | null
   width: number | null
   height: number | null
   is_provisional: boolean
-  upload_status: string
+  upload_status: 'awaiting_upload' | 'uploaded' | 'abandoned'
   taken_at: Date
-  taken_at_confidence: string
+  taken_at_confidence: 'exif' | 'filename' | 'upload'
   uploaded_at: Date
   gps_lat: number | null
   gps_lng: number | null
@@ -33,15 +31,15 @@ export interface PhotoRow {
   p_hash: string | null
   is_near_duplicate: boolean
   near_duplicate_of: string | null
-  duplicate_review_status: string
-  processing_status: string
+  duplicate_review_status: 'pending' | 'kept_new' | 'kept_original' | 'kept_both'
+  processing_status: 'pending' | 'processing' | 'done' | 'error'
   processing_error: string | null
   processing_attempts: number
   processing_last_attempted_at: Date | null
   deleted_at: Date | null
 }
 
-export interface PersonRow {
+export interface DbPerson {
   id: string
   user_id: string
   name: string
@@ -51,61 +49,83 @@ export interface PersonRow {
   updated_at: Date
 }
 
-export interface PhotoFaceRow {
+export interface DbPhotoFace {
   id: string
   photo_id: string
   person_id: string | null
-  bounding_box: Record<string, number>
+  bounding_box: { x: number; y: number; w: number; h: number }
   emotion: string | null
   is_looking_at_camera: boolean | null
-  estimated_age_group: string | null
+  estimated_age_group: 'child' | 'teen' | 'adult' | 'elderly' | null
   confidence: number | null
   created_at: Date
 }
 
-export interface PricingTierRow {
+export interface DbAlbum {
   id: string
+  user_id: string
+  title: string
+  description: string | null
+  cover_photo_id: string | null
+  is_smart: boolean
+  smart_query: string | null
+  photo_count: number
+  created_at: Date
+}
+
+export interface DbAlbumPhoto {
+  album_id: string
+  photo_id: string
+  position: number | null
+  added_at: Date
+}
+
+export interface DbPricingTier {
+  id: string
+  name: string
   display_name: string
-  tier_class: string
-  billing_interval: string | null
   price_cents: number
-  original_price_cents: number | null
-  storage_bytes: number
+  price_interval: 'month' | 'year' | null
+  storage_bytes: bigint
   is_founding: boolean
   founding_slots_total: number | null
   founding_slots_used: number
-  is_founding_open: boolean
-  is_active: boolean
+  founding_closes_at: Date | null
   stripe_price_id: string | null
-  features: Record<string, unknown>
+  is_active: boolean
+  sort_order: number
   created_at: Date
   updated_at: Date
 }
 
-export interface UserSubscriptionRow {
+export interface DbUserSubscription {
   id: string
   user_id: string
   tier_id: string
-  is_founding: boolean
-  founding_price_locked_cents: number | null
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
-  stripe_status: string | null
+  stripe_price_id: string | null
+  status: 'active' | 'past_due' | 'canceled' | 'trialing' | 'incomplete'
   current_period_start: Date | null
   current_period_end: Date | null
   cancel_at_period_end: boolean
-  storage_used_bytes: number
-  storage_limit_bytes: number
   created_at: Date
   updated_at: Date
 }
 
-export interface StorageEventRow {
+export interface DbStorageEvent {
   id: string
   user_id: string
   photo_id: string | null
-  event_type: string
-  bytes_delta: number
-  storage_after_bytes: number
+  event_type: 'upload' | 'delete' | 'thumbnail'
+  bytes_delta: bigint
+  storage_after: bigint
   created_at: Date
+}
+
+export interface DbFoundingMember {
+  id: string
+  user_id: string
+  tier_id: string
+  joined_at: Date
 }

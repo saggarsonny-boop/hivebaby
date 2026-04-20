@@ -1,46 +1,26 @@
 import { getStripe } from './client'
-import { getTierById, getOrCreateSubscription } from '../db/subscriptions'
+import { env } from '@/lib/env'
 
-export async function createCheckoutSession(
-  userId: string,
-  userEmail: string,
-  tierId: string,
-  successUrl: string,
+export async function createCheckoutSession(params: {
+  userId: string
+  email: string
+  stripePriceId: string
+  successUrl: string
   cancelUrl: string
-): Promise<string> {
+}): Promise<string> {
   const stripe = getStripe()
-  const tier = await getTierById(tierId)
-  if (!tier) throw new Error(`Tier not found: ${tierId}`)
-  if (!tier.stripePriceId) throw new Error(`No Stripe price ID for tier: ${tierId}`)
-
-  const sub = await getOrCreateSubscription(userId)
-  let customerId = sub.stripeCustomerId ?? undefined
-
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: userEmail,
-      metadata: { userId },
-    })
-    customerId = customer.id
-    const { getDb } = await import('../db/client')
-    const sql = getDb()
-    await sql`
-      UPDATE user_subscriptions SET stripe_customer_id = ${customerId}
-      WHERE user_id = ${userId}
-    `
-  }
 
   const session = await stripe.checkout.sessions.create({
-    customer: customerId,
     mode: 'subscription',
-    line_items: [{ price: tier.stripePriceId, quantity: 1 }],
-    success_url: successUrl,
-    cancel_url: cancelUrl,
-    metadata: { userId, tierId },
-    subscription_data: {
-      metadata: { userId, tierId },
-    },
+    payment_method_types: ['card'],
+    line_items: [{ price: params.stripePriceId, quantity: 1 }],
+    success_url: params.successUrl,
+    cancel_url: params.cancelUrl,
+    client_reference_id: params.userId,
+    customer_email: params.email,
+    metadata: { userId: params.userId },
   })
 
-  return session.url!
+  if (!session.url) throw new Error('No checkout URL returned from Stripe')
+  return session.url
 }

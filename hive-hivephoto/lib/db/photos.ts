@@ -1,143 +1,124 @@
-import { getDb } from './client'
-import { mapPhotoRow, mapPhotoSummaryRow } from './mappers'
-import type { PhotoRow } from '../types/db'
-import type { Photo, PhotoSummary, PresignRequest, GalleryPage } from '../types/photo'
+import { sql } from './client'
+import type { DbPhoto } from '@/lib/types/db'
+import type { Photo } from '@/lib/types/photo'
+import type { SearchFilters } from '@/lib/types/search'
+import { mapPhoto } from './mappers'
+import { hammingDistance } from '@/lib/image/hash'
 
-const MAX_RETRIES = 3
-const PROVISIONAL_TTL_MINUTES = 15
-const ANALYZE_BATCH_SIZE = 10
-
-// ─── Insert provisional photo record ─────────────────────────────────────────
-
-export async function insertProvisionalPhoto(
-  userId: string,
-  req: Omit<PresignRequest, 'takenAt' | 'takenAtConfidence'> & {
-    originalKey: string
-    takenAt: Date
-    takenAtConfidence: 'exif' | 'filename' | 'upload'
-  }
-): Promise<string> {
-  const sql = getDb()
+export async function createProvisionalPhoto(params: {
+  userId: string
+  sha256Hash: string
+  format: string
+  fileSizeBytes: number
+  takenAt: Date
+  takenAtConfidence: 'exif' | 'filename' | 'upload'
+}): Promise<string> {
   const rows = await sql`
     INSERT INTO photos (
-      user_id, original_key, sha256_hash,
-      taken_at, taken_at_confidence,
-      is_provisional, upload_status, processing_status
+      user_id, sha256_hash, format, file_size_bytes,
+      taken_at, taken_at_confidence, is_provisional, upload_status, processing_status
     ) VALUES (
-      ${userId}, ${req.originalKey}, ${req.sha256Hash},
-      ${req.takenAt.toISOString()}, ${req.takenAtConfidence},
-      TRUE, 'awaiting_upload', 'pending'
+      ${params.userId}, ${params.sha256Hash}, ${params.format},
+      ${params.fileSizeBytes}, ${params.takenAt.toISOString()},
+      ${params.takenAtConfidence}, TRUE, 'awaiting_upload', 'pending'
     )
     RETURNING id
-  ` as { id: string }[]
-  return rows[0].id
+  `
+  return (rows[0] as { id: string }).id
 }
 
-// ─── Check exact duplicate ────────────────────────────────────────────────────
-
-export async function findExactDuplicate(userId: string, sha256Hash: string): Promise<Photo | null> {
-  const sql = getDb()
+export async function findPhotoByHash(userId: string, sha256Hash: string): Promise<Photo | null> {
   const rows = await sql`
     SELECT * FROM photos
     WHERE user_id = ${userId}
       AND sha256_hash = ${sha256Hash}
+      AND upload_status = 'uploaded'
       AND deleted_at IS NULL
     LIMIT 1
-  ` as PhotoRow[]
-  return rows[0] ? mapPhotoRow(rows[0]) : null
+  `
+  if (!rows.length) return null
+  return mapPhoto(rows[0] as unknown as DbPhoto)
 }
 
-// ─── Check perceptual near-duplicate via pHash ────────────────────────────────
+export async function getPhotoById(id: string, userId: string): Promise<Photo | null> {
+  const rows = await sql`
+    SELECT * FROM photos
+    WHERE id = ${id} AND user_id = ${userId} AND deleted_at IS NULL
+    LIMIT 1
+  `
+  if (!rows.length) return null
+  return mapPhoto(rows[0] as unknown as DbPhoto)
+}
 
-export async function findNearDuplicates(userId: string, pHash: string, maxHamming = 3): Promise<Photo[]> {
-  // Hamming distance via XOR on stored hashes — approximated in SQL using bit_count on xor.
-  // For Hobby tier we do a simple LIKE fallback via prefix comparison.
-  const sql = getDb()
+export async function getPhotosByUser(userId: string, limit = 50, offset = 0): Promise<Photo[]> {
   const rows = await sql`
     SELECT * FROM photos
     WHERE user_id = ${userId}
-      AND p_hash IS NOT NULL
-      AND deleted_at IS NULL
       AND is_provisional = FALSE
-      AND upload_status = 'uploaded'
-      AND (
-        -- Bit-level Hamming distance on 64-char hex pHash, computed via similarity
-        -- Full hamming done server-side on returned rows
-        LEFT(p_hash, 8) = LEFT(${pHash}, 8)
-        OR LEFT(p_hash, 16) = LEFT(${pHash}, 16)
-      )
-    LIMIT 20
-  ` as PhotoRow[]
-
-  // Filter by actual Hamming distance server-side
-  return rows
-    .filter(r => r.p_hash && hammingDistance(r.p_hash, pHash) <= maxHamming)
-    .map(mapPhotoRow)
+      AND is_near_duplicate = FALSE
+      AND deleted_at IS NULL
+    ORDER BY taken_at DESC
+    LIMIT ${limit} OFFSET ${offset}
+  `
+  return (rows as unknown as DbPhoto[]).map(mapPhoto)
 }
 
-function hammingDistance(a: string, b: string): number {
-  if (a.length !== b.length) return Infinity
-  let dist = 0
-  for (let i = 0; i < a.length; i++) {
-    const xor = parseInt(a[i], 16) ^ parseInt(b[i], 16)
-    dist += xor.toString(2).split('1').length - 1
-  }
-  return dist
+export async function countPhotosByUser(userId: string): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*)::int AS cnt FROM photos
+    WHERE user_id = ${userId}
+      AND is_provisional = FALSE
+      AND deleted_at IS NULL
+  `
+  return (rows[0] as { cnt: number }).cnt
 }
 
-// ─── Finalize upload ──────────────────────────────────────────────────────────
-
-export interface FinalizePhotoParams {
-  photoId: string
+export async function updatePhotoAfterUpload(params: {
+  id: string
+  originalKey: string
   thumbKey: string
   thumbUrl: string
   format: string
   fileSizeBytes: number
   width: number
   height: number
+  takenAt: Date
+  takenAtConfidence: 'exif' | 'filename' | 'upload'
   gpsLat: number | null
   gpsLng: number | null
   cameraMake: string | null
   cameraModel: string | null
-  takenAt: Date
-  takenAtConfidence: 'exif' | 'filename' | 'upload'
   pHash: string | null
-  isNearDuplicate: boolean
-  nearDuplicateOf: string | null
-}
-
-export async function finalizePhoto(params: FinalizePhotoParams): Promise<void> {
-  const sql = getDb()
+  locationName?: string | null
+}): Promise<void> {
   await sql`
     UPDATE photos SET
+      original_key = ${params.originalKey},
       thumb_key = ${params.thumbKey},
       thumb_url = ${params.thumbUrl},
       format = ${params.format},
       file_size_bytes = ${params.fileSizeBytes},
       width = ${params.width},
       height = ${params.height},
+      taken_at = ${params.takenAt.toISOString()},
+      taken_at_confidence = ${params.takenAtConfidence},
       gps_lat = ${params.gpsLat},
       gps_lng = ${params.gpsLng},
       camera_make = ${params.cameraMake},
       camera_model = ${params.cameraModel},
-      taken_at = ${params.takenAt.toISOString()},
-      taken_at_confidence = ${params.takenAtConfidence},
       p_hash = ${params.pHash},
-      is_near_duplicate = ${params.isNearDuplicate},
-      near_duplicate_of = ${params.nearDuplicateOf},
+      location_name = ${params.locationName ?? null},
       is_provisional = FALSE,
       upload_status = 'uploaded',
       processing_status = 'pending'
-    WHERE id = ${params.photoId}
+    WHERE id = ${params.id}
   `
 }
 
-// ─── Apply AI enrichment ──────────────────────────────────────────────────────
-
-export interface ApplyAiParams {
-  photoId: string
-  aiTitle: string
-  aiDescription: string
+export async function updatePhotoAiResults(params: {
+  id: string
+  title: string
+  description: string
   objects: string[]
   scenes: string[]
   emotions: string[]
@@ -145,247 +126,236 @@ export interface ApplyAiParams {
   colors: string[]
   dominantColor: string
   locationName: string | null
-}
-
-export async function applyAiEnrichment(params: ApplyAiParams): Promise<void> {
-  const sql = getDb()
+  faces: Array<{ boundingBox: { x: number; y: number; w: number; h: number }; emotion?: string; isLookingAtCamera?: boolean; estimatedAgeGroup?: string }>
+}): Promise<void> {
   await sql`
     UPDATE photos SET
-      ai_title = ${params.aiTitle},
-      ai_description = ${params.aiDescription},
+      ai_title = ${params.title},
+      ai_description = ${params.description},
       objects = ${params.objects},
       scenes = ${params.scenes},
       emotions = ${params.emotions},
       actions = ${params.actions},
       colors = ${params.colors},
       dominant_color = ${params.dominantColor},
-      location_name = ${params.locationName},
-      processing_status = 'done',
-      processing_error = NULL
-    WHERE id = ${params.photoId}
+      location_name = COALESCE(location_name, ${params.locationName}),
+      processing_status = 'done'
+    WHERE id = ${params.id}
   `
 }
 
-// ─── Claim photos for AI analysis (FOR UPDATE SKIP LOCKED) ───────────────────
+export async function markPhotoProcessingError(id: string, error: string): Promise<void> {
+  await sql`
+    UPDATE photos SET
+      processing_status = CASE WHEN processing_attempts + 1 >= 3 THEN 'error' ELSE 'pending' END,
+      processing_attempts = processing_attempts + 1,
+      processing_error = ${error},
+      processing_last_attempted_at = NOW()
+    WHERE id = ${id}
+  `
+}
 
-export async function claimPhotosForAnalysis(): Promise<Photo[]> {
-  const sql = getDb()
+export async function claimPhotosForProcessing(limit: number): Promise<Photo[]> {
   const rows = await sql`
-    WITH claimed AS (
-      SELECT id FROM photos
-      WHERE upload_status = 'uploaded'
-        AND processing_status IN ('pending', 'error')
-        AND processing_attempts < ${MAX_RETRIES}
-        AND deleted_at IS NULL
-      ORDER BY uploaded_at ASC
-      LIMIT ${ANALYZE_BATCH_SIZE}
-      FOR UPDATE SKIP LOCKED
-    )
     UPDATE photos SET
       processing_status = 'processing',
-      processing_attempts = processing_attempts + 1,
       processing_last_attempted_at = NOW()
-    FROM claimed
-    WHERE photos.id = claimed.id
-    RETURNING photos.*
-  ` as PhotoRow[]
-  return rows.map(mapPhotoRow)
-}
-
-// ─── Mark analysis failed ─────────────────────────────────────────────────────
-
-export async function markAnalysisFailed(photoId: string, error: string): Promise<void> {
-  const sql = getDb()
-  await sql`
-    UPDATE photos SET
-      processing_status = CASE
-        WHEN processing_attempts >= ${MAX_RETRIES} THEN 'error'
-        ELSE 'pending'
-      END,
-      processing_error = ${error}
-    WHERE id = ${photoId}
+    WHERE id IN (
+      SELECT id FROM photos
+      WHERE upload_status = 'uploaded'
+        AND processing_status IN ('pending','error')
+        AND processing_attempts < 3
+        AND deleted_at IS NULL
+      ORDER BY uploaded_at ASC
+      LIMIT ${limit}
+      FOR UPDATE SKIP LOCKED
+    )
+    RETURNING *
   `
+  return (rows as unknown as DbPhoto[]).map(mapPhoto)
 }
 
-// ─── Gallery query ────────────────────────────────────────────────────────────
-
-export async function getGalleryPage(
-  userId: string,
-  cursor: string | null,
-  limit = 40
-): Promise<GalleryPage> {
-  const sql = getDb()
-
-  const countRow = await sql`
-    SELECT COUNT(*) as total FROM photos
-    WHERE user_id = ${userId}
-      AND deleted_at IS NULL
-      AND is_provisional = FALSE
-      AND is_near_duplicate = FALSE
-  ` as unknown as { total: string }[]
-
+export async function findNearDuplicates(userId: string, pHashStr: string): Promise<Photo[]> {
   const rows = await sql`
     SELECT * FROM photos
     WHERE user_id = ${userId}
+      AND p_hash IS NOT NULL
+      AND upload_status = 'uploaded'
       AND deleted_at IS NULL
-      AND is_provisional = FALSE
-      AND is_near_duplicate = FALSE
-      ${cursor ? sql`AND taken_at < ${cursor}` : sql``}
-    ORDER BY taken_at DESC
-    LIMIT ${limit + 1}
-  ` as unknown as PhotoRow[]
-
-  const hasMore = rows.length > limit
-  const pageRows = hasMore ? rows.slice(0, limit) : rows
-  const nextCursor = hasMore ? pageRows[pageRows.length - 1].taken_at.toISOString() : null
-
-  return {
-    photos: pageRows.map(mapPhotoSummaryRow),
-    nextCursor,
-    total: parseInt(String(countRow[0]?.total ?? '0')),
-  }
-}
-
-// ─── Single photo fetch ───────────────────────────────────────────────────────
-
-export async function getPhotoById(photoId: string, userId: string): Promise<Photo | null> {
-  const sql = getDb()
-  const rows = await sql`
-    SELECT * FROM photos
-    WHERE id = ${photoId}
-      AND user_id = ${userId}
-      AND deleted_at IS NULL
-    LIMIT 1
-  ` as PhotoRow[]
-  return rows[0] ? mapPhotoRow(rows[0]) : null
-}
-
-// ─── Soft delete ──────────────────────────────────────────────────────────────
-
-export async function softDeletePhoto(photoId: string, userId: string): Promise<void> {
-  const sql = getDb()
-  await sql`
-    UPDATE photos SET deleted_at = NOW()
-    WHERE id = ${photoId} AND user_id = ${userId}
   `
+  return (rows as unknown as DbPhoto[])
+    .map(mapPhoto)
+    .filter((p) => p.pHash && hammingDistance(pHashStr, p.pHash) <= 3)
 }
 
-// ─── Reanalyze reset ─────────────────────────────────────────────────────────
-
-export async function resetAnalysis(photoId: string, userId: string): Promise<void> {
-  const sql = getDb()
+export async function markNearDuplicate(id: string, nearDuplicateOf: string): Promise<void> {
   await sql`
     UPDATE photos SET
-      processing_status = 'pending',
-      processing_attempts = 0,
-      processing_error = NULL
-    WHERE id = ${photoId} AND user_id = ${userId}
+      is_near_duplicate = TRUE,
+      near_duplicate_of = ${nearDuplicateOf},
+      duplicate_review_status = 'pending'
+    WHERE id = ${id}
   `
 }
 
-// ─── Duplicate resolution ─────────────────────────────────────────────────────
-
-export async function resolveDuplicate(
-  photoId: string,
+export async function updateDuplicateReviewStatus(
+  id: string,
   userId: string,
   status: 'kept_new' | 'kept_original' | 'kept_both'
 ): Promise<void> {
-  const sql = getDb()
-  if (status === 'kept_original') {
-    // Delete the near-duplicate (the new one)
-    await sql`
-      UPDATE photos SET deleted_at = NOW()
-      WHERE id = ${photoId} AND user_id = ${userId}
-    `
-  }
   await sql`
-    UPDATE photos SET
-      duplicate_review_status = ${status},
-      is_near_duplicate = CASE WHEN ${status} = 'kept_both' THEN FALSE ELSE is_near_duplicate END
-    WHERE id = ${photoId} AND user_id = ${userId}
+    UPDATE photos SET duplicate_review_status = ${status}
+    WHERE id = ${id} AND user_id = ${userId}
   `
 }
 
-// ─── Pending duplicates list ──────────────────────────────────────────────────
-
-export async function getPendingDuplicates(userId: string): Promise<Array<{ photo: PhotoSummary; original: PhotoSummary | null }>> {
-  const sql = getDb()
+export async function getPendingDuplicates(userId: string): Promise<Photo[]> {
   const rows = await sql`
-    SELECT p.*, orig.id as orig_id, orig.thumb_url as orig_thumb_url,
-           orig.taken_at as orig_taken_at, orig.taken_at_confidence as orig_taken_at_confidence,
-           orig.ai_title as orig_ai_title, orig.user_title as orig_user_title,
-           orig.width as orig_width, orig.height as orig_height,
-           orig.is_near_duplicate as orig_is_near_duplicate,
-           orig.duplicate_review_status as orig_duplicate_review_status,
-           orig.processing_status as orig_processing_status
-    FROM photos p
-    LEFT JOIN photos orig ON orig.id = p.near_duplicate_of
-    WHERE p.user_id = ${userId}
-      AND p.is_near_duplicate = TRUE
-      AND p.duplicate_review_status = 'pending'
-      AND p.deleted_at IS NULL
-    ORDER BY p.uploaded_at DESC
-    LIMIT 50
-  ` as (PhotoRow & {
-    orig_id: string | null; orig_thumb_url: string | null; orig_taken_at: Date | null
-    orig_taken_at_confidence: string | null; orig_ai_title: string | null; orig_user_title: string | null
-    orig_width: number | null; orig_height: number | null; orig_is_near_duplicate: boolean | null
-    orig_duplicate_review_status: string | null; orig_processing_status: string | null
-  })[]
+    SELECT * FROM photos
+    WHERE user_id = ${userId}
+      AND is_near_duplicate = TRUE
+      AND duplicate_review_status = 'pending'
+      AND deleted_at IS NULL
+    ORDER BY uploaded_at DESC
+  `
+  return (rows as unknown as DbPhoto[]).map(mapPhoto)
+}
 
-  return rows.map(row => ({
-    photo: mapPhotoSummaryRow(row),
-    original: row.orig_id ? {
-      id: row.orig_id,
-      thumbUrl: row.orig_thumb_url!,
-      takenAt: row.orig_taken_at!,
-      takenAtConfidence: (row.orig_taken_at_confidence || 'upload') as PhotoSummary['takenAtConfidence'],
-      aiTitle: row.orig_ai_title,
-      userTitle: row.orig_user_title,
-      width: row.orig_width!,
-      height: row.orig_height!,
-      isNearDuplicate: row.orig_is_near_duplicate!,
-      duplicateReviewStatus: (row.orig_duplicate_review_status || 'pending') as PhotoSummary['duplicateReviewStatus'],
-      processingStatus: (row.orig_processing_status || 'pending') as PhotoSummary['processingStatus'],
-    } : null,
+export async function softDeletePhoto(id: string, userId: string): Promise<void> {
+  await sql`
+    UPDATE photos SET deleted_at = NOW()
+    WHERE id = ${id} AND user_id = ${userId}
+  `
+}
+
+export async function updateUserTitle(id: string, userId: string, title: string): Promise<void> {
+  await sql`
+    UPDATE photos SET user_title = ${title}
+    WHERE id = ${id} AND user_id = ${userId}
+  `
+}
+
+export async function searchPhotos(
+  userId: string,
+  filters: SearchFilters,
+  limit = 50,
+  offset = 0
+): Promise<Photo[]> {
+  // Build base query — array operators handled in JS post-filter for simplicity
+  const rows = await sql`
+    SELECT * FROM photos
+    WHERE user_id = ${userId}
+      AND is_provisional = FALSE
+      AND is_near_duplicate = FALSE
+      AND deleted_at IS NULL
+      AND (${filters.dateFrom ?? null}::timestamptz IS NULL OR taken_at >= ${filters.dateFrom ?? null}::timestamptz)
+      AND (${filters.dateTo ?? null}::timestamptz IS NULL OR taken_at <= ${filters.dateTo ?? null}::timestamptz)
+      AND (${filters.location ?? null} IS NULL OR location_name ILIKE ${'%' + (filters.location ?? '') + '%'})
+      AND (${filters.freeText ?? null} IS NULL OR ai_description ILIKE ${'%' + (filters.freeText ?? '') + '%'}
+           OR ai_title ILIKE ${'%' + (filters.freeText ?? '') + '%'})
+    ORDER BY taken_at DESC
+    LIMIT ${limit * 3} OFFSET ${offset}
+  `
+  let photos = (rows as unknown as DbPhoto[]).map(mapPhoto)
+
+  if (filters.objects?.length) {
+    const objs = filters.objects.map((o) => o.toLowerCase())
+    photos = photos.filter((p) =>
+      objs.some((o) => p.objects.some((po) => po.toLowerCase().includes(o)))
+    )
+  }
+  if (filters.scenes?.length) {
+    const sc = filters.scenes.map((s) => s.toLowerCase())
+    photos = photos.filter((p) =>
+      sc.some((s) => p.scenes.some((ps) => ps.toLowerCase().includes(s)))
+    )
+  }
+  if (filters.emotions?.length) {
+    const em = filters.emotions.map((e) => e.toLowerCase())
+    photos = photos.filter((p) =>
+      em.some((e) => p.emotions.some((pe) => pe.toLowerCase().includes(e)))
+    )
+  }
+
+  return photos.slice(0, limit)
+}
+
+export async function getGeotaggedPhotos(userId: string): Promise<Photo[]> {
+  const rows = await sql`
+    SELECT * FROM photos
+    WHERE user_id = ${userId}
+      AND gps_lat IS NOT NULL
+      AND gps_lng IS NOT NULL
+      AND is_provisional = FALSE
+      AND deleted_at IS NULL
+    ORDER BY taken_at DESC
+    LIMIT 1000
+  `
+  return (rows as unknown as DbPhoto[]).map(mapPhoto)
+}
+
+export async function deleteProvisionalPhotos(olderThanMinutes: number): Promise<number> {
+  const rows = await sql`
+    DELETE FROM photos
+    WHERE is_provisional = TRUE
+      AND upload_status = 'awaiting_upload'
+      AND uploaded_at < NOW() - (${olderThanMinutes} || ' minutes')::interval
+    RETURNING id
+  `
+  return rows.length
+}
+
+export async function getStorageUsedBytes(userId: string): Promise<bigint> {
+  const rows = await sql`
+    SELECT COALESCE(SUM(file_size_bytes), 0)::bigint AS total
+    FROM photos
+    WHERE user_id = ${userId}
+      AND is_provisional = FALSE
+      AND deleted_at IS NULL
+  `
+  return BigInt((rows[0] as { total: string }).total)
+}
+
+export async function getRecentStorageEvents(userId: string, limit = 20): Promise<Array<{
+  id: string
+  eventType: string
+  bytesDelta: number
+  storageAfter: number
+  createdAt: string
+  photoId: string | null
+}>> {
+  const rows = await sql`
+    SELECT * FROM storage_events
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `
+  return (rows as Array<{
+    id: string
+    event_type: string
+    bytes_delta: string
+    storage_after: string
+    created_at: Date
+    photo_id: string | null
+  }>).map((r) => ({
+    id: r.id,
+    eventType: r.event_type,
+    bytesDelta: Number(r.bytes_delta),
+    storageAfter: Number(r.storage_after),
+    createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+    photoId: r.photo_id,
   }))
 }
 
-// ─── Abandon stale provisional uploads ───────────────────────────────────────
-
-export async function abandonStaleProvisional(): Promise<number> {
-  const sql = getDb()
-  const rows = await sql`
-    UPDATE photos SET upload_status = 'abandoned'
-    WHERE is_provisional = TRUE
-      AND upload_status = 'awaiting_upload'
-      AND uploaded_at < NOW() - INTERVAL '${PROVISIONAL_TTL_MINUTES} minutes'
-    RETURNING id
-  ` as { id: string }[]
-  return rows.length
-}
-
-// ─── Hard-delete abandoned/old deleted rows ───────────────────────────────────
-
-export async function purgeDeleted(olderThanDays = 30): Promise<number> {
-  const sql = getDb()
-  const rows = await sql`
-    DELETE FROM photos
-    WHERE (
-      (upload_status = 'abandoned' AND is_provisional = TRUE)
-      OR deleted_at < NOW() - INTERVAL '${olderThanDays} days'
-    )
-    RETURNING id
-  ` as { id: string }[]
-  return rows.length
-}
-
-// ─── Update user title ────────────────────────────────────────────────────────
-
-export async function updateUserTitle(photoId: string, userId: string, title: string): Promise<void> {
-  const sql = getDb()
+export async function trackStorageEvent(params: {
+  userId: string
+  photoId: string | null
+  eventType: 'upload' | 'delete' | 'thumbnail'
+  bytesDelta: bigint
+  storageAfter: bigint
+}): Promise<void> {
   await sql`
-    UPDATE photos SET user_title = ${title}
-    WHERE id = ${photoId} AND user_id = ${userId}
+    INSERT INTO storage_events (user_id, photo_id, event_type, bytes_delta, storage_after)
+    VALUES (${params.userId}, ${params.photoId}, ${params.eventType}, ${params.bytesDelta.toString()}, ${params.storageAfter.toString()})
   `
 }

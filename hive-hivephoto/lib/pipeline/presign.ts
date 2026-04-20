@@ -1,93 +1,45 @@
-import { insertProvisionalPhoto, findExactDuplicate } from '../db/photos'
-import { getOrCreateSubscription } from '../db/subscriptions'
-import { createPresignedPutUrl } from '../storage/r2'
-import { originalKey, extFromMime, isAllowedContentType, MAX_FILE_SIZE_BYTES } from '../storage/keys'
-import type { PresignRequest, PresignResponse } from '../types/photo'
+import { findPhotoByHash, createProvisionalPhoto } from '@/lib/db/photos'
+import { checkStorageLimit } from '@/lib/pricing/gates'
+import { getPresignedPutUrl } from '@/lib/storage/r2'
+import { origKey, extFromMime } from '@/lib/storage/keys'
+import { env } from '@/lib/env'
+import type { PresignRequest, PresignResponse } from '@/lib/types/pipeline'
 
-export async function handlePresign(
+export async function presignUpload(
   userId: string,
-  req: PresignRequest
+  request: PresignRequest
 ): Promise<PresignResponse> {
-  // 1. Validate content type
-  if (!isAllowedContentType(req.contentType)) {
-    throw new ValidationError(`Unsupported file type: ${req.contentType}`)
-  }
-
-  // 2. Validate file size
-  if (req.fileSizeBytes > MAX_FILE_SIZE_BYTES) {
-    throw new ValidationError(`File too large: ${req.fileSizeBytes} bytes (max 5GB)`)
-  }
-
-  // 3. Check exact duplicate by SHA-256
-  const existing = await findExactDuplicate(userId, req.sha256Hash)
+  // Check exact duplicate (sha256_hash per user)
+  const existing = await findPhotoByHash(userId, request.sha256Hash)
   if (existing) {
-    throw new DuplicateError(existing.id)
+    return { isDuplicate: true, existingId: existing.id }
   }
 
-  // 4. Check storage availability
-  const sub = await getOrCreateSubscription(userId)
-  const hasSpace = sub.storageLimitBytes === -1 || 
-    (sub.storageUsedBytes + req.fileSizeBytes) <= sub.storageLimitBytes
-  if (!hasSpace) {
-    throw new StorageLimitError(sub.storageLimitBytes, sub.storageUsedBytes)
+  // Check storage limit
+  const canStore = await checkStorageLimit(userId, request.fileSize)
+  if (!canStore) {
+    throw Object.assign(new Error('Storage limit exceeded'), { code: 'STORAGE_LIMIT' })
   }
 
-  // 5. Determine takenAt
-  const takenAt = req.takenAt ? new Date(req.takenAt) : new Date()
-  const takenAtConfidence = req.takenAtConfidence ?? (req.takenAt ? 'exif' : 'upload')
-
-  // 6. Generate object key
-  const ext = extFromMime(req.contentType)
-  // We'll use a temp UUID-like key; photoId becomes the authoritative ID
-  const tempId = crypto.randomUUID()
-  const key = originalKey(userId, tempId, ext)
-
-  // 7. Insert provisional DB row
-  const photoId = await insertProvisionalPhoto(userId, {
-    ...req,
-    originalKey: key,
-    takenAt,
-    takenAtConfidence,
+  const ext = extFromMime(request.mimeType)
+  // Create provisional row to reserve photoId
+  const photoId = await createProvisionalPhoto({
+    userId,
+    sha256Hash: request.sha256Hash,
+    format: ext,
+    fileSizeBytes: request.fileSize,
+    takenAt: new Date(),
+    takenAtConfidence: 'upload',
   })
 
-  // Override key with real photoId
-  const finalKey = originalKey(userId, photoId, ext)
-
-  // 8. Generate presigned PUT URL
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
-  const uploadUrl = await createPresignedPutUrl(finalKey, req.contentType, 900)
-
-  // Update key in DB
-  const { getDb } = await import('../db/client')
-  const sql = getDb()
-  await sql`UPDATE photos SET original_key = ${finalKey} WHERE id = ${photoId}`
+  const key = origKey(userId, photoId, ext)
+  const uploadUrl = await getPresignedPutUrl(env.R2_BUCKET_ORIGINALS, key, request.mimeType, 3600)
 
   return {
+    isDuplicate: false,
     photoId,
     uploadUrl,
-    expiresAt: expiresAt.toISOString(),
+    storageKey: key,
   }
 }
 
-export class ValidationError extends Error {
-  status = 400
-  constructor(message: string) { super(message); this.name = 'ValidationError' }
-}
-
-export class DuplicateError extends Error {
-  status = 409
-  existingPhotoId: string
-  constructor(existingPhotoId: string) {
-    super('Exact duplicate detected')
-    this.name = 'DuplicateError'
-    this.existingPhotoId = existingPhotoId
-  }
-}
-
-export class StorageLimitError extends Error {
-  status = 402
-  constructor(limitBytes: number, usedBytes: number) {
-    super(`Storage limit reached: ${usedBytes}/${limitBytes} bytes used`)
-    this.name = 'StorageLimitError'
-  }
-}

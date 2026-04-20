@@ -1,16 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { search } from '@/lib/search/parser'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { executeSearch } from '@/lib/search/query'
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   try {
-    const userId = await requireAuth()
-    const query = new URL(req.url).searchParams.get('q') ?? ''
-    const results = await search(userId, query)
-    return NextResponse.json({ results })
+    const userId = await requireUser()
+    const { searchParams } = new URL(req.url)
+    const q = searchParams.get('q') ?? ''
+    const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 200)
+    const offset = parseInt(searchParams.get('offset') ?? '0')
+    const result = await executeSearch(userId, q, limit, offset)
+    return NextResponse.json(result)
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    console.error('[search]', err)
-    return NextResponse.json({ results: [] }) // Always return something
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

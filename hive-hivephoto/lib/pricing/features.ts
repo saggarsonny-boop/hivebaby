@@ -1,42 +1,63 @@
-import type { TierFeatures } from '@/lib/types/photo'
+export interface TierFeatures {
+  maxUploadSizeMb: number
+  aiAnalysis: boolean
+  naturalLanguageSearch: boolean
+  duplicateDetection: boolean
+  faceRecognition: boolean
+  mapView: boolean
+  smartAlbums: boolean
+  advancedSearch: boolean
+}
 
-export const FREE_FEATURES: TierFeatures = {
+const FREE_FEATURES: TierFeatures = {
+  maxUploadSizeMb: 50,
+  aiAnalysis: true,
+  naturalLanguageSearch: true,
+  duplicateDetection: true,
+  faceRecognition: false,
+  mapView: true,
   smartAlbums: false,
-  autoFaceClustering: false,
-  familyVault: false,
-  apiAccess: false,
-  prioritySupport: false,
-  sharedAlbums: false,
-  collaborativeAlbums: false,
-  aiMemoryReports: false,
-  migrationTools: false,
-  rawVault: false,
-  maxVideoSizeBytes: 2 * 1024 * 1024 * 1024,
-  sharedAlbumMaxMembers: 0,
-  savedSearches: false,
-  priorityProcessing: false,
+  advancedSearch: false,
 }
 
-export const PATRON_FEATURES: TierFeatures = {
-  ...FREE_FEATURES,
+const PATRON_FEATURES: TierFeatures = {
+  maxUploadSizeMb: 200,
+  aiAnalysis: true,
+  naturalLanguageSearch: true,
+  duplicateDetection: true,
+  faceRecognition: true,
+  mapView: true,
+  smartAlbums: false,
+  advancedSearch: true,
+}
+
+const SOVEREIGN_FEATURES: TierFeatures = {
+  maxUploadSizeMb: 500,
+  aiAnalysis: true,
+  naturalLanguageSearch: true,
+  duplicateDetection: true,
+  faceRecognition: true,
+  mapView: true,
   smartAlbums: true,
-  autoFaceClustering: true,
-  sharedAlbums: true,
-  sharedAlbumMaxMembers: 5,
-  maxVideoSizeBytes: 10 * 1024 * 1024 * 1024,
-  priorityProcessing: true,
+  advancedSearch: true,
 }
 
-export const SOVEREIGN_FEATURES: TierFeatures = {
-  ...PATRON_FEATURES,
-  familyVault: true,
-  collaborativeAlbums: true,
-  sharedAlbumMaxMembers: 20,
-  aiMemoryReports: true,
-  migrationTools: true,
-  rawVault: true,
-  apiAccess: true,
-  prioritySupport: true,
-  savedSearches: true,
-  maxVideoSizeBytes: -1,
+export function getFeaturesForTierName(tierName: string): TierFeatures {
+  if (tierName.includes('sovereign')) return SOVEREIGN_FEATURES
+  if (tierName.includes('patron')) return PATRON_FEATURES
+  return FREE_FEATURES
+}
+
+export function getFeatureList(tierName: string): string[] {
+  const f = getFeaturesForTierName(tierName)
+  const list: string[] = []
+  if (f.aiAnalysis) list.push('AI photo analysis')
+  if (f.naturalLanguageSearch) list.push('Natural language search')
+  if (f.duplicateDetection) list.push('Duplicate detection')
+  if (f.faceRecognition) list.push('Face recognition & people')
+  if (f.mapView) list.push('GPS map view')
+  if (f.smartAlbums) list.push('Smart albums')
+  if (f.advancedSearch) list.push('Advanced filters')
+  list.push(`Upload up to ${f.maxUploadSizeMb}MB per photo`)
+  return list
 }

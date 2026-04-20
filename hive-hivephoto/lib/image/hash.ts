@@ -1,94 +1,76 @@
-import { createHash } from 'crypto'
 import sharp from 'sharp'
-import type { ImageHashes } from '../types/pipeline'
 
-// ─── SHA-256 ──────────────────────────────────────────────────────────────────
+/**
+ * Compute a perceptual hash (pHash) of an image.
+ * Resize to 32x32 grayscale, compute 8x8 DCT, return 64-bit hex string (16 hex chars).
+ */
+export async function pHash(imageBuffer: Buffer): Promise<string> {
+  const { data } = await sharp(imageBuffer)
+    .resize(32, 32, { fit: 'fill' })
+    .grayscale()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
 
-export function computeSha256(buffer: Buffer): string {
-  return createHash('sha256').update(buffer).digest('hex')
-}
+  const pixels = Array.from(data)
+  const size = 32
 
-// ─── pHash (perceptual hash, 64-bit) ─────────────────────────────────────────
-// DCT-based, 8×8 grid, outputs 16 hex chars (64 bits)
-
-export async function computePHash(buffer: Buffer): Promise<string | null> {
-  try {
-    // Resize to 32×32 greyscale, compute 8×8 DCT
-    const { data } = await sharp(buffer)
-      .resize(32, 32, { fit: 'fill' })
-      .greyscale()
-      .raw()
-      .toBuffer({ resolveWithObject: true })
-
-    const pixels = Array.from(data)
-    const dct = computeDct8x8(pixels)
-    const flatDct = dct.flat()
-    const median = computeMedian(flatDct.slice(1)) // Skip DC component
-
-    // Build 64-bit hash as hex
-    let hash = ''
-    for (let i = 0; i < 64; i++) {
-      // Pack 4 bits at a time
-    }
-
-    // Simpler approach: threshold each of 64 DCT coefficients
-    let bits = ''
-    for (let i = 0; i < 64; i++) {
-      bits += flatDct[i] > median ? '1' : '0'
-    }
-
-    // Convert 64 bits to 16 hex chars
-    hash = ''
-    for (let i = 0; i < 64; i += 4) {
-      hash += parseInt(bits.slice(i, i + 4), 2).toString(16)
-    }
-
-    return hash
-  } catch {
-    return null
-  }
-}
-
-function computeDct8x8(pixels: number[]): number[][] {
-  const N = 8
-  const result: number[][] = Array.from({ length: N }, () => new Array(N).fill(0))
-  const sqrt2N = Math.sqrt(2 / N)
-
-  for (let u = 0; u < N; u++) {
-    for (let v = 0; v < N; v++) {
+  // Compute 2D DCT
+  const dct: number[][] = []
+  for (let u = 0; u < size; u++) {
+    dct[u] = []
+    for (let v = 0; v < size; v++) {
       let sum = 0
-      for (let x = 0; x < N; x++) {
-        for (let y = 0; y < N; y++) {
-          // Sample from center of 32×32 image using 8×8 blocks
-          const px = Math.floor(x * 4 + 2)
-          const py = Math.floor(y * 4 + 2)
-          const pixelVal = pixels[px * 32 + py] ?? 0
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
           sum +=
-            pixelVal *
-            Math.cos(((2 * x + 1) * u * Math.PI) / (2 * N)) *
-            Math.cos(((2 * y + 1) * v * Math.PI) / (2 * N))
+            pixels[i * size + j] *
+            Math.cos(((2 * i + 1) * u * Math.PI) / (2 * size)) *
+            Math.cos(((2 * j + 1) * v * Math.PI) / (2 * size))
         }
       }
       const cu = u === 0 ? 1 / Math.sqrt(2) : 1
       const cv = v === 0 ? 1 / Math.sqrt(2) : 1
-      result[u][v] = (sqrt2N * sqrt2N * cu * cv * sum) / 2
+      dct[u][v] = (2 / size) * cu * cv * sum
     }
   }
-  return result
+
+  // Use top-left 8x8 DCT coefficients
+  const allCoeffs: number[] = []
+  for (let u = 0; u < 8; u++) {
+    for (let v = 0; v < 8; v++) {
+      allCoeffs.push(dct[u][v])
+    }
+  }
+
+  const avg = allCoeffs.reduce((a, b) => a + b, 0) / allCoeffs.length
+
+  let hashBits = ''
+  for (const c of allCoeffs) {
+    hashBits += c >= avg ? '1' : '0'
+  }
+
+  // Convert 64 bits to 16 hex chars
+  let hex = ''
+  for (let i = 0; i < hashBits.length; i += 4) {
+    hex += parseInt(hashBits.slice(i, i + 4), 2).toString(16)
+  }
+  return hex
 }
 
-function computeMedian(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
-  return sorted.length % 2 !== 0
-    ? sorted[mid]
-    : (sorted[mid - 1] + sorted[mid]) / 2
-}
-
-export async function computeHashes(buffer: Buffer): Promise<ImageHashes> {
-  const [sha256, pHash] = await Promise.all([
-    computeSha256(buffer),
-    computePHash(buffer),
-  ])
-  return { sha256, pHash }
+/**
+ * Hamming distance between two hex pHash strings using XOR on hex chars.
+ */
+export function hammingDistance(a: string, b: string): number {
+  if (a.length !== b.length) return Infinity
+  let dist = 0
+  for (let i = 0; i < a.length; i += 2) {
+    const byteA = parseInt(a.slice(i, i + 2), 16)
+    const byteB = parseInt(b.slice(i, i + 2), 16)
+    let xor = byteA ^ byteB
+    while (xor) {
+      dist += xor & 1
+      xor >>= 1
+    }
+  }
+  return dist
 }

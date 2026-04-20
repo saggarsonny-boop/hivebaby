@@ -1,20 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
-import { getGalleryPage } from '@/lib/db/photos'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
+import { getPhotosByUser, countPhotosByUser } from '@/lib/db/photos'
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   try {
-    const userId = await requireAuth()
-    const url = new URL(req.url)
-    const cursor = url.searchParams.get('cursor') ?? null
-    const limitParam = url.searchParams.get('limit')
-    const limit = limitParam ? Math.min(100, parseInt(limitParam)) : 40
-
-    const page = await getGalleryPage(userId, cursor, limit)
-    return NextResponse.json(page)
+    const userId = await requireUser()
+    const { searchParams } = new URL(req.url)
+    const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 200)
+    const offset = parseInt(searchParams.get('offset') ?? '0')
+    const [photos, total] = await Promise.all([
+      getPhotosByUser(userId, limit, offset),
+      countPhotosByUser(userId),
+    ])
+    return NextResponse.json({ photos, total, limit, offset })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    console.error('[photos GET]', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

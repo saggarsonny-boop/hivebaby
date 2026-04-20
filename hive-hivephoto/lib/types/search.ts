@@ -1,26 +1,25 @@
 export interface SearchFilters {
-  rawQuery: string
-  dateAfter?: string
-  dateBefore?: string
+  dateFrom?: string
+  dateTo?: string
   objects?: string[]
   scenes?: string[]
   emotions?: string[]
   actions?: string[]
-  locationName?: string
-  personNames?: string[]
-  dominantColor?: string
-  cameraModel?: string
-  takenAtConfidence?: 'exif' | 'filename' | 'upload'
+  location?: string
+  personName?: string
+  freeText?: string
 }
 
-export interface SearchResult {
-  photoId: string
-  relevanceScore: number
-  matchedFields: string[]
+export interface SearchRequest {
+  query: string
+  page?: number
+  limit?: number
 }
 
-export interface ParsedSearchQuery {
+export interface SearchResponse {
   filters: SearchFilters
-  fallbackTextQuery: string | null
-  parseConfidence: 'high' | 'medium' | 'low' | 'fallback'
+  photos: import('./photo').Photo[]
+  total: number
+  page: number
+  limit: number
 }

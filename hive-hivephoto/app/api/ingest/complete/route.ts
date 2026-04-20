@@ -1,28 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
 import { finalizeUpload } from '@/lib/pipeline/finalize-upload'
-import type { CompleteRequest } from '@/lib/types/photo'
+import type { CompleteUploadRequest } from '@/lib/types/pipeline'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const userId = await requireAuth()
-    const body = await req.json() as CompleteRequest
-
-    if (!body.photoId) {
-      return NextResponse.json({ error: 'Missing photoId' }, { status: 400 })
-    }
-
-    const result = await finalizeUpload(userId, body.photoId)
-    return NextResponse.json({
-      photoId: result.photoId,
-      thumbUrl: result.thumbUrl,
-      isNearDuplicate: result.isNearDuplicate,
-      processingStatus: 'pending',
-    })
+    const userId = await requireUser()
+    const body = (await req.json()) as CompleteUploadRequest
+    const result = await finalizeUpload(userId, body.photoId, body.storageKey)
+    return NextResponse.json(result)
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const msg = err instanceof Error ? err.message : 'Internal server error'
-    console.error('[ingest/complete]', err)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (err instanceof Response) return err
+    const message = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

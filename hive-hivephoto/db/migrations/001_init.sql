@@ -14,10 +14,10 @@ CREATE TABLE photos (
   height INTEGER,
   is_provisional BOOLEAN NOT NULL DEFAULT TRUE,
   upload_status TEXT NOT NULL DEFAULT 'awaiting_upload'
-    CHECK (upload_status IN ('awaiting_upload', 'uploaded', 'abandoned')),
+    CHECK (upload_status IN ('awaiting_upload','uploaded','abandoned')),
   taken_at TIMESTAMPTZ NOT NULL,
-  taken_at_confidence TEXT NOT NULL
-    CHECK (taken_at_confidence IN ('exif', 'filename', 'upload')),
+  taken_at_confidence TEXT NOT NULL DEFAULT 'upload'
+    CHECK (taken_at_confidence IN ('exif','filename','upload')),
   uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gps_lat DOUBLE PRECISION,
   gps_lng DOUBLE PRECISION,
@@ -38,24 +38,19 @@ CREATE TABLE photos (
   is_near_duplicate BOOLEAN NOT NULL DEFAULT FALSE,
   near_duplicate_of UUID REFERENCES photos(id) ON DELETE SET NULL,
   duplicate_review_status TEXT NOT NULL DEFAULT 'pending'
-    CHECK (duplicate_review_status IN ('pending', 'kept_new', 'kept_original', 'kept_both')),
+    CHECK (duplicate_review_status IN ('pending','kept_new','kept_original','kept_both')),
   processing_status TEXT NOT NULL DEFAULT 'pending'
-    CHECK (processing_status IN ('pending', 'processing', 'done', 'error')),
+    CHECK (processing_status IN ('pending','processing','done','error')),
   processing_error TEXT,
-  processing_attempts INTEGER NOT NULL DEFAULT 0
-    CHECK (processing_attempts >= 0),
+  processing_attempts INTEGER NOT NULL DEFAULT 0 CHECK (processing_attempts >= 0),
   processing_last_attempted_at TIMESTAMPTZ,
   deleted_at TIMESTAMPTZ,
   CONSTRAINT unique_hash_per_user UNIQUE (user_id, sha256_hash),
   CONSTRAINT finalized_photos_require_storage CHECK (
     is_provisional = TRUE OR (
-      original_key IS NOT NULL AND
-      thumb_key IS NOT NULL AND
-      thumb_url IS NOT NULL AND
-      format IS NOT NULL AND
-      file_size_bytes IS NOT NULL AND
-      width IS NOT NULL AND
-      height IS NOT NULL
+      original_key IS NOT NULL AND thumb_key IS NOT NULL AND thumb_url IS NOT NULL
+      AND format IS NOT NULL AND file_size_bytes IS NOT NULL
+      AND width IS NOT NULL AND height IS NOT NULL
     )
   ),
   CONSTRAINT gps_both_or_neither CHECK ((gps_lat IS NULL) = (gps_lng IS NULL))
@@ -92,10 +87,11 @@ CREATE TABLE album_photos (
   PRIMARY KEY (album_id, photo_id)
 );
 
+-- Indexes
 CREATE INDEX idx_photos_gallery ON photos(user_id, taken_at DESC)
   WHERE deleted_at IS NULL AND is_provisional = FALSE AND is_near_duplicate = FALSE;
 CREATE INDEX idx_photos_analysis_queue ON photos(processing_attempts, processing_last_attempted_at, uploaded_at)
-  WHERE upload_status = 'uploaded' AND processing_status IN ('pending', 'error') AND processing_attempts < 3 AND deleted_at IS NULL;
+  WHERE upload_status = 'uploaded' AND processing_status IN ('pending','error') AND processing_attempts < 3 AND deleted_at IS NULL;
 CREATE INDEX idx_photos_dupe_review ON photos(user_id, uploaded_at DESC)
   WHERE is_near_duplicate = TRUE AND duplicate_review_status = 'pending' AND deleted_at IS NULL;
 CREATE INDEX idx_photos_provisional_cleanup ON photos(upload_status, uploaded_at)
@@ -113,12 +109,8 @@ CREATE INDEX idx_people_user ON people(user_id);
 
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
+BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER people_updated_at
-  BEFORE UPDATE ON people
+CREATE TRIGGER people_updated_at BEFORE UPDATE ON people
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();

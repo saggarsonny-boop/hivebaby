@@ -1,43 +1,47 @@
 import { getAnthropicClient } from './client'
-import type { AiAnalysisResult } from '../types/pipeline'
 
-const MODEL = 'claude-sonnet-4-5'
-
-const SYSTEM_PROMPT = `You are an expert photo analyst. Analyze the provided photo and return a JSON object with these exact fields:
-{
-  "title": "Short, specific 3-8 word title for this photo",
-  "description": "1-2 sentence description of what's in the photo. Be specific — mention people, objects, setting, mood.",
-  "objects": ["array", "of", "physical", "objects", "visible"],
-  "scenes": ["indoor","outdoor","beach","forest","city","etc"],
-  "emotions": ["happy","sad","peaceful","excited","etc — only if clearly present"],
-  "actions": ["running","eating","talking","etc — only if happening"],
-  "colors": ["dominant", "color", "palette", "as", "color", "names"],
-  "dominantColor": "single most prominent color as lowercase color name",
-  "faces": [
-    {
-      "boundingBox": {"x": 0.1, "y": 0.1, "width": 0.2, "height": 0.3},
-      "emotion": "happy",
-      "isLookingAtCamera": true,
-      "estimatedAgeGroup": "adult",
-      "confidence": 0.9
-    }
-  ],
-  "locationName": "City, Country if GPS or clear visual clues exist, otherwise null"
+export interface PhotoAnalysis {
+  title: string
+  description: string
+  objects: string[]
+  scenes: string[]
+  emotions: string[]
+  actions: string[]
+  colors: string[]
+  dominantColor: string
+  locationName?: string
+  faces: Array<{
+    boundingBox: { x: number; y: number; w: number; h: number }
+    emotion?: string
+    isLookingAtCamera?: boolean
+    estimatedAgeGroup?: 'child' | 'teen' | 'adult' | 'elderly'
+  }>
 }
-Bounding boxes are 0-1 relative to image dimensions (x,y = top-left corner).
-estimatedAgeGroup must be one of: child, teen, adult, elderly, or null.
-Return ONLY valid JSON, no markdown, no explanation.`
 
-export async function analyzePhoto(
-  imageBuffer: Buffer,
-  mimeType: string
-): Promise<AiAnalysisResult> {
+const SYSTEM_PROMPT = `You are an AI photo analyst for a personal photo library. Analyze the image and return a JSON object with exactly these fields:
+- title: A short, descriptive title (5-10 words)
+- description: 1-3 sentence description of the photo
+- objects: array of objects/subjects visible (5-15 items)
+- scenes: array of scene classifications (e.g. "outdoor", "beach", "portrait", "landscape")
+- emotions: array of emotions/moods conveyed (e.g. "happy", "peaceful", "nostalgic")
+- actions: array of actions occurring (e.g. "running", "laughing", "eating")
+- colors: array of dominant colors (e.g. "blue", "golden", "green")
+- dominantColor: single most dominant color as hex code (e.g. "#4a90e2")
+- locationName: visually identifiable location name, or null if unknown
+- faces: array of detected faces, each with:
+  - boundingBox: {x, y, w, h} as fractions 0.0-1.0 of image dimensions
+  - emotion: optional emotion string
+  - isLookingAtCamera: boolean
+  - estimatedAgeGroup: "child"|"teen"|"adult"|"elderly" or omit if uncertain
+
+Return ONLY valid JSON. No markdown, no explanation.`
+
+export async function analyzePhoto(imageBuffer: Buffer): Promise<PhotoAnalysis> {
   const client = getAnthropicClient()
-
   const base64 = imageBuffer.toString('base64')
 
-  const message = await client.messages.create({
-    model: MODEL,
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-5',
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
     messages: [
@@ -48,71 +52,46 @@ export async function analyzePhoto(
             type: 'image',
             source: {
               type: 'base64',
-              media_type: mimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+              media_type: 'image/jpeg',
               data: base64,
             },
           },
           {
             type: 'text',
-            text: 'Analyze this photo and return the JSON as specified.',
+            text: 'Analyze this photo and return the JSON response.',
           },
         ],
       },
     ],
   })
 
-  const content = message.content[0]
-  if (content.type !== 'text') throw new Error('Unexpected AI response type')
+  const text = response.content.find((c) => c.type === 'text')?.text ?? '{}'
 
-  return parseAnalysisResponse(content.text)
-}
-
-function parseAnalysisResponse(raw: string): AiAnalysisResult {
-  // Strip possible markdown code fences
-  const cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-
-  let parsed: Record<string, unknown>
   try {
-    parsed = JSON.parse(cleaned)
+    const parsed = JSON.parse(text) as Partial<PhotoAnalysis>
+    return {
+      title: parsed.title ?? 'Untitled Photo',
+      description: parsed.description ?? '',
+      objects: Array.isArray(parsed.objects) ? parsed.objects : [],
+      scenes: Array.isArray(parsed.scenes) ? parsed.scenes : [],
+      emotions: Array.isArray(parsed.emotions) ? parsed.emotions : [],
+      actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+      colors: Array.isArray(parsed.colors) ? parsed.colors : [],
+      dominantColor: parsed.dominantColor ?? '#888888',
+      locationName: parsed.locationName ?? undefined,
+      faces: Array.isArray(parsed.faces) ? parsed.faces : [],
+    }
   } catch {
-    throw new Error(`Failed to parse AI analysis JSON: ${raw.slice(0, 200)}`)
+    return {
+      title: 'Untitled Photo',
+      description: text.slice(0, 500),
+      objects: [],
+      scenes: [],
+      emotions: [],
+      actions: [],
+      colors: [],
+      dominantColor: '#888888',
+      faces: [],
+    }
   }
-
-  return {
-    title: String(parsed.title ?? 'Untitled'),
-    description: String(parsed.description ?? ''),
-    objects: ensureStringArray(parsed.objects),
-    scenes: ensureStringArray(parsed.scenes),
-    emotions: ensureStringArray(parsed.emotions),
-    actions: ensureStringArray(parsed.actions),
-    colors: ensureStringArray(parsed.colors),
-    dominantColor: String(parsed.dominantColor ?? ''),
-    faces: parseFaces(parsed.faces),
-    locationName: parsed.locationName ? String(parsed.locationName) : null,
-  }
-}
-
-function ensureStringArray(val: unknown): string[] {
-  if (!Array.isArray(val)) return []
-  return val.map(String).filter(Boolean)
-}
-
-function parseFaces(val: unknown): AiAnalysisResult['faces'] {
-  if (!Array.isArray(val)) return []
-  return val
-    .filter(f => f && typeof f === 'object')
-    .map(f => ({
-      boundingBox: {
-        x: Number(f.boundingBox?.x ?? 0),
-        y: Number(f.boundingBox?.y ?? 0),
-        width: Number(f.boundingBox?.width ?? 0),
-        height: Number(f.boundingBox?.height ?? 0),
-      },
-      emotion: f.emotion ? String(f.emotion) : null,
-      isLookingAtCamera: f.isLookingAtCamera != null ? Boolean(f.isLookingAtCamera) : null,
-      estimatedAgeGroup: ['child', 'teen', 'adult', 'elderly'].includes(f.estimatedAgeGroup)
-        ? f.estimatedAgeGroup
-        : null,
-      confidence: f.confidence != null ? Math.min(1, Math.max(0, Number(f.confidence))) : null,
-    }))
 }

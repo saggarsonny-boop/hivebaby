@@ -1,6 +1,8 @@
-import { abandonStaleProvisional } from '../db/photos'
+import { deleteProvisionalPhotos } from '@/lib/db/photos'
 
-export async function runCleanupProvisional(): Promise<{ abandoned: number }> {
-  const abandoned = await abandonStaleProvisional()
-  return { abandoned }
+const STALE_MINUTES = 60
+
+export async function runCleanupProvisional(): Promise<{ deleted: number }> {
+  const deleted = await deleteProvisionalPhotos(STALE_MINUTES)
+  return { deleted }
 }

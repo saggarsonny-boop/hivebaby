@@ -1,92 +1,112 @@
 import ExifReader from 'exifreader'
-import type { ExtractedExif } from '../types/pipeline'
+import sharp from 'sharp'
+import type { ExtractedMetadata } from '@/lib/types/pipeline'
 
-export async function extractExif(buffer: Buffer, fileName: string): Promise<ExtractedExif> {
-  let tags: Record<string, unknown> = {}
+/**
+ * Extract image metadata from a buffer.
+ * Width/height are authoritative from sharp.
+ * takenAt fallback chain: exif DateTimeOriginal → filename date pattern → new Date()
+ */
+export async function extractMetadata(
+  buffer: Buffer,
+  filename?: string
+): Promise<ExtractedMetadata> {
+  // Get authoritative dimensions from sharp
+  const sharpMeta = await sharp(buffer).metadata()
+  const width = sharpMeta.width ?? 0
+  const height = sharpMeta.height ?? 0
+  const orientation = sharpMeta.orientation ?? null
+
+  let tags: ExifReader.Tags = {} as ExifReader.Tags
   try {
-    tags = ExifReader.load(buffer, { expanded: false }) as unknown as Record<string, unknown>
+    tags = ExifReader.load(buffer)
   } catch {
-    // Non-EXIF images fail silently
+    // Non-fatal
   }
 
-  const takenAt = parseExifDate(tags as ExifReader.Tags)
-  const confidence = takenAt ? 'exif' : tryFilenameDate(fileName) ? 'filename' : 'upload'
-  const finalDate = takenAt ?? tryFilenameDate(fileName) ?? new Date()
+  // Timestamp
+  let takenAt: Date | null = null
+  let takenAtConfidence: 'exif' | 'filename' | 'upload' = 'upload'
 
-  const lat = parseGps(tags['GPSLatitude'] as ExifReader.XmpTag | undefined, tags['GPSLatitudeRef'] as ExifReader.XmpTag | undefined)
-  const lng = parseGps(tags['GPSLongitude'] as ExifReader.XmpTag | undefined, tags['GPSLongitudeRef'] as ExifReader.XmpTag | undefined)
+  const exifDate = tags['DateTimeOriginal']?.description as string | undefined
+  if (exifDate) {
+    const normalized = exifDate.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
+    const parsed = new Date(normalized)
+    if (!isNaN(parsed.getTime())) {
+      takenAt = parsed
+      takenAtConfidence = 'exif'
+    }
+  }
+
+  if (!takenAt && filename) {
+    const match = filename.match(/(\d{4})[-_](\d{2})[-_](\d{2})/)
+    if (match) {
+      const parsed = new Date(`${match[1]}-${match[2]}-${match[3]}`)
+      if (!isNaN(parsed.getTime())) {
+        takenAt = parsed
+        takenAtConfidence = 'filename'
+      }
+    }
+  }
+
+  if (!takenAt) takenAt = new Date()
+
+  // GPS
+  let gpsLat: number | null = null
+  let gpsLng: number | null = null
+
+  try {
+    const latTag = tags['GPSLatitude']
+    const lngTag = tags['GPSLongitude']
+    const latRef = tags['GPSLatitudeRef']?.description as string | undefined
+    const lngRef = tags['GPSLongitudeRef']?.description as string | undefined
+
+    if (latTag && lngTag) {
+      gpsLat = parseGpsCoord(latTag.value, latRef)
+      gpsLng = parseGpsCoord(lngTag.value, lngRef)
+    }
+  } catch {
+    gpsLat = null
+    gpsLng = null
+  }
+
+  // Camera
+  const cameraMake = (tags['Make']?.description as string) ?? null
+  const cameraModel = (tags['Model']?.description as string) ?? null
 
   return {
-    takenAt: finalDate,
-    takenAtConfidence: confidence as ExtractedExif['takenAtConfidence'],
-    gpsLat: lat,
-    gpsLng: lng,
-    cameraMake: tagString(tags['Make'] as ExifReader.XmpTag | undefined),
-    cameraModel: tagString(tags['Model'] as ExifReader.XmpTag | undefined),
-    width: tagNumber(tags['Image Width'] as ExifReader.XmpTag | undefined) ?? tagNumber(tags['PixelXDimension'] as ExifReader.XmpTag | undefined),
-    height: tagNumber(tags['Image Height'] as ExifReader.XmpTag | undefined) ?? tagNumber(tags['PixelYDimension'] as ExifReader.XmpTag | undefined),
-    format: null, // Determined by Sharp
-    orientation: tagNumber(tags['Orientation'] as ExifReader.XmpTag | undefined),
+    width,
+    height,
+    takenAt,
+    takenAtConfidence,
+    gpsLat,
+    gpsLng,
+    cameraMake,
+    cameraModel,
+    orientation,
   }
 }
 
-function parseExifDate(tags: ExifReader.Tags): Date | null {
-  const raw = tagString(tags['DateTimeOriginal']) ?? tagString(tags['DateTime'])
-  if (!raw) return null
-  // EXIF format: "YYYY:MM:DD HH:MM:SS"
-  const parts = raw.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/)
-  if (!parts) return null
-  const d = new Date(`${parts[1]}-${parts[2]}-${parts[3]}T${parts[4]}:${parts[5]}:${parts[6]}`)
-  return isNaN(d.getTime()) ? null : d
-}
+type GpsValue = Array<[number, number]> | number | unknown
 
-function tryFilenameDate(fileName: string): Date | null {
-  // Common patterns: IMG_20231225_143022, 2023-12-25_14-30-22, 20231225_143022
-  const match = fileName.match(/(\d{4})[_-]?(\d{2})[_-]?(\d{2})[ _T-]?(\d{2})[ _:-]?(\d{2})[ _:-]?(\d{2})/)
-  if (!match) return null
-  const d = new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`)
-  return isNaN(d.getTime()) ? null : d
-}
+function parseGpsCoord(value: GpsValue, ref?: string): number {
+  let decimal: number
 
-function parseGps(
-  val: unknown,
-  ref: unknown
-): number | null {
-  if (!val) return null
-  try {
-    const desc = typeof val === 'object' && val !== null && 'description' in val
-      ? String((val as { description: unknown }).description)
-      : ''
-    const degrees = parseFloat(desc)
-    if (isNaN(degrees)) return null
-    const direction = typeof ref === 'object' && ref !== null && 'value' in ref
-      ? String((ref as { value: unknown }).value)
-      : ''
-    return (direction === 'S' || direction === 'W') ? -degrees : degrees
-  } catch {
-    return null
+  if (Array.isArray(value)) {
+    const toDecimal = (pair: unknown): number => {
+      if (Array.isArray(pair) && pair.length === 2) {
+        return (pair[0] as number) / (pair[1] as number)
+      }
+      return pair as number
+    }
+    const deg = toDecimal(value[0])
+    const min = toDecimal(value[1])
+    const sec = toDecimal(value[2])
+    decimal = deg + min / 60 + sec / 3600
+  } else {
+    decimal = value as number
   }
-}
 
-function tagString(tag: unknown): string | null {
-  if (!tag) return null
-  const v = typeof tag === 'object' && tag !== null
-    ? ('description' in tag
-      ? String((tag as { description: unknown }).description)
-      : 'value' in tag
-        ? String((tag as { value: unknown }).value)
-        : null)
-    : null
-  return v?.trim() || null
-}
-
-function tagNumber(tag: unknown): number | null {
-  if (!tag) return null
-  const v = typeof tag === 'object' && tag !== null && 'value' in tag
-    ? (tag as { value: unknown }).value
-    : null
-  if (v === null || v === undefined) return null
-  if (Array.isArray(v)) return typeof v[0] === 'number' ? v[0] : null
-  const n = Number(v)
-  return isNaN(n) ? null : n
+  if (ref === 'S' || ref === 'W') decimal = -decimal
+  return decimal
 }

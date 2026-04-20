@@ -1,16 +1,19 @@
 import { getStripe } from './client'
-import { getOrCreateSubscription } from '../db/subscriptions'
+import { sql } from '@/lib/db/client'
 
-export async function createBillingPortalSession(
-  userId: string,
-  returnUrl: string
-): Promise<string> {
+export async function createPortalSession(userId: string, returnUrl: string): Promise<string> {
   const stripe = getStripe()
-  const sub = await getOrCreateSubscription(userId)
-  if (!sub.stripeCustomerId) throw new Error('No Stripe customer found')
+
+  const rows = await sql`
+    SELECT stripe_customer_id FROM user_subscriptions
+    WHERE user_id = ${userId} AND stripe_customer_id IS NOT NULL
+    LIMIT 1
+  `
+  if (!rows.length) throw new Error('No Stripe customer found')
+  const customerId = (rows[0] as { stripe_customer_id: string }).stripe_customer_id
 
   const session = await stripe.billingPortal.sessions.create({
-    customer: sub.stripeCustomerId,
+    customer: customerId,
     return_url: returnUrl,
   })
 

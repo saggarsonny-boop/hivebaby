@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, AuthError } from '@/lib/auth/guards'
+import { NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth/guards'
 import { getPendingDuplicates } from '@/lib/db/photos'
 
-export async function GET(_req: NextRequest) {
+export async function GET(_req: Request) {
   try {
-    const userId = await requireAuth()
-    const dupes = await getPendingDuplicates(userId)
-    return NextResponse.json({ duplicates: dupes, total: dupes.length })
+    const userId = await requireUser()
+    const photos = await getPendingDuplicates(userId)
+    return NextResponse.json({ photos })
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

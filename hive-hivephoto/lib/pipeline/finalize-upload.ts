@@ -1,78 +1,86 @@
-import { getPhotoById, finalizePhoto, findNearDuplicates } from '../db/photos'
-import { trackStorageEvent } from '../db/subscriptions'
-import { downloadObject, uploadThumbnail } from '../storage/r2'
-import { thumbKey, thumbPublicUrl } from '../storage/keys'
-import { extractExif } from '../image/metadata'
-import { generateThumbnail, getImageDimensions } from '../image/thumbnail'
-import { computePHash } from '../image/hash'
-import { env } from '../env'
-import type { FinalizeResult } from '../types/pipeline'
+// GOVERNANCE: Photos are NEVER deleted due to tier changes or downgrades.
+// Photos are NEVER held hostage. On downgrade: all existing photos remain
+// accessible and downloadable. New uploads blocked only if over storage limit.
+// This is a Hive governance rule — not a product decision.
 
-export async function finalizeUpload(userId: string, photoId: string): Promise<FinalizeResult> {
-  // 1. Fetch provisional record
-  const photo = await getPhotoById(photoId, userId)
-  if (!photo) throw new Error(`Photo not found: ${photoId}`)
-  if (!photo.originalKey) throw new Error(`No original key for photo: ${photoId}`)
+import { objectExists, getObjectBuffer, putObject } from '@/lib/storage/r2'
+import { extractMetadata } from '@/lib/image/metadata'
+import { pHash } from '@/lib/image/hash'
+import { generateThumbnail } from '@/lib/image/thumbnail'
+import {
+  updatePhotoAfterUpload,
+  findNearDuplicates,
+  markNearDuplicate,
+  getStorageUsedBytes,
+  trackStorageEvent,
+} from '@/lib/db/photos'
+import { thumbKey } from '@/lib/storage/keys'
+import { env } from '@/lib/env'
+import type { CompleteUploadResponse } from '@/lib/types/pipeline'
 
-  // 2. Download from R2
-  const buffer = await downloadObject(photo.originalKey)
+export async function finalizeUpload(
+  userId: string,
+  photoId: string,
+  storageKey: string,
+  filename?: string
+): Promise<CompleteUploadResponse> {
+  // Verify object exists in R2
+  const exists = await objectExists(env.R2_BUCKET_ORIGINALS, storageKey)
+  if (!exists) throw new Error(`Object not found in R2: ${storageKey}`)
 
-  // 3. Sharp: authoritative dimensions + format
-  const { width, height, format } = await getImageDimensions(buffer)
+  const buffer = await getObjectBuffer(env.R2_BUCKET_ORIGINALS, storageKey)
+  const metadata = await extractMetadata(buffer, filename)
+  const photoHash = await pHash(buffer)
 
-  // 4. ExifReader: metadata
-  const exif = await extractExif(buffer, photo.originalKey.split('/').pop() ?? '')
+  const thumb = await generateThumbnail(buffer)
+  const tKey = thumbKey(userId, photoId)
+  await putObject(env.R2_BUCKET_THUMBS, tKey, thumb, 'image/webp')
 
-  // 5. Compute pHash server-side
-  const pHash = await computePHash(buffer)
+  const thumbUrl = `${env.R2_PUBLIC_THUMB_URL}/${tKey}`
+  const extParts = storageKey.split('.')
+  const format = extParts[extParts.length - 1] ?? 'jpg'
 
-  // 6. Check perceptual near-duplicates
-  let isNearDuplicate = false
-  let nearDuplicateOf: string | null = null
-  if (pHash) {
-    const dupes = await findNearDuplicates(userId, pHash)
-    if (dupes.length > 0) {
-      isNearDuplicate = true
-      nearDuplicateOf = dupes[0].id
+  await updatePhotoAfterUpload({
+    id: photoId,
+    originalKey: storageKey,
+    thumbKey: tKey,
+    thumbUrl,
+    format,
+    fileSizeBytes: buffer.length,
+    width: metadata.width,
+    height: metadata.height,
+    takenAt: metadata.takenAt,
+    takenAtConfidence: metadata.takenAtConfidence,
+    gpsLat: metadata.gpsLat,
+    gpsLng: metadata.gpsLng,
+    cameraMake: metadata.cameraMake,
+    cameraModel: metadata.cameraModel,
+    pHash: photoHash,
+  })
+
+  // Track storage event
+  const storageAfter = await getStorageUsedBytes(userId)
+  await trackStorageEvent({
+    userId,
+    photoId,
+    eventType: 'upload',
+    bytesDelta: BigInt(buffer.length),
+    storageAfter,
+  })
+
+  // Near-duplicate check (only against same user, hamming <= 3)
+  const nearDupes = await findNearDuplicates(userId, photoHash)
+  const dupes = nearDupes.filter((p) => p.id !== photoId)
+
+  if (dupes.length > 0) {
+    await markNearDuplicate(photoId, dupes[0].id)
+    return {
+      success: true,
+      photoId,
+      isNearDuplicate: true,
+      nearDuplicateOfId: dupes[0].id,
     }
   }
 
-  // 7. Generate thumbnail (orientation-corrected via Sharp)
-  const thumb = await generateThumbnail(buffer, exif.orientation)
-  const tKey = thumbKey(userId, photoId)
-  const tUrl = thumbPublicUrl(env.r2PublicBaseUrl, userId, photoId)
-
-  // 8. Upload thumbnail to public R2 bucket
-  await uploadThumbnail(tKey, thumb.buffer)
-
-  // 9. Finalize DB row
-  await finalizePhoto({
-    photoId,
-    thumbKey: tKey,
-    thumbUrl: tUrl,
-    format,
-    fileSizeBytes: buffer.length,
-    width,
-    height,
-    gpsLat: exif.gpsLat,
-    gpsLng: exif.gpsLng,
-    cameraMake: exif.cameraMake,
-    cameraModel: exif.cameraModel,
-    takenAt: exif.takenAt ?? new Date(),
-    takenAtConfidence: exif.takenAtConfidence,
-    pHash,
-    isNearDuplicate,
-    nearDuplicateOf,
-  })
-
-  // 10. Track storage event
-  await trackStorageEvent(userId, photoId, 'upload', buffer.length)
-  await trackStorageEvent(userId, photoId, 'thumbnail', thumb.sizeBytes)
-
-  return {
-    photoId,
-    thumbUrl: tUrl,
-    isNearDuplicate,
-    nearDuplicateOf,
-  }
+  return { success: true, photoId }
 }

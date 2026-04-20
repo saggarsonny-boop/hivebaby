@@ -1,21 +1,21 @@
 import type { Metadata } from 'next'
+import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
-import Nav from '@/components/layout/Nav'
-import Footer from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
-  title: 'HivePhoto',
-  description: 'You are the investor. Your memories, searchable forever.',
+  title: 'HivePhoto — AI Photo Library',
+  description: 'Your private AI-powered photo library. Smart search, automatic tagging, face recognition, duplicate detection. No ads. No investors. No agenda.',
+  icons: { icon: '/favicon.svg', apple: '/favicon.svg' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <Nav />
-        <main className="mx-auto w-full max-w-7xl px-4 py-6">{children}</main>
-        <Footer />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className="min-h-screen antialiased">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
