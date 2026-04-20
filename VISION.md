@@ -218,6 +218,14 @@ On first visit (localStorage, never repeats), after welcome card:
 ### WEEK 2 — WHITE PAPER LAUNCH
 - [ ] White paper final version complete
 - [ ] Published to SSRN (Sonny Saggar MD, DOI assigned)
+- [ ] Submit to Records Management Journal (Emerald Publishing) — full specification white paper
+  URL: emeraldgrouppublishing.com/journal/rmj
+  Note: confirm SSRN preprint acceptable as prior deposit before submitting
+- [ ] Submit to American Archivist (Society of American Archivists) — preservation-focused brief as shorter commentary piece
+  URL: americanarchivist.org
+  Note: different paper from RMJ submission, not same text
+- [ ] Submit to Archives and Records (Taylor & Francis) — consider for the judicial or archive brief specifically
+  URL: tandfonline.com/journals/cjsa21
 - [ ] Deposited at Internet Archive
 - [ ] ud.hive.baby/whitepaper — live page with Reader embed + UDS download of the white paper itself
 - [ ] LinkedIn announcement post
@@ -240,6 +248,11 @@ On first visit (localStorage, never repeats), after welcome card:
 - [ ] UD Creator full launch
 
 ### ONGOING
+- [ ] Peer review timeline: 3–6 months per journal
+- [ ] Track submission status for each journal separately
+- [ ] Do not submit same paper to two journals simultaneously
+- [ ] Different briefs can be submitted to different journals as separate works
+- [ ] By acceptance time, UD will have real adoption data to strengthen each paper
 - [ ] Stripe revenue routed to WY C Corp bank account
 - [ ] IP agreement maintained and updated as new IP created
 - [ ] Trademark renewals: USPTO requires maintenance filings
