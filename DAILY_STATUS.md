@@ -1,4 +1,12 @@
-# HIVE STATUS — 2026-04-19 13:00 CDT
+# HIVE STATUS — 2026-04-20 14:20 UTC
+
+## OPS SWEEP (machine-run)
+- Fleet HTTP probe completed across all listed domains.
+- `hivememe.hive.baby` Cloudflare DNS CNAME was missing and has now been created:
+	- `hivememe.hive.baby -> cname.vercel-dns.com` (created 2026-04-20 14:19 UTC)
+- Post-fix DNS now resolves publicly (A records returned via Cloudflare DoH).
+- `hivememe.hive.baby` still fails TLS handshake from probe environment (`SSL_ERROR_SYSCALL`), indicating upstream certificate/domain binding is not ready yet.
+- `creatorconsole.hive.baby` returns HTTP 307 consistently and requires owner confirmation that this redirect is intentional.
 
 - Total engines: 14
 - Live and working: 13
