@@ -162,6 +162,10 @@ Three.js 3D planet. Each hexagon cell = one Hive engine.
 - Full Onboarding Stack (all four components)
 - Data source credited visibly if using real data
 
+## Universal Document™ — Trademark
+Universal Document™ is a pending trademark (Serial 99774346, filed 2026-04-20).
+Always use ™ symbol after "Universal Document" in all Hive properties and documents.
+
 ## How to Work Across Repos
 Use GitHub API with token to read/write/commit to any repo.
 After any hivebaby change, trigger: `curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_Mj8SJS4gAlrG2PCXdUCUMmoAQAA3/CfgdTZ1r50"`

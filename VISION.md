@@ -195,7 +195,7 @@ On first visit (localStorage, never repeats), after welcome card:
 ### IMMEDIATE — THIS WEEK
 - [ ] WY C Corp formation (Sonny action — online via Wyoming Secretary of State, ~$100)
 - [ ] IP Agreement: Sonny personally licenses all UD IP to WY C Corp. One-page document. Attorney-as-correspondent approach: attorney's details on cover letter only — Sonny signs everything directly. USPTO allows this. Keeps filing costs low.
-- [ ] USPTO trademark: "Universal Document" wordmark + UD logo, class 42. File in Sonny's name. WY C Corp listed as exclusive licensee. Assign to Corp post-formation.
+- [x] USPTO trademark: "Universal Document" wordmark + UD logo, class 42. Filed 2026-04-20 in Sonny's name. Serial: 99774346. Status: Pending — monitor at tsdr.uspto.gov every 2–3 months. Office actions to saggarsonny@gmail.com. Assign to Corp post-formation.
 - [ ] USPTO certification mark: "UD Certified" mark. Attorney-as-correspondent. Compliance standards statement drafted by Sonny, reviewed by attorney.
 - [ ] IP licensing: WY C Corp licenses UD IP to Sonny (UAE entity) for international use. UAE entity collects international revenue. Transfer TM + CM registrations to UAE entity on expatriation (target 2028).
 - [ ] Apache 2.0 license + NOTICE file applied to iSDK repo. NOTICE text: "Implements the Universal Document specification. Specification by Sonny Saggar MD. ud.hive.baby"
