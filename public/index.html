@@ -800,7 +800,7 @@ const ADMIN_ENGINES = [
   { name:'Queen Bee',          emoji:'👑', url:'https://queenbee.hive.baby',                    tagline:'Sovereign governance engine' },
   { name:'HiveEngine Builder', emoji:'⚙️', url:'https://hiveenginebuilder.hive.baby',           tagline:'Design and deploy engines' },
   { name:'Creator Console',    emoji:'🎛️', url:'https://creatorconsole.hive.baby',              tagline:'Private ops dashboard' },
-  { name:'Space Station',      emoji:'🛸', url:'https://station.hive.baby',                      tagline:'Internal hub — password: HiveBees' },
+  { name:'Space Station',      emoji:'🛸', url:'https://station.hive.baby',                      tagline:'Internal hub — ops access only' },
 ];
 
 // tier: 1=Live, 2=Building, 3=Planned. status drives visual tier.
@@ -820,7 +820,7 @@ const ENGINES = [
   { name:'UD Validator',       emoji:'✅', status:'live',     tier:1, tagline:'Validate .uds and .udr files instantly.',               url:'https://validator.hive.baby',            keywords:['validator','validate','check','document','ud'] },
   { name:'Patrons',            emoji:'🐝', status:'patron',   tier:1, tagline:'The people who keep Hive free.',                       url:'https://hive.baby/patrons',              keywords:['patron','support','donate','fund','community'] },
   // TIER 2 — BUILDING
-  { name:'Universal Document', emoji:'📄', status:'building', tier:2, tagline:'The UD hub. Spec, whitepaper, and certification.',      url:'https://ud.hive.baby',                   keywords:['universal','document','ud','format','intelligence'] },
+  { name:'Universal Document', emoji:'📄', status:'building', tier:2, tagline:'The UD hub. Spec, whitepaper, and certification.',      url:null,                                     keywords:['universal','document','ud','format','intelligence'] },
   { name:'WhoTextedMe',        emoji:'📱', status:'live',     tier:1, tagline:'Free reverse phone lookup.',                           url:'https://whotextedme.hive.baby',          keywords:['phone','number','lookup','caller','reverse','text'] },
   { name:'HiveEngineBuilder',  emoji:'⚙️', status:'live',     tier:1, tagline:'Build Hive engines. The meta-engine.',                  url:'https://hiveenginebuilder.hive.baby',    keywords:['build','engine','create','tool','builder','hive'] },
   { name:'QueenBee',           emoji:'👑', status:'live',     tier:1, tagline:'The governance layer. Proposals and community voice.',  url:'https://queenbee.hive.baby',             keywords:['queen','governance','vote','proposal','community','hive'] },
@@ -834,7 +834,6 @@ const ENGINES = [
   // TIER 3 — PLANNED
   { name:'HiveTV',             emoji:'📺', status:'planned',  tier:3, tagline:'AI broadcast platform. Gary Gansson.',                 url:null, keywords:['tv','broadcast','gary','show','media'] },
   { name:'Trust Mesh',         emoji:'🕸️', status:'planned', tier:3, tagline:'Universal matching and micro-contract.',               url:null, keywords:['trust','mesh','match','contract','social'] },
-  { name:'HiveMeme',           emoji:'😂', status:'building', tier:2, tagline:'AI meme engine. Viral culture, fast.',                url:'https://hivememe.hive.baby',             keywords:['meme','viral','culture','content','funny','ai'] },
   { name:'Confession',         emoji:'🙏', status:'planned',  tier:3, tagline:'Say it anonymously.',                                 url:null, keywords:['confession','anonymous','say','share'] },
   { name:'Desire',             emoji:'💫', status:'planned',  tier:3, tagline:'What do you really want?',                            url:null, keywords:['desire','want','wish','dream'] },
   { name:'Regret',             emoji:'😔', status:'planned',  tier:3, tagline:'Process what you carry.',                             url:null, keywords:['regret','process','emotion','carry'] },

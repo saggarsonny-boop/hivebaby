@@ -37,8 +37,21 @@ export class GrapplerHook {
   // GOVERNANCE RULE: Photos are NEVER deleted on tier downgrade.
   // Users always retain access to their photos regardless of subscription status.
   enforceNoDeleteOnDowngrade(_userId: string): void {
-    // This is a no-op by design — photos survive downgrades.
-    // Enforced at the application layer: downgrade does not trigger any photo deletion.
+    // No-op by design — photos survive downgrades.
+    // Enforced at the application layer: downgrade never triggers photo deletion.
+  }
+
+  // GOVERNANCE RULE: cron_secret header required on all cron routes.
+  // Call at the top of every cron route handler.
+  validateCronSecret(request: Request): boolean {
+    const secret = request.headers.get('x-cron-secret')
+    return secret !== null && secret === process.env.CRON_SECRET
+  }
+
+  // GOVERNANCE RULE: max 3 analysis retries per photo.
+  // Returns true if the photo is eligible for another attempt.
+  enforceMaxRetries(currentRetries: number, maxRetries = 3): boolean {
+    return currentRetries < maxRetries
   }
 
   async logGovernanceEvent(event: {
