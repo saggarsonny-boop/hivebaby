@@ -45,6 +45,7 @@ Account: saggarsonny-boop
 | sovereign-arbitrage | SovereignArbitrage | sovereignarbitrage.hive.baby | LIVE | Next.js + Anthropic |
 | ud-utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
 | ud-signer | UDSigner | signer.hive.baby | LIVE | Next.js + Anthropic |
+| ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind |
 
 ## Naming Standards (canonical — all future engines must follow)
 
