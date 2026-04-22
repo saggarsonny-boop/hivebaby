@@ -33,9 +33,14 @@ Account: saggarsonny-boop
 | queen-bee | QueenBee | queenbee.hive.baby | IN PROGRESS | Next.js + Anthropic |
 | creator-console | HiveCreatorConsole | creatorconsole.hive.baby | LIVE | Next.js |
 | secret-box | HiveSecretBox | secretbox.hive.baby | LIVE | Next.js |
-| universal-document | UniversalDocument | ud.hive.baby | IN PROGRESS | Next.js + Anthropic |
+| universal-document/apps/landing | UniversalDocument | ud.hive.baby | LIVE | Next.js |
 | whotextedme | WhoTextedMe | whotextedme.hive.baby | LIVE | Next.js + Anthropic |
 | universal-document/apps/converter | UDConverter | converter.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/creator | UDCreator | creator.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/reader | UDReader | reader.hive.baby | LIVE | Next.js |
+| universal-document/apps/validator | UDValidator | validator.hive.baby | LIVE | Next.js |
+| universal-document/apps/utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/signer | UDSigner | signer.hive.baby | LIVE | Next.js |
 | hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic |
 | hive-hivememe | HiveMeme | hivememe.hive.baby | BUILDING | Next.js + Anthropic |
 | hive-hivephoto | HivePhoto | hivephoto.hive.baby | BUILDING | Next.js + Anthropic + Clerk + Neon + R2 + Stripe |
@@ -43,8 +48,6 @@ Account: saggarsonny-boop
 | hive-microritual | HiveMicroRitual | hivemicroritual.hive.baby | LIVE | Next.js + Anthropic |
 | hive-memory-space | HiveMemorySpace | hivememoryspace.hive.baby | BUILDING | Next.js + Anthropic |
 | sovereign-arbitrage | SovereignArbitrage | sovereignarbitrage.hive.baby | LIVE | Next.js + Anthropic |
-| ud-utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
-| ud-signer | UDSigner | signer.hive.baby | LIVE | Next.js + Anthropic |
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind |
 
 ## Naming Standards (canonical — all future engines must follow)
