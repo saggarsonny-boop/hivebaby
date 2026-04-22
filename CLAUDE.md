@@ -170,6 +170,39 @@ Three.js 3D planet. Each hexagon cell = one Hive engine.
 - Full Onboarding Stack (all four components)
 - Data source credited visibly if using real data
 
+## UD Design System — GOVERNANCE RULE (hard, no exceptions)
+
+All UD tools, engines, apps, and commensals must use the UD Design System. This is a governance rule enforced at the ENGINE_GRAMMAR level. Any build that deviates must be corrected before merge.
+
+### Typography
+| Role | Font |
+|------|------|
+| Headings | Playfair Display |
+| Body | DM Sans |
+| Labels / meta / code | DM Mono |
+
+### Color Palette
+| Token | Hex | Use |
+|-------|-----|-----|
+| Ink | `#1e2d3d` | Primary text, nav, dark backgrounds |
+| Paper | `#fafaf8` | Page background |
+| Gold | `#c8960a` | CTAs, accents, brand highlights |
+| Paper-2 | `#f2f1ee` | Alternate section backgrounds |
+| Border | `#e0ddd6` | Dividers, card borders |
+| Muted | `#6b7280` | Secondary text, placeholders |
+
+### Border Radius
+- Standard elements: `8px`
+- Cards: `12px`
+
+### File Type Icons
+- **UDR** — light blue (`#93c5fd`), file-shape, "UDR" + "UNIVERSAL DOCUMENT™" wordmark below
+- **UDS** — dark navy (`#1e2d3d`), file-shape, "UDS" + "UNIVERSAL DOCUMENT™" wordmark below
+- Icon files live at `/public/icons/udr.svg` and `/public/icons/uds.svg` in each UD repo
+
+### Scope — applies without exception to:
+UD Reader · UD Converter · UD Creator · UD Validator · UD Utilities · UD Signer · every future UD tool
+
 ## Universal Document™ — Trademark
 Universal Document™ is a pending trademark (Serial 99774346, filed 2026-04-20).
 Always use ™ symbol after "Universal Document" in all Hive properties and documents.
