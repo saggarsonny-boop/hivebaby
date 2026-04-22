@@ -62,6 +62,9 @@ Aurora, lightning, seismic, ocean currents, time controls, ISS live camera, cell
 ## Premium Locks
 - None (planet is always free)
 
+## UD Design System — Governance Rule
+All UD-ecosystem engines (UD Reader, UD Converter, UD Creator, UD Validator, UD Utilities, UD Signer, and all future UD tools) MUST conform to the UD Design System. See CLAUDE.md § "UD Design System" for the full spec. This rule is enforced at the ENGINE_GRAMMAR level. Any UD engine whose PR does not conform must be rejected and corrected before merge. No exceptions.
+
 ## Governance Inheritance
 - Governed by: QueenBee.MasterGrappler (pending)
 - Safety level: standard

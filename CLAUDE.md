@@ -33,9 +33,14 @@ Account: saggarsonny-boop
 | queen-bee | QueenBee | queenbee.hive.baby | IN PROGRESS | Next.js + Anthropic |
 | creator-console | HiveCreatorConsole | creatorconsole.hive.baby | LIVE | Next.js |
 | secret-box | HiveSecretBox | secretbox.hive.baby | LIVE | Next.js |
-| universal-document | UniversalDocument | ud.hive.baby | IN PROGRESS | Next.js + Anthropic |
+| universal-document/apps/landing | UniversalDocument | ud.hive.baby | LIVE | Next.js |
 | whotextedme | WhoTextedMe | whotextedme.hive.baby | LIVE | Next.js + Anthropic |
 | universal-document/apps/converter | UDConverter | converter.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/creator | UDCreator | creator.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/reader | UDReader | reader.hive.baby | LIVE | Next.js |
+| universal-document/apps/validator | UDValidator | validator.hive.baby | LIVE | Next.js |
+| universal-document/apps/utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/signer | UDSigner | signer.hive.baby | LIVE | Next.js |
 | hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic |
 | hive-hivememe | HiveMeme | hivememe.hive.baby | BUILDING | Next.js + Anthropic |
 | hive-hivephoto | HivePhoto | hivephoto.hive.baby | BUILDING | Next.js + Anthropic + Clerk + Neon + R2 + Stripe |
@@ -43,8 +48,6 @@ Account: saggarsonny-boop
 | hive-microritual | HiveMicroRitual | hivemicroritual.hive.baby | LIVE | Next.js + Anthropic |
 | hive-memory-space | HiveMemorySpace | hivememoryspace.hive.baby | BUILDING | Next.js + Anthropic |
 | sovereign-arbitrage | SovereignArbitrage | sovereignarbitrage.hive.baby | LIVE | Next.js + Anthropic |
-| ud-utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
-| ud-signer | UDSigner | signer.hive.baby | LIVE | Next.js + Anthropic |
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind |
 
 ## Naming Standards (canonical — all future engines must follow)
@@ -169,6 +172,39 @@ Three.js 3D planet. Each hexagon cell = one Hive engine.
 - Free tier forever; paid features via Stripe
 - Full Onboarding Stack (all four components)
 - Data source credited visibly if using real data
+
+## UD Design System — GOVERNANCE RULE (hard, no exceptions)
+
+All UD tools, engines, apps, and commensals must use the UD Design System. This is a governance rule enforced at the ENGINE_GRAMMAR level. Any build that deviates must be corrected before merge.
+
+### Typography
+| Role | Font |
+|------|------|
+| Headings | Playfair Display |
+| Body | DM Sans |
+| Labels / meta / code | DM Mono |
+
+### Color Palette
+| Token | Hex | Use |
+|-------|-----|-----|
+| Ink | `#1e2d3d` | Primary text, nav, dark backgrounds |
+| Paper | `#fafaf8` | Page background |
+| Gold | `#c8960a` | CTAs, accents, brand highlights |
+| Paper-2 | `#f2f1ee` | Alternate section backgrounds |
+| Border | `#e0ddd6` | Dividers, card borders |
+| Muted | `#6b7280` | Secondary text, placeholders |
+
+### Border Radius
+- Standard elements: `8px`
+- Cards: `12px`
+
+### File Type Icons
+- **UDR** — light blue (`#93c5fd`), file-shape, "UDR" + "UNIVERSAL DOCUMENT™" wordmark below
+- **UDS** — dark navy (`#1e2d3d`), file-shape, "UDS" + "UNIVERSAL DOCUMENT™" wordmark below
+- Icon files live at `/public/icons/udr.svg` and `/public/icons/uds.svg` in each UD repo
+
+### Scope — applies without exception to:
+UD Reader · UD Converter · UD Creator · UD Validator · UD Utilities · UD Signer · every future UD tool
 
 ## Universal Document™ — Trademark
 Universal Document™ is a pending trademark (Serial 99774346, filed 2026-04-20).
