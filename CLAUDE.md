@@ -46,6 +46,7 @@ Account: saggarsonny-boop
 | ud-utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
 | ud-signer | UDSigner | signer.hive.baby | LIVE | Next.js + Anthropic |
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind |
+| expo-hive | HiveApp | App Store / Play Store | READY TO SUBMIT | Expo + react-native-webview |
 
 ## Naming Standards (canonical — all future engines must follow)
 
@@ -92,6 +93,21 @@ hive-moon deploy: `cd /workspaces/hive-moon && npx vercel --prod --yes` (project
 All engines: enginename.hive.baby — Cloudflare CNAME → cname.vercel-dns.com
 Vercel Deployment Protection must be OFF for public access
 
+## Mobile App — expo-hive
+Local path: `/home/user/expo-hive` — committed, ready to push.
+To publish: create `saggarsonny-boop/expo-hive` on GitHub, then:
+```
+cd /home/user/expo-hive
+git remote set-url origin https://github.com/saggarsonny-boop/expo-hive.git
+git push -u origin main
+```
+Then: `eas login` → `eas build:configure` (updates projectId in app.json) → `eas build --platform all`
+
+## Email Routing — hive@hive.baby
+Solved via Cloudflare Email Worker (hive-email-router). No MX record needed.
+- Worker forwards every inbound email to saggarsonny@gmail.com
+- Worker simultaneously POSTs to support.hive.baby/api/inbound (HiveAdminSupport webhook)
+- Gmail delivery + HiveAdminSupport logging both confirmed working
 ---
 
 ## hive.baby Planet — THE FRONT DOOR
