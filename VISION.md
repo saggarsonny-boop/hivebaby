@@ -612,6 +612,41 @@ Applied to all engines: hivefield, hiveclock, hiveclarity, hivestrengthmastery, 
 
 ---
 
+## CONSULTING FRAMEWORK — PERMANENT REFERENCE
+
+### Sonny is available for consulting in:
+- Document infrastructure strategy
+- AI readiness and governance
+- Digital health document governance
+- Universal Document™ (UD) implementation advice
+- Clinical AI evaluation
+
+### Sonny is NOT available for:
+- Non-compete arrangements of any kind
+- Engagements that conflict with Universal Document Incorporated or The Hive
+- Helping organisations build competing document format standards
+
+### Standard disclosure for all consulting enquiries:
+> "I have an existing relationship with Universal Document Incorporated and The Hive ecosystem. I am not available for engagements that create conflicts with that relationship. I cannot sign a non-compete. NDAs covering client-specific information learned during the engagement are acceptable. I disclose this upfront so we can assess fit before investing time on either side."
+
+### Fee structure:
+- Day rate: £2,000–5,000 depending on engagement
+- Project fees: scoped and agreed in advance
+- Long-term arrangements: equity or revenue share for engagements that produce ongoing value
+- All commercial arrangements through Universal Document Incorporated or a separate consulting vehicle
+
+### HiveAdminSupport behaviour for consulting enquiries:
+- Acknowledge warmly — flag immediately (keywords: "consult", "advisory", "engagement", "retainer")
+- Do NOT auto-respond with pricing
+- Route to Sonny for personal response within 24 hours
+
+### Credentials:
+- Medium articles Part 1 and Part 2 are the primary consulting credential documents
+- White paper at universaldocument.hive.baby is the secondary credential
+- LinkedIn overhaul needed — see session notes
+
+---
+
 ## SECONDARY MEANING PROTOCOL — PERMANENT STANDING INSTRUCTION
 
 In ALL content produced for the Hive ecosystem and Universal Document properties, apply this naming convention without exception:
