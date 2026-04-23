@@ -190,6 +190,13 @@ Three.js 3D planet. Each hexagon cell = one Hive engine.
 Universal Document™ is a pending trademark (Serial 99774346, filed 2026-04-20).
 Always use ™ symbol after "Universal Document" in all Hive properties and documents.
 
+## Beta Status
+BETA STATUS: All Pro features free. Stripe in test mode.
+Beta end date: TBD — Sonny will announce.
+When beta ends: Sonny will instruct CC to activate Stripe live mode and implement usage limits.
+Pro badges still show on Pro features so users understand the value — but clicking them works without payment.
+Show "Pro · Free during beta" beneath Pro badges instead of just "Pro".
+
 ## How to Work Across Repos
 Use GitHub API with token to read/write/commit to any repo.
 After any hivebaby change, trigger: `curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_Mj8SJS4gAlrG2PCXdUCUMmoAQAA3/CfgdTZ1r50"`
