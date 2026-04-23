@@ -48,6 +48,29 @@ Account: saggarsonny-boop
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind |
 | expo-hive | HiveApp | App Store / Play Store | READY TO SUBMIT | Expo + react-native-webview |
 
+## Brand Assets (official — do not recreate as SVG)
+
+All brand marks are PNG files. Use exactly as provided. Do not redraw, redesign, or recreate in SVG.
+
+| Asset | File | Description | Usage |
+|-------|------|-------------|-------|
+| UDS mark | `ud-mark-uds.png` | Dark blue background, light UD mark, "UDS" label | UDNav logo, UDS file icon, favicon |
+| UDR mark | `ud-mark-udr.png` | Light blue background, dark UD mark, "UDR" label | UDR file icon |
+| HIVE icon | `hive-icon.png` | Gold glowing hexagon on dark honeycomb grid | Hive app icon, expo-hive app store icon |
+
+### File locations (once deployed)
+- UD apps: `apps/{app}/public/icons/ud-mark-uds.png`, `ud-mark-udr.png`
+- Hive: `hivebaby/public/hive-icon.png`
+- UDNav component: replace text "UD" mark with `<img src="/icons/ud-mark-uds.png">`
+- Favicon: `ud-mark-uds.png` square-cropped → `favicon.ico` in each app
+
+### Deployment status
+- [ ] PNGs committed to universal-document repo
+- [ ] PNGs copied to all app public/icons/ folders
+- [ ] UDNav updated to use PNG mark
+- [ ] Favicons updated
+- [ ] hive-icon.png committed to hivebaby
+
 ## Naming Standards (canonical — all future engines must follow)
 
 ### Engine Names
