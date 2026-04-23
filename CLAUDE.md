@@ -190,6 +190,30 @@ Three.js 3D planet. Each hexagon cell = one Hive engine.
 Universal Document™ is a pending trademark (Serial 99774346, filed 2026-04-20).
 Always use ™ symbol after "Universal Document" in all Hive properties and documents.
 
+## Universal Document™ — File Format Specification
+
+There are exactly THREE file formats. No others. No new extensions. Ever.
+
+| Extension | Name | Purpose |
+|-----------|------|---------|
+| `.uds` | Universal Document Sealed | A sealed, tamper-evident document. Immutable once sealed. |
+| `.udr` | Universal Document Revisable | A draft/working document. Can be edited. Converts to .uds on sealing. |
+| `.udz` | Universal Document Bundle | A governed bundle of multiple .uds files. General-purpose. |
+
+### .udz is universal — NOT domain-specific
+
+`.udz` is the single bundle format for any collection of .uds files. It is not a legal format, medical format, or any other specialist format.
+
+Specialised bundle assemblers (UDZ Legal Bundle, UDZ Deposition Package, UD FOI Bundle, UD Data Package, UD Claims Package, etc.) are **tools that output .udz files**. They are NOT new file formats.
+
+**Rule for all bundle tool UI copy:**
+- ✓ "Output: .udz bundle"
+- ✓ "Creates a .udz bundle pre-configured for legal proceedings"
+- ✗ "Output: .udz legal bundle"
+- ✗ "Creates a .udz-legal file"
+
+The output filename may have a descriptive suffix (e.g. `case-files-deposition.udz`) but the extension is always `.udz`.
+
 ## Beta Status
 BETA STATUS: All Pro features free. Stripe in test mode.
 Beta end date: TBD — Sonny will announce.
