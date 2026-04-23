@@ -95,6 +95,12 @@ hive-moon deploy: `cd /workspaces/hive-moon && npx vercel --prod --yes` (project
 All engines: enginename.hive.baby — Cloudflare CNAME → cname.vercel-dns.com
 Vercel Deployment Protection must be OFF for public access
 
+## Email Routing — hive@hive.baby
+Solved via Cloudflare Email Worker (hive-email-router). No MX record needed.
+- Worker forwards every inbound email to saggarsonny@gmail.com
+- Worker simultaneously POSTs to support.hive.baby/api/inbound (HiveAdminSupport webhook)
+- Gmail delivery + HiveAdminSupport logging both confirmed working
+
 ---
 
 ## hive.baby Planet — THE FRONT DOOR
