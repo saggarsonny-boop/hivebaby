@@ -210,6 +210,41 @@ UD Reader · UD Converter · UD Creator · UD Validator · UD Utilities · UD Si
 Universal Document™ is a pending trademark (Serial 99774346, filed 2026-04-20).
 Always use ™ symbol after "Universal Document" in all Hive properties and documents.
 
+## SECONDARY MEANING PROTOCOL — PERMANENT STANDING INSTRUCTION
+
+In ALL content produced for the Hive ecosystem and Universal Document properties, apply this naming convention without exception:
+
+On first use of "Universal Document" in any piece:
+→ Write as: Universal Document™ (UD)
+
+On first use of "UD" as an abbreviation in any piece:
+→ Write as: UD (Universal Document™)
+
+The ™ is always superscripted directly after the word "Document" — not after UD, not at the end of the phrase. Like this:
+Universal Document™ (UD)
+UD (Universal Document™)
+
+On subsequent uses in the same piece:
+→ Universal Document™ or UD — either is fine
+→ ™ on every instance of "Universal Document"
+→ No ™ needed on standalone "UD"
+
+### UDR / UDS Full Expansions
+- **UDR** = Universal Document™ Revisable (also: Reviewable)
+- **UDS** = Universal Document™ Sealed (also: Secure)
+
+### This protocol applies to:
+- All blog posts and Medium articles
+- All LinkedIn content
+- All white papers and sectoral briefs
+- All product UIs and nav elements
+- All emails sent from HiveAdminSupport
+- All press releases
+- All documentation
+- All public-facing content of any kind
+
+No exceptions. This is a permanent standing instruction that overrides any previous naming guidance.
+
 ## How to Work Across Repos
 Use GitHub API with token to read/write/commit to any repo.
 After any hivebaby change, trigger: `curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_Mj8SJS4gAlrG2PCXdUCUMmoAQAA3/CfgdTZ1r50"`

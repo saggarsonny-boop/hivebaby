@@ -608,3 +608,41 @@ Add CSS variables:
 --font-mono: 'DM Mono', monospace;
 
 Applied to all engines: hivefield, hiveclock, hiveclarity, hivestrengthmastery, hivebodylog, hivemoon, secret-box, whotextedme, converter, creator, validator, ud-landing, station.hive.baby, queen-bee
+
+
+---
+
+## SECONDARY MEANING PROTOCOL — PERMANENT STANDING INSTRUCTION
+
+In ALL content produced for the Hive ecosystem and Universal Document properties, apply this naming convention without exception:
+
+On first use of "Universal Document" in any piece:
+→ Write as: Universal Document™ (UD)
+
+On first use of "UD" as an abbreviation in any piece:
+→ Write as: UD (Universal Document™)
+
+The ™ is always superscripted directly after the word "Document" — not after UD, not at the end of the phrase. Like this:
+Universal Document™ (UD)
+UD (Universal Document™)
+
+On subsequent uses in the same piece:
+→ Universal Document™ or UD — either is fine
+→ ™ on every instance of "Universal Document"
+→ No ™ needed on standalone "UD"
+
+### UDR / UDS Full Expansions
+- **UDR** = Universal Document™ Revisable (also: Reviewable)
+- **UDS** = Universal Document™ Sealed (also: Secure)
+
+### This protocol applies to:
+- All blog posts and Medium articles
+- All LinkedIn content
+- All white papers and sectoral briefs
+- All product UIs and nav elements
+- All emails sent from HiveAdminSupport
+- All press releases
+- All documentation
+- All public-facing content of any kind
+
+No exceptions. This is a permanent standing instruction that overrides any previous naming guidance.
