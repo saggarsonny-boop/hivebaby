@@ -244,6 +244,32 @@ When beta ends: Sonny will instruct CC to activate Stripe live mode and implemen
 Pro badges still show on Pro features so users understand the value — but clicking them works without payment.
 Show "Pro · Free during beta" beneath Pro badges instead of just "Pro".
 
+## UD Pre-registration — SEO & Positioning
+
+Route: `utilities.hive.baby/pre-registration`
+Page title: "UD Pre-registration — Tamper-Evident Research Protocol Registration"
+Meta description: "Register your research hypothesis before data collection with cryptographic proof and blockchain timestamp. Free forever. No account required."
+
+Target audience: academic researchers, open science advocates, journal editors.
+
+Key SEO terms (use naturally in copy):
+- preregistration / hypothesis registration
+- registered reports
+- open science / research transparency
+- HARKing (Hypothesising After Results are Known)
+- reproducibility crisis
+- Centre for Open Science alternative / OSF alternative
+- blockchain research integrity
+
+Positioning vs OSF:
+- Proof lives inside the document, not our database
+- Mathematically verifiable by anyone (FNV-1a hash)
+- No account required — runs entirely in browser
+- No platform dependency (survives if we shut down)
+- Free forever — research tools never paywalled
+
+This tool is always FREE. Never gate or paywalled. No badge needed.
+
 ## How to Work Across Repos
 Use GitHub API with token to read/write/commit to any repo.
 After any hivebaby change, trigger: `curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_Mj8SJS4gAlrG2PCXdUCUMmoAQAA3/CfgdTZ1r50"`
