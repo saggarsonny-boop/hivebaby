@@ -237,6 +237,44 @@ Specialised bundle assemblers (UDZ Legal Bundle, UDZ Deposition Package, UD FOI 
 
 The output filename may have a descriptive suffix (e.g. `case-files-deposition.udz`) but the extension is always `.udz`.
 
+## MANDATORY SEO RULE
+
+Every new tool page, utility, engine, or app built in the UD ecosystem MUST include SEO as part of the build — not as a separate task added later.
+
+**SEO is part of the definition of done for every page. No exceptions.**
+
+For every new page, CC must:
+
+1. **Create a `layout.tsx`** (server component) with correct page title and meta description before the page goes live
+2. **Weave keywords naturally** into page copy — never keyword stuff
+3. **Include a comparison section** showing how this tool differs from the main competitor or existing solution
+4. **Add the tool to the sitemap** (if one exists)
+
+### layout.tsx format (required for every tool page):
+```tsx
+export const metadata = {
+  title: "[Tool Name] — [Specific Benefit]",
+  description: "[What it does]. [Key differentiator]. [Tier/pricing one-liner].",
+  keywords: "[keyword1], [keyword2], [keyword3]",
+  openGraph: {
+    title: "[Tool Name] — [Specific Benefit]",
+    description: "[What it does]. [Key differentiator].",
+    url: "https://utilities.hive.baby/[route]",
+    siteName: "Universal Document™",
+    type: "website",
+  }
+}
+```
+
+### This rule applies to:
+- Every utilities tool page (`/utilities/src/app/[tool]/layout.tsx`)
+- Every standalone app (converter, creator, signer, validator, reader)
+- Every future Hive engine page
+- Every landing page section
+
+### Comparison section format:
+A named section on the page titled "How [Tool] differs from [Competitor]" with 3–5 cards explaining the structural differentiators. Not marketing copy — honest, specific, verifiable differences.
+
 ## Beta Status
 BETA STATUS: All Pro features free. Stripe in test mode.
 Beta end date: TBD — Sonny will announce.
