@@ -308,6 +308,26 @@ Positioning vs OSF:
 
 This tool is always FREE. Never gate or paywalled. No badge needed.
 
+## Stripe Live Price IDs — April 24 2026
+
+All 22 products created in live mode. Payment links are direct Stripe-hosted checkout pages.
+
+| Plan | Monthly Price ID | Annual Price ID | Monthly Link | Annual Link |
+|------|-----------------|-----------------|--------------|-------------|
+| UD Solo | price_1TPtJ2PIZtoQZOG1cOYsKZbI | price_1TPtJAPIZtoQZOG1ywp29gzN | plink_1TPtJ2PIZtoQZOG177D6wf7J | plink_1TPtJBPIZtoQZOG1CuZkmRMd |
+| UD Pro | price_1TPtJ2PIZtoQZOG13GimEZoi | price_1TPtJBPIZtoQZOG1j18iDp3z | plink_1TPtJ3PIZtoQZOG14zH50WxQ | plink_1TPtJBPIZtoQZOG1xErmXCuK |
+| UD Premium | price_1TPtJ3PIZtoQZOG1ejTmihTM | price_1TPtJCPIZtoQZOG1ASGfg1O9 | plink_1TPtJ3PIZtoQZOG1wF9TTsCp | plink_1TPtJCPIZtoQZOG15WraIbzd |
+| Enterprise Starter | price_1TPtJ4PIZtoQZOG11t2dnSJJ | price_1TPtJCPIZtoQZOG1MpqZIpyr | plink_1TPtJ4PIZtoQZOG1FUuTbD5w | plink_1TPtJDPIZtoQZOG1j0ObWbtt |
+| Enterprise Pro | price_1TPtJ5PIZtoQZOG1NUp56tn2 | price_1TPtJDPIZtoQZOG114P0ImlG | plink_1TPtJ5PIZtoQZOG1t5WrmjrP | plink_1TPtJEPIZtoQZOG1HkIrIPeW |
+| Enterprise Scale | price_1TPtJ5PIZtoQZOG1L0rL7Gx5 | price_1TPtJEPIZtoQZOG18n4tb0ON | plink_1TPtJ6PIZtoQZOG1lexZUI2A | plink_1TPtJEPIZtoQZOG1XHCGfiWA |
+| cSDK Lite | price_1TPtJ6PIZtoQZOG1JcEY2AT6 | price_1TPtJFPIZtoQZOG1WGXr4Scj | plink_1TPtJ7PIZtoQZOG16VqZIpFB | plink_1TPtJFPIZtoQZOG1Mv5SlnWv |
+| cSDK Pro | price_1TPtJ7PIZtoQZOG1pwqaxVFI | price_1TPtJGPIZtoQZOG10iywTn7v | plink_1TPtJ7PIZtoQZOG1V27uHCF6 | plink_1TPtJGPIZtoQZOG1LBCRGgm4 |
+| cSDK Scale | price_1TPtJ8PIZtoQZOG1s9aQdYx8 | price_1TPtJGPIZtoQZOG1ihxNgWEV | plink_1TPtJ8PIZtoQZOG17Sc5upCq | plink_1TPtJHPIZtoQZOG1LQu7FQCI |
+| UD Signer Solo | price_1TPtJ9PIZtoQZOG1JD3wXRXF | price_1TPtJHPIZtoQZOG1r79Lfort | plink_1TPtJ9PIZtoQZOG1A4bgIZ5c | plink_1TPtJIPIZtoQZOG1bmJGldYr |
+| UD Signer Business | price_1TPtJ9PIZtoQZOG1mUwO7bEg | price_1TPtJIPIZtoQZOG13xr6j9Rg | plink_1TPtJAPIZtoQZOG1ZYGK1xRK | plink_1TPtJIPIZtoQZOG1b3pvm940 |
+
+All hardcoded in `apps/shared/lib/pricing.ts`. UpgradePrompt.tsx uses `getPaymentLink()` for direct Stripe checkout.
+
 ## UDUtilities Engine Status — April 24 2026
 
 - **Total engines built:** 108
