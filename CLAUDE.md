@@ -328,6 +328,16 @@ All 22 products created in live mode. Payment links are direct Stripe-hosted che
 
 All hardcoded in `apps/shared/lib/pricing.ts`. UpgradePrompt.tsx uses `getPaymentLink()` for direct Stripe checkout.
 
+## Stripe Support Add-On Price IDs — April 24 2026
+
+| Plan | Price ID | Payment Link |
+|------|----------|--------------|
+| UD Support Monthly ($1.99/mo) | price_1TPtaOPIZtoQZOG1pLuthSHB | plink_1TPtaOPIZtoQZOG19n2Qfbmf |
+| UD Support Annual ($19/yr) | price_1TPtaPPIZtoQZOG11QC0Bbbz | plink_1TPtaPPIZtoQZOG1SMN0h5A9 |
+| UD Support One-Time ($5) | price_1TPtaPPIZtoQZOG1hKNfugHU | plink_1TPtaQPIZtoQZOG1VDe0ZG85 |
+
+Wired into pricing.ts, UpgradePrompt.tsx (add-on section), UDFooter (all 7 apps), support.hive.baby, and ud.hive.baby/support.
+
 ## UDUtilities Engine Status — April 24 2026
 
 - **Total engines built:** 108
