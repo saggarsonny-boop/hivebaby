@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Find utilities project and fix ANTHROPIC_API_KEY
+      - name: Find utilities, set ANTHROPIC_API_KEY, redeploy
         env:
           VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
           ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
@@ -22,18 +22,11 @@ jobs:
           node << 'EOF' > /tmp/reset-audit.txt
           const VTOKEN = process.env.VERCEL_TOKEN_MAIN;
           const AKEY   = process.env.ANTHROPIC_KEY;
+          const TEAM   = 'saggarsonny-3909s-projects';
 
           async function vget(path) {
             const r = await fetch(`https://api.vercel.com${path}`, {
               headers: { 'Authorization': `Bearer ${VTOKEN}` },
-            });
-            return r.json();
-          }
-          async function vpatch(path, body) {
-            const r = await fetch(`https://api.vercel.com${path}`, {
-              method: 'PATCH',
-              headers: { 'Authorization': `Bearer ${VTOKEN}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
             });
             return r.json();
           }
@@ -45,106 +38,118 @@ jobs:
             });
             return r.json();
           }
-
-          async function listProjects(teamParam) {
-            const label = teamParam || 'personal';
-            const qs = teamParam ? `&teamId=${teamParam}` : '';
-            const all = await vget(`/v9/projects?limit=100${qs}`);
-            if (all.error) { console.log(`  ${label}: ERROR ${all.error.code} — ${all.error.message}`); return []; }
-            const projects = all.projects || [];
-            console.log(`  ${label}: ${projects.length} projects`);
-            for (const p of projects) {
-              const aliases = (p.alias || []).map(a => a.value || a.domain || '').filter(Boolean);
-              const isUtil = aliases.some(a => a.includes('utilities'));
-              console.log(`    ${p.name} (${p.id}) [${aliases.slice(0,3).join(', ')}]${isUtil ? ' ← UTILITIES' : ''}`);
-            }
-            return projects;
-          }
-
-          async function fixApiKey(projId, teamParam) {
-            const qs = teamParam ? `?teamId=${teamParam}` : '';
-            console.log(`\n=== ENV VARS on ${projId} ===`);
-            const env = await vget(`/v9/projects/${projId}/env${qs}`);
-            if (env.error) { console.log('ERROR:', JSON.stringify(env.error)); return; }
-            const vars = env.envs || [];
-            let anthropicVar = null;
-            for (const v of vars) {
-              const display = v.type === 'encrypted' ? 'ENCRYPTED' : (v.value ? 'SET' : 'EMPTY');
-              console.log(`  ${v.key} [${(v.target||[]).join(',')}] ${display}`);
-              if (v.key === 'ANTHROPIC_API_KEY') anthropicVar = v;
-            }
-            console.log('\n=== ANTHROPIC_API_KEY ===');
-            if (!AKEY) { console.log('ERROR: ANTHROPIC_KEY secret not in workflow'); return; }
-            if (!anthropicVar) {
-              console.log('MISSING — adding');
-              const r = await vpost(`/v10/projects/${projId}/env${qs}`, {
-                key: 'ANTHROPIC_API_KEY', value: AKEY,
-                type: 'encrypted', target: ['production', 'preview'],
-              });
-              console.log(r.error ? 'FAILED: ' + JSON.stringify(r.error) : `ADDED id=${r.id}`);
-            } else {
-              console.log(`EXISTS id=${anthropicVar.id} — patching value`);
-              const r = await vpatch(`/v9/projects/${projId}/env/${anthropicVar.id}${qs}`, {
-                value: AKEY, target: ['production', 'preview'],
-              });
-              console.log(r.error ? 'PATCH FAILED: ' + JSON.stringify(r.error) : `PATCHED OK`);
-            }
-            // Trigger redeploy
-            console.log('\n=== REDEPLOY ===');
-            const deps = await vget(`/v6/deployments?projectId=${projId}&limit=1${qs ? '&' + qs.slice(1) : ''}`);
-            const latest = (deps.deployments || [])[0];
-            if (latest) {
-              console.log(`Latest: ${latest.uid} state=${latest.state}`);
-              const rd = await vpost(`/v13/deployments?forceNew=1${qs ? '&' + qs.slice(1) : ''}`, {
-                deploymentId: latest.uid, name: latest.name || projId, target: 'production',
-              });
-              console.log(rd.error ? 'REDEPLOY ERROR: ' + JSON.stringify(rd.error).slice(0,200) : `REDEPLOYING: ${rd.id || rd.uid || 'ok'}`);
-            }
-          }
+          function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
           async function main() {
-            console.log('=== STEP 1: LIST TEAMS ===');
-            const teams = await vget('/v2/teams?limit=20');
-            const teamList = teams.teams || [];
-            console.log(`Teams: ${teamList.map(t => `${t.name}(${t.id})`).join(', ') || 'none'}`);
-
-            console.log('\n=== STEP 2: ALL PROJECTS ===');
-            let allProjects = [];
-            let foundTeam = null;
-
-            // Personal
-            const personal = await listProjects(null);
-            for (const p of personal) {
-              const aliases = (p.alias || []).map(a => a.value || a.domain || '');
-              if (aliases.some(a => a.includes('utilities'))) { foundTeam = null; }
-              allProjects.push({ project: p, teamParam: null });
+            // STEP 1: List all projects under saggarsonny-3909s-projects
+            console.log('=== STEP 1: LIST PROJECTS (saggarsonny-3909s-projects) ===');
+            const all = await vget(`/v9/projects?teamId=${TEAM}&limit=100`);
+            if (all.error) {
+              console.log('ERROR:', JSON.stringify(all.error));
+              process.exit(1);
+            }
+            const projects = all.projects || [];
+            console.log(`Found ${projects.length} projects:`);
+            let utilProject = null;
+            for (const p of projects) {
+              const aliases = (p.alias || []).map(a => a.value || a.domain || '').filter(Boolean);
+              const isUtil = aliases.some(a => a.includes('utilities')) || p.name.toLowerCase().includes('util');
+              console.log(`  ${p.name} (${p.id}) [${aliases.slice(0,3).join(', ')}]${isUtil ? ' ← UTILITIES' : ''}`);
+              if (isUtil) utilProject = p;
             }
 
-            // Each team
-            for (const team of teamList) {
-              const teamProjs = await listProjects(team.id);
-              for (const p of teamProjs) {
-                const aliases = (p.alias || []).map(a => a.value || a.domain || '');
-                if (aliases.some(a => a.includes('utilities'))) { foundTeam = team.id; }
-                allProjects.push({ project: p, teamParam: team.id });
-              }
+            if (!utilProject) {
+              console.log('\nNot found by alias/name. All project names listed above.');
+              process.exit(1);
             }
 
-            // Find utilities by alias or name
-            const utilEntry = allProjects.find(e => {
-              const aliases = (e.project.alias || []).map(a => a.value || a.domain || '');
-              return aliases.some(a => a.includes('utilities')) || e.project.name.includes('util');
+            console.log(`\nProject ID: ${utilProject.id}`);
+            console.log(`Project name: ${utilProject.name}`);
+
+            // STEP 2: Set ANTHROPIC_API_KEY
+            console.log('\n=== STEP 2: SET ANTHROPIC_API_KEY ===');
+            if (!AKEY) { console.log('ERROR: ANTHROPIC_KEY secret not available'); process.exit(1); }
+
+            // Check if it already exists
+            const envList = await vget(`/v9/projects/${utilProject.id}/env?teamId=${TEAM}`);
+            const existing = (envList.envs || []).find(e => e.key === 'ANTHROPIC_API_KEY');
+            if (existing) {
+              console.log(`Already exists (id=${existing.id}) — will update`);
+              const patch = await fetch(`https://api.vercel.com/v9/projects/${utilProject.id}/env/${existing.id}?teamId=${TEAM}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${VTOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: AKEY, target: ['production', 'preview', 'development'] }),
+              }).then(r => r.json());
+              console.log(patch.error ? 'PATCH FAILED: ' + JSON.stringify(patch.error) : 'UPDATED OK');
+            } else {
+              console.log('Does not exist — creating');
+              const created = await vpost(`/v9/projects/${utilProject.id}/env?teamId=${TEAM}`, {
+                key: 'ANTHROPIC_API_KEY',
+                value: AKEY,
+                type: 'encrypted',
+                target: ['production', 'preview', 'development'],
+              });
+              console.log(created.error ? 'CREATE FAILED: ' + JSON.stringify(created.error) : `CREATED id=${created.id}`);
+            }
+
+            // STEP 3: Trigger redeploy from GitHub
+            console.log('\n=== STEP 3: TRIGGER REDEPLOY ===');
+            const deploy = await vpost(`/v13/deployments?teamId=${TEAM}`, {
+              name: utilProject.name,
+              gitSource: {
+                type: 'github',
+                repo: 'saggarsonny-boop/universal-document',
+                ref: 'main',
+              },
             });
 
-            if (utilEntry) {
-              console.log(`\n=== FOUND: ${utilEntry.project.name} (${utilEntry.project.id}) ===`);
-              await fixApiKey(utilEntry.project.id, utilEntry.teamParam);
-            } else {
-              console.log('\n=== utilities not found by alias — listing all project names for manual check ===');
-              for (const e of allProjects) {
-                console.log(`  ${e.project.name} (${e.project.id})`);
+            if (deploy.error) {
+              console.log('DEPLOY ERROR:', JSON.stringify(deploy.error).slice(0, 300));
+              process.exit(1);
+            }
+
+            const depId = deploy.id || deploy.uid;
+            console.log(`Deployment ID: ${depId}`);
+            console.log(`URL: ${deploy.url || 'n/a'}`);
+            console.log(`Initial state: ${deploy.status || deploy.state || deploy.readyState || 'QUEUED'}`);
+
+            // STEP 4: Poll for READY or ERROR (max 5 min)
+            console.log('\n=== STEP 4: BUILD STATUS ===');
+            const maxWait = 300000;
+            const start = Date.now();
+            let lastState = '';
+            while (Date.now() - start < maxWait) {
+              await sleep(15000);
+              const d = await vget(`/v13/deployments/${depId}?teamId=${TEAM}`);
+              const state = d.status || d.state || d.readyState;
+              if (state !== lastState) {
+                console.log(`[${Math.round((Date.now()-start)/1000)}s] state: ${state}`);
+                lastState = state;
+              }
+              if (state === 'READY') {
+                console.log('\n✓ BUILD READY');
+                console.log(`url: ${d.url}`);
+                break;
+              }
+              if (state === 'ERROR' || state === 'CANCELED') {
+                console.log(`\n✗ BUILD FAILED: ${d.errorMessage || 'unknown'}`);
+                const evRes = await fetch(
+                  `https://api.vercel.com/v2/deployments/${depId}/events?limit=100&teamId=${TEAM}`,
+                  { headers: { 'Authorization': `Bearer ${VTOKEN}` } }
+                );
+                const evText = await evRes.text();
+                for (const line of evText.split('\n').filter(l => l.trim())) {
+                  try {
+                    const e = JSON.parse(line);
+                    const p = e.payload || '';
+                    const t = typeof p === 'string' ? p : (p.text || p.message || '');
+                    if (t.trim()) console.log(t.slice(0, 300));
+                  } catch {}
+                }
+                break;
               }
             }
+            if (Date.now() - start >= maxWait) console.log('TIMEOUT after 5 min');
           }
 
           main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
@@ -161,5 +166,5 @@ jobs:
           git config user.name "Claude Code"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/saggarsonny-boop/hivebaby.git
           git add hivephoto-reset-audit.txt
-          git commit -m "chore: utilities ANTHROPIC_API_KEY fix $(date -u +%H:%M)" || echo "no changes"
+          git commit -m "chore: utilities set ANTHROPIC_API_KEY + redeploy $(date -u +%H:%M)" || echo "no changes"
           git push origin HEAD:main
