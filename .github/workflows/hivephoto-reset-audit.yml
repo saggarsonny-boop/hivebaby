@@ -17,15 +17,17 @@ jobs:
       - name: Full reset audit
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node << 'EOF' > /tmp/reset-audit.txt
-          const TOKEN = process.env.VERCEL_TOKEN;
+          const VTOKEN = process.env.VERCEL_TOKEN;
+          const GTOKEN = process.env.GITHUB_TOKEN;
           const FIRST_FAIL_ID = 'HBaK8Qj5dNpNXfabXRRMuDzCecVR';
           const WORKING_ID    = '9tT4cD2rKrv6CU8r9hLJEpdyjHPZ';
 
           async function vapi(path) {
             const res = await fetch(`https://api.vercel.com${path}`, {
-              headers: { 'Authorization': `Bearer ${TOKEN}` },
+              headers: { 'Authorization': `Bearer ${VTOKEN}` },
             });
             return res.json();
           }
@@ -35,7 +37,7 @@ jobs:
             console.log('=== STEP 1: FIRST FAILURE BUILD LOG (HBaK8Qj5d / 8e43b2c) ===');
             const evRes = await fetch(
               `https://api.vercel.com/v2/deployments/${FIRST_FAIL_ID}/events?limit=200`,
-              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+              { headers: { 'Authorization': `Bearer ${VTOKEN}` } }
             );
             const evText = await evRes.text();
             let lineCount = 0;
@@ -66,7 +68,6 @@ jobs:
 
             // STEP 3: Vercel project build settings
             console.log('\n=== STEP 3: PROJECT BUILD SETTINGS ===');
-            // Try both possible project names
             for (const projName of ['hive-hivephoto', 'hive-photo-o3no']) {
               const p = await vapi(`/v9/projects/${projName}`);
               if (p.error) { console.log(`${projName}: ${p.error.code}`); continue; }
@@ -78,7 +79,6 @@ jobs:
               console.log(`  nodeVersion: ${p.nodeVersion || '(default)'}`);
               console.log(`  installCommand: ${p.installCommand || '(default)'}`);
               console.log(`  devCommand: ${p.devCommand || '(none)'}`);
-              // Also check git connection
               const link = p.link || {};
               console.log(`  git.repo: ${link.repo || 'n/a'}`);
               console.log(`  git.repoId: ${link.repoId || 'n/a'}`);
@@ -86,25 +86,31 @@ jobs:
               console.log(`  git.type: ${link.type || 'n/a'}`);
             }
 
-            // STEP 4: Current package.json from GitHub
+            // STEP 4: Current package.json from GitHub (uses GITHUB_TOKEN)
             console.log('\n=== STEP 4: CURRENT package.json (GitHub main) ===');
             const pkgRes = await fetch(
               'https://api.github.com/repos/saggarsonny-boop/hive-hivephoto/contents/package.json',
-              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+              { headers: { 'Authorization': `Bearer ${GTOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
             );
             const pkgData = await pkgRes.json();
-            const pkgContent = Buffer.from(pkgData.content, 'base64').toString();
-            console.log(pkgContent);
+            if (pkgData.content) {
+              const pkgContent = Buffer.from(pkgData.content, 'base64').toString();
+              console.log(pkgContent);
+            } else {
+              console.log('ERROR fetching package.json:', JSON.stringify(pkgData).slice(0, 300));
+            }
 
-            // STEP 5: Repo root structure
+            // STEP 5: Repo root structure (uses GITHUB_TOKEN)
             console.log('\n=== STEP 5: REPO ROOT STRUCTURE ===');
             const rootRes = await fetch(
               'https://api.github.com/repos/saggarsonny-boop/hive-hivephoto/contents/',
-              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+              { headers: { 'Authorization': `Bearer ${GTOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
             );
             const rootFiles = await rootRes.json();
             if (Array.isArray(rootFiles)) {
               rootFiles.forEach(f => console.log(`  ${f.type === 'dir' ? '[dir]' : '[file]'} ${f.name}`));
+            } else {
+              console.log('ERROR:', JSON.stringify(rootFiles).slice(0, 300));
             }
           }
 
@@ -115,9 +121,12 @@ jobs:
           cp /tmp/reset-audit.txt hivephoto-reset-audit.txt
 
       - name: Commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.email "claude@hive.baby"
           git config user.name "Claude Code"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/saggarsonny-boop/hivebaby.git
           git add hivephoto-reset-audit.txt
           git commit -m "chore: hivephoto reset audit $(date -u +%H:%M)" || echo "no changes"
-          git push
+          git push origin HEAD:main
