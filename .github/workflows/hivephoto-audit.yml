@@ -1,0 +1,86 @@
+name: HivePhoto Full Audit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run full audit
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          node << 'EOF' > /tmp/audit.txt
+          const TOKEN = process.env.VERCEL_TOKEN;
+
+          async function vapi(path) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
+              headers: { 'Authorization': `Bearer ${TOKEN}` },
+            });
+            return res.json();
+          }
+
+          async function main() {
+            // STEP 1: Last READY deployments
+            console.log('=== STEP 1: LAST READY DEPLOYMENTS ===');
+            const all = await vapi('/v6/deployments?projectId=hive-hivephoto&limit=20');
+            for (const dep of (all.deployments || [])) {
+              console.log(`${dep.uid} state=${dep.state} created=${new Date(dep.created).toISOString()} url=${dep.url} err=${dep.errorMessage||''}`);
+            }
+
+            // STEP 2: Latest deployment detail
+            console.log('\n=== STEP 2: LATEST DEPLOYMENT DETAIL ===');
+            const latest = (all.deployments || [])[0];
+            if (latest) {
+              const detail = await vapi(`/v13/deployments/${latest.uid}`);
+              console.log('uid:', detail.uid);
+              console.log('state:', detail.status || detail.state);
+              console.log('readyState:', detail.readyState);
+              console.log('errorMessage:', detail.errorMessage || 'none');
+              console.log('meta.githubCommitSha:', detail.meta?.githubCommitSha || 'n/a');
+              if (detail.error) console.log('error:', JSON.stringify(detail.error));
+            }
+
+            // STEP 3: Runtime events (errors only) for latest
+            console.log('\n=== STEP 3: RUNTIME ERROR EVENTS ===');
+            if (latest) {
+              const evRes = await fetch(
+                `https://api.vercel.com/v2/deployments/${latest.uid}/events?limit=200`,
+                { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+              );
+              const evText = await evRes.text();
+              const lines = evText.split('\n').filter(l => l.trim());
+              let found = 0;
+              for (const line of lines) {
+                try {
+                  const e = JSON.parse(line);
+                  const p = e.payload || '';
+                  const text = typeof p === 'string' ? p : (p.text || p.message || p.error || JSON.stringify(p));
+                  if (text && text.length > 1) {
+                    console.log(`[${e.type||'?'}] ${text}`);
+                    found++;
+                  }
+                } catch { if (line.length > 2) console.log(line); }
+              }
+              if (!found) console.log('(no events returned — deployment may be too old or events not available)');
+            }
+          }
+
+          main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
+          EOF
+
+          cat /tmp/audit.txt
+          cp /tmp/audit.txt hivephoto-audit.txt
+
+      - name: Commit audit
+        run: |
+          git config user.email "claude@hive.baby"
+          git config user.name "Claude Code"
+          git add hivephoto-audit.txt
+          git commit -m "chore: hivephoto full audit $(date -u +%H:%M)" || echo "no changes"
+          git push

@@ -1,0 +1,94 @@
+name: Get HivePhoto Runtime Logs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch runtime error logs
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          node << 'EOF' > /tmp/runtime-logs.txt
+          const TOKEN = process.env.VERCEL_TOKEN;
+          const DEP_ID = 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF';
+
+          async function main() {
+            // Get runtime/function logs via events endpoint
+            const res = await fetch(
+              `https://api.vercel.com/v2/deployments/${DEP_ID}/events?limit=200&types=stderr,error,lambda,middleware`,
+              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+            );
+            const text = await res.text();
+            console.log('=== RAW EVENTS ===');
+            const lines = text.split('\n');
+            for (const line of lines) {
+              if (!line.trim()) continue;
+              try {
+                const e = JSON.parse(line);
+                const type = e.type || '';
+                const payload = e.payload || '';
+                const text2 = typeof payload === 'string' ? payload : (payload.text || payload.message || JSON.stringify(payload));
+                if (text2) console.log(`[${type}] ${text2}`);
+              } catch {
+                console.log(line);
+              }
+            }
+
+            // Also check deployment details for error info
+            console.log('\n=== DEPLOYMENT DETAIL ===');
+            const dep = await fetch(
+              `https://api.vercel.com/v13/deployments/${DEP_ID}`,
+              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+            ).then(r => r.json());
+            console.log('status:', dep.status || dep.state);
+            console.log('readyState:', dep.readyState);
+            if (dep.errorMessage) console.log('errorMessage:', dep.errorMessage);
+            if (dep.error) console.log('error:', JSON.stringify(dep.error));
+
+            // Get function/edge logs separately
+            console.log('\n=== FUNCTION CHECKS ===');
+            const fnRes = await fetch(
+              `https://api.vercel.com/v2/deployments/${DEP_ID}/events?limit=200`,
+              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+            );
+            const fnText = await fnRes.text();
+            const fnLines = fnText.split('\n');
+            for (const line of fnLines) {
+              if (!line.trim()) continue;
+              try {
+                const e = JSON.parse(line);
+                const payload = e.payload || '';
+                const text2 = typeof payload === 'string' ? payload
+                  : (payload.text || payload.message || payload.error || '');
+                if (text2 && (
+                  text2.includes('Error') || text2.includes('error') ||
+                  text2.includes('middleware') || text2.includes('MIDDLEWARE') ||
+                  text2.includes('Clerk') || text2.includes('clerk') ||
+                  text2.includes('500') || text2.includes('env')
+                )) {
+                  console.log(`[${e.type}] ${text2}`);
+                }
+              } catch { /* skip */ }
+            }
+          }
+
+          main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
+          EOF
+
+          cat /tmp/runtime-logs.txt
+          cp /tmp/runtime-logs.txt hivephoto-runtime-logs.txt
+
+      - name: Commit logs
+        run: |
+          git config user.email "claude@hive.baby"
+          git config user.name "Claude Code"
+          git add hivephoto-runtime-logs.txt
+          git commit -m "chore: hivephoto runtime logs $(date -u +%H:%M)" || echo "no changes"
+          git push
