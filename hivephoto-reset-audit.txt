@@ -1,8 +1,20 @@
-=== ALL VERCEL PROJECTS ===
-Total projects: 2
-  hive-hivephoto (prj_EbbB8f8Tra8XZ7nRMocNE0fvTjQz) aliases=[]
-  ud-signer (prj_5RTEVp2FqzOeaTi2xJUM1pfDZJHg) aliases=[]
+=== STEP 1: LIST TEAMS ===
+Teams: hivebaby (team_HZrPLEw121E41ZgpLOAMrOxF)
 
-Could not find utilities project by alias. Trying by name patterns...
+--- Listing projects (personal) ---
+Found 2 projects
+  hive-hivephoto (prj_EbbB8f8Tra8XZ7nRMocNE0fvTjQz) domains=[]
+  ud-signer (prj_5RTEVp2FqzOeaTi2xJUM1pfDZJHg) domains=[]
 
-ERROR: Could not identify utilities project
+--- Listing projects (teamId=team_HZrPLEw121E41ZgpLOAMrOxF) ---
+Found 2 projects
+  hive-hivephoto (prj_EbbB8f8Tra8XZ7nRMocNE0fvTjQz) domains=[]
+  ud-signer (prj_5RTEVp2FqzOeaTi2xJUM1pfDZJHg) domains=[]
+
+--- Listing projects (teamId=saggarsonny-3909s-projects) ---
+ERROR: {"code":"forbidden","message":"Not authorized: Trying to access resource under scope \"saggarsonny-3909s-projects\". You must re-authenticate to this scope or use a token with access to this scope.","saml":true,"teamId":null,"scope":"saggarsonny-3909s-projects","enforced":false}
+
+--- Listing projects (teamId=saggarsonny-boop) ---
+ERROR: {"code":"forbidden","message":"Not authorized"}
+
+=== NOT FOUND: utilities project not identified ===
