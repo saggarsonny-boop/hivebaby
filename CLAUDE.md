@@ -38,7 +38,7 @@ Account: saggarsonny-boop
 | universal-document/apps/converter | UDConverter | converter.hive.baby | LIVE | Next.js + Anthropic |
 | hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic |
 | hive-hivememe | HiveMeme | hivememe.hive.baby | BUILDING | Next.js + Anthropic |
-| hive-hivephoto | HivePhoto | hivephoto.hive.baby | BUILDING | Next.js + Anthropic + Clerk + Neon + R2 + Stripe |
+| hive-hivephoto | HivePhoto | hivephoto.hive.baby | LIVE | Next.js + Anthropic + Clerk + Neon + R2 + Stripe |
 | hive-aestheticbestie | HiveAestheticBestie | hiveaestheticbestie.hive.baby | LIVE | Next.js + Anthropic |
 | hive-microritual | HiveMicroRitual | hivemicroritual.hive.baby | LIVE | Next.js + Anthropic |
 | hive-memory-space | HiveMemorySpace | hivememoryspace.hive.baby | BUILDING | Next.js + Anthropic |
