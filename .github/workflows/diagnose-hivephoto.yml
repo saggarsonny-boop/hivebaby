@@ -1,0 +1,91 @@
+name: Diagnose HivePhoto
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Diagnose Vercel projects and env vars
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          STRIPE_PK: pk_live_51TLUezPIZtoQZOG1xMEEx8CVcqo4vFcZxYERzeRWKPdsQncaQ4Y8ksJQcY3Ayl0Z0OGz2FjvcgnzaUqSGDSgH01M00qL1arsI6
+        run: |
+          node << 'EOF'
+          const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
+          const STRIPE_PK = process.env.STRIPE_PK;
+
+          async function vapi(path, method = 'GET', body) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
+              method,
+              headers: { 'Authorization': `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+              body: body ? JSON.stringify(body) : undefined,
+            });
+            return res.json();
+          }
+
+          async function main() {
+            // STEP 1: Domains on both projects
+            console.log("\n=== STEP 1: DOMAINS ===");
+            for (const proj of ["hive-hivephoto", "hive-photo-o3no"]) {
+              try {
+                const d = await vapi(`/v9/projects/${proj}/domains`);
+                const domains = (d.domains || []).map(x => x.name);
+                console.log(`${proj}: ${JSON.stringify(domains)}`);
+              } catch(e) { console.log(`${proj}: ERROR ${e.message}`); }
+            }
+
+            // STEP 1b: Project IDs
+            console.log("\n=== PROJECT IDs ===");
+            for (const proj of ["hive-hivephoto", "hive-photo-o3no"]) {
+              try {
+                const d = await vapi(`/v9/projects/${proj}`);
+                console.log(`${proj}: id=${d.id} accountId=${d.accountId}`);
+              } catch(e) { console.log(`${proj}: ERROR ${e.message}`); }
+            }
+
+            // STEP 2: Last 3 deployments
+            console.log("\n=== STEP 2: DEPLOYMENTS ===");
+            for (const proj of ["hive-hivephoto", "hive-photo-o3no"]) {
+              try {
+                const d = await vapi(`/v6/deployments?projectId=${proj}&limit=3`);
+                const deploys = (d.deployments || []).map(dep => `${dep.uid} state=${dep.state} url=${dep.url} err=${dep.errorMessage||''}`);
+                deploys.forEach(x => console.log(`  [${proj}]`, x));
+              } catch(e) { console.log(`${proj} deploys: ERROR ${e.message}`); }
+            }
+
+            // STEP 3: Env vars on hive-hivephoto
+            console.log("\n=== STEP 3: ENV VARS on hive-hivephoto ===");
+            try {
+              const d = await vapi(`/v9/projects/hive-hivephoto/env`);
+              const envs = (d.envs || []).map(e => `  ${e.key} [${(e.target||[]).join(",")}]`);
+              envs.forEach(e => console.log(e));
+            } catch(e) { console.log("ERROR:", e.message); }
+
+            // STEP 4: Add STRIPE_PK if missing
+            console.log("\n=== STEP 4: SET STRIPE_PK ===");
+            try {
+              const result = await vapi(`/v9/projects/hive-hivephoto/env`, 'POST', {
+                key: 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+                value: STRIPE_PK,
+                type: 'encrypted',
+                target: ['production', 'preview'],
+              });
+              console.log("Result:", result.key || result.error?.code || JSON.stringify(result).slice(0,100));
+            } catch(e) { console.log("Error:", e.message); }
+
+            // STEP 5: Fix domain assignment
+            console.log("\n=== STEP 5: FIX DOMAIN ===");
+            try {
+              const rm = await vapi(`/v9/projects/hive-photo-o3no/domains/hivephoto.hive.baby`, 'DELETE');
+              console.log("Removed from hive-photo-o3no:", JSON.stringify(rm).slice(0,80));
+            } catch(e) { console.log("Remove (ok if 404):", e.message); }
+            try {
+              const add = await vapi(`/v9/projects/hive-hivephoto/domains`, 'POST', { name: 'hivephoto.hive.baby' });
+              console.log("Added to hive-hivephoto:", add.name || JSON.stringify(add).slice(0,100));
+            } catch(e) { console.log("Add domain:", e.message); }
+          }
+
+          main().catch(e => { console.error("FATAL:", e.message); process.exit(1); });
+          EOF
