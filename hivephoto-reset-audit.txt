@@ -1,0 +1,83 @@
+=== STEP 1: FIRST FAILURE BUILD LOG (HBaK8Qj5d / 8e43b2c) ===
+(no events returned)
+
+=== STEP 2: WORKING DEPLOYMENT FILES (9tT4cD2rK / Apr 19) ===
+{"error":"Deployment not found"}
+
+=== STEP 3: PROJECT BUILD SETTINGS ===
+Project: hive-hivephoto (prj_EbbB8f8Tra8XZ7nRMocNE0fvTjQz)
+  rootDirectory: (none — repo root)
+  buildCommand: (default)
+  outputDirectory: (default)
+  framework: nextjs
+  nodeVersion: 24.x
+  installCommand: (default)
+  devCommand: (none)
+  git.repo: hive-hivephoto
+  git.repoId: 1215300422
+  git.productionBranch: main
+  git.type: github
+hive-photo-o3no: not_found
+
+=== STEP 4: CURRENT package.json (GitHub main) ===
+{
+  "name": "hive-hivephoto",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "15.3.9",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@clerk/nextjs": "^6.0.0",
+    "@neondatabase/serverless": "^0.9.0",
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "^3.0.0",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "stripe": "^16.0.0",
+    "@stripe/stripe-js": "^4.0.0",
+    "sharp": "^0.33.0",
+    "exifreader": "^4.0.0",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^5.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/postcss": "^4.0.0"
+  }
+}
+
+
+=== STEP 5: REPO ROOT STRUCTURE ===
+  [file] .env.example
+  [file] .gitignore
+  [file] AGENTS.md
+  [file] CLAUDE.md
+  [file] ENGINE_GRAMMAR.md
+  [file] README.md
+  [dir] app
+  [dir] components
+  [dir] db
+  [file] eslint.config.mjs
+  [dir] lib
+  [file] middleware.ts
+  [file] next.config.ts
+  [file] package-lock.json
+  [file] package.json
+  [file] postcss.config.mjs
+  [dir] public
+  [dir] scripts
+  [file] setup.env.example
+  [file] tailwind.config.ts
+  [file] tsconfig.json
+  [file] vercel.json
