@@ -1,5 +1,5 @@
-Latest deployment: dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF state=BUILDING
-State: BUILDING
+Latest deployment: dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF state=READY
+State: READY
 Error: none
 Created: 2026-04-25T15:07:59.503Z
 
@@ -102,4 +102,183 @@ https://nextjs.org/telemetry
 }
 ,
    Creating an optimized production build ...
+,
+ ✓ Compiled successfully in 10.0s
+,
+   Skipping linting
+,
+   Checking validity of types ...
+,
+   Collecting page data ...
+,
+   Generating static pages (0/33) ...
+,
+   Generating static pages (8/33) 
+,
+   Generating static pages (16/33) 
+,
+   Generating static pages (24/33) 
+,
+ ✓ Generating static pages (33/33)
+,
+   Finalizing page optimization ...
+,
+   Collecting build traces ...
+,
+{
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
+  text: '',
+  id: '1777129722646489337541600000',
+  date: 1777129722646,
+  serial: '1777129722646489337541600000'
+}
+,
+Route (app)                                 Size  First Load JS
+,
+┌ ○ /                                    3.08 kB         168 kB
+,
+├ ○ /_not-found                            981 B         103 kB
+,
+├ ○ /account                             2.19 kB         162 kB
+,
+├ ○ /account/billing                     1.86 kB         162 kB
+,
+├ ○ /account/storage                     1.96 kB         162 kB
+,
+├ ƒ /api/admin/migrate                     219 B         102 kB
+,
+├ ƒ /api/admin/seed-stripe                 219 B         102 kB
+,
+├ ƒ /api/cron/analyze                      219 B         102 kB
+,
+├ ƒ /api/cron/cleanup                      219 B         102 kB
+,
+├ ƒ /api/cron/cleanup-provisional          219 B         102 kB
+,
+├ ƒ /api/cron/storage-reconcile            219 B         102 kB
+,
+├ ƒ /api/duplicates                        219 B         102 kB
+,
+├ ƒ /api/duplicates/[id]                   219 B         102 kB
+,
+├ ƒ /api/duplicates/[id]/keep-both         219 B         102 kB
+,
+├ ƒ /api/duplicates/[id]/keep-new          219 B         102 kB
+,
+├ ƒ /api/duplicates/[id]/keep-original     219 B         102 kB
+,
+├ ƒ /api/faces/[id]/label                  219 B         102 kB
+,
+├ ƒ /api/ingest/complete                   219 B         102 kB
+,
+├ ƒ /api/ingest/presign                    219 B         102 kB
+,
+├ ƒ /api/people                            219 B         102 kB
+,
+├ ƒ /api/people/[id]                       219 B         102 kB
+,
+├ ƒ /api/photos                            219 B         102 kB
+,
+├ ƒ /api/photos/[id]                       219 B         102 kB
+,
+├ ƒ /api/photos/[id]/reanalyze             219 B         102 kB
+,
+├ ƒ /api/photos/[id]/signed-url            219 B         102 kB
+,
+├ ƒ /api/pricing                           219 B         102 kB
+,
+├ ƒ /api/search                            219 B         102 kB
+,
+├ ƒ /api/storage/usage                     219 B         102 kB
+,
+├ ƒ /api/subscription                      219 B         102 kB
+,
+├ ƒ /api/subscription/cancel               219 B         102 kB
+,
+├ ƒ /api/subscription/portal               219 B         102 kB
+,
+├ ƒ /api/subscription/upgrade              219 B         102 kB
+,
+├ ƒ /api/webhooks/stripe                   219 B         102 kB
+,
+├ ○ /duplicates                          2.05 kB         167 kB
+,
+├ ○ /map                                 1.43 kB         161 kB
+,
+├ ○ /people                              1.82 kB         167 kB
+,
+├ ƒ /people/[id]                         1.76 kB         167 kB
+,
+├ ƒ /photo/[id]                          2.77 kB         168 kB
+,
+├ ○ /pricing                              2.9 kB         163 kB
+,
+├ ○ /search                              2.85 kB         168 kB
+,
+└ ○ /upload                              3.32 kB         163 kB
+,
++ First Load JS shared by all             102 kB
+,
+  ├ chunks/1684-ec7b7ea25e88dc0e.js      46.4 kB
+,
+  ├ chunks/4bd1b696-62ffffd4cde81aa4.js  53.2 kB
+,
+  └ other shared chunks (total)          2.05 kB
+,
+{
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
+  text: '',
+  id: '1777129722659489337541600003',
+  date: 1777129722659,
+  serial: '1777129722659489337541600003'
+}
+,
+{
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
+  text: '',
+  id: '1777129722659489337541600004',
+  date: 1777129722659,
+  serial: '1777129722659489337541600004'
+}
+,
+ƒ Middleware                             33.3 kB
+,
+{
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
+  text: '',
+  id: '1777129722660489337541600000',
+  date: 1777129722660,
+  serial: '1777129722660489337541600000'
+}
+,
+○  (Static)   prerendered as static content
+,
+ƒ  (Dynamic)  server-rendered on demand
+,
+{
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
+  text: '',
+  id: '1777129722660489337541600003',
+  date: 1777129722660,
+  serial: '1777129722660489337541600003'
+}
+,
+Traced Next.js server files in: 71.397ms
+,
+Created all serverless functions in: 376.76ms
+,
+Collected static files (public/, static/, .next/static): 16.937ms
+,
+Build Completed in /vercel/output [41s]
+,
+Deploying outputs...
+,
+Deployment completed
+,
+Creating build cache...
 ]
