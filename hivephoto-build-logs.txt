@@ -1,8 +1,25 @@
-Latest deployment: dpl_3EeQJcApnBV9qfREjJijensAR8Qx state=QUEUED
-State: QUEUED
+Latest deployment: dpl_3EeQJcApnBV9qfREjJijensAR8Qx state=BUILDING
+State: BUILDING
 Error: none
 Created: 2026-04-25T15:05:33.898Z
 
 === BUILD LOG ===
 [
+Running build in Washington, D.C., USA (East) – iad1
+,
+Build machine configuration: 4 cores, 8 GB
+,
+Cloning github.com/saggarsonny-boop/hive-hivephoto (Branch: main, Commit: c9ec6b6)
+,
+Previous build caches not available.
+,
+Cloning completed: 205.000ms
+,
+Running "vercel build"
+,
+Vercel CLI 51.6.1
+,
+Installing dependencies...
+,
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
 ]
