@@ -14,21 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Trigger hive-hivephoto build + get logs
+      - name: Check and fix ud-utilities env vars
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node << 'EOF' > /tmp/reset-audit.txt
           const VTOKEN = process.env.VERCEL_TOKEN;
-          const GTOKEN = process.env.GITHUB_TOKEN;
+          const AKEY   = process.env.ANTHROPIC_API_KEY;
 
-          async function ghapi(path, method = 'GET', body) {
-            const res = await fetch(`https://api.github.com${path}`, {
+          async function vapi(path, method = 'GET', body) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
               method,
               headers: {
-                'Authorization': `Bearer ${GTOKEN}`,
-                'Accept': 'application/vnd.github.v3+json',
+                'Authorization': `Bearer ${VTOKEN}`,
                 'Content-Type': 'application/json',
               },
               body: body ? JSON.stringify(body) : undefined,
@@ -36,101 +35,91 @@ jobs:
             return res.json();
           }
 
-          async function vapi(path) {
-            const res = await fetch(`https://api.vercel.com${path}`, {
-              headers: { 'Authorization': `Bearer ${VTOKEN}` },
-            });
-            return res.json();
-          }
-
-          async function sleep(ms) {
-            return new Promise(r => setTimeout(r, ms));
-          }
-
           async function main() {
-            // STEP 1: Get current commit SHA on hive-hivephoto/main
-            console.log('=== STEP 1: TRIGGER EMPTY COMMIT ON hive-hivephoto ===');
-            const refData = await ghapi('/repos/saggarsonny-boop/hive-hivephoto/git/refs/heads/main');
-            const currentSha = refData.object?.sha;
-            if (!currentSha) {
-              console.log('ERROR getting ref:', JSON.stringify(refData).slice(0, 300));
-              process.exit(1);
-            }
-            console.log('Current SHA:', currentSha);
+            // STEP 1: List all env vars on ud-utilities
+            console.log('=== STEP 1: ud-utilities ENV VARS ===');
+            const env = await vapi('/v9/projects/ud-utilities/env');
+            if (env.error) {
+              console.log('ERROR:', JSON.stringify(env.error));
+              // Try alternate project name
+              console.log('Trying ud-utilities by slug...');
+              const env2 = await vapi('/v9/projects/ud-utilities/env?teamId=');
+              console.log(JSON.stringify(env2).slice(0, 500));
+            } else {
+              const vars = env.envs || [];
+              console.log(`Total env vars: ${vars.length}`);
+              let hasAnthropicKey = false;
+              let anthropicValue = null;
+              for (const v of vars) {
+                const targets = (v.target || []).join(',');
+                const hasValue = v.value ? 'POPULATED' : (v.type === 'encrypted' ? 'ENCRYPTED(hidden)' : 'EMPTY');
+                console.log(`  ${v.key} [${targets}] = ${hasValue}`);
+                if (v.key === 'ANTHROPIC_API_KEY') {
+                  hasAnthropicKey = true;
+                  anthropicValue = v;
+                }
+              }
 
-            // Get the current commit to get its tree
-            const currentCommit = await ghapi(`/repos/saggarsonny-boop/hive-hivephoto/git/commits/${currentSha}`);
-            const treeSha = currentCommit.tree?.sha;
-            console.log('Tree SHA:', treeSha);
+              // STEP 2: Check ANTHROPIC_API_KEY
+              console.log('\n=== STEP 2: ANTHROPIC_API_KEY STATUS ===');
+              if (!hasAnthropicKey) {
+                console.log('MISSING — not found in ud-utilities env vars');
+                console.log('Setting ANTHROPIC_API_KEY on ud-utilities...');
+                if (!AKEY) {
+                  console.log('ERROR: ANTHROPIC_API_KEY not available in workflow secrets');
+                } else {
+                  const result = await vapi('/v10/projects/ud-utilities/env', 'POST', {
+                    key: 'ANTHROPIC_API_KEY',
+                    value: AKEY,
+                    type: 'encrypted',
+                    target: ['production', 'preview'],
+                  });
+                  if (result.error) {
+                    console.log('SET ERROR:', JSON.stringify(result.error));
+                  } else {
+                    console.log('SET OK — id:', result.id, 'key:', result.key);
+                  }
+                }
+              } else {
+                console.log('PRESENT — id:', anthropicValue.id, 'type:', anthropicValue.type, 'targets:', (anthropicValue.target || []).join(','));
+                // Check if it's encrypted/populated
+                if (anthropicValue.type === 'encrypted') {
+                  console.log('Value: encrypted (cannot read back — treat as set)');
+                } else if (!anthropicValue.value) {
+                  console.log('WARNING: value appears empty — patching...');
+                  if (AKEY) {
+                    const patch = await vapi(`/v9/projects/ud-utilities/env/${anthropicValue.id}`, 'PATCH', {
+                      value: AKEY,
+                      target: ['production', 'preview'],
+                    });
+                    console.log('PATCH result:', patch.error ? JSON.stringify(patch.error) : 'OK');
+                  }
+                }
+              }
 
-            // Create a new empty commit
-            const now = new Date().toISOString();
-            const newCommit = await ghapi('/repos/saggarsonny-boop/hive-hivephoto/git/commits', 'POST', {
-              message: `chore: trigger rebuild with Node 20.x [${now}]`,
-              tree: treeSha,
-              parents: [currentSha],
-            });
-            console.log('New commit SHA:', newCommit.sha);
-
-            // Update the ref
-            const updateRef = await ghapi('/repos/saggarsonny-boop/hive-hivephoto/git/refs/heads/main', 'PATCH', {
-              sha: newCommit.sha,
-              force: false,
-            });
-            console.log('Ref updated to:', updateRef.object?.sha);
-
-            // STEP 2: Wait 60s for Vercel to pick up and start building
-            console.log('\n=== STEP 2: WAITING 60s FOR VERCEL ===');
-            await sleep(60000);
-
-            // STEP 3: Get latest deployment
-            console.log('\n=== STEP 3: LATEST DEPLOYMENT ===');
-            const deps = await vapi('/v6/deployments?projectId=hive-hivephoto&limit=3');
-            const latest = (deps.deployments || [])[0];
-            if (!latest) {
-              console.log('No deployments found');
-              process.exit(1);
-            }
-            console.log(`uid: ${latest.uid}`);
-            console.log(`state: ${latest.state}`);
-            console.log(`created: ${new Date(latest.created).toISOString()}`);
-            console.log(`url: ${latest.url}`);
-            console.log(`error: ${latest.errorMessage || 'none'}`);
-
-            // STEP 4: Wait more if still building
-            if (latest.state === 'BUILDING' || latest.state === 'QUEUED' || latest.state === 'INITIALIZING') {
-              console.log('\n=== WAITING ANOTHER 90s FOR BUILD ===');
-              await sleep(90000);
-              const deps2 = await vapi('/v6/deployments?projectId=hive-hivephoto&limit=1');
-              const dep2 = (deps2.deployments || [])[0];
-              if (dep2) {
-                console.log(`state after wait: ${dep2.state}`);
-                console.log(`error: ${dep2.errorMessage || 'none'}`);
+              // STEP 3: Trigger redeploy of ud-utilities to pick up new env
+              console.log('\n=== STEP 3: TRIGGER REDEPLOY ===');
+              const deps = await vapi('/v6/deployments?projectId=ud-utilities&limit=1');
+              const latest = (deps.deployments || [])[0];
+              if (latest) {
+                console.log(`Latest deployment: ${latest.uid} state=${latest.state}`);
+                // Only redeploy if ANTHROPIC_API_KEY was missing
+                if (!hasAnthropicKey && AKEY) {
+                  const redeploy = await vapi(`/v13/deployments?forceNew=1`, 'POST', {
+                    name: 'ud-utilities',
+                    deploymentId: latest.uid,
+                    target: 'production',
+                  });
+                  if (redeploy.error) {
+                    console.log('REDEPLOY ERROR:', JSON.stringify(redeploy.error).slice(0, 200));
+                  } else {
+                    console.log('REDEPLOY triggered:', redeploy.id || redeploy.uid || 'ok');
+                  }
+                } else {
+                  console.log('(no redeploy needed — key was already present or no change made)');
+                }
               }
             }
-
-            // STEP 5: Get build events
-            console.log('\n=== STEP 4: BUILD LOG ===');
-            const evRes = await fetch(
-              `https://api.vercel.com/v2/deployments/${latest.uid}/events?limit=200`,
-              { headers: { 'Authorization': `Bearer ${VTOKEN}` } }
-            );
-            const evText = await evRes.text();
-            let lineCount = 0;
-            for (const line of evText.split('\n')) {
-              if (!line.trim()) continue;
-              try {
-                const e = JSON.parse(line);
-                const p = e.payload || '';
-                const text = typeof p === 'string' ? p
-                  : (p.text || p.message || JSON.stringify(p));
-                if (text && text.trim()) {
-                  console.log(text.slice(0, 300));
-                  lineCount++;
-                }
-              } catch { if (line.length > 2) console.log(line); }
-            }
-            if (lineCount === 0) console.log('(no events — may still be building or too new)');
           }
 
           main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
@@ -147,5 +136,5 @@ jobs:
           git config user.name "Claude Code"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/saggarsonny-boop/hivebaby.git
           git add hivephoto-reset-audit.txt
-          git commit -m "chore: hivephoto build trigger + log $(date -u +%H:%M)" || echo "no changes"
+          git commit -m "chore: ud-utilities env audit $(date -u +%H:%M)" || echo "no changes"
           git push origin HEAD:main
