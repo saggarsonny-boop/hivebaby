@@ -1,0 +1,74 @@
+name: Report HivePhoto State
+
+on:
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Query Vercel and write report
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          node << 'EOF' > /tmp/report.txt
+          const TOKEN = process.env.VERCEL_TOKEN;
+
+          async function vapi(path, method = 'GET', body) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
+              method,
+              headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+              body: body ? JSON.stringify(body) : undefined,
+            });
+            return res.json();
+          }
+
+          async function main() {
+            // Which project owns the domain?
+            const all = await vapi('/v9/projects?limit=50');
+            let ownerProject = null;
+            for (const p of (all.projects || [])) {
+              const aliases = (p.alias || []).map(a => a.value || '');
+              if (aliases.some(d => d.includes('hivephoto'))) {
+                console.log(`OWNER: ${p.name} id=${p.id} aliases=${aliases.filter(d=>d.includes('hivephoto'))}`);
+                ownerProject = p.name;
+              }
+            }
+            if (!ownerProject) console.log('OWNER: not found in project list');
+
+            // Direct domain check
+            for (const proj of ['hive-hivephoto', 'hive-photo-o3no']) {
+              const d = await vapi(`/v9/projects/${proj}/domains`);
+              const domains = (d.domains || []).map(x => x.name);
+              console.log(`DOMAINS ${proj}: ${domains.join(', ') || 'none'}`);
+            }
+
+            // Env vars on hive-hivephoto
+            const env = await vapi('/v9/projects/hive-hivephoto/env');
+            const envKeys = (env.envs || []).map(e => `${e.key}[${(e.target||[]).join(',')}]`);
+            console.log(`ENV hive-hivephoto: ${envKeys.join(' | ')}`);
+
+            // Last deployment on hive-hivephoto
+            const deps = await vapi('/v6/deployments?projectId=hive-hivephoto&limit=3');
+            for (const dep of (deps.deployments || [])) {
+              console.log(`DEPLOY ${dep.uid} state=${dep.state} url=${dep.url} err=${dep.errorMessage||''}`);
+            }
+          }
+
+          main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
+          EOF
+
+          cat /tmp/report.txt
+          cp /tmp/report.txt hivephoto-state.txt
+
+      - name: Commit report
+        run: |
+          git config user.email "claude@hive.baby"
+          git config user.name "Claude Code"
+          git add hivephoto-state.txt
+          git commit -m "chore: hivephoto state report $(date -u +%H:%M)" || echo "no changes"
+          git push
