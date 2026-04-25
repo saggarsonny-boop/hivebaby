@@ -14,6 +14,7 @@ Hive is a social experiment. "You are the investor." No ads, no investors, no ag
 - When the planet is broken, fix it without being asked
 - Use GitHub API + token to work across all repos from this single Codespace
 - Read VISION.md when you need engine specs, pipeline details, adoption stack, or full ecosystem context
+- **ALWAYS check Vercel build logs before attempting any fix on a failing deployment. Build logs reveal the actual error. Never guess at root cause without reading the logs first.**
 
 ## GitHub
 Token: [stored in Codespace secret / ask Sonny]
