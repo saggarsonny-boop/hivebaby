@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check and fix ud-utilities env vars
+      - name: Find utilities project + fix ANTHROPIC_API_KEY
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -26,99 +26,70 @@ jobs:
           async function vapi(path, method = 'GET', body) {
             const res = await fetch(`https://api.vercel.com${path}`, {
               method,
-              headers: {
-                'Authorization': `Bearer ${VTOKEN}`,
-                'Content-Type': 'application/json',
-              },
+              headers: { 'Authorization': `Bearer ${VTOKEN}`, 'Content-Type': 'application/json' },
               body: body ? JSON.stringify(body) : undefined,
             });
             return res.json();
           }
 
-          async function main() {
-            // STEP 1: List all env vars on ud-utilities
-            console.log('=== STEP 1: ud-utilities ENV VARS ===');
-            const env = await vapi('/v9/projects/ud-utilities/env');
-            if (env.error) {
-              console.log('ERROR:', JSON.stringify(env.error));
-              // Try alternate project name
-              console.log('Trying ud-utilities by slug...');
-              const env2 = await vapi('/v9/projects/ud-utilities/env?teamId=');
-              console.log(JSON.stringify(env2).slice(0, 500));
+          async function checkAndFixProject(projId) {
+            console.log(`\n=== ENV VARS for ${projId} ===`);
+            const env = await vapi(`/v9/projects/${projId}/env`);
+            if (env.error) { console.log('ERROR:', JSON.stringify(env.error)); return; }
+            const vars = env.envs || [];
+            console.log(`Total: ${vars.length}`);
+            let anthropicVar = null;
+            for (const v of vars) {
+              const targets = (v.target || []).join(',');
+              const display = v.type === 'encrypted' ? 'ENCRYPTED' : (v.value ? 'SET' : 'EMPTY');
+              console.log(`  ${v.key} [${targets}] ${display}`);
+              if (v.key === 'ANTHROPIC_API_KEY') anthropicVar = v;
+            }
+
+            console.log('\n=== ANTHROPIC_API_KEY STATUS ===');
+            if (!anthropicVar) {
+              console.log('MISSING — adding now');
+              if (!AKEY) { console.log('ERROR: secret not available'); return; }
+              const r = await vapi(`/v10/projects/${projId}/env`, 'POST', {
+                key: 'ANTHROPIC_API_KEY', value: AKEY,
+                type: 'encrypted', target: ['production', 'preview'],
+              });
+              console.log(r.error ? 'SET FAILED: ' + JSON.stringify(r.error) : `SET OK id=${r.id}`);
             } else {
-              const vars = env.envs || [];
-              console.log(`Total env vars: ${vars.length}`);
-              let hasAnthropicKey = false;
-              let anthropicValue = null;
-              for (const v of vars) {
-                const targets = (v.target || []).join(',');
-                const hasValue = v.value ? 'POPULATED' : (v.type === 'encrypted' ? 'ENCRYPTED(hidden)' : 'EMPTY');
-                console.log(`  ${v.key} [${targets}] = ${hasValue}`);
-                if (v.key === 'ANTHROPIC_API_KEY') {
-                  hasAnthropicKey = true;
-                  anthropicValue = v;
-                }
-              }
+              console.log(`PRESENT type=${anthropicVar.type} targets=${(anthropicVar.target||[]).join(',')}`);
+            }
+          }
 
-              // STEP 2: Check ANTHROPIC_API_KEY
-              console.log('\n=== STEP 2: ANTHROPIC_API_KEY STATUS ===');
-              if (!hasAnthropicKey) {
-                console.log('MISSING — not found in ud-utilities env vars');
-                console.log('Setting ANTHROPIC_API_KEY on ud-utilities...');
-                if (!AKEY) {
-                  console.log('ERROR: ANTHROPIC_API_KEY not available in workflow secrets');
-                } else {
-                  const result = await vapi('/v10/projects/ud-utilities/env', 'POST', {
-                    key: 'ANTHROPIC_API_KEY',
-                    value: AKEY,
-                    type: 'encrypted',
-                    target: ['production', 'preview'],
-                  });
-                  if (result.error) {
-                    console.log('SET ERROR:', JSON.stringify(result.error));
-                  } else {
-                    console.log('SET OK — id:', result.id, 'key:', result.key);
-                  }
-                }
-              } else {
-                console.log('PRESENT — id:', anthropicValue.id, 'type:', anthropicValue.type, 'targets:', (anthropicValue.target || []).join(','));
-                // Check if it's encrypted/populated
-                if (anthropicValue.type === 'encrypted') {
-                  console.log('Value: encrypted (cannot read back — treat as set)');
-                } else if (!anthropicValue.value) {
-                  console.log('WARNING: value appears empty — patching...');
-                  if (AKEY) {
-                    const patch = await vapi(`/v9/projects/ud-utilities/env/${anthropicValue.id}`, 'PATCH', {
-                      value: AKEY,
-                      target: ['production', 'preview'],
-                    });
-                    console.log('PATCH result:', patch.error ? JSON.stringify(patch.error) : 'OK');
-                  }
-                }
-              }
+          async function main() {
+            // STEP 1: List all projects to find utilities
+            console.log('=== ALL VERCEL PROJECTS ===');
+            const all = await vapi('/v9/projects?limit=100');
+            if (all.error) { console.log('ERROR:', JSON.stringify(all.error)); return; }
+            const projects = all.projects || [];
+            console.log(`Total projects: ${projects.length}`);
 
-              // STEP 3: Trigger redeploy of ud-utilities to pick up new env
-              console.log('\n=== STEP 3: TRIGGER REDEPLOY ===');
-              const deps = await vapi('/v6/deployments?projectId=ud-utilities&limit=1');
-              const latest = (deps.deployments || [])[0];
-              if (latest) {
-                console.log(`Latest deployment: ${latest.uid} state=${latest.state}`);
-                // Only redeploy if ANTHROPIC_API_KEY was missing
-                if (!hasAnthropicKey && AKEY) {
-                  const redeploy = await vapi(`/v13/deployments?forceNew=1`, 'POST', {
-                    name: 'ud-utilities',
-                    deploymentId: latest.uid,
-                    target: 'production',
-                  });
-                  if (redeploy.error) {
-                    console.log('REDEPLOY ERROR:', JSON.stringify(redeploy.error).slice(0, 200));
-                  } else {
-                    console.log('REDEPLOY triggered:', redeploy.id || redeploy.uid || 'ok');
-                  }
-                } else {
-                  console.log('(no redeploy needed — key was already present or no change made)');
+            let utilProject = null;
+            for (const p of projects) {
+              const aliases = (p.alias || []).map(a => a.value || a.domain || '').filter(Boolean);
+              const hasUtils = aliases.some(a => a.includes('utilities'));
+              console.log(`  ${p.name} (${p.id}) aliases=[${aliases.slice(0,3).join(', ')}]${hasUtils ? ' ← UTILITIES' : ''}`);
+              if (hasUtils) utilProject = p;
+            }
+
+            if (!utilProject) {
+              console.log('\nCould not find utilities project by alias. Trying by name patterns...');
+              for (const p of projects) {
+                if (p.name.includes('util') || p.name.includes('universal')) {
+                  console.log(`  Candidate: ${p.name} (${p.id})`);
+                  if (!utilProject) utilProject = p;
                 }
               }
+            }
+
+            if (utilProject) {
+              await checkAndFixProject(utilProject.id);
+            } else {
+              console.log('\nERROR: Could not identify utilities project');
             }
           }
 
@@ -136,5 +107,5 @@ jobs:
           git config user.name "Claude Code"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/saggarsonny-boop/hivebaby.git
           git add hivephoto-reset-audit.txt
-          git commit -m "chore: ud-utilities env audit $(date -u +%H:%M)" || echo "no changes"
+          git commit -m "chore: utilities env audit $(date -u +%H:%M)" || echo "no changes"
           git push origin HEAD:main
