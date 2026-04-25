@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Audit + fix node version
+      - name: Trigger hive-hivephoto build + get logs
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -22,26 +22,97 @@ jobs:
           node << 'EOF' > /tmp/reset-audit.txt
           const VTOKEN = process.env.VERCEL_TOKEN;
           const GTOKEN = process.env.GITHUB_TOKEN;
-          const LATEST_FAIL_ID = 'D55C1xV4aPWjG3RGArwh1T5pRrNP';
+
+          async function ghapi(path, method = 'GET', body) {
+            const res = await fetch(`https://api.github.com${path}`, {
+              method,
+              headers: {
+                'Authorization': `Bearer ${GTOKEN}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+              },
+              body: body ? JSON.stringify(body) : undefined,
+            });
+            return res.json();
+          }
+
+          async function vapi(path) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
+              headers: { 'Authorization': `Bearer ${VTOKEN}` },
+            });
+            return res.json();
+          }
+
+          async function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+          }
 
           async function main() {
-            // TASK 1: Read vercel.json from hive-hivephoto
-            console.log('=== TASK 1: vercel.json ===');
-            const vjRes = await fetch(
-              'https://api.github.com/repos/saggarsonny-boop/hive-hivephoto/contents/vercel.json',
-              { headers: { 'Authorization': `Bearer ${GTOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
-            );
-            const vjData = await vjRes.json();
-            if (vjData.content) {
-              console.log(Buffer.from(vjData.content, 'base64').toString());
-            } else {
-              console.log('ERROR:', JSON.stringify(vjData).slice(0, 300));
+            // STEP 1: Get current commit SHA on hive-hivephoto/main
+            console.log('=== STEP 1: TRIGGER EMPTY COMMIT ON hive-hivephoto ===');
+            const refData = await ghapi('/repos/saggarsonny-boop/hive-hivephoto/git/refs/heads/main');
+            const currentSha = refData.object?.sha;
+            if (!currentSha) {
+              console.log('ERROR getting ref:', JSON.stringify(refData).slice(0, 300));
+              process.exit(1);
+            }
+            console.log('Current SHA:', currentSha);
+
+            // Get the current commit to get its tree
+            const currentCommit = await ghapi(`/repos/saggarsonny-boop/hive-hivephoto/git/commits/${currentSha}`);
+            const treeSha = currentCommit.tree?.sha;
+            console.log('Tree SHA:', treeSha);
+
+            // Create a new empty commit
+            const now = new Date().toISOString();
+            const newCommit = await ghapi('/repos/saggarsonny-boop/hive-hivephoto/git/commits', 'POST', {
+              message: `chore: trigger rebuild with Node 20.x [${now}]`,
+              tree: treeSha,
+              parents: [currentSha],
+            });
+            console.log('New commit SHA:', newCommit.sha);
+
+            // Update the ref
+            const updateRef = await ghapi('/repos/saggarsonny-boop/hive-hivephoto/git/refs/heads/main', 'PATCH', {
+              sha: newCommit.sha,
+              force: false,
+            });
+            console.log('Ref updated to:', updateRef.object?.sha);
+
+            // STEP 2: Wait 60s for Vercel to pick up and start building
+            console.log('\n=== STEP 2: WAITING 60s FOR VERCEL ===');
+            await sleep(60000);
+
+            // STEP 3: Get latest deployment
+            console.log('\n=== STEP 3: LATEST DEPLOYMENT ===');
+            const deps = await vapi('/v6/deployments?projectId=hive-hivephoto&limit=3');
+            const latest = (deps.deployments || [])[0];
+            if (!latest) {
+              console.log('No deployments found');
+              process.exit(1);
+            }
+            console.log(`uid: ${latest.uid}`);
+            console.log(`state: ${latest.state}`);
+            console.log(`created: ${new Date(latest.created).toISOString()}`);
+            console.log(`url: ${latest.url}`);
+            console.log(`error: ${latest.errorMessage || 'none'}`);
+
+            // STEP 4: Wait more if still building
+            if (latest.state === 'BUILDING' || latest.state === 'QUEUED' || latest.state === 'INITIALIZING') {
+              console.log('\n=== WAITING ANOTHER 90s FOR BUILD ===');
+              await sleep(90000);
+              const deps2 = await vapi('/v6/deployments?projectId=hive-hivephoto&limit=1');
+              const dep2 = (deps2.deployments || [])[0];
+              if (dep2) {
+                console.log(`state after wait: ${dep2.state}`);
+                console.log(`error: ${dep2.errorMessage || 'none'}`);
+              }
             }
 
-            // TASK 2: Build log for latest failure D55C1xV4a
-            console.log('\n=== TASK 2: BUILD LOG (D55C1xV4a) ===');
+            // STEP 5: Get build events
+            console.log('\n=== STEP 4: BUILD LOG ===');
             const evRes = await fetch(
-              `https://api.vercel.com/v2/deployments/${LATEST_FAIL_ID}/events?limit=100`,
+              `https://api.vercel.com/v2/deployments/${latest.uid}/events?limit=200`,
               { headers: { 'Authorization': `Bearer ${VTOKEN}` } }
             );
             const evText = await evRes.text();
@@ -59,29 +130,7 @@ jobs:
                 }
               } catch { if (line.length > 2) console.log(line); }
             }
-            if (lineCount === 0) console.log('(no events returned)');
-
-            // TASK 3: Change nodeVersion to 20.x
-            console.log('\n=== TASK 3: SET nodeVersion 20.x ===');
-            const patchRes = await fetch(
-              'https://api.vercel.com/v9/projects/hive-hivephoto',
-              {
-                method: 'PATCH',
-                headers: {
-                  'Authorization': `Bearer ${VTOKEN}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ nodeVersion: '20.x' }),
-              }
-            );
-            const patchData = await patchRes.json();
-            if (patchData.error) {
-              console.log('PATCH ERROR:', JSON.stringify(patchData.error));
-            } else {
-              console.log('nodeVersion now:', patchData.nodeVersion);
-              console.log('name:', patchData.name);
-              console.log('id:', patchData.id);
-            }
+            if (lineCount === 0) console.log('(no events — may still be building or too new)');
           }
 
           main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
@@ -98,5 +147,5 @@ jobs:
           git config user.name "Claude Code"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/saggarsonny-boop/hivebaby.git
           git add hivephoto-reset-audit.txt
-          git commit -m "chore: hivephoto audit + node 20.x fix $(date -u +%H:%M)" || echo "no changes"
+          git commit -m "chore: hivephoto build trigger + log $(date -u +%H:%M)" || echo "no changes"
           git push origin HEAD:main
