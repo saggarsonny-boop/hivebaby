@@ -1,0 +1,122 @@
+=== STEP 1: LAST READY DEPLOYMENTS ===
+dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF state=READY created=2026-04-25T15:07:59.503Z url=hive-hivephoto-l7r11toz1-hivebaby.vercel.app err=
+dpl_3EeQJcApnBV9qfREjJijensAR8Qx state=ERROR created=2026-04-25T15:05:33.898Z url=hive-hivephoto-cuz83h2x3-hivebaby.vercel.app err=Vulnerable version of Next.js detected, please update immediately.
+dpl_7tyYrfi7HWYat7DQSQdd9p6eF9Ey state=ERROR created=2026-04-25T15:05:33.533Z url=hive-hivephoto-90fqhchvc-hivebaby.vercel.app err=Command "npm run build" exited with 1
+dpl_FLH7V44B8egCrqfCCWvucbJLg35R state=ERROR created=2026-04-25T15:02:20.633Z url=hive-hivephoto-ih5ugotv9-hivebaby.vercel.app err=Command "npm run build" exited with 1
+dpl_F1gpejnfiB6LkWjgtoKGDHqhtw4D state=ERROR created=2026-04-25T14:57:20.600Z url=hive-hivephoto-knk5z8h71-hivebaby.vercel.app err=Command "npm run build" exited with 1
+dpl_9PF8V1KRJFgy6YLPYKLd3PLUy4Tn state=ERROR created=2026-04-25T14:37:32.588Z url=hive-hivephoto-h2890agto-hivebaby.vercel.app err=Command "npm install" exited with 1
+dpl_9cd9RkgRphreLawLHZoFR4VdhacJ state=ERROR created=2026-04-25T14:32:05.231Z url=hive-hivephoto-5z2n1txgl-hivebaby.vercel.app err=Command "npm install" exited with 1
+dpl_2QRwbTLS3fdE4H88V2ULLz9pvHgS state=ERROR created=2026-04-25T14:10:42.231Z url=hive-hivephoto-674e42e0u-hivebaby.vercel.app err=Command "npm install" exited with 1
+dpl_BPo9XVVGjE6YDfrD8ULVrX2KtkXn state=ERROR created=2026-04-25T12:48:53.698Z url=hive-hivephoto-868sdibw1-hivebaby.vercel.app err=Command "npm install" exited with 1
+
+=== STEP 2: LATEST DEPLOYMENT DETAIL ===
+uid: undefined
+state: READY
+readyState: READY
+errorMessage: none
+meta.githubCommitSha: 7426484417c3b39b4979ff7ab93a52c6498887ef
+
+=== STEP 3: RUNTIME ERROR EVENTS ===
+[stdout] Running build in Washington, D.C., USA (East) – iad1
+[stdout] Build machine configuration: 4 cores, 8 GB
+[stdout] Cloning github.com/saggarsonny-boop/hive-hivephoto (Branch: main, Commit: 7426484)
+[stdout] Previous build caches not available.
+[stdout] Cloning completed: 206.000ms
+[stdout] Running "vercel build"
+[stderr] Vercel CLI 51.6.1
+[stdout] Installing dependencies...
+[stderr] npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129693511489337541600000","date":1777129693511,"serial":"1777129693511489337541600000"}
+[stdout] added 253 packages in 11s
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129693511489337541600002","date":1777129693511,"serial":"1777129693511489337541600002"}
+[stdout] 36 packages are looking for funding
+[stdout]   run `npm fund` for details
+[stdout] Detected Next.js version: 15.3.9
+[stdout] Running "npm run build"
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129693663489337541600000","date":1777129693663,"serial":"1777129693663489337541600000"}
+[stdout] > hive-hivephoto@0.1.0 build
+[stdout] > next build
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129693664489337541600000","date":1777129693664,"serial":"1777129693664489337541600000"}
+[stdout] Attention: Next.js now collects completely anonymous telemetry regarding usage.
+[stdout] This information is used to shape Next.js' roadmap and prioritize features.
+[stdout] You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+[stdout] https://nextjs.org/telemetry
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129694183489337541600003","date":1777129694183,"serial":"1777129694183489337541600003"}
+[stdout]    ▲ Next.js 15.3.9
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129694240489337541600000","date":1777129694240,"serial":"1777129694240489337541600000"}
+[stdout]    Creating an optimized production build ...
+[stdout]  ✓ Compiled successfully in 10.0s
+[stdout]    Skipping linting
+[stdout]    Checking validity of types ...
+[stdout]    Collecting page data ...
+[stdout]    Generating static pages (0/33) ...
+[stdout]    Generating static pages (8/33) 
+[stdout]    Generating static pages (16/33) 
+[stdout]    Generating static pages (24/33) 
+[stdout]  ✓ Generating static pages (33/33)
+[stdout]    Finalizing page optimization ...
+[stdout]    Collecting build traces ...
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129722646489337541600000","date":1777129722646,"serial":"1777129722646489337541600000"}
+[stdout] Route (app)                                 Size  First Load JS
+[stdout] ┌ ○ /                                    3.08 kB         168 kB
+[stdout] ├ ○ /_not-found                            981 B         103 kB
+[stdout] ├ ○ /account                             2.19 kB         162 kB
+[stdout] ├ ○ /account/billing                     1.86 kB         162 kB
+[stdout] ├ ○ /account/storage                     1.96 kB         162 kB
+[stdout] ├ ƒ /api/admin/migrate                     219 B         102 kB
+[stdout] ├ ƒ /api/admin/seed-stripe                 219 B         102 kB
+[stdout] ├ ƒ /api/cron/analyze                      219 B         102 kB
+[stdout] ├ ƒ /api/cron/cleanup                      219 B         102 kB
+[stdout] ├ ƒ /api/cron/cleanup-provisional          219 B         102 kB
+[stdout] ├ ƒ /api/cron/storage-reconcile            219 B         102 kB
+[stdout] ├ ƒ /api/duplicates                        219 B         102 kB
+[stdout] ├ ƒ /api/duplicates/[id]                   219 B         102 kB
+[stdout] ├ ƒ /api/duplicates/[id]/keep-both         219 B         102 kB
+[stdout] ├ ƒ /api/duplicates/[id]/keep-new          219 B         102 kB
+[stdout] ├ ƒ /api/duplicates/[id]/keep-original     219 B         102 kB
+[stdout] ├ ƒ /api/faces/[id]/label                  219 B         102 kB
+[stdout] ├ ƒ /api/ingest/complete                   219 B         102 kB
+[stdout] ├ ƒ /api/ingest/presign                    219 B         102 kB
+[stdout] ├ ƒ /api/people                            219 B         102 kB
+[stdout] ├ ƒ /api/people/[id]                       219 B         102 kB
+[stdout] ├ ƒ /api/photos                            219 B         102 kB
+[stdout] ├ ƒ /api/photos/[id]                       219 B         102 kB
+[stdout] ├ ƒ /api/photos/[id]/reanalyze             219 B         102 kB
+[stdout] ├ ƒ /api/photos/[id]/signed-url            219 B         102 kB
+[stdout] ├ ƒ /api/pricing                           219 B         102 kB
+[stdout] ├ ƒ /api/search                            219 B         102 kB
+[stdout] ├ ƒ /api/storage/usage                     219 B         102 kB
+[stdout] ├ ƒ /api/subscription                      219 B         102 kB
+[stdout] ├ ƒ /api/subscription/cancel               219 B         102 kB
+[stdout] ├ ƒ /api/subscription/portal               219 B         102 kB
+[stdout] ├ ƒ /api/subscription/upgrade              219 B         102 kB
+[stdout] ├ ƒ /api/webhooks/stripe                   219 B         102 kB
+[stdout] ├ ○ /duplicates                          2.05 kB         167 kB
+[stdout] ├ ○ /map                                 1.43 kB         161 kB
+[stdout] ├ ○ /people                              1.82 kB         167 kB
+[stdout] ├ ƒ /people/[id]                         1.76 kB         167 kB
+[stdout] ├ ƒ /photo/[id]                          2.77 kB         168 kB
+[stdout] ├ ○ /pricing                              2.9 kB         163 kB
+[stdout] ├ ○ /search                              2.85 kB         168 kB
+[stdout] └ ○ /upload                              3.32 kB         163 kB
+[stdout] + First Load JS shared by all             102 kB
+[stdout]   ├ chunks/1684-ec7b7ea25e88dc0e.js      46.4 kB
+[stdout]   ├ chunks/4bd1b696-62ffffd4cde81aa4.js  53.2 kB
+[stdout]   └ other shared chunks (total)          2.05 kB
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129722659489337541600003","date":1777129722659,"serial":"1777129722659489337541600003"}
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129722659489337541600004","date":1777129722659,"serial":"1777129722659489337541600004"}
+[stdout] ƒ Middleware                             33.3 kB
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129722660489337541600000","date":1777129722660,"serial":"1777129722660489337541600000"}
+[stdout] ○  (Static)   prerendered as static content
+[stdout] ƒ  (Dynamic)  server-rendered on demand
+[stdout] {"deploymentId":"dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF","info":{"type":"build","name":"bld_mfvjppthb","entrypoint":"."},"text":"","id":"1777129722660489337541600003","date":1777129722660,"serial":"1777129722660489337541600003"}
+[stdout] Traced Next.js server files in: 71.397ms
+[stdout] Created all serverless functions in: 376.76ms
+[stdout] Collected static files (public/, static/, .next/static): 16.937ms
+[stderr] Build Completed in /vercel/output [41s]
+[stdout] Deploying outputs...
+[stdout] Deployment completed
+[stdout] Creating build cache...
+[stdout] Created build cache: 6s
+[stdout] Uploading build cache [142.86 MB]
+[stdout] Build cache uploaded: 1.864s
