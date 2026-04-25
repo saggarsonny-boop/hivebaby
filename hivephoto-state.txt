@@ -1,0 +1,7 @@
+OWNER: not found in project list
+DOMAINS hive-hivephoto: hivephoto.hive.baby, hive-hivephoto-ten.vercel.app
+DOMAINS hive-photo-o3no: none
+ENV hive-hivephoto: ANTHROPIC_API_KEY[production,preview] | CRON_SECRET[production,preview] | NEXT_PUBLIC_APP_URL[production,preview] | R2_PUBLIC_THUMB_URL[production,preview] | R2_BUCKET_THUMBS[production,preview] | R2_BUCKET_ORIGINALS[production,preview] | R2_SECRET_ACCESS_KEY[production,preview] | R2_ACCESS_KEY_ID[production,preview] | R2_ACCOUNT_ID[production,preview] | NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY[production,preview] | STRIPE_WEBHOOK_SECRET[production,preview] | STRIPE_SECRET_KEY[production,preview] | DATABASE_URL[production,preview] | CLERK_SECRET_KEY[production,preview] | NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY[production,preview]
+DEPLOY dpl_F1gpejnfiB6LkWjgtoKGDHqhtw4D state=ERROR url=hive-hivephoto-knk5z8h71-hivebaby.vercel.app err=Command "npm run build" exited with 1
+DEPLOY dpl_9PF8V1KRJFgy6YLPYKLd3PLUy4Tn state=ERROR url=hive-hivephoto-h2890agto-hivebaby.vercel.app err=Command "npm install" exited with 1
+DEPLOY dpl_9cd9RkgRphreLawLHZoFR4VdhacJ state=ERROR url=hive-hivephoto-5z2n1txgl-hivebaby.vercel.app err=Command "npm install" exited with 1
