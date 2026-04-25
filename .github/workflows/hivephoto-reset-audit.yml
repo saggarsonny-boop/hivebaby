@@ -19,7 +19,7 @@ jobs:
           VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
           ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
         run: |
-          echo "ANTHROPIC_KEY first 10 chars: $(echo $ANTHROPIC_KEY | cut -c1-10)"
+          echo "ANTHROPIC_KEY first 20 chars: $(echo $ANTHROPIC_KEY | cut -c1-20)"
 
           node << 'EOF' > /tmp/reset-audit.txt
           const VTOKEN = process.env.VERCEL_TOKEN_MAIN;
