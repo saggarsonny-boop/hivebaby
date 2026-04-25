@@ -14,82 +14,138 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Find utilities project + fix ANTHROPIC_API_KEY
+      - name: Find utilities project and fix ANTHROPIC_API_KEY
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
         run: |
           node << 'EOF' > /tmp/reset-audit.txt
           const VTOKEN = process.env.VERCEL_TOKEN;
-          const AKEY   = process.env.ANTHROPIC_API_KEY;
+          const AKEY   = process.env.ANTHROPIC_KEY;
 
-          async function vapi(path, method = 'GET', body) {
-            const res = await fetch(`https://api.vercel.com${path}`, {
-              method,
-              headers: { 'Authorization': `Bearer ${VTOKEN}`, 'Content-Type': 'application/json' },
-              body: body ? JSON.stringify(body) : undefined,
+          async function vget(path) {
+            const r = await fetch(`https://api.vercel.com${path}`, {
+              headers: { 'Authorization': `Bearer ${VTOKEN}` },
             });
-            return res.json();
+            return r.json();
+          }
+          async function vpatch(path, body) {
+            const r = await fetch(`https://api.vercel.com${path}`, {
+              method: 'PATCH',
+              headers: { 'Authorization': `Bearer ${VTOKEN}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            return r.json();
+          }
+          async function vpost(path, body) {
+            const r = await fetch(`https://api.vercel.com${path}`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${VTOKEN}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            return r.json();
           }
 
-          async function checkAndFixProject(projId) {
-            console.log(`\n=== ENV VARS for ${projId} ===`);
-            const env = await vapi(`/v9/projects/${projId}/env`);
-            if (env.error) { console.log('ERROR:', JSON.stringify(env.error)); return; }
-            const vars = env.envs || [];
-            console.log(`Total: ${vars.length}`);
-            let anthropicVar = null;
-            for (const v of vars) {
-              const targets = (v.target || []).join(',');
-              const display = v.type === 'encrypted' ? 'ENCRYPTED' : (v.value ? 'SET' : 'EMPTY');
-              console.log(`  ${v.key} [${targets}] ${display}`);
-              if (v.key === 'ANTHROPIC_API_KEY') anthropicVar = v;
-            }
-
-            console.log('\n=== ANTHROPIC_API_KEY STATUS ===');
-            if (!anthropicVar) {
-              console.log('MISSING — adding now');
-              if (!AKEY) { console.log('ERROR: secret not available'); return; }
-              const r = await vapi(`/v10/projects/${projId}/env`, 'POST', {
-                key: 'ANTHROPIC_API_KEY', value: AKEY,
-                type: 'encrypted', target: ['production', 'preview'],
-              });
-              console.log(r.error ? 'SET FAILED: ' + JSON.stringify(r.error) : `SET OK id=${r.id}`);
-            } else {
-              console.log(`PRESENT type=${anthropicVar.type} targets=${(anthropicVar.target||[]).join(',')}`);
-            }
-          }
-
-          async function main() {
-            // STEP 1: List all projects to find utilities
-            console.log('=== ALL VERCEL PROJECTS ===');
-            const all = await vapi('/v9/projects?limit=100');
-            if (all.error) { console.log('ERROR:', JSON.stringify(all.error)); return; }
+          async function findAndFix(teamParam) {
+            const label = teamParam ? `teamId=${teamParam}` : 'personal';
+            console.log(`\n--- Listing projects (${label}) ---`);
+            const all = await vget(`/v9/projects?limit=100${teamParam ? `&teamId=${teamParam}` : ''}`);
+            if (all.error) { console.log('ERROR:', JSON.stringify(all.error)); return null; }
             const projects = all.projects || [];
-            console.log(`Total projects: ${projects.length}`);
+            console.log(`Found ${projects.length} projects`);
 
             let utilProject = null;
             for (const p of projects) {
               const aliases = (p.alias || []).map(a => a.value || a.domain || '').filter(Boolean);
-              const hasUtils = aliases.some(a => a.includes('utilities'));
-              console.log(`  ${p.name} (${p.id}) aliases=[${aliases.slice(0,3).join(', ')}]${hasUtils ? ' ← UTILITIES' : ''}`);
-              if (hasUtils) utilProject = p;
+              const isUtil = aliases.some(a => a.includes('utilities'));
+              console.log(`  ${p.name} (${p.id}) domains=[${aliases.slice(0,2).join(', ')}]${isUtil ? ' ← UTILITIES' : ''}`);
+              if (isUtil) utilProject = { project: p, teamParam };
+            }
+            return utilProject;
+          }
+
+          async function fixApiKey(projId, teamParam) {
+            const qs = teamParam ? `?teamId=${teamParam}` : '';
+            console.log(`\n=== ENV VARS on ${projId} ===`);
+            const env = await vget(`/v9/projects/${projId}/env${qs}`);
+            if (env.error) { console.log('ERROR:', JSON.stringify(env.error)); return; }
+
+            const vars = env.envs || [];
+            let anthropicVar = null;
+            for (const v of vars) {
+              const display = v.type === 'encrypted' ? 'ENCRYPTED' : (v.value ? 'SET' : 'EMPTY');
+              console.log(`  ${v.key} [${(v.target||[]).join(',')}] ${display}`);
+              if (v.key === 'ANTHROPIC_API_KEY') anthropicVar = v;
             }
 
-            if (!utilProject) {
-              console.log('\nCould not find utilities project by alias. Trying by name patterns...');
-              for (const p of projects) {
-                if (p.name.includes('util') || p.name.includes('universal')) {
-                  console.log(`  Candidate: ${p.name} (${p.id})`);
-                  if (!utilProject) utilProject = p;
-                }
+            console.log('\n=== ANTHROPIC_API_KEY ===');
+            if (!AKEY) {
+              console.log('ERROR: ANTHROPIC_KEY secret not available in workflow');
+              return;
+            }
+
+            if (!anthropicVar) {
+              console.log('MISSING — adding now');
+              const r = await vpost(`/v10/projects/${projId}/env${qs}`, {
+                key: 'ANTHROPIC_API_KEY', value: AKEY,
+                type: 'encrypted', target: ['production', 'preview'],
+              });
+              console.log(r.error ? 'FAILED: ' + JSON.stringify(r.error) : `ADDED id=${r.id}`);
+            } else {
+              console.log(`EXISTS id=${anthropicVar.id} type=${anthropicVar.type}`);
+              // Patch the value to ensure it's correct
+              const r = await vpatch(`/v9/projects/${projId}/env/${anthropicVar.id}${qs}`, {
+                value: AKEY, target: ['production', 'preview'],
+              });
+              console.log(r.error ? 'PATCH FAILED: ' + JSON.stringify(r.error) : `PATCHED id=${r.id || anthropicVar.id}`);
+            }
+
+            // Trigger redeploy
+            console.log('\n=== TRIGGER REDEPLOY ===');
+            const deps = await vget(`/v6/deployments?projectId=${projId}&limit=1${teamParam ? `&teamId=${teamParam}` : ''}`);
+            const latest = (deps.deployments || [])[0];
+            if (latest) {
+              console.log(`Latest: ${latest.uid} state=${latest.state}`);
+              const rd = await vpost(`/v13/deployments?forceNew=1${teamParam ? `&teamId=${teamParam}` : ''}`, {
+                deploymentId: latest.uid, name: latest.name || projId, target: 'production',
+              });
+              console.log(rd.error ? 'REDEPLOY ERROR: ' + JSON.stringify(rd.error).slice(0,200) : `REDEPLOYING: ${rd.id || rd.uid || 'triggered'}`);
+            } else {
+              console.log('No existing deployment found');
+            }
+          }
+
+          async function main() {
+            console.log('=== STEP 1: LIST TEAMS ===');
+            const teams = await vget('/v2/teams?limit=20');
+            const teamList = teams.teams || [];
+            console.log(`Teams: ${teamList.map(t => `${t.name} (${t.id})`).join(', ') || 'none (personal only)'}`);
+
+            // Try personal account first
+            let found = await findAndFix(null);
+
+            // Try each team
+            for (const team of teamList) {
+              if (!found) {
+                found = await findAndFix(team.id);
+              } else {
+                // Still list for info
+                await findAndFix(team.id);
               }
             }
 
-            if (utilProject) {
-              await checkAndFixProject(utilProject.id);
+            if (!found) {
+              // Try known team slugs
+              for (const slug of ['saggarsonny-3909s-projects', 'saggarsonny-boop']) {
+                if (!found) found = await findAndFix(slug);
+              }
+            }
+
+            if (found) {
+              console.log(`\n=== FOUND: ${found.project.name} (${found.project.id}) ===`);
+              await fixApiKey(found.project.id, found.teamParam);
             } else {
-              console.log('\nERROR: Could not identify utilities project');
+              console.log('\n=== NOT FOUND: utilities project not identified ===');
             }
           }
 
@@ -107,5 +163,5 @@ jobs:
           git config user.name "Claude Code"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/saggarsonny-boop/hivebaby.git
           git add hivephoto-reset-audit.txt
-          git commit -m "chore: utilities env audit $(date -u +%H:%M)" || echo "no changes"
+          git commit -m "chore: find utilities project + fix ANTHROPIC_API_KEY $(date -u +%H:%M)" || echo "no changes"
           git push origin HEAD:main
