@@ -1,4 +1,8 @@
-=== STEP 1: ud-utilities ENV VARS ===
-ERROR: {"code":"not_found","message":"Project not found."}
-Trying ud-utilities by slug...
-{"error":{"code":"not_found","message":"Project not found."}}
+=== ALL VERCEL PROJECTS ===
+Total projects: 2
+  hive-hivephoto (prj_EbbB8f8Tra8XZ7nRMocNE0fvTjQz) aliases=[]
+  ud-signer (prj_5RTEVp2FqzOeaTi2xJUM1pfDZJHg) aliases=[]
+
+Could not find utilities project by alias. Trying by name patterns...
+
+ERROR: Could not identify utilities project
