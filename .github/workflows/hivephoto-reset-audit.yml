@@ -1,0 +1,120 @@
+name: HivePhoto Reset Audit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Full reset audit
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          node << 'EOF' > /tmp/reset-audit.txt
+          const TOKEN = process.env.VERCEL_TOKEN;
+          const FIRST_FAIL_ID = 'HBaK8Qj5dNpNXfabXRRMuDzCecVR';
+          const WORKING_ID    = '9tT4cD2rKrv6CU8r9hLJEpdyjHPZ';
+
+          async function vapi(path) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
+              headers: { 'Authorization': `Bearer ${TOKEN}` },
+            });
+            return res.json();
+          }
+
+          async function main() {
+            // STEP 1: Build logs for first failure HBaK8Qj5d
+            console.log('=== STEP 1: FIRST FAILURE BUILD LOG (HBaK8Qj5d / 8e43b2c) ===');
+            const evRes = await fetch(
+              `https://api.vercel.com/v2/deployments/${FIRST_FAIL_ID}/events?limit=200`,
+              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+            );
+            const evText = await evRes.text();
+            let lineCount = 0;
+            for (const line of evText.split('\n')) {
+              if (!line.trim()) continue;
+              try {
+                const e = JSON.parse(line);
+                const t = e.type || '?';
+                const p = e.payload || '';
+                const text = typeof p === 'string' ? p
+                  : (p.text || p.message || JSON.stringify(p));
+                if (text && text.trim()) {
+                  console.log(`[${t}] ${text.slice(0, 300)}`);
+                  lineCount++;
+                }
+              } catch { if (line.length > 2) console.log(line); }
+            }
+            if (lineCount === 0) console.log('(no events returned)');
+
+            // STEP 2: Files from working April 19 deployment
+            console.log('\n=== STEP 2: WORKING DEPLOYMENT FILES (9tT4cD2rK / Apr 19) ===');
+            const files = await vapi(`/v6/deployments/${WORKING_ID}/files`);
+            if (Array.isArray(files)) {
+              files.slice(0, 60).forEach(f => console.log(f.name || JSON.stringify(f)));
+            } else {
+              console.log(JSON.stringify(files).slice(0, 500));
+            }
+
+            // STEP 3: Vercel project build settings
+            console.log('\n=== STEP 3: PROJECT BUILD SETTINGS ===');
+            // Try both possible project names
+            for (const projName of ['hive-hivephoto', 'hive-photo-o3no']) {
+              const p = await vapi(`/v9/projects/${projName}`);
+              if (p.error) { console.log(`${projName}: ${p.error.code}`); continue; }
+              console.log(`Project: ${p.name} (${p.id})`);
+              console.log(`  rootDirectory: ${p.rootDirectory || '(none — repo root)'}`);
+              console.log(`  buildCommand: ${p.buildCommand || '(default)'}`);
+              console.log(`  outputDirectory: ${p.outputDirectory || '(default)'}`);
+              console.log(`  framework: ${p.framework || '(auto-detect)'}`);
+              console.log(`  nodeVersion: ${p.nodeVersion || '(default)'}`);
+              console.log(`  installCommand: ${p.installCommand || '(default)'}`);
+              console.log(`  devCommand: ${p.devCommand || '(none)'}`);
+              // Also check git connection
+              const link = p.link || {};
+              console.log(`  git.repo: ${link.repo || 'n/a'}`);
+              console.log(`  git.repoId: ${link.repoId || 'n/a'}`);
+              console.log(`  git.productionBranch: ${link.productionBranch || 'n/a'}`);
+              console.log(`  git.type: ${link.type || 'n/a'}`);
+            }
+
+            // STEP 4: Current package.json from GitHub
+            console.log('\n=== STEP 4: CURRENT package.json (GitHub main) ===');
+            const pkgRes = await fetch(
+              'https://api.github.com/repos/saggarsonny-boop/hive-hivephoto/contents/package.json',
+              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+            );
+            const pkgData = await pkgRes.json();
+            const pkgContent = Buffer.from(pkgData.content, 'base64').toString();
+            console.log(pkgContent);
+
+            // STEP 5: Repo root structure
+            console.log('\n=== STEP 5: REPO ROOT STRUCTURE ===');
+            const rootRes = await fetch(
+              'https://api.github.com/repos/saggarsonny-boop/hive-hivephoto/contents/',
+              { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+            );
+            const rootFiles = await rootRes.json();
+            if (Array.isArray(rootFiles)) {
+              rootFiles.forEach(f => console.log(`  ${f.type === 'dir' ? '[dir]' : '[file]'} ${f.name}`));
+            }
+          }
+
+          main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
+          EOF
+
+          cat /tmp/reset-audit.txt
+          cp /tmp/reset-audit.txt hivephoto-reset-audit.txt
+
+      - name: Commit
+        run: |
+          git config user.email "claude@hive.baby"
+          git config user.name "Claude Code"
+          git add hivephoto-reset-audit.txt
+          git commit -m "chore: hivephoto reset audit $(date -u +%H:%M)" || echo "no changes"
+          git push
