@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Full reset audit
+      - name: Audit + fix node version
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -22,21 +22,26 @@ jobs:
           node << 'EOF' > /tmp/reset-audit.txt
           const VTOKEN = process.env.VERCEL_TOKEN;
           const GTOKEN = process.env.GITHUB_TOKEN;
-          const FIRST_FAIL_ID = 'HBaK8Qj5dNpNXfabXRRMuDzCecVR';
-          const WORKING_ID    = '9tT4cD2rKrv6CU8r9hLJEpdyjHPZ';
-
-          async function vapi(path) {
-            const res = await fetch(`https://api.vercel.com${path}`, {
-              headers: { 'Authorization': `Bearer ${VTOKEN}` },
-            });
-            return res.json();
-          }
+          const LATEST_FAIL_ID = 'D55C1xV4aPWjG3RGArwh1T5pRrNP';
 
           async function main() {
-            // STEP 1: Build logs for first failure HBaK8Qj5d
-            console.log('=== STEP 1: FIRST FAILURE BUILD LOG (HBaK8Qj5d / 8e43b2c) ===');
+            // TASK 1: Read vercel.json from hive-hivephoto
+            console.log('=== TASK 1: vercel.json ===');
+            const vjRes = await fetch(
+              'https://api.github.com/repos/saggarsonny-boop/hive-hivephoto/contents/vercel.json',
+              { headers: { 'Authorization': `Bearer ${GTOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
+            );
+            const vjData = await vjRes.json();
+            if (vjData.content) {
+              console.log(Buffer.from(vjData.content, 'base64').toString());
+            } else {
+              console.log('ERROR:', JSON.stringify(vjData).slice(0, 300));
+            }
+
+            // TASK 2: Build log for latest failure D55C1xV4a
+            console.log('\n=== TASK 2: BUILD LOG (D55C1xV4a) ===');
             const evRes = await fetch(
-              `https://api.vercel.com/v2/deployments/${FIRST_FAIL_ID}/events?limit=200`,
+              `https://api.vercel.com/v2/deployments/${LATEST_FAIL_ID}/events?limit=100`,
               { headers: { 'Authorization': `Bearer ${VTOKEN}` } }
             );
             const evText = await evRes.text();
@@ -45,72 +50,37 @@ jobs:
               if (!line.trim()) continue;
               try {
                 const e = JSON.parse(line);
-                const t = e.type || '?';
                 const p = e.payload || '';
                 const text = typeof p === 'string' ? p
                   : (p.text || p.message || JSON.stringify(p));
                 if (text && text.trim()) {
-                  console.log(`[${t}] ${text.slice(0, 300)}`);
+                  console.log(text.slice(0, 300));
                   lineCount++;
                 }
               } catch { if (line.length > 2) console.log(line); }
             }
             if (lineCount === 0) console.log('(no events returned)');
 
-            // STEP 2: Files from working April 19 deployment
-            console.log('\n=== STEP 2: WORKING DEPLOYMENT FILES (9tT4cD2rK / Apr 19) ===');
-            const files = await vapi(`/v6/deployments/${WORKING_ID}/files`);
-            if (Array.isArray(files)) {
-              files.slice(0, 60).forEach(f => console.log(f.name || JSON.stringify(f)));
-            } else {
-              console.log(JSON.stringify(files).slice(0, 500));
-            }
-
-            // STEP 3: Vercel project build settings
-            console.log('\n=== STEP 3: PROJECT BUILD SETTINGS ===');
-            for (const projName of ['hive-hivephoto', 'hive-photo-o3no']) {
-              const p = await vapi(`/v9/projects/${projName}`);
-              if (p.error) { console.log(`${projName}: ${p.error.code}`); continue; }
-              console.log(`Project: ${p.name} (${p.id})`);
-              console.log(`  rootDirectory: ${p.rootDirectory || '(none — repo root)'}`);
-              console.log(`  buildCommand: ${p.buildCommand || '(default)'}`);
-              console.log(`  outputDirectory: ${p.outputDirectory || '(default)'}`);
-              console.log(`  framework: ${p.framework || '(auto-detect)'}`);
-              console.log(`  nodeVersion: ${p.nodeVersion || '(default)'}`);
-              console.log(`  installCommand: ${p.installCommand || '(default)'}`);
-              console.log(`  devCommand: ${p.devCommand || '(none)'}`);
-              const link = p.link || {};
-              console.log(`  git.repo: ${link.repo || 'n/a'}`);
-              console.log(`  git.repoId: ${link.repoId || 'n/a'}`);
-              console.log(`  git.productionBranch: ${link.productionBranch || 'n/a'}`);
-              console.log(`  git.type: ${link.type || 'n/a'}`);
-            }
-
-            // STEP 4: Current package.json from GitHub (uses GITHUB_TOKEN)
-            console.log('\n=== STEP 4: CURRENT package.json (GitHub main) ===');
-            const pkgRes = await fetch(
-              'https://api.github.com/repos/saggarsonny-boop/hive-hivephoto/contents/package.json',
-              { headers: { 'Authorization': `Bearer ${GTOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
+            // TASK 3: Change nodeVersion to 20.x
+            console.log('\n=== TASK 3: SET nodeVersion 20.x ===');
+            const patchRes = await fetch(
+              'https://api.vercel.com/v9/projects/hive-hivephoto',
+              {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${VTOKEN}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nodeVersion: '20.x' }),
+              }
             );
-            const pkgData = await pkgRes.json();
-            if (pkgData.content) {
-              const pkgContent = Buffer.from(pkgData.content, 'base64').toString();
-              console.log(pkgContent);
+            const patchData = await patchRes.json();
+            if (patchData.error) {
+              console.log('PATCH ERROR:', JSON.stringify(patchData.error));
             } else {
-              console.log('ERROR fetching package.json:', JSON.stringify(pkgData).slice(0, 300));
-            }
-
-            // STEP 5: Repo root structure (uses GITHUB_TOKEN)
-            console.log('\n=== STEP 5: REPO ROOT STRUCTURE ===');
-            const rootRes = await fetch(
-              'https://api.github.com/repos/saggarsonny-boop/hive-hivephoto/contents/',
-              { headers: { 'Authorization': `Bearer ${GTOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
-            );
-            const rootFiles = await rootRes.json();
-            if (Array.isArray(rootFiles)) {
-              rootFiles.forEach(f => console.log(`  ${f.type === 'dir' ? '[dir]' : '[file]'} ${f.name}`));
-            } else {
-              console.log('ERROR:', JSON.stringify(rootFiles).slice(0, 300));
+              console.log('nodeVersion now:', patchData.nodeVersion);
+              console.log('name:', patchData.name);
+              console.log('id:', patchData.id);
             }
           }
 
@@ -128,5 +98,5 @@ jobs:
           git config user.name "Claude Code"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/saggarsonny-boop/hivebaby.git
           git add hivephoto-reset-audit.txt
-          git commit -m "chore: hivephoto reset audit $(date -u +%H:%M)" || echo "no changes"
+          git commit -m "chore: hivephoto audit + node 20.x fix $(date -u +%H:%M)" || echo "no changes"
           git push origin HEAD:main
