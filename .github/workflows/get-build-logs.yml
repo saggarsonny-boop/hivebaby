@@ -17,7 +17,14 @@ jobs:
         run: |
           node << 'EOF' > /tmp/build-logs.txt
           const TOKEN = process.env.VERCEL_TOKEN;
-          const DEP_ID = 'dpl_F1gpejnfiB6LkWjgtoKGDHqhtw4D';
+          // Get latest deployment ID dynamically
+          const latest = await fetch('https://api.vercel.com/v6/deployments?projectId=hive-hivephoto&limit=1', {
+            headers: { 'Authorization': `Bearer ${TOKEN}` },
+          }).then(r => r.json());
+          const dep0 = (latest.deployments || [])[0];
+          if (!dep0) { console.log('No deployments found'); process.exit(1); }
+          const DEP_ID = dep0.uid;
+          console.log(`Latest deployment: ${DEP_ID} state=${dep0.state}`);
 
           async function main() {
             // Get deployment details
