@@ -1,7 +1,7 @@
-Latest deployment: dpl_3EeQJcApnBV9qfREjJijensAR8Qx state=ERROR
-State: ERROR
-Error: Vulnerable version of Next.js detected, please update immediately.
-Created: 2026-04-25T15:05:33.898Z
+Latest deployment: dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF state=BUILDING
+State: BUILDING
+Error: none
+Created: 2026-04-25T15:07:59.503Z
 
 === BUILD LOG ===
 [
@@ -9,11 +9,11 @@ Running build in Washington, D.C., USA (East) – iad1
 ,
 Build machine configuration: 4 cores, 8 GB
 ,
-Cloning github.com/saggarsonny-boop/hive-hivephoto (Branch: main, Commit: c9ec6b6)
+Cloning github.com/saggarsonny-boop/hive-hivephoto (Branch: main, Commit: 7426484)
 ,
 Previous build caches not available.
 ,
-Cloning completed: 205.000ms
+Cloning completed: 206.000ms
 ,
 Running "vercel build"
 ,
@@ -23,43 +23,41 @@ Installing dependencies...
 ,
 npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
 ,
-npm warn deprecated next@15.3.1: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.
-,
 {
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
   text: '',
-  id: '1777129581614153775832000000',
-  date: 1777129581614,
-  serial: '1777129581614153775832000000'
+  id: '1777129693511489337541600000',
+  date: 1777129693511,
+  serial: '1777129693511489337541600000'
 }
 ,
-added 254 packages in 10s
+added 253 packages in 11s
 ,
 {
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
   text: '',
-  id: '1777129581614153775832000002',
-  date: 1777129581614,
-  serial: '1777129581614153775832000002'
+  id: '1777129693511489337541600002',
+  date: 1777129693511,
+  serial: '1777129693511489337541600002'
 }
 ,
 36 packages are looking for funding
 ,
   run `npm fund` for details
 ,
-Detected Next.js version: 15.3.1
+Detected Next.js version: 15.3.9
 ,
 Running "npm run build"
 ,
 {
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
   text: '',
-  id: '1777129581763153775832000000',
-  date: 1777129581763,
-  serial: '1777129581763153775832000000'
+  id: '1777129693663489337541600000',
+  date: 1777129693663,
+  serial: '1777129693663489337541600000'
 }
 ,
 > hive-hivephoto@0.1.0 build
@@ -67,12 +65,12 @@ Running "npm run build"
 > next build
 ,
 {
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
   text: '',
-  id: '1777129581763153775832000003',
-  date: 1777129581763,
-  serial: '1777129581763153775832000003'
+  id: '1777129693664489337541600000',
+  date: 1777129693664,
+  serial: '1777129693664489337541600000'
 }
 ,
 Attention: Next.js now collects completely anonymous telemetry regarding usage.
@@ -84,199 +82,24 @@ You can learn more, including how to opt-out if you'd not like to participate in
 https://nextjs.org/telemetry
 ,
 {
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
   text: '',
-  id: '1777129582294153775832000004',
-  date: 1777129582294,
-  serial: '1777129582294153775832000004'
+  id: '1777129694183489337541600003',
+  date: 1777129694183,
+  serial: '1777129694183489337541600003'
 }
 ,
-   ▲ Next.js 15.3.1
+   ▲ Next.js 15.3.9
 ,
 {
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
+  deploymentId: 'dpl_7gdh16TJ7Rq5xiZJUkXXUPHDF8QF',
+  info: { type: 'build', name: 'bld_mfvjppthb', entrypoint: '.' },
   text: '',
-  id: '1777129582349153775832000001',
-  date: 1777129582349,
-  serial: '1777129582349153775832000001'
+  id: '1777129694240489337541600000',
+  date: 1777129694240,
+  serial: '1777129694240489337541600000'
 }
 ,
    Creating an optimized production build ...
-,
- ✓ Compiled successfully in 9.0s
-,
-   Skipping linting
-,
-   Checking validity of types ...
-,
-   Collecting page data ...
-,
-   Generating static pages (0/33) ...
-,
-   Generating static pages (8/33) 
-,
-   Generating static pages (16/33) 
-,
-   Generating static pages (24/33) 
-,
- ✓ Generating static pages (33/33)
-,
-   Finalizing page optimization ...
-,
-   Collecting build traces ...
-,
-{
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
-  text: '',
-  id: '1777129609674153775832000000',
-  date: 1777129609674,
-  serial: '1777129609674153775832000000'
-}
-,
-Route (app)                                 Size  First Load JS
-,
-┌ ○ /                                    3.08 kB         168 kB
-,
-├ ○ /_not-found                            981 B         102 kB
-,
-├ ○ /account                             2.18 kB         162 kB
-,
-├ ○ /account/billing                     1.86 kB         161 kB
-,
-├ ○ /account/storage                     1.96 kB         161 kB
-,
-├ ƒ /api/admin/migrate                     219 B         102 kB
-,
-├ ƒ /api/admin/seed-stripe                 219 B         102 kB
-,
-├ ƒ /api/cron/analyze                      219 B         102 kB
-,
-├ ƒ /api/cron/cleanup                      219 B         102 kB
-,
-├ ƒ /api/cron/cleanup-provisional          219 B         102 kB
-,
-├ ƒ /api/cron/storage-reconcile            219 B         102 kB
-,
-├ ƒ /api/duplicates                        219 B         102 kB
-,
-├ ƒ /api/duplicates/[id]                   219 B         102 kB
-,
-├ ƒ /api/duplicates/[id]/keep-both         219 B         102 kB
-,
-├ ƒ /api/duplicates/[id]/keep-new          219 B         102 kB
-,
-├ ƒ /api/duplicates/[id]/keep-original     219 B         102 kB
-,
-├ ƒ /api/faces/[id]/label                  219 B         102 kB
-,
-├ ƒ /api/ingest/complete                   219 B         102 kB
-,
-├ ƒ /api/ingest/presign                    219 B         102 kB
-,
-├ ƒ /api/people                            219 B         102 kB
-,
-├ ƒ /api/people/[id]                       219 B         102 kB
-,
-├ ƒ /api/photos                            219 B         102 kB
-,
-├ ƒ /api/photos/[id]                       219 B         102 kB
-,
-├ ƒ /api/photos/[id]/reanalyze             219 B         102 kB
-,
-├ ƒ /api/photos/[id]/signed-url            219 B         102 kB
-,
-├ ƒ /api/pricing                           219 B         102 kB
-,
-├ ƒ /api/search                            219 B         102 kB
-,
-├ ƒ /api/storage/usage                     219 B         102 kB
-,
-├ ƒ /api/subscription                      219 B         102 kB
-,
-├ ƒ /api/subscription/cancel               219 B         102 kB
-,
-├ ƒ /api/subscription/portal               219 B         102 kB
-,
-├ ƒ /api/subscription/upgrade              219 B         102 kB
-,
-├ ƒ /api/webhooks/stripe                   219 B         102 kB
-,
-├ ○ /duplicates                          2.05 kB         167 kB
-,
-├ ○ /map                                 1.43 kB         161 kB
-,
-├ ○ /people                              1.82 kB         167 kB
-,
-├ ƒ /people/[id]                         1.75 kB         167 kB
-,
-├ ƒ /photo/[id]                          2.77 kB         168 kB
-,
-├ ○ /pricing                              2.9 kB         162 kB
-,
-├ ○ /search                              2.85 kB         168 kB
-,
-└ ○ /upload                              3.32 kB         163 kB
-,
-+ First Load JS shared by all             101 kB
-,
-  ├ chunks/1684-ff19828650127365.js      46.1 kB
-,
-  ├ chunks/4bd1b696-62ffffd4cde81aa4.js  53.2 kB
-,
-  └ other shared chunks (total)          2.06 kB
-,
-{
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
-  text: '',
-  id: '1777129609685153775832000005',
-  date: 1777129609685,
-  serial: '1777129609685153775832000005'
-}
-,
-{
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
-  text: '',
-  id: '1777129609685153775832000006',
-  date: 1777129609685,
-  serial: '1777129609685153775832000006'
-}
-,
-ƒ Middleware                             33.3 kB
-,
-{
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
-  text: '',
-  id: '1777129609686153775832000000',
-  date: 1777129609686,
-  serial: '1777129609686153775832000000'
-}
-,
-○  (Static)   prerendered as static content
-,
-ƒ  (Dynamic)  server-rendered on demand
-,
-{
-  deploymentId: 'dpl_3EeQJcApnBV9qfREjJijensAR8Qx',
-  info: { type: 'build', name: 'bld_e553t9itn', entrypoint: '.' },
-  text: '',
-  id: '1777129609686153775832000003',
-  date: 1777129609686,
-  serial: '1777129609686153775832000003'
-}
-,
-Traced Next.js server files in: 63.771ms
-,
-Created all serverless functions in: 402.521ms
-,
-Collected static files (public/, static/, .next/static): 10.198ms
-,
-Build Completed in /vercel/output [39s]
-,
-Vulnerable version of Next.js detected, please update immediately.
 ]
