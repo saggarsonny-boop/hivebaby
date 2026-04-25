@@ -351,6 +351,56 @@ Wired into pricing.ts, UpgradePrompt.tsx (add-on section), UDFooter (all 7 apps)
 - **Date completed:** April 24 2026
 - **Deployed to:** utilities.hive.baby (Vercel auto-deploy on push to main)
 
+## CHANGE PROPAGATION RULES
+
+Every time a trigger below fires, ALL listed updates MUST ship in the same commit. No partial updates.
+
+### TRIGGER: engine count changes
+- `apps/utilities/src/app/layout.tsx` — title, description, openGraph title + description
+- Hero heading on utilities hub page (`apps/utilities/src/app/page.tsx`)
+- Any hardcoded count in `apps/landing/` pages
+- `CLAUDE.md` UDUtilities Engine Status block
+
+### TRIGGER: new engine added to utilities
+- `FREE_NAV` or `SPECIALIST_CATS` array in `apps/utilities/src/app/page.tsx`
+- Sitemap (`apps/utilities/public/sitemap.xml` if it exists)
+- SEO `layout.tsx` for that engine's route
+- `TooltipTour` entry in `apps/utilities/src/lib/tourSteps.ts`
+- Hub category grid
+- Engine count everywhere (see trigger above)
+
+### TRIGGER: pricing changes
+- `apps/shared/lib/pricing.ts`
+- `UpgradePrompt.tsx` in shared components
+- `UDFooter` on all 8 properties
+- Support page pricing cards (`hive-support/src/app/`)
+- `CLAUDE.md` Stripe price ID table
+
+### TRIGGER: new property deployed
+- `UDNav` on ALL existing properties
+- `hive.baby` ecosystem links (`hivebaby/`)
+- `ud-inc` page ecosystem links (`ud-inc/`)
+- Sitemaps on affected properties
+- `CLAUDE.md` Repos/Domains/Status table
+
+### TRIGGER: URL or domain changes
+- All outreach documents in `apps/landing/public/`
+- Email templates in `hive-support/`
+- `UDNav` across all properties
+- Footer links across all properties
+- `CLAUDE.md` canonical URL references
+
+### TRIGGER: whitepaper updates
+- `apps/landing/src/app/whitepaper/` page
+- PDF download file in `apps/landing/public/`
+- `.uds` version of whitepaper in `apps/landing/public/demos/`
+
+### TRIGGER: styling/UX fix on one property
+- Check if the same fix is needed on all 8 properties
+- Apply consistently or document why the discrepancy is intentional
+
+---
+
 ## How to Work Across Repos
 Use GitHub API with token to read/write/commit to any repo.
 After any hivebaby change, trigger: `curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_Mj8SJS4gAlrG2PCXdUCUMmoAQAA3/CfgdTZ1r50"`
