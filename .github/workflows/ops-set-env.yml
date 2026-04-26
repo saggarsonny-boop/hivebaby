@@ -1,0 +1,116 @@
+name: Ops — Set DATABASE_URL on landing and ud-signer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/ops-set-env.yml'
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Set DATABASE_URL on landing and ud-signer, redeploy landing, seed demos
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN || secrets.VERCEL_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          node << 'EOF'
+          const TOKEN = process.env.VERCEL_TOKEN
+          const DB_URL = process.env.DATABASE_URL
+
+          if (!TOKEN) { console.error('VERCEL_TOKEN_MAIN / VERCEL_TOKEN not set'); process.exit(1) }
+          if (!DB_URL) { console.error('DATABASE_URL not set'); process.exit(1) }
+
+          const PROJECTS = [
+            { id: 'prj_iraVc9HNzaNyFv14gnn0tWMO6oVk', name: 'landing (ud.hive.baby)' },
+            { id: 'prj_aHr0Al8la5rpFajSnBs7WM0AfSEJ', name: 'ud-signer (signer.hive.baby)' },
+          ]
+
+          async function vercel(path, method = 'GET', body) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
+              method,
+              headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+              body: body ? JSON.stringify(body) : undefined,
+            })
+            const json = await res.json()
+            if (!res.ok && res.status !== 409) throw new Error(`${res.status}: ${JSON.stringify(json.error ?? json)}`)
+            return json
+          }
+
+          async function setEnv(projectId, projectName) {
+            console.log(`\n→ ${projectName} (${projectId})`)
+
+            // Try to create; if 409 (conflict = already exists), delete and recreate
+            try {
+              await vercel(`/v9/projects/${projectId}/env`, 'POST', {
+                key: 'DATABASE_URL',
+                value: DB_URL,
+                type: 'encrypted',
+                target: ['production', 'preview'],
+              })
+              console.log('  ✓ DATABASE_URL created')
+            } catch (e) {
+              if (!e.message.includes('409')) throw e
+              // Already exists — find and update
+              const envs = await vercel(`/v9/projects/${projectId}/env`)
+              const existing = (envs.envs || []).find(v => v.key === 'DATABASE_URL')
+              if (existing) {
+                await vercel(`/v9/projects/${projectId}/env/${existing.id}`, 'PATCH', {
+                  value: DB_URL,
+                  target: ['production', 'preview'],
+                })
+                console.log('  ✓ DATABASE_URL updated')
+              } else {
+                throw e
+              }
+            }
+          }
+
+          async function redeploy(projectId, projectName) {
+            console.log(`\n→ Redeploying ${projectName}`)
+            // Get latest deployment
+            const deps = await vercel(`/v6/deployments?projectId=${projectId}&limit=1&target=production`)
+            const latest = (deps.deployments || [])[0]
+            if (!latest) { console.log('  ⚠ No production deployment found'); return null }
+
+            const dep = await vercel('/v13/deployments', 'POST', {
+              name: latest.name,
+              deploymentId: latest.uid,
+              target: 'production',
+            })
+            console.log(`  ✓ Redeployment triggered: ${dep.id ?? dep.uid}`)
+            return dep.id ?? dep.uid
+          }
+
+          async function waitAndSeed() {
+            console.log('\n→ Waiting 60s for landing to redeploy...')
+            await new Promise(r => setTimeout(r, 60000))
+
+            for (let i = 1; i <= 5; i++) {
+              try {
+                const res = await fetch('https://ud.hive.baby/api/seed-demos')
+                const json = await res.json()
+                if (json.ok) {
+                  console.log(`  ✓ seed-demos: ${JSON.stringify(json.results?.map(r => r.status))}`)
+                  return
+                }
+                console.log(`  ⚠ seed-demos attempt ${i}: ${JSON.stringify(json)}`)
+              } catch (e) {
+                console.log(`  ⚠ seed-demos attempt ${i}: ${e.message}`)
+              }
+              if (i < 5) await new Promise(r => setTimeout(r, 15000))
+            }
+            console.log('  ✗ seed-demos did not return ok:true after 5 attempts')
+          }
+
+          async function main() {
+            for (const p of PROJECTS) await setEnv(p.id, p.name)
+            await redeploy(PROJECTS[0].id, PROJECTS[0].name)
+            await waitAndSeed()
+            console.log('\n✓ Done')
+          }
+
+          main().catch(e => { console.error('FATAL:', e.message); process.exit(1) })
+          EOF
