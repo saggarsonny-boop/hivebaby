@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN || secrets.VERCEL_TOKEN }}
+      _VT_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      _VT: ${{ secrets.VERCEL_TOKEN }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       LANDING_PROJECT: prj_iraVc9HNzaNyFv14gnn0tWMO6oVk
       SIGNER_PROJECT: prj_aHr0Al8la5rpFajSnBs7WM0AfSEJ
@@ -21,15 +22,22 @@ jobs:
     steps:
       - name: Check secrets
         run: |
+          # Resolve token: prefer VERCEL_TOKEN_MAIN, fall back to VERCEL_TOKEN
+          VERCEL_TOKEN="${_VT_MAIN:-$_VT}"
+          echo "VERCEL_TOKEN_MAIN length: ${#_VT_MAIN}"
+          echo "VERCEL_TOKEN length: ${#_VT}"
+          echo "DATABASE_URL length: ${#DATABASE_URL}"
           if [ -z "$VERCEL_TOKEN" ]; then
-            echo "ERROR: VERCEL_TOKEN_MAIN and VERCEL_TOKEN are both unset in repo secrets"
+            echo "ERROR: Both VERCEL_TOKEN_MAIN and VERCEL_TOKEN are empty — add one to repo Settings → Secrets and variables → Actions"
             exit 1
           fi
           if [ -z "$DATABASE_URL" ]; then
-            echo "ERROR: DATABASE_URL is not set in repo secrets"
+            echo "ERROR: DATABASE_URL is not set — add to repo Settings → Secrets and variables → Actions"
             exit 1
           fi
-          echo "✓ Secrets present (VERCEL_TOKEN length=${#VERCEL_TOKEN}, DATABASE_URL length=${#DATABASE_URL})"
+          echo "✓ Token resolved (length=${#VERCEL_TOKEN}), DATABASE_URL present"
+          # Export for subsequent steps
+          echo "VERCEL_TOKEN=$VERCEL_TOKEN" >> $GITHUB_ENV
 
       - name: Set DATABASE_URL on landing project
         run: |
