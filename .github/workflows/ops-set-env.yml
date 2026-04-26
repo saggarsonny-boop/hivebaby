@@ -12,119 +12,113 @@ jobs:
   set-env:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN || secrets.VERCEL_TOKEN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      LANDING_PROJECT: prj_iraVc9HNzaNyFv14gnn0tWMO6oVk
+      SIGNER_PROJECT: prj_aHr0Al8la5rpFajSnBs7WM0AfSEJ
+
     steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Set DATABASE_URL on landing and ud-signer, redeploy landing, seed demos
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN || secrets.VERCEL_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Check secrets
         run: |
-          node << 'EOF'
-          function need(name) {
-            const v = process.env[name];
-            if (!v) { console.warn(`WARNING: secret ${name} not set — skipping`); return ''; }
-            return v;
-          }
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "ERROR: VERCEL_TOKEN_MAIN and VERCEL_TOKEN are both unset in repo secrets"
+            exit 1
+          fi
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL is not set in repo secrets"
+            exit 1
+          fi
+          echo "✓ Secrets present (VERCEL_TOKEN length=${#VERCEL_TOKEN}, DATABASE_URL length=${#DATABASE_URL})"
 
-          const TOKEN = need('VERCEL_TOKEN')
-          const DB_URL = need('DATABASE_URL')
+      - name: Set DATABASE_URL on landing project
+        run: |
+          echo "→ Setting DATABASE_URL on landing ($LANDING_PROJECT)"
+          STATUS=$(curl -s -o /tmp/resp.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v9/projects/$LANDING_PROJECT/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"key\":\"DATABASE_URL\",\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+          cat /tmp/resp.json | jq -c '{status: .key, err: .error}' 2>/dev/null || cat /tmp/resp.json
+          if [ "$STATUS" = "409" ]; then
+            echo "  Already exists — finding env ID to update"
+            ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$LANDING_PROJECT/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.envs[]? | select(.key=="DATABASE_URL") | .id' | head -1)
+            echo "  Env ID: $ENV_ID"
+            if [ -n "$ENV_ID" ]; then
+              curl -s -X PATCH "https://api.vercel.com/v9/projects/$LANDING_PROJECT/env/$ENV_ID" \
+                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" | jq -c '{key}'
+              echo "  ✓ Updated"
+            fi
+          elif [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
+            echo "  ✓ Created (HTTP $STATUS)"
+          else
+            echo "  ✗ Unexpected HTTP $STATUS"
+            exit 1
+          fi
 
-          if (!TOKEN || !DB_URL) {
-            console.error('FATAL: Required secrets missing. Set VERCEL_TOKEN (or VERCEL_TOKEN_MAIN) and DATABASE_URL in repo Settings → Secrets → Actions.')
-            process.exit(1)
-          }
+      - name: Set DATABASE_URL on ud-signer project
+        run: |
+          echo "→ Setting DATABASE_URL on ud-signer ($SIGNER_PROJECT)"
+          STATUS=$(curl -s -o /tmp/resp2.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v9/projects/$SIGNER_PROJECT/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"key\":\"DATABASE_URL\",\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+          cat /tmp/resp2.json | jq -c '{status: .key, err: .error}' 2>/dev/null || cat /tmp/resp2.json
+          if [ "$STATUS" = "409" ]; then
+            echo "  Already exists — finding env ID to update"
+            ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$SIGNER_PROJECT/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.envs[]? | select(.key=="DATABASE_URL") | .id' | head -1)
+            if [ -n "$ENV_ID" ]; then
+              curl -s -X PATCH "https://api.vercel.com/v9/projects/$SIGNER_PROJECT/env/$ENV_ID" \
+                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" | jq -c '{key}'
+              echo "  ✓ Updated"
+            fi
+          elif [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
+            echo "  ✓ Created (HTTP $STATUS)"
+          else
+            echo "  ✗ Unexpected HTTP $STATUS"
+            exit 1
+          fi
 
-          const PROJECTS = [
-            { id: 'prj_iraVc9HNzaNyFv14gnn0tWMO6oVk', name: 'landing (ud.hive.baby)' },
-            { id: 'prj_aHr0Al8la5rpFajSnBs7WM0AfSEJ', name: 'ud-signer (signer.hive.baby)' },
-          ]
+      - name: Redeploy landing (ud.hive.baby)
+        run: |
+          echo "→ Triggering redeploy of landing"
+          LATEST=$(curl -s "https://api.vercel.com/v6/deployments?projectId=$LANDING_PROJECT&limit=1&target=production" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.deployments[0].uid // empty')
+          if [ -z "$LATEST" ]; then
+            echo "  ⚠ No production deployment found — skipping redeploy"
+            exit 0
+          fi
+          DEP_NAME=$(curl -s "https://api.vercel.com/v6/deployments?projectId=$LANDING_PROJECT&limit=1&target=production" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.deployments[0].name')
+          echo "  Latest deployment: $LATEST (name: $DEP_NAME)"
+          RESULT=$(curl -s -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"$DEP_NAME\",\"deploymentId\":\"$LATEST\",\"target\":\"production\"}")
+          echo "  $RESULT" | jq -c '{id, url, readyState}' 2>/dev/null || echo "  $RESULT"
+          echo "  ✓ Redeploy triggered"
 
-          async function vercel(path, method = 'GET', body) {
-            const res = await fetch(`https://api.vercel.com${path}`, {
-              method,
-              headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-              body: body ? JSON.stringify(body) : undefined,
-            })
-            const json = await res.json()
-            if (!res.ok && res.status !== 409) throw new Error(`${res.status}: ${JSON.stringify(json.error ?? json)}`)
-            return json
-          }
-
-          async function setEnv(projectId, projectName) {
-            console.log(`\n→ ${projectName} (${projectId})`)
-
-            // Try to create; if 409 (conflict = already exists), delete and recreate
-            try {
-              await vercel(`/v9/projects/${projectId}/env`, 'POST', {
-                key: 'DATABASE_URL',
-                value: DB_URL,
-                type: 'encrypted',
-                target: ['production', 'preview'],
-              })
-              console.log('  ✓ DATABASE_URL created')
-            } catch (e) {
-              if (!e.message.includes('409')) throw e
-              // Already exists — find and update
-              const envs = await vercel(`/v9/projects/${projectId}/env`)
-              const existing = (envs.envs || []).find(v => v.key === 'DATABASE_URL')
-              if (existing) {
-                await vercel(`/v9/projects/${projectId}/env/${existing.id}`, 'PATCH', {
-                  value: DB_URL,
-                  target: ['production', 'preview'],
-                })
-                console.log('  ✓ DATABASE_URL updated')
-              } else {
-                throw e
-              }
-            }
-          }
-
-          async function redeploy(projectId, projectName) {
-            console.log(`\n→ Redeploying ${projectName}`)
-            // Get latest deployment
-            const deps = await vercel(`/v6/deployments?projectId=${projectId}&limit=1&target=production`)
-            const latest = (deps.deployments || [])[0]
-            if (!latest) { console.log('  ⚠ No production deployment found'); return null }
-
-            const dep = await vercel('/v13/deployments', 'POST', {
-              name: latest.name,
-              deploymentId: latest.uid,
-              target: 'production',
-            })
-            console.log(`  ✓ Redeployment triggered: ${dep.id ?? dep.uid}`)
-            return dep.id ?? dep.uid
-          }
-
-          async function waitAndSeed() {
-            console.log('\n→ Waiting 60s for landing to redeploy...')
-            await new Promise(r => setTimeout(r, 60000))
-
-            for (let i = 1; i <= 5; i++) {
-              try {
-                const res = await fetch('https://ud.hive.baby/api/seed-demos')
-                const json = await res.json()
-                if (json.ok) {
-                  console.log(`  ✓ seed-demos: ${JSON.stringify(json.results?.map(r => r.status))}`)
-                  return
-                }
-                console.log(`  ⚠ seed-demos attempt ${i}: ${JSON.stringify(json)}`)
-              } catch (e) {
-                console.log(`  ⚠ seed-demos attempt ${i}: ${e.message}`)
-              }
-              if (i < 5) await new Promise(r => setTimeout(r, 15000))
-            }
-            console.log('  ✗ seed-demos did not return ok:true after 5 attempts')
-          }
-
-          async function main() {
-            for (const p of PROJECTS) await setEnv(p.id, p.name)
-            await redeploy(PROJECTS[0].id, PROJECTS[0].name)
-            await waitAndSeed()
-            console.log('\n✓ Done')
-          }
-
-          main().catch(e => { console.error('FATAL:', e.message); process.exit(1) })
-          EOF
+      - name: Wait and verify seed-demos
+        run: |
+          echo "→ Waiting 90s for landing to redeploy..."
+          sleep 90
+          for i in 1 2 3 4 5; do
+            echo "  Attempt $i: curl https://ud.hive.baby/api/seed-demos"
+            RESULT=$(curl -s "https://ud.hive.baby/api/seed-demos")
+            echo "  Response: $RESULT"
+            OK=$(echo "$RESULT" | jq -r '.ok // false' 2>/dev/null)
+            if [ "$OK" = "true" ]; then
+              echo "  ✓ seed-demos returned ok:true"
+              exit 0
+            fi
+            if [ $i -lt 5 ]; then sleep 15; fi
+          done
+          echo "  ✗ seed-demos did not return ok:true after 5 attempts"
+          exit 1
