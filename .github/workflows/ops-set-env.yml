@@ -2,26 +2,35 @@ name: Ops — Set DATABASE_URL on landing and ud-signer
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/ops-set-env.yml'
 
 jobs:
   set-env:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Set DATABASE_URL on landing and ud-signer, redeploy landing, seed demos
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN || secrets.VERCEL_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           node << 'EOF'
-          const TOKEN = process.env.VERCEL_TOKEN
-          const DB_URL = process.env.DATABASE_URL
+          function need(name) {
+            const v = process.env[name];
+            if (!v) { console.warn(`WARNING: secret ${name} not set — skipping`); return ''; }
+            return v;
+          }
 
-          if (!TOKEN) { console.error('VERCEL_TOKEN_MAIN / VERCEL_TOKEN not set'); process.exit(1) }
-          if (!DB_URL) { console.error('DATABASE_URL not set'); process.exit(1) }
+          const TOKEN = need('VERCEL_TOKEN')
+          const DB_URL = need('DATABASE_URL')
+
+          if (!TOKEN || !DB_URL) {
+            console.error('FATAL: Required secrets missing. Set VERCEL_TOKEN (or VERCEL_TOKEN_MAIN) and DATABASE_URL in repo Settings → Secrets → Actions.')
+            process.exit(1)
+          }
 
           const PROJECTS = [
             { id: 'prj_iraVc9HNzaNyFv14gnn0tWMO6oVk', name: 'landing (ud.hive.baby)' },
