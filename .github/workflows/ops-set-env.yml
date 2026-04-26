@@ -2,6 +2,11 @@ name: Ops — Set DATABASE_URL on landing and ud-signer
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/hive-integrity-audit-pQacd
+    paths:
+      - '.github/workflows/ops-set-env.yml'
 
 jobs:
   set-env:
