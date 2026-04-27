@@ -608,3 +608,76 @@ Add CSS variables:
 --font-mono: 'DM Mono', monospace;
 
 Applied to all engines: hivefield, hiveclock, hiveclarity, hivestrengthmastery, hivebodylog, hivemoon, secret-box, whotextedme, converter, creator, validator, ud-landing, station.hive.baby, queen-bee
+
+
+---
+
+## CONSULTING FRAMEWORK — PERMANENT REFERENCE
+
+### Sonny is available for consulting in:
+- Document infrastructure strategy
+- AI readiness and governance
+- Digital health document governance
+- Universal Document™ (UD) implementation advice
+- Clinical AI evaluation
+
+### Sonny is NOT available for:
+- Non-compete arrangements of any kind
+- Engagements that conflict with Universal Document Incorporated or The Hive
+- Helping organisations build competing document format standards
+
+### Standard disclosure for all consulting enquiries:
+> "I have an existing relationship with Universal Document Incorporated and The Hive ecosystem. I am not available for engagements that create conflicts with that relationship. I cannot sign a non-compete. NDAs covering client-specific information learned during the engagement are acceptable. I disclose this upfront so we can assess fit before investing time on either side."
+
+### Fee structure:
+- Day rate: £2,000–5,000 depending on engagement
+- Project fees: scoped and agreed in advance
+- Long-term arrangements: equity or revenue share for engagements that produce ongoing value
+- All commercial arrangements through Universal Document Incorporated or a separate consulting vehicle
+
+### HiveAdminSupport behaviour for consulting enquiries:
+- Acknowledge warmly — flag immediately (keywords: "consult", "advisory", "engagement", "retainer")
+- Do NOT auto-respond with pricing
+- Route to Sonny for personal response within 24 hours
+
+### Credentials:
+- Medium articles Part 1 and Part 2 are the primary consulting credential documents
+- White paper at universaldocument.hive.baby is the secondary credential
+- LinkedIn overhaul needed — see session notes
+
+---
+
+## SECONDARY MEANING PROTOCOL — PERMANENT STANDING INSTRUCTION
+
+In ALL content produced for the Hive ecosystem and Universal Document properties, apply this naming convention without exception:
+
+On first use of "Universal Document" in any piece:
+→ Write as: Universal Document™ (UD)
+
+On first use of "UD" as an abbreviation in any piece:
+→ Write as: UD (Universal Document™)
+
+The ™ is always superscripted directly after the word "Document" — not after UD, not at the end of the phrase. Like this:
+Universal Document™ (UD)
+UD (Universal Document™)
+
+On subsequent uses in the same piece:
+→ Universal Document™ or UD — either is fine
+→ ™ on every instance of "Universal Document"
+→ No ™ needed on standalone "UD"
+
+### UDR / UDS Full Expansions
+- **UDR** = Universal Document™ Revisable (also: Reviewable)
+- **UDS** = Universal Document™ Sealed (also: Secure)
+
+### This protocol applies to:
+- All blog posts and Medium articles
+- All LinkedIn content
+- All white papers and sectoral briefs
+- All product UIs and nav elements
+- All emails sent from HiveAdminSupport
+- All press releases
+- All documentation
+- All public-facing content of any kind
+
+No exceptions. This is a permanent standing instruction that overrides any previous naming guidance.

@@ -1,0 +1,264 @@
+name: Activate HivePhoto
+
+on:
+  workflow_dispatch:
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run activation
+        env:
+          CF_TOKEN: ${{ secrets.CF_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CF_ACCOUNT }}
+          CF_ZONE: ${{ secrets.CF_ZONE }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
+          STRIPE_PK: ${{ secrets.STRIPE_PK }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLERK_PK: ${{ secrets.CLERK_PK }}
+          CLERK_SK: ${{ secrets.CLERK_SK }}
+          ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: https://hivephoto.hive.baby
+        run: |
+          node << 'EOF'
+          function need(name) {
+            const v = process.env[name];
+            if (!v) { console.warn(`WARNING: ${name} not set`); return ''; }
+            return v;
+          }
+
+          const CF_TOKEN     = need('CF_TOKEN');
+          const CF_ACCOUNT   = need('CF_ACCOUNT');
+          const CF_ZONE      = need('CF_ZONE');
+          const VERCEL_TOKEN = need('VERCEL_TOKEN');
+          const STRIPE_KEY   = need('STRIPE_KEY');
+          const STRIPE_PK    = need('STRIPE_PK');
+          const DATABASE_URL = need('DATABASE_URL');
+          const CLERK_PK     = need('CLERK_PK');
+          const CLERK_SK     = need('CLERK_SK');
+          const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY || '';
+          const CRON_SECRET  = need('CRON_SECRET');
+          const APP_URL      = process.env.APP_URL || 'https://hivephoto.hive.baby';
+
+          let vercelProjectId = '';
+          let r2AccessKeyId   = '';
+          let r2SecretAccessKey = '';
+
+          function log(e, m) { console.log(`${e}  ${m}`); }
+
+          async function cf(path, method = 'GET', body) {
+            const res = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
+              method,
+              headers: { 'Authorization': `Bearer ${CF_TOKEN}`, 'Content-Type': 'application/json' },
+              body: body ? JSON.stringify(body) : undefined,
+            });
+            const json = await res.json();
+            if (!json.success) throw new Error(JSON.stringify(json.errors));
+            return json.result;
+          }
+
+          async function vercelApi(path, method = 'GET', body) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
+              method,
+              headers: { 'Authorization': `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+              body: body ? JSON.stringify(body) : undefined,
+            });
+            const json = await res.json();
+            if (res.status === 409) return json;
+            if (!res.ok && json.error) throw new Error(JSON.stringify(json.error));
+            return json;
+          }
+
+          async function createR2Buckets() {
+            log('BUCKET', 'Creating R2 buckets...');
+            for (const name of ['hivephoto-originals', 'hivephoto-thumbs']) {
+              try {
+                await cf(`/accounts/${CF_ACCOUNT}/r2/buckets`, 'POST', { name });
+                log('OK', `Bucket: ${name}`);
+              } catch (e) {
+                if (e.message.includes('10006') || e.message.includes('already exists')) {
+                  log('SKIP', `Already exists: ${name}`);
+                } else { log('WARN', `Bucket ${name}: ${e.message}`); }
+              }
+            }
+          }
+
+          async function createR2Token() {
+            log('KEY', 'Creating R2 API token...');
+            try {
+              const result = await cf(`/accounts/${CF_ACCOUNT}/r2/tokens`, 'POST', {
+                name: 'hivephoto-r2',
+                policies: [{
+                  effect: 'allow',
+                  resources: {
+                    [`com.cloudflare.edge.r2.bucket.${CF_ACCOUNT}_default_hivephoto-originals`]: '*',
+                    [`com.cloudflare.edge.r2.bucket.${CF_ACCOUNT}_default_hivephoto-thumbs`]: '*',
+                  },
+                  actions: [
+                    'com.cloudflare.edge.r2.get_object',
+                    'com.cloudflare.edge.r2.put_object',
+                    'com.cloudflare.edge.r2.delete_object',
+                    'com.cloudflare.edge.r2.list_objects',
+                  ],
+                }],
+              });
+              r2AccessKeyId = result.accessKeyId;
+              r2SecretAccessKey = result.secretAccessKey;
+              log('OK', `R2 token: ${r2AccessKeyId}`);
+            } catch (e) {
+              log('WARN', `R2 token: ${e.message}`);
+            }
+          }
+
+          async function createVercelProject() {
+            log('VERCEL', 'Creating Vercel project...');
+            try {
+              const existing = await vercelApi('/v9/projects/hive-hivephoto');
+              if (existing.id) {
+                vercelProjectId = existing.id;
+                log('SKIP', `Already exists: ${vercelProjectId}`);
+                return;
+              }
+            } catch (_) {}
+            const project = await vercelApi('/v9/projects', 'POST', {
+              name: 'hive-hivephoto',
+              framework: 'nextjs',
+              gitRepository: { repo: 'saggarsonny-boop/hive-hivephoto', type: 'github' },
+            });
+            vercelProjectId = project.id;
+            log('OK', `Created: ${vercelProjectId}`);
+          }
+
+          async function setVercelEnvVars() {
+            log('ENV', 'Setting Vercel env vars...');
+            const thumbUrl = `https://pub-${CF_ACCOUNT.slice(0, 8)}.r2.dev`;
+            const envVars = [
+              ['NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', CLERK_PK],
+              ['CLERK_SECRET_KEY', CLERK_SK],
+              ['DATABASE_URL', DATABASE_URL],
+              ['STRIPE_SECRET_KEY', STRIPE_KEY],
+              ['STRIPE_WEBHOOK_SECRET', 'whsec_placeholder'],
+              ['NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', STRIPE_PK],
+              ['R2_ACCOUNT_ID', CF_ACCOUNT],
+              ['R2_ACCESS_KEY_ID', r2AccessKeyId || 'set-manually'],
+              ['R2_SECRET_ACCESS_KEY', r2SecretAccessKey || 'set-manually'],
+              ['R2_BUCKET_ORIGINALS', 'hivephoto-originals'],
+              ['R2_BUCKET_THUMBS', 'hivephoto-thumbs'],
+              ['R2_PUBLIC_THUMB_URL', thumbUrl],
+              ['ANTHROPIC_API_KEY', ANTHROPIC_KEY],
+              ['NEXT_PUBLIC_APP_URL', APP_URL],
+              ['CRON_SECRET', CRON_SECRET],
+            ];
+            for (const [key, value] of envVars) {
+              if (!value) { log('SKIP', `${key} (empty)`); continue; }
+              try {
+                await vercelApi(`/v9/projects/${vercelProjectId}/env`, 'POST', {
+                  key, value, type: 'encrypted', target: ['production', 'preview'],
+                });
+                log('OK', `Env: ${key}`);
+              } catch (e) {
+                log('SKIP', `${key}: ${e.message.slice(0,60)}`);
+              }
+            }
+          }
+
+          async function disableVercelProtection() {
+            log('VERCEL', 'Disabling deployment protection...');
+            try {
+              await vercelApi(`/v9/projects/${vercelProjectId}`, 'PATCH', {
+                passwordProtection: null,
+                ssoProtection: null,
+              });
+              log('OK', 'Deployment protection disabled');
+            } catch (e) { log('SKIP', `Protection: ${e.message.slice(0,60)}`); }
+          }
+
+          async function addVercelDomain() {
+            log('DOMAIN', 'Linking domain...');
+            try {
+              await vercelApi(`/v9/projects/${vercelProjectId}/domains`, 'POST', { name: 'hivephoto.hive.baby' });
+              log('OK', 'Domain: hivephoto.hive.baby');
+            } catch (e) { log('SKIP', `Domain: ${e.message.slice(0,80)}`); }
+          }
+
+          async function addDnsCname() {
+            log('DNS', 'Adding CNAME...');
+            try {
+              await cf(`/zones/${CF_ZONE}/dns_records`, 'POST', {
+                type: 'CNAME', name: 'hivephoto', content: 'cname.vercel-dns.com', ttl: 1, proxied: false,
+              });
+              log('OK', 'CNAME: hivephoto -> cname.vercel-dns.com');
+            } catch (e) {
+              if (e.message.includes('81057') || e.message.includes('already exists')) {
+                log('SKIP', 'CNAME already exists');
+              } else { log('WARN', `CNAME: ${e.message}`); }
+            }
+          }
+
+          async function triggerMigrations() {
+            log('DB', 'Waiting 90s for Vercel deploy, then running migrations...');
+            await new Promise(r => setTimeout(r, 90000));
+            for (let i = 1; i <= 8; i++) {
+              try {
+                const res = await fetch(`${APP_URL}/api/admin/migrate`, {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${CRON_SECRET}` },
+                });
+                const text = await res.text();
+                if (!res.ok) {
+                  log('WAIT', `HTTP ${res.status} attempt ${i} — retrying in 20s`);
+                  await new Promise(r => setTimeout(r, 20000));
+                  continue;
+                }
+                const json = JSON.parse(text);
+                if (json.ok) { log('OK', `Migrations: ${json.summary}`); return; }
+                const failed = (json.results || []).filter(r => !r.ok);
+                if (failed.length) console.log('Failed steps:', JSON.stringify(failed));
+                log('PARTIAL', `Attempt ${i}: ${json.summary}`);
+              } catch (e) { log('RETRY', `Attempt ${i}: ${e.message}`); }
+              if (i < 8) await new Promise(r => setTimeout(r, 20000));
+            }
+            log('WARN', 'Migrations incomplete — check /api/admin/migrate');
+          }
+
+          async function triggerStripeSeed() {
+            log('STRIPE', 'Seeding Stripe products...');
+            try {
+              const res = await fetch(`${APP_URL}/api/admin/seed-stripe`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${CRON_SECRET}` },
+              });
+              const json = await res.json();
+              if (json.ok) {
+                log('OK', `Stripe: ${json.summary}`);
+                (json.results || []).forEach(r => log('  -', `${r.tierName}: ${r.priceId}`));
+              } else {
+                console.log('Stripe results:', JSON.stringify(json, null, 2));
+              }
+            } catch (e) { log('WARN', `Stripe: ${e.message}`); }
+          }
+
+          async function main() {
+            console.log('\n=== HivePhoto Activation ===\n');
+            await createR2Buckets();
+            await createR2Token();
+            await createVercelProject();
+            await setVercelEnvVars();
+            await disableVercelProtection();
+            await addVercelDomain();
+            await addDnsCname();
+            console.log('\nWaiting for Vercel deploy...');
+            await triggerMigrations();
+            await triggerStripeSeed();
+            console.log('\n=== Done. https://hivephoto.hive.baby ===\n');
+          }
+
+          main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
+          EOF

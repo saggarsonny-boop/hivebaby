@@ -14,6 +14,7 @@ Hive is a social experiment. "You are the investor." No ads, no investors, no ag
 - When the planet is broken, fix it without being asked
 - Use GitHub API + token to work across all repos from this single Codespace
 - Read VISION.md when you need engine specs, pipeline details, adoption stack, or full ecosystem context
+- **ALWAYS check Vercel build logs before attempting any fix on a failing deployment. Build logs reveal the actual error. Never guess at root cause without reading the logs first.**
 
 ## GitHub
 Token: [stored in Codespace secret / ask Sonny]
@@ -33,9 +34,14 @@ Account: saggarsonny-boop
 | queen-bee | QueenBee | queenbee.hive.baby | IN PROGRESS | Next.js + Anthropic |
 | creator-console | HiveCreatorConsole | creatorconsole.hive.baby | LIVE | Next.js |
 | secret-box | HiveSecretBox | secretbox.hive.baby | LIVE | Next.js |
-| universal-document | UniversalDocument | ud.hive.baby | IN PROGRESS | Next.js + Anthropic |
+| universal-document/apps/landing | UniversalDocument | ud.hive.baby | LIVE | Next.js |
 | whotextedme | WhoTextedMe | whotextedme.hive.baby | LIVE | Next.js + Anthropic |
 | universal-document/apps/converter | UDConverter | converter.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/creator | UDCreator | creator.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/reader | UDReader | reader.hive.baby | LIVE | Next.js |
+| universal-document/apps/validator | UDValidator | validator.hive.baby | LIVE | Next.js |
+| universal-document/apps/utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
+| universal-document/apps/signer | UDSigner | signer.hive.baby | LIVE | Next.js |
 | hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic |
 | hive-hivememe | HiveMeme | hivememe.hive.baby | BUILDING | Next.js + Anthropic |
 | hive-hivephoto | HivePhoto | hivephoto.hive.baby | LIVE | Next.js + Anthropic + Clerk + Neon + R2 + Stripe |
@@ -43,33 +49,7 @@ Account: saggarsonny-boop
 | hive-microritual | HiveMicroRitual | hivemicroritual.hive.baby | LIVE | Next.js + Anthropic |
 | hive-memory-space | HiveMemorySpace | hivememoryspace.hive.baby | BUILDING | Next.js + Anthropic |
 | sovereign-arbitrage | SovereignArbitrage | sovereignarbitrage.hive.baby | LIVE | Next.js + Anthropic |
-| ud-utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
-| ud-signer | UDSigner | signer.hive.baby | LIVE | Next.js + Anthropic |
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind |
-| expo-hive | HiveApp | App Store / Play Store | READY TO SUBMIT | Expo + react-native-webview |
-
-## Brand Assets (official — do not recreate as SVG)
-
-All brand marks are PNG files. Use exactly as provided. Do not redraw, redesign, or recreate in SVG.
-
-| Asset | File | Description | Usage |
-|-------|------|-------------|-------|
-| UDS mark | `ud-mark-uds.png` | Dark blue background, light UD mark, "UDS" label | UDNav logo, UDS file icon, favicon |
-| UDR mark | `ud-mark-udr.png` | Light blue background, dark UD mark, "UDR" label | UDR file icon |
-| HIVE icon | `hive-icon.png` | Gold glowing hexagon on dark honeycomb grid | Hive app icon, expo-hive app store icon |
-
-### File locations (once deployed)
-- UD apps: `apps/{app}/public/icons/ud-mark-uds.png`, `ud-mark-udr.png`
-- Hive: `hivebaby/public/hive-icon.png`
-- UDNav component: replace text "UD" mark with `<img src="/icons/ud-mark-uds.png">`
-- Favicon: `ud-mark-uds.png` square-cropped → `favicon.ico` in each app
-
-### Deployment status
-- [ ] PNGs committed to universal-document repo
-- [ ] PNGs copied to all app public/icons/ folders
-- [ ] UDNav updated to use PNG mark
-- [ ] Favicons updated
-- [ ] hive-icon.png committed to hivebaby
 
 ## Naming Standards (canonical — all future engines must follow)
 
@@ -116,21 +96,12 @@ hive-moon deploy: `cd /workspaces/hive-moon && npx vercel --prod --yes` (project
 All engines: enginename.hive.baby — Cloudflare CNAME → cname.vercel-dns.com
 Vercel Deployment Protection must be OFF for public access
 
-## Mobile App — expo-hive
-Local path: `/home/user/expo-hive` — committed, ready to push.
-To publish: create `saggarsonny-boop/expo-hive` on GitHub, then:
-```
-cd /home/user/expo-hive
-git remote set-url origin https://github.com/saggarsonny-boop/expo-hive.git
-git push -u origin main
-```
-Then: `eas login` → `eas build:configure` (updates projectId in app.json) → `eas build --platform all`
-
 ## Email Routing — hive@hive.baby
 Solved via Cloudflare Email Worker (hive-email-router). No MX record needed.
 - Worker forwards every inbound email to saggarsonny@gmail.com
 - Worker simultaneously POSTs to support.hive.baby/api/inbound (HiveAdminSupport webhook)
 - Gmail delivery + HiveAdminSupport logging both confirmed working
+
 ---
 
 ## hive.baby Planet — THE FRONT DOOR
@@ -209,195 +180,110 @@ Three.js 3D planet. Each hexagon cell = one Hive engine.
 - Full Onboarding Stack (all four components)
 - Data source credited visibly if using real data
 
+## UD Design System — GOVERNANCE RULE (hard, no exceptions)
+
+All UD tools, engines, apps, and commensals must use the UD Design System. This is a governance rule enforced at the ENGINE_GRAMMAR level. Any build that deviates must be corrected before merge.
+
+### Typography
+| Role | Font |
+|------|------|
+| Headings | Playfair Display |
+| Body | DM Sans |
+| Labels / meta / code | DM Mono |
+
+### Color Palette
+| Token | Hex | Use |
+|-------|-----|-----|
+| Ink | `#1e2d3d` | Primary text, nav, dark backgrounds |
+| Paper | `#fafaf8` | Page background |
+| Gold | `#c8960a` | CTAs, accents, brand highlights |
+| Paper-2 | `#f2f1ee` | Alternate section backgrounds |
+| Border | `#e0ddd6` | Dividers, card borders |
+| Muted | `#6b7280` | Secondary text, placeholders |
+
+### Border Radius
+- Standard elements: `8px`
+- Cards: `12px`
+
+### File Type Icons
+- **UDR** — light blue (`#93c5fd`), file-shape, "UDR" + "UNIVERSAL DOCUMENT™" wordmark below
+- **UDS** — dark navy (`#1e2d3d`), file-shape, "UDS" + "UNIVERSAL DOCUMENT™" wordmark below
+- Icon files live at `/public/icons/udr.svg` and `/public/icons/uds.svg` in each UD repo
+
+### Scope — applies without exception to:
+UD Reader · UD Converter · UD Creator · UD Validator · UD Utilities · UD Signer · every future UD tool
+
 ## Universal Document™ — Trademark
 Universal Document™ is a pending trademark (Serial 99774346, filed 2026-04-20).
 Always use ™ symbol after "Universal Document" in all Hive properties and documents.
 
-## Universal Document™ — File Format Specification
+## SECONDARY MEANING PROTOCOL — PERMANENT STANDING INSTRUCTION
 
-There are exactly THREE file formats. No others. No new extensions. Ever.
+In ALL content produced for the Hive ecosystem and Universal Document properties, apply this naming convention without exception:
 
-| Extension | Name | Purpose |
-|-----------|------|---------|
-| `.uds` | Universal Document Sealed | A sealed, tamper-evident document. Immutable once sealed. |
-| `.udr` | Universal Document Revisable | A draft/working document. Can be edited. Converts to .uds on sealing. |
-| `.udz` | Universal Document Bundle | A governed bundle of multiple .uds files. General-purpose. |
+On first use of "Universal Document" in any piece:
+→ Write as: Universal Document™ (UD)
 
-### .udz is universal — NOT domain-specific
+On first use of "UD" as an abbreviation in any piece:
+→ Write as: UD (Universal Document™)
 
-`.udz` is the single bundle format for any collection of .uds files. It is not a legal format, medical format, or any other specialist format.
+The ™ is always superscripted directly after the word "Document" — not after UD, not at the end of the phrase. Like this:
+Universal Document™ (UD)
+UD (Universal Document™)
 
-Specialised bundle assemblers (UDZ Legal Bundle, UDZ Deposition Package, UD FOI Bundle, UD Data Package, UD Claims Package, etc.) are **tools that output .udz files**. They are NOT new file formats.
+On subsequent uses in the same piece:
+→ Universal Document™ or UD — either is fine
+→ ™ on every instance of "Universal Document"
+→ No ™ needed on standalone "UD"
 
-**Rule for all bundle tool UI copy:**
-- ✓ "Output: .udz bundle"
-- ✓ "Creates a .udz bundle pre-configured for legal proceedings"
-- ✗ "Output: .udz legal bundle"
-- ✗ "Creates a .udz-legal file"
+### UDR / UDS Full Expansions
+- **UDR** = Universal Document™ Revisable (also: Reviewable)
+- **UDS** = Universal Document™ Sealed (also: Secure)
 
-The output filename may have a descriptive suffix (e.g. `case-files-deposition.udz`) but the extension is always `.udz`.
+### This protocol applies to:
+- All blog posts and Medium articles
+- All LinkedIn content
+- All white papers and sectoral briefs
+- All product UIs and nav elements
+- All emails sent from HiveAdminSupport
+- All press releases
+- All documentation
+- All public-facing content of any kind
 
-## MANDATORY SEO RULE
+No exceptions. This is a permanent standing instruction that overrides any previous naming guidance.
 
-Every new tool page, utility, engine, or app built in the UD ecosystem MUST include SEO as part of the build — not as a separate task added later.
+## CONSULTING FRAMEWORK — PERMANENT REFERENCE
 
-**SEO is part of the definition of done for every page. No exceptions.**
+### Sonny is available for consulting in:
+- Document infrastructure strategy
+- AI readiness and governance
+- Digital health document governance
+- Universal Document™ (UD) implementation advice
+- Clinical AI evaluation
 
-For every new page, CC must:
+### Sonny is NOT available for:
+- Non-compete arrangements of any kind
+- Engagements that conflict with Universal Document Incorporated or The Hive
+- Helping organisations build competing document format standards
 
-1. **Create a `layout.tsx`** (server component) with correct page title and meta description before the page goes live
-2. **Weave keywords naturally** into page copy — never keyword stuff
-3. **Include a comparison section** showing how this tool differs from the main competitor or existing solution
-4. **Add the tool to the sitemap** (if one exists)
+### Standard disclosure for all consulting enquiries:
+> "I have an existing relationship with Universal Document Incorporated and The Hive ecosystem. I am not available for engagements that create conflicts with that relationship. I cannot sign a non-compete. NDAs covering client-specific information learned during the engagement are acceptable. I disclose this upfront so we can assess fit before investing time on either side."
 
-### layout.tsx format (required for every tool page):
-```tsx
-export const metadata = {
-  title: "[Tool Name] — [Specific Benefit]",
-  description: "[What it does]. [Key differentiator]. [Tier/pricing one-liner].",
-  keywords: "[keyword1], [keyword2], [keyword3]",
-  openGraph: {
-    title: "[Tool Name] — [Specific Benefit]",
-    description: "[What it does]. [Key differentiator].",
-    url: "https://utilities.hive.baby/[route]",
-    siteName: "Universal Document™",
-    type: "website",
-  }
-}
-```
+### Fee structure:
+- Day rate: £2,000–5,000 depending on engagement
+- Project fees: scoped and agreed in advance
+- Long-term arrangements: equity or revenue share for engagements that produce ongoing value
+- All commercial arrangements through Universal Document Incorporated or a separate consulting vehicle
 
-### This rule applies to:
-- Every utilities tool page (`/utilities/src/app/[tool]/layout.tsx`)
-- Every standalone app (converter, creator, signer, validator, reader)
-- Every future Hive engine page
-- Every landing page section
+### HiveAdminSupport behaviour for consulting enquiries:
+- Acknowledge warmly — flag immediately (keywords: "consult", "advisory", "engagement", "retainer")
+- Do NOT auto-respond with pricing
+- Route to Sonny for personal response within 24 hours
 
-### Comparison section format:
-A named section on the page titled "How [Tool] differs from [Competitor]" with 3–5 cards explaining the structural differentiators. Not marketing copy — honest, specific, verifiable differences.
-
-## Beta Status
-BETA STATUS: All Pro features free. Stripe in test mode.
-Beta end date: TBD — Sonny will announce.
-When beta ends: Sonny will instruct CC to activate Stripe live mode and implement usage limits.
-Pro badges still show on Pro features so users understand the value — but clicking them works without payment.
-Show "Pro · Free during beta" beneath Pro badges instead of just "Pro".
-
-## UD Pre-registration — SEO & Positioning
-
-Route: `utilities.hive.baby/pre-registration`
-Page title: "UD Pre-registration — Tamper-Evident Research Protocol Registration"
-Meta description: "Register your research hypothesis before data collection with cryptographic proof and blockchain timestamp. Free forever. No account required."
-
-Target audience: academic researchers, open science advocates, journal editors.
-
-Key SEO terms (use naturally in copy):
-- preregistration / hypothesis registration
-- registered reports
-- open science / research transparency
-- HARKing (Hypothesising After Results are Known)
-- reproducibility crisis
-- Centre for Open Science alternative / OSF alternative
-- blockchain research integrity
-
-Positioning vs OSF:
-- Proof lives inside the document, not our database
-- Mathematically verifiable by anyone (FNV-1a hash)
-- No account required — runs entirely in browser
-- No platform dependency (survives if we shut down)
-- Free forever — research tools never paywalled
-
-This tool is always FREE. Never gate or paywalled. No badge needed.
-
-## Stripe Live Price IDs — April 24 2026
-
-All 22 products created in live mode. Payment links are direct Stripe-hosted checkout pages.
-
-| Plan | Monthly Price ID | Annual Price ID | Monthly Link | Annual Link |
-|------|-----------------|-----------------|--------------|-------------|
-| UD Solo | price_1TPtJ2PIZtoQZOG1cOYsKZbI | price_1TPtJAPIZtoQZOG1ywp29gzN | plink_1TPtJ2PIZtoQZOG177D6wf7J | plink_1TPtJBPIZtoQZOG1CuZkmRMd |
-| UD Pro | price_1TPtJ2PIZtoQZOG13GimEZoi | price_1TPtJBPIZtoQZOG1j18iDp3z | plink_1TPtJ3PIZtoQZOG14zH50WxQ | plink_1TPtJBPIZtoQZOG1xErmXCuK |
-| UD Premium | price_1TPtJ3PIZtoQZOG1ejTmihTM | price_1TPtJCPIZtoQZOG1ASGfg1O9 | plink_1TPtJ3PIZtoQZOG1wF9TTsCp | plink_1TPtJCPIZtoQZOG15WraIbzd |
-| Enterprise Starter | price_1TPtJ4PIZtoQZOG11t2dnSJJ | price_1TPtJCPIZtoQZOG1MpqZIpyr | plink_1TPtJ4PIZtoQZOG1FUuTbD5w | plink_1TPtJDPIZtoQZOG1j0ObWbtt |
-| Enterprise Pro | price_1TPtJ5PIZtoQZOG1NUp56tn2 | price_1TPtJDPIZtoQZOG114P0ImlG | plink_1TPtJ5PIZtoQZOG1t5WrmjrP | plink_1TPtJEPIZtoQZOG1HkIrIPeW |
-| Enterprise Scale | price_1TPtJ5PIZtoQZOG1L0rL7Gx5 | price_1TPtJEPIZtoQZOG18n4tb0ON | plink_1TPtJ6PIZtoQZOG1lexZUI2A | plink_1TPtJEPIZtoQZOG1XHCGfiWA |
-| cSDK Lite | price_1TPtJ6PIZtoQZOG1JcEY2AT6 | price_1TPtJFPIZtoQZOG1WGXr4Scj | plink_1TPtJ7PIZtoQZOG16VqZIpFB | plink_1TPtJFPIZtoQZOG1Mv5SlnWv |
-| cSDK Pro | price_1TPtJ7PIZtoQZOG1pwqaxVFI | price_1TPtJGPIZtoQZOG10iywTn7v | plink_1TPtJ7PIZtoQZOG1V27uHCF6 | plink_1TPtJGPIZtoQZOG1LBCRGgm4 |
-| cSDK Scale | price_1TPtJ8PIZtoQZOG1s9aQdYx8 | price_1TPtJGPIZtoQZOG1ihxNgWEV | plink_1TPtJ8PIZtoQZOG17Sc5upCq | plink_1TPtJHPIZtoQZOG1LQu7FQCI |
-| UD Signer Solo | price_1TPtJ9PIZtoQZOG1JD3wXRXF | price_1TPtJHPIZtoQZOG1r79Lfort | plink_1TPtJ9PIZtoQZOG1A4bgIZ5c | plink_1TPtJIPIZtoQZOG1bmJGldYr |
-| UD Signer Business | price_1TPtJ9PIZtoQZOG1mUwO7bEg | price_1TPtJIPIZtoQZOG13xr6j9Rg | plink_1TPtJAPIZtoQZOG1ZYGK1xRK | plink_1TPtJIPIZtoQZOG1b3pvm940 |
-
-All hardcoded in `apps/shared/lib/pricing.ts`. UpgradePrompt.tsx uses `getPaymentLink()` for direct Stripe checkout.
-
-## Stripe Support Add-On Price IDs — April 24 2026
-
-| Plan | Price ID | Payment Link |
-|------|----------|--------------|
-| UD Support Monthly ($1.99/mo) | price_1TPtaOPIZtoQZOG1pLuthSHB | plink_1TPtaOPIZtoQZOG19n2Qfbmf |
-| UD Support Annual ($19/yr) | price_1TPtaPPIZtoQZOG11QC0Bbbz | plink_1TPtaPPIZtoQZOG1SMN0h5A9 |
-| UD Support One-Time ($5) | price_1TPtaPPIZtoQZOG1hKNfugHU | plink_1TPtaQPIZtoQZOG1VDe0ZG85 |
-
-Wired into pricing.ts, UpgradePrompt.tsx (add-on section), UDFooter (all 7 apps), support.hive.baby, and ud.hive.baby/support.
-
-## UDUtilities Engine Status — April 24 2026
-
-- **Total engines built:** 108
-- **Total page routes:** 101 (100 engines + hub page)
-- **Static pages compiled:** 114/114
-- **All outputs REAL:** ✓ (no stubs — every engine produces .uds or .udz)
-- **Build status:** GREEN — `✓ Compiled successfully`
-- **TooltipTour:** ✓ on all engines
-- **SEO layout.tsx:** ✓ on all engines
-- **Dropdowns:** Free Tools (41 entries) · Specialist Tools (16 categories)
-- **Date completed:** April 24 2026
-- **Deployed to:** utilities.hive.baby (Vercel auto-deploy on push to main)
-
-## CHANGE PROPAGATION RULES
-
-Every time a trigger below fires, ALL listed updates MUST ship in the same commit. No partial updates.
-
-### TRIGGER: engine count changes
-- `apps/utilities/src/app/layout.tsx` — title, description, openGraph title + description
-- Hero heading on utilities hub page (`apps/utilities/src/app/page.tsx`)
-- Any hardcoded count in `apps/landing/` pages
-- `CLAUDE.md` UDUtilities Engine Status block
-
-### TRIGGER: new engine added to utilities
-- `FREE_NAV` or `SPECIALIST_CATS` array in `apps/utilities/src/app/page.tsx`
-- Sitemap (`apps/utilities/public/sitemap.xml` if it exists)
-- SEO `layout.tsx` for that engine's route
-- `TooltipTour` entry in `apps/utilities/src/lib/tourSteps.ts`
-- Hub category grid
-- Engine count everywhere (see trigger above)
-
-### TRIGGER: pricing changes
-- `apps/shared/lib/pricing.ts`
-- `UpgradePrompt.tsx` in shared components
-- `UDFooter` on all 8 properties
-- Support page pricing cards (`hive-support/src/app/`)
-- `CLAUDE.md` Stripe price ID table
-
-### TRIGGER: new property deployed
-- `UDNav` on ALL existing properties
-- `hive.baby` ecosystem links (`hivebaby/`)
-- `ud-inc` page ecosystem links (`ud-inc/`)
-- Sitemaps on affected properties
-- `CLAUDE.md` Repos/Domains/Status table
-
-### TRIGGER: URL or domain changes
-- All outreach documents in `apps/landing/public/`
-- Email templates in `hive-support/`
-- `UDNav` across all properties
-- Footer links across all properties
-- `CLAUDE.md` canonical URL references
-
-### TRIGGER: whitepaper updates
-- `apps/landing/src/app/whitepaper/` page
-- PDF download file in `apps/landing/public/`
-- `.uds` version of whitepaper in `apps/landing/public/demos/`
-
-### TRIGGER: styling/UX fix on one property
-- Check if the same fix is needed on all 8 properties
-- Apply consistently or document why the discrepancy is intentional
+### Credentials:
+- Medium articles Part 1 and Part 2 are the primary consulting credential documents
+- White paper at universaldocument.hive.baby is the secondary credential
+- LinkedIn overhaul needed — see session notes
 
 ---
 

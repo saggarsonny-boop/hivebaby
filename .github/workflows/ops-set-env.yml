@@ -30,75 +30,108 @@ jobs:
           echo "✓ Token resolved (length=${#TOKEN}), DATABASE_URL present"
           echo "VERCEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
           echo "DATABASE_URL=$DATABASE_URL" >> "$GITHUB_ENV"
-          echo "LANDING_PROJECT=prj_iraVc9HNzaNyFv14gnn0tWMO6oVk" >> "$GITHUB_ENV"
-          echo "SIGNER_PROJECT=prj_aHr0Al8la5rpFajSnBs7WM0AfSEJ" >> "$GITHUB_ENV"
 
-      - name: Set DATABASE_URL on landing project
+      - name: Set DATABASE_URL on landing (prj_iraVc9HNzaNyFv14gnn0tWMO6oVk)
         run: |
-          echo "→ Setting DATABASE_URL on landing ($LANDING_PROJECT)"
-          STATUS=$(curl -s -o /tmp/resp.json -w "%{http_code}" \
-            -X POST "https://api.vercel.com/v9/projects/$LANDING_PROJECT/env" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"key\":\"DATABASE_URL\",\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
-          echo "HTTP $STATUS: $(cat /tmp/resp.json | jq -c '{key,error:.error.message}' 2>/dev/null || cat /tmp/resp.json)"
-          if [ "$STATUS" = "409" ]; then
-            ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$LANDING_PROJECT/env" \
-              -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.envs[]? | select(.key=="DATABASE_URL") | .id' | head -1)
-            if [ -n "$ENV_ID" ]; then
-              curl -s -X PATCH "https://api.vercel.com/v9/projects/$LANDING_PROJECT/env/$ENV_ID" \
-                -H "Authorization: Bearer $VERCEL_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "{\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" | jq -c '{key}'
-              echo "  ✓ Updated"
+          set_env_var() {
+            local PROJECT="$1"
+            echo "→ POST /v9/projects/$PROJECT/env"
+            STATUS=$(curl -s -o /tmp/vercel_resp.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects/$PROJECT/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"DATABASE_URL\",\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+            BODY=$(cat /tmp/vercel_resp.json)
+            echo "  HTTP $STATUS: $BODY"
+            if [ "$STATUS" = "409" ]; then
+              echo "  Already exists — patching"
+              ENV_ID=$(echo "$BODY" | jq -r '.error.envVarId // empty' 2>/dev/null)
+              if [ -z "$ENV_ID" ]; then
+                ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT/env" \
+                  -H "Authorization: Bearer $VERCEL_TOKEN" \
+                  | jq -r '.envs[]? | select(.key=="DATABASE_URL") | .id' | head -1)
+              fi
+              echo "  Env ID: $ENV_ID"
+              if [ -n "$ENV_ID" ]; then
+                PATCH=$(curl -s -w "\n%{http_code}" \
+                  -X PATCH "https://api.vercel.com/v9/projects/$PROJECT/env/$ENV_ID" \
+                  -H "Authorization: Bearer $VERCEL_TOKEN" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"target\":[\"production\",\"preview\"]}")
+                echo "  PATCH: $PATCH"
+                echo "  ✓ Updated"
+              else
+                echo "  ⚠ Could not find env ID to patch"
+              fi
+            elif [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
+              echo "  ✓ Created (HTTP $STATUS)"
+            else
+              echo "  ⚠ Unexpected HTTP $STATUS — logged above, continuing"
             fi
-          elif [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
-            echo "  ✓ Created"
-          else
-            echo "  ✗ Unexpected HTTP $STATUS"; exit 1
-          fi
+          }
+          set_env_var "prj_iraVc9HNzaNyFv14gnn0tWMO6oVk"
 
-      - name: Set DATABASE_URL on ud-signer project
+      - name: Set DATABASE_URL on ud-signer (prj_aHr0Al8la5rpFajSnBs7WM0AfSEJ / ud-signer)
         run: |
-          echo "→ Setting DATABASE_URL on ud-signer ($SIGNER_PROJECT)"
-          STATUS=$(curl -s -o /tmp/resp2.json -w "%{http_code}" \
-            -X POST "https://api.vercel.com/v9/projects/$SIGNER_PROJECT/env" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"key\":\"DATABASE_URL\",\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
-          echo "HTTP $STATUS: $(cat /tmp/resp2.json | jq -c '{key,error:.error.message}' 2>/dev/null || cat /tmp/resp2.json)"
-          if [ "$STATUS" = "409" ]; then
-            ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$SIGNER_PROJECT/env" \
-              -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.envs[]? | select(.key=="DATABASE_URL") | .id' | head -1)
-            if [ -n "$ENV_ID" ]; then
-              curl -s -X PATCH "https://api.vercel.com/v9/projects/$SIGNER_PROJECT/env/$ENV_ID" \
-                -H "Authorization: Bearer $VERCEL_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "{\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" | jq -c '{key}'
-              echo "  ✓ Updated"
+          set_env_var() {
+            local PROJECT="$1"
+            echo "→ POST /v9/projects/$PROJECT/env"
+            STATUS=$(curl -s -o /tmp/vercel_resp.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects/$PROJECT/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"DATABASE_URL\",\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+            BODY=$(cat /tmp/vercel_resp.json)
+            echo "  HTTP $STATUS: $BODY"
+            if [ "$STATUS" = "409" ]; then
+              echo "  Already exists — patching"
+              ENV_ID=$(echo "$BODY" | jq -r '.error.envVarId // empty' 2>/dev/null)
+              if [ -z "$ENV_ID" ]; then
+                ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT/env" \
+                  -H "Authorization: Bearer $VERCEL_TOKEN" \
+                  | jq -r '.envs[]? | select(.key=="DATABASE_URL") | .id' | head -1)
+              fi
+              echo "  Env ID: $ENV_ID"
+              if [ -n "$ENV_ID" ]; then
+                PATCH=$(curl -s -w "\n%{http_code}" \
+                  -X PATCH "https://api.vercel.com/v9/projects/$PROJECT/env/$ENV_ID" \
+                  -H "Authorization: Bearer $VERCEL_TOKEN" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"value\":$(echo "$DATABASE_URL" | jq -Rs .),\"target\":[\"production\",\"preview\"]}")
+                echo "  PATCH: $PATCH"
+                echo "  ✓ Updated"
+              else
+                echo "  ⚠ Could not find env ID to patch"
+              fi
+            elif [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
+              echo "  ✓ Created (HTTP $STATUS)"
+            else
+              echo "  ⚠ Unexpected HTTP $STATUS — logged above, continuing"
             fi
-          elif [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
-            echo "  ✓ Created"
-          else
-            echo "  ✗ Unexpected HTTP $STATUS"; exit 1
-          fi
+          }
+          # Try by project ID first, then by project name
+          set_env_var "prj_aHr0Al8la5rpFajSnBs7WM0AfSEJ"
+          echo "--- also trying by name 'ud-signer' ---"
+          set_env_var "ud-signer"
 
       - name: Redeploy landing (ud.hive.baby)
         run: |
           echo "→ Triggering redeploy of landing"
-          LATEST=$(curl -s "https://api.vercel.com/v6/deployments?projectId=$LANDING_PROJECT&limit=1&target=production" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.deployments[0].uid // empty')
+          PAYLOAD=$(curl -s "https://api.vercel.com/v6/deployments?projectId=prj_iraVc9HNzaNyFv14gnn0tWMO6oVk&limit=1&target=production" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+          echo "  Latest deployment: $(echo "$PAYLOAD" | jq -c '.deployments[0] | {uid,name,state}')"
+          LATEST=$(echo "$PAYLOAD" | jq -r '.deployments[0].uid // empty')
+          DEP_NAME=$(echo "$PAYLOAD" | jq -r '.deployments[0].name // empty')
           if [ -z "$LATEST" ]; then
-            echo "  No production deployment found — skipping"; exit 0
+            echo "  ⚠ No production deployment found — skipping redeploy"
+          else
+            RESULT=$(curl -s -X POST "https://api.vercel.com/v13/deployments" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"$DEP_NAME\",\"deploymentId\":\"$LATEST\",\"target\":\"production\"}")
+            echo "  Redeploy response: $(echo "$RESULT" | jq -c '{id,readyState,url}' 2>/dev/null || echo "$RESULT")"
+            echo "  ✓ Redeploy triggered"
           fi
-          DEP_NAME=$(curl -s "https://api.vercel.com/v6/deployments?projectId=$LANDING_PROJECT&limit=1&target=production" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.deployments[0].name')
-          curl -s -X POST "https://api.vercel.com/v13/deployments" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"name\":\"$DEP_NAME\",\"deploymentId\":\"$LATEST\",\"target\":\"production\"}" \
-            | jq -c '{id,readyState}'
-          echo "  ✓ Redeploy triggered"
 
       - name: Wait and verify seed-demos
         run: |
@@ -108,8 +141,10 @@ jobs:
             RESULT=$(curl -s "https://ud.hive.baby/api/seed-demos")
             echo "  Attempt $i: $RESULT"
             if [ "$(echo "$RESULT" | jq -r '.ok // false' 2>/dev/null)" = "true" ]; then
-              echo "  ✓ seed-demos ok"; exit 0
+              echo "  ✓ seed-demos ok:true — all done"
+              exit 0
             fi
             [ $i -lt 5 ] && sleep 15
           done
-          echo "  ✗ seed-demos did not return ok:true"; exit 1
+          echo "  ✗ seed-demos did not return ok:true after 5 attempts"
+          exit 1

@@ -1,0 +1,73 @@
+name: Cloudflare - Replace CNAME aliases
+
+on:
+  workflow_dispatch:
+
+jobs:
+  replace-cnames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Delete existing and recreate CNAME aliases
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ZONE: ${{ secrets.CF_ZONE }}
+        run: |
+          set +e
+          ZONE="${CF_ZONE:-bcb5522993ecf90a4f1d5dfe101e5a5c}"
+          if [ -z "$CF_API_TOKEN" ]; then echo "::error::CF_API_TOKEN not set"; exit 1; fi
+          FAILED=0
+
+          # Step 1 — List all matching records
+          ALL=$(curl -s "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?per_page=100" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}")
+          EXISTING=$(echo "$ALL" | jq -r '.result[] | select(.name | ascii_downcase | test("moon\\.hive|bodylog\\.hive|clock\\.hive|secret\\.hive|aesthetic\\.hive")) | "\(.id) \(.type) \(.name) -> \(.content)"' 2>/dev/null)
+          echo "::notice::EXISTING RECORDS: $(echo $EXISTING | tr '\n' '|')"
+
+          # Step 2 — Delete all matching records
+          ALL_IDS=$(echo "$ALL" | jq -r '.result[] | select(.name | ascii_downcase | test("moon\\.hive|bodylog\\.hive|clock\\.hive|secret\\.hive|aesthetic\\.hive")) | .id' 2>/dev/null)
+          if [ -z "$ALL_IDS" ]; then
+            echo "::notice::DELETE: no matching records found"
+          else
+            for ID in $ALL_IDS; do
+              NAME=$(echo "$ALL" | jq -r --arg id "$ID" '.result[] | select(.id == $id) | .name' 2>/dev/null)
+              DEL=$(curl -s -X DELETE \
+                "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records/${ID}" \
+                -H "Authorization: Bearer ${CF_API_TOKEN}")
+              SUCCESS=$(echo "$DEL" | jq -r '.success' 2>/dev/null)
+              echo "::notice::DELETE $NAME id=$ID success=$SUCCESS"
+            done
+          fi
+
+          # Step 3 — Create correct records
+          create_cname() {
+            local N=$1 T=$2
+            RESP=$(curl -s -w "\n%{http_code}" \
+              -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records" \
+              -H "Authorization: Bearer ${CF_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{\"type\":\"CNAME\",\"name\":\"${N}\",\"content\":\"${T}\",\"ttl\":1,\"proxied\":false}")
+            BODY=$(echo "$RESP" | head -1)
+            CODE=$(echo "$RESP" | tail -1)
+            DETAIL=$(echo "$BODY" | jq -r 'if .success then "ok id=\(.result.id)" else "FAIL errors=\(.errors | tostring)" end' 2>/dev/null || echo "$BODY")
+            echo "::notice::CREATE $N->$T HTTP=$CODE $DETAIL"
+            if [ "$CODE" != "200" ] && [ "$CODE" != "201" ]; then FAILED=1; fi
+          }
+
+          create_cname moon.hive.baby      hivemoon.hive.baby
+          create_cname bodylog.hive.baby   hivebodylog.hive.baby
+          create_cname clock.hive.baby     hiveclock.hive.baby
+          create_cname secret.hive.baby    secretbox.hive.baby
+          create_cname aesthetic.hive.baby hiveaestheticbestie.hive.baby
+
+          # Step 4 — Verify final state
+          FINAL=$(curl -s "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?per_page=100" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}")
+          VERIFIED=$(echo "$FINAL" | jq -r '.result[] | select(.name | ascii_downcase | test("moon\\.hive|bodylog\\.hive|clock\\.hive|secret\\.hive|aesthetic\\.hive")) | "\(.type) \(.name)->\(.content) proxied=\(.proxied)"' 2>/dev/null)
+          echo "::notice::FINAL STATE: $(echo $VERIFIED | tr '\n' '|')"
+
+          if [ "$FAILED" = "1" ]; then
+            echo "::error::One or more creates failed — see notices above"
+            exit 1
+          fi

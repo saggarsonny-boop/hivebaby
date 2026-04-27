@@ -1,0 +1,80 @@
+name: Fix HivePhoto Domain
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix-domain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and fix hivephoto.hive.baby domain
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          node << 'EOF'
+          const TOKEN = process.env.VERCEL_TOKEN;
+
+          async function vapi(path, method = 'GET', body) {
+            const res = await fetch(`https://api.vercel.com${path}`, {
+              method,
+              headers: {
+                'Authorization': `Bearer ${TOKEN}`,
+                'Content-Type': 'application/json',
+              },
+              body: body ? JSON.stringify(body) : undefined,
+            });
+            return res.json();
+          }
+
+          async function main() {
+            // List all projects and find which owns hivephoto.hive.baby
+            console.log("=== STEP 1: Find project owning hivephoto.hive.baby ===");
+            const projects = await vapi('/v9/projects?limit=50');
+            let ownerName = null;
+            for (const p of (projects.projects || [])) {
+              const aliases = (p.alias || []).map(a => a.value || a.domain || '');
+              if (aliases.some(d => d.includes('hivephoto'))) {
+                console.log(`FOUND: ${p.name} (id=${p.id}) owns: ${aliases.filter(d => d.includes('hivephoto'))}`);
+                ownerName = p.name;
+              }
+              if (p.name.includes('hivephoto') || p.name.includes('photo')) {
+                console.log(`Project: ${p.name} (id=${p.id}) aliases: ${aliases}`);
+              }
+            }
+
+            if (!ownerName) {
+              console.log("Domain not found on any project — checking domains endpoint directly");
+            }
+
+            // Check both projects directly
+            console.log("\n=== STEP 2: Direct domain check on both projects ===");
+            for (const proj of ['hive-hivephoto', 'hive-photo-o3no']) {
+              const d = await vapi(`/v9/projects/${proj}/domains`);
+              const domains = (d.domains || []).map(x => x.name);
+              console.log(`${proj}: ${JSON.stringify(domains)}`);
+            }
+
+            // Fix: ensure hivephoto.hive.baby is on hive-hivephoto only
+            console.log("\n=== STEP 3: Fix domain assignment ===");
+
+            // Remove from wrong project (ignore 404)
+            const rm = await vapi('/v9/projects/hive-photo-o3no/domains/hivephoto.hive.baby', 'DELETE');
+            console.log(`Remove from hive-photo-o3no: ${JSON.stringify(rm).slice(0, 100)}`);
+
+            // Add to correct project
+            const add = await vapi('/v9/projects/hive-hivephoto/domains', 'POST', {
+              name: 'hivephoto.hive.baby',
+            });
+            console.log(`Add to hive-hivephoto: ${add.name || add.error?.code || JSON.stringify(add).slice(0, 100)}`);
+
+            // Verify
+            console.log("\n=== STEP 4: Verify ===");
+            for (const proj of ['hive-hivephoto', 'hive-photo-o3no']) {
+              const d = await vapi(`/v9/projects/${proj}/domains`);
+              const domains = (d.domains || []).map(x => x.name);
+              console.log(`${proj}: ${JSON.stringify(domains)}`);
+            }
+          }
+
+          main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
+          EOF

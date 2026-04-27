@@ -1,0 +1,170 @@
+name: HivePhoto Reset Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/hivephoto-reset-audit.yml']
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Delete + recreate ANTHROPIC_API_KEY, redeploy utilities
+        env:
+          VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
+        run: |
+          echo "ANTHROPIC_KEY first 20 chars: $(echo $ANTHROPIC_KEY | cut -c1-20)"
+
+          node << 'EOF' > /tmp/reset-audit.txt
+          const VTOKEN = process.env.VERCEL_TOKEN_MAIN;
+          const AKEY   = process.env.ANTHROPIC_KEY;
+          const TEAM   = 'saggarsonny-3909s-projects';
+
+          async function vreq(method, path, body) {
+            const r = await fetch(`https://api.vercel.com${path}`, {
+              method,
+              headers: { 'Authorization': `Bearer ${VTOKEN}`, 'Content-Type': 'application/json' },
+              body: body ? JSON.stringify(body) : undefined,
+            });
+            const text = await r.text();
+            try { return JSON.parse(text); } catch { return { _raw: text, _status: r.status }; }
+          }
+          function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+          async function main() {
+            // Print key prefix for verification
+            console.log(`ANTHROPIC_KEY prefix: ${AKEY ? AKEY.slice(0,10) + '...' : 'MISSING'}`);
+
+            // STEP 1: Find utilities project
+            console.log('\n=== STEP 1: FIND UTILITIES PROJECT ===');
+            const all = await vreq('GET', `/v9/projects?teamId=${TEAM}&limit=100`);
+            if (all.error) { console.log('ERROR:', JSON.stringify(all.error)); process.exit(1); }
+            const projects = all.projects || [];
+            console.log(`${projects.length} projects under ${TEAM}:`);
+            let utilProject = null;
+            for (const p of projects) {
+              const aliases = (p.alias || []).map(a => a.value || a.domain || '').filter(Boolean);
+              const isUtil = aliases.some(a => a.includes('utilities')) || p.name.toLowerCase().includes('util');
+              console.log(`  ${p.name} (${p.id}) [${aliases.slice(0,3).join(', ')}]${isUtil ? ' ← UTILITIES' : ''}`);
+              if (isUtil) utilProject = p;
+            }
+            if (!utilProject) { console.log('NOT FOUND'); process.exit(1); }
+            console.log(`\nFound: ${utilProject.name} (${utilProject.id})`);
+
+            // STEP 2: List existing env vars
+            console.log('\n=== STEP 2: EXISTING ENV VARS ===');
+            const envList = await vreq('GET', `/v9/projects/${utilProject.id}/env?teamId=${TEAM}`);
+            if (envList.error) { console.log('ERROR:', JSON.stringify(envList.error)); process.exit(1); }
+            const vars = envList.envs || [];
+            let anthropicVar = null;
+            for (const v of vars) {
+              const display = v.type === 'encrypted' ? 'ENCRYPTED' : (v.value ? 'SET' : 'EMPTY');
+              console.log(`  ${v.key} [${(v.target||[]).join(',')}] ${display} id=${v.id}`);
+              if (v.key === 'ANTHROPIC_API_KEY') anthropicVar = v;
+            }
+
+            // STEP 3: Delete existing if present
+            if (anthropicVar) {
+              console.log(`\n=== STEP 3: DELETE existing ANTHROPIC_API_KEY (id=${anthropicVar.id}) ===`);
+              const del = await vreq('DELETE', `/v9/projects/${utilProject.id}/env/${anthropicVar.id}?teamId=${TEAM}`);
+              if (del && del.error) {
+                console.log('DELETE FAILED:', JSON.stringify(del.error));
+              } else {
+                console.log('DELETED OK');
+              }
+            } else {
+              console.log('\n=== STEP 3: No existing ANTHROPIC_API_KEY to delete ===');
+            }
+
+            // STEP 4: Create fresh
+            console.log('\n=== STEP 4: CREATE ANTHROPIC_API_KEY ===');
+            if (!AKEY) { console.log('ERROR: ANTHROPIC_KEY secret empty'); process.exit(1); }
+            const created = await vreq('POST', `/v9/projects/${utilProject.id}/env?teamId=${TEAM}`, {
+              key: 'ANTHROPIC_API_KEY',
+              value: AKEY,
+              type: 'encrypted',
+              target: ['production', 'preview', 'development'],
+            });
+            if (created.error) {
+              console.log('CREATE FAILED:', JSON.stringify(created.error));
+              process.exit(1);
+            }
+            console.log(`CREATED OK id=${created.id} key=${created.key}`);
+
+            // STEP 5: Trigger redeploy
+            console.log('\n=== STEP 5: TRIGGER REDEPLOY ===');
+            const deploy = await vreq('POST', `/v13/deployments?teamId=${TEAM}`, {
+              name: utilProject.name,
+              gitSource: {
+                type: 'github',
+                repo: 'saggarsonny-boop/universal-document',
+                ref: 'main',
+              },
+            });
+            if (deploy.error) {
+              console.log('DEPLOY ERROR:', JSON.stringify(deploy.error).slice(0,300));
+              process.exit(1);
+            }
+            const depId = deploy.id || deploy.uid;
+            console.log(`Deployment ID: ${depId}`);
+            console.log(`URL: ${deploy.url || 'n/a'}`);
+            console.log(`Initial state: ${deploy.status || deploy.state || 'QUEUED'}`);
+
+            // STEP 6: Poll until READY or ERROR
+            console.log('\n=== STEP 6: BUILD POLL ===');
+            const start = Date.now();
+            let lastState = '';
+            while (Date.now() - start < 300000) {
+              await sleep(15000);
+              const d = await vreq('GET', `/v13/deployments/${depId}?teamId=${TEAM}`);
+              const state = d.status || d.state || d.readyState;
+              if (state !== lastState) {
+                console.log(`[${Math.round((Date.now()-start)/1000)}s] ${state}`);
+                lastState = state;
+              }
+              if (state === 'READY') {
+                console.log('\n✓ READY — pharmacy tool should now work');
+                console.log(`url: https://${d.url || 'utilities.hive.baby'}`);
+                break;
+              }
+              if (state === 'ERROR' || state === 'CANCELED') {
+                console.log(`\n✗ FAILED: ${d.errorMessage || 'unknown'}`);
+                const evText = await fetch(
+                  `https://api.vercel.com/v2/deployments/${depId}/events?limit=100&teamId=${TEAM}`,
+                  { headers: { 'Authorization': `Bearer ${VTOKEN}` } }
+                ).then(r => r.text());
+                for (const line of evText.split('\n').filter(l => l.trim())) {
+                  try {
+                    const e = JSON.parse(line);
+                    const p = e.payload || '';
+                    const t = typeof p === 'string' ? p : (p.text || p.message || '');
+                    if (t.trim()) console.log(t.slice(0,300));
+                  } catch {}
+                }
+                break;
+              }
+            }
+          }
+
+          main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });
+          EOF
+
+          cat /tmp/reset-audit.txt
+          cp /tmp/reset-audit.txt hivephoto-reset-audit.txt
+
+      - name: Commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.email "claude@hive.baby"
+          git config user.name "Claude Code"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/saggarsonny-boop/hivebaby.git
+          git add hivephoto-reset-audit.txt
+          git commit -m "chore: utilities delete+recreate ANTHROPIC_API_KEY $(date -u +%H:%M)" || echo "no changes"
+          git push origin HEAD:main
