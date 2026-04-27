@@ -8,8 +8,8 @@ governance: QueenBee.MasterGrappler
 safety: enabled
 multilingual: pending
 premium: false
-status: building
-tier: 2
+status: live
+tier: 1
 schema: intelligent-medical-records
 stack: [nextjs, typescript, tailwind, anthropic, neon-postgres]
 </GrapplerHook>
@@ -18,7 +18,7 @@ stack: [nextjs, typescript, tailwind, anthropic, neon-postgres]
 - **Name:** HiveIMR
 - **Domain:** hiveimr.hive.baby
 - **Repo:** saggarsonny-boop/hivebaby (subdir `hive-imr/`)
-- **Status:** Building (Tier 2)
+- **Status:** Live (Tier 1)
 - **Stack:** Next.js + TypeScript + Tailwind + Anthropic SDK + Neon PostgreSQL
 
 ## Purpose
@@ -79,8 +79,8 @@ auditable generations, free at the base tier.
 - Health check: `GET /api/health`
 
 ## Phase Plan
-1. ✅ Scaffold (this branch)
-2. Drop Thomas's component, harden AI to API route
+1. ✅ Scaffold
+2. ✅ Thomas's component + AI route hardened to `/api/ai/generate`
 3. Neon schema (patients, sessions, ai_generations, orders) + demo seed
 4. Cookie-based role selector at `/login`
 5. AI route hardening (handoff / clinical summary / discharge / order justification)

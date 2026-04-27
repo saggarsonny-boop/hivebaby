@@ -40,8 +40,8 @@
 - `creatorconsole.hive.baby` returns HTTP 307 consistently and requires owner confirmation that this redirect is intentional.
 
 - Total engines: 28
-- Live and working: 24
-- Building: 3 (HiveMeme, HiveMemorySpace, HiveIMR)
+- Live and working: 25
+- Building: 2 (HiveMeme, HiveMemorySpace)
 - Planned: 1 (QueenBee)
 
 ## TIER 1
