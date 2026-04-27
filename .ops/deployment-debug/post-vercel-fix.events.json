@@ -1,0 +1,210 @@
+[
+  {
+    "type": "stdout",
+    "text": "Running build in Washington, D.C., USA (East) – iad1"
+  },
+  {
+    "type": "stdout",
+    "text": "Build machine configuration: 4 cores, 8 GB"
+  },
+  {
+    "type": "stdout",
+    "text": "Cloning github.com/saggarsonny-boop/hivebaby (Branch: main, Commit: 5e5248c)"
+  },
+  {
+    "type": "stdout",
+    "text": "Warning: Failed to fetch one or more git submodules"
+  },
+  {
+    "type": "stdout",
+    "text": "Cloning completed: 350.000ms"
+  },
+  {
+    "type": "stdout",
+    "text": "Restored build cache from previous deployment (Fw4toGDpj7EjfjHYE1s2pEeXWB9U)"
+  },
+  {
+    "type": "stdout",
+    "text": "Running \"vercel build\""
+  },
+  {
+    "type": "stderr",
+    "text": "Vercel CLI 51.6.1"
+  },
+  {
+    "type": "stdout",
+    "text": "Installing dependencies..."
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "text": "up to date in 1s"
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "text": "146 packages are looking for funding"
+  },
+  {
+    "type": "stdout",
+    "text": "  run `npm fund` for details"
+  },
+  {
+    "type": "stdout",
+    "text": "Detected Next.js version: 16.2.3"
+  },
+  {
+    "type": "stdout",
+    "text": "Running \"npm run build\""
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "text": "> hive-imr@0.1.0 build"
+  },
+  {
+    "type": "stdout",
+    "text": "> next build"
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stderr",
+    "text": "⚠ Both `outputFileTracingRoot` and `turbopack.root` are set, but they must have the same value."
+  },
+  {
+    "type": "stderr",
+    "text": "Using `outputFileTracingRoot` value: /vercel/path0."
+  },
+  {
+    "type": "stdout",
+    "text": "  Applying modifyConfig from Vercel"
+  },
+  {
+    "type": "stdout",
+    "text": "▲ Next.js 16.2.3 (Turbopack)"
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "text": "  Creating an optimized production build ..."
+  },
+  {
+    "type": "stderr",
+    "text": "⚠ Both `outputFileTracingRoot` and `turbopack.root` are set, but they must have the same value."
+  },
+  {
+    "type": "stderr",
+    "text": "Using `outputFileTracingRoot` value: /vercel/path0."
+  },
+  {
+    "type": "stdout",
+    "text": "✓ Compiled successfully in 3.0s"
+  },
+  {
+    "type": "stdout",
+    "text": "  Skipping validation of types"
+  },
+  {
+    "type": "stdout",
+    "text": "  Finished TypeScript config validation in 10ms ..."
+  },
+  {
+    "type": "stdout",
+    "text": "  Collecting page data using 3 workers ..."
+  },
+  {
+    "type": "stdout",
+    "text": "  Generating static pages using 3 workers (0/3) ..."
+  },
+  {
+    "type": "stdout",
+    "text": "✓ Generating static pages using 3 workers (3/3) in 161ms"
+  },
+  {
+    "type": "stdout",
+    "text": "  Finalizing page optimization ..."
+  },
+  {
+    "type": "stdout",
+    "text": "  Running onBuildComplete from Vercel"
+  },
+  {
+    "type": "stderr",
+    "text": "Detected .env file, it is strongly recommended to use Vercel's env handling instead"
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "text": "Route (app)"
+  },
+  {
+    "type": "stdout",
+    "text": "┌ ○ /"
+  },
+  {
+    "type": "stdout",
+    "text": "├ ○ /_not-found"
+  },
+  {
+    "type": "stdout",
+    "text": "├ ƒ /api/ai/generate"
+  },
+  {
+    "type": "stdout",
+    "text": "└ ƒ /api/health"
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "text": "○  (Static)   prerendered as static content"
+  },
+  {
+    "type": "stdout",
+    "text": "ƒ  (Dynamic)  server-rendered on demand"
+  },
+  {
+    "type": "stdout",
+    "text": ""
+  },
+  {
+    "type": "stderr",
+    "text": "Build Completed in /vercel/output [9s]"
+  },
+  {
+    "type": "stdout",
+    "text": "Deploying outputs..."
+  },
+  {
+    "type": "stdout",
+    "text": "Deployment completed"
+  },
+  {
+    "type": "stdout",
+    "text": "Creating build cache..."
+  }
+]
