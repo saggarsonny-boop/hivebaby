@@ -1,0 +1,57 @@
+name: Ops — Inspect hive-imr Vercel project
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - name: Resolve Vercel token
+        run: |
+          TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: neither VERCEL_TOKEN_MAIN nor VERCEL_TOKEN is set"
+            exit 1
+          fi
+          echo "Token resolved (length=${#TOKEN})"
+          echo "VERCEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Fetch project (your snippet)
+        run: |
+          curl -s "https://api.vercel.com/v9/projects/hive-imr" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" | \
+            python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('alias','no alias'))"
+
+      - name: Project summary
+        run: |
+          curl -s "https://api.vercel.com/v9/projects/hive-imr" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -o /tmp/proj.json
+          ERR=$(jq -r '.error.message // empty' /tmp/proj.json)
+          if [ -n "$ERR" ]; then
+            echo "Error fetching project: $ERR"
+            cat /tmp/proj.json
+            exit 1
+          fi
+          echo "Project ID:        $(jq -r '.id' /tmp/proj.json)"
+          echo "Production branch: $(jq -r '.link.productionBranch // .productionBranch // "main"' /tmp/proj.json)"
+          echo "Root directory:    $(jq -r '.rootDirectory // "(repo root)"' /tmp/proj.json)"
+          echo "Framework:         $(jq -r '.framework // "(unset)"' /tmp/proj.json)"
+          echo
+          echo "Aliases:"
+          jq -r '.alias[]? | "  - \(.domain)"' /tmp/proj.json
+
+      - name: Latest deployment
+        run: |
+          curl -s "https://api.vercel.com/v6/deployments?projectId=$(jq -r '.id' /tmp/proj.json)&limit=1" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" -o /tmp/dep.json
+          jq -r '.deployments[0] | "  ID:      \(.uid)\n  URL:     https://\(.url)\n  State:   \(.state)\n  Target:  \(.target // "preview")\n  Created: \(.created)"' /tmp/dep.json
+          echo
+          echo "Likely live URLs:"
+          echo "  https://hive-imr.vercel.app"
+          echo "  https://hiveimr.hive.baby"
