@@ -1048,13 +1048,27 @@ const tsMesh = new THREE.Mesh(
 const tsLight = new THREE.PointLight(0x00ffcc, 2.2, 0.5);
 tsMesh.add(tsLight);
 scene.add(tsMesh);
+// Color-cycle palette: cyan → yellow → coral → purple, 2s each
+const TS_PALETTE = [0x00ffcc, 0xFFD700, 0xFF6B6B, 0xB388FF].map(c => new THREE.Color(c));
+const TS_CYCLE_S = 2.0;
+const _tsCol = new THREE.Color();
 function updateTestingSatellite() {
-  const theta = (2 * Math.PI * Date.now() / 1000 / TS_PERIOD + tsOffset) % (2 * Math.PI);
+  const now = Date.now() / 1000;
+  const theta = (2 * Math.PI * now / TS_PERIOD + tsOffset) % (2 * Math.PI);
   tsMesh.position.set(
     TS_R * Math.cos(theta),
     TS_R * Math.sin(theta) * Math.sin(TS_INC),
     TS_R * Math.sin(theta) * Math.cos(TS_INC)
   );
+  // Smooth color cycling with cubic ease
+  const phase = (now / TS_CYCLE_S) % TS_PALETTE.length;
+  const idx  = Math.floor(phase) % TS_PALETTE.length;
+  const next = (idx + 1) % TS_PALETTE.length;
+  const f    = phase - Math.floor(phase);
+  const s    = f * f * (3 - 2 * f); // smoothstep
+  _tsCol.lerpColors(TS_PALETTE[idx], TS_PALETTE[next], s);
+  tsMesh.material.color.copy(_tsCol);
+  tsLight.color.copy(_tsCol);
 }
 
 // ─── Space Station ────────────────────────────────────────────────────────────
