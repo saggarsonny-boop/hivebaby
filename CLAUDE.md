@@ -180,6 +180,22 @@ Three.js 3D planet. Each hexagon cell = one Hive engine.
 - Full Onboarding Stack (all four components)
 - Data source credited visibly if using real data
 
+## ENGINE LAUNCH CHECKLIST
+
+Every new engine that reaches 100% complete and is live must:
+
+1. Be added to test.hive.baby engine_slots with a 10-item testing checklist
+2. Have SEO layout.tsx with correct title and description
+3. Have TooltipTour implemented
+4. Be added to UDNav or planet surface as appropriate
+5. Have ANTHROPIC_API_KEY and all required env vars confirmed in Vercel
+6. Pass /api/health check
+7. Be added to the health check workflow URL list
+8. Have the engine count updated everywhere it appears
+
+This rule applies to ALL engines across ALL Hive properties.
+No engine launches without completing this checklist.
+
 ## UD Design System — GOVERNANCE RULE (hard, no exceptions)
 
 All UD tools, engines, apps, and commensals must use the UD Design System. This is a governance rule enforced at the ENGINE_GRAMMAR level. Any build that deviates must be corrected before merge.
