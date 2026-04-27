@@ -16,38 +16,33 @@ jobs:
         run: |
           set +e
           ZONE="${CF_ZONE:-bcb5522993ecf90a4f1d5dfe101e5a5c}"
-          if [ -z "$CF_API_TOKEN" ]; then echo "ERROR: CF_API_TOKEN not set"; exit 1; fi
-          echo "Zone: $ZONE"
+          if [ -z "$CF_API_TOKEN" ]; then echo "::error::CF_API_TOKEN not set"; exit 1; fi
           FAILED=0
 
-          echo ""
-          echo "=== STEP 1: List all matching records ==="
+          # Step 1 — List all matching records
           ALL=$(curl -s "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?per_page=100" \
             -H "Authorization: Bearer ${CF_API_TOKEN}")
-          echo "$ALL" | jq -r '.result[] | select(.name | ascii_downcase | test("moon\\.hive|bodylog\\.hive|clock\\.hive|secret\\.hive|aesthetic\\.hive")) | "  \(.id) \(.type) \(.name) -> \(.content)"' 2>/dev/null || echo "  (jq error listing records)"
+          EXISTING=$(echo "$ALL" | jq -r '.result[] | select(.name | ascii_downcase | test("moon\\.hive|bodylog\\.hive|clock\\.hive|secret\\.hive|aesthetic\\.hive")) | "\(.id) \(.type) \(.name) -> \(.content)"' 2>/dev/null)
+          echo "::notice::EXISTING RECORDS: $(echo $EXISTING | tr '\n' '|')"
 
-          echo ""
-          echo "=== STEP 2: Delete all matching records ==="
+          # Step 2 — Delete all matching records
           ALL_IDS=$(echo "$ALL" | jq -r '.result[] | select(.name | ascii_downcase | test("moon\\.hive|bodylog\\.hive|clock\\.hive|secret\\.hive|aesthetic\\.hive")) | .id' 2>/dev/null)
           if [ -z "$ALL_IDS" ]; then
-            echo "  No matching records found to delete"
+            echo "::notice::DELETE: no matching records found"
           else
             for ID in $ALL_IDS; do
               NAME=$(echo "$ALL" | jq -r --arg id "$ID" '.result[] | select(.id == $id) | .name' 2>/dev/null)
-              echo "  Deleting $NAME (id=$ID)"
               DEL=$(curl -s -X DELETE \
                 "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records/${ID}" \
                 -H "Authorization: Bearer ${CF_API_TOKEN}")
-              echo "    $(echo $DEL | jq -c '{success,errors}' 2>/dev/null || echo $DEL)"
+              SUCCESS=$(echo "$DEL" | jq -r '.success' 2>/dev/null)
+              echo "::notice::DELETE $NAME id=$ID success=$SUCCESS"
             done
           fi
 
-          echo ""
-          echo "=== STEP 3: Create correct CNAME records ==="
-
-          do_create() {
-            N=$1; T=$2
-            echo "  Creating $N -> $T"
+          # Step 3 — Create correct records
+          create_cname() {
+            local N=$1 T=$2
             RESP=$(curl -s -w "\n%{http_code}" \
               -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records" \
               -H "Authorization: Bearer ${CF_API_TOKEN}" \
@@ -55,26 +50,24 @@ jobs:
               -d "{\"type\":\"CNAME\",\"name\":\"${N}\",\"content\":\"${T}\",\"ttl\":1,\"proxied\":false}")
             BODY=$(echo "$RESP" | head -1)
             CODE=$(echo "$RESP" | tail -1)
-            echo "    HTTP $CODE: $(echo $BODY | jq -c '{success,errors,id:.result.id,name:.result.name}' 2>/dev/null || echo $BODY)"
+            DETAIL=$(echo "$BODY" | jq -r 'if .success then "ok id=\(.result.id)" else "FAIL errors=\(.errors | tostring)" end' 2>/dev/null || echo "$BODY")
+            echo "::notice::CREATE $N->$T HTTP=$CODE $DETAIL"
             if [ "$CODE" != "200" ] && [ "$CODE" != "201" ]; then FAILED=1; fi
           }
 
-          do_create moon.hive.baby      hivemoon.hive.baby
-          do_create bodylog.hive.baby   hivebodylog.hive.baby
-          do_create clock.hive.baby     hiveclock.hive.baby
-          do_create secret.hive.baby    secretbox.hive.baby
-          do_create aesthetic.hive.baby hiveaestheticbestie.hive.baby
+          create_cname moon.hive.baby      hivemoon.hive.baby
+          create_cname bodylog.hive.baby   hivebodylog.hive.baby
+          create_cname clock.hive.baby     hiveclock.hive.baby
+          create_cname secret.hive.baby    secretbox.hive.baby
+          create_cname aesthetic.hive.baby hiveaestheticbestie.hive.baby
 
-          echo ""
-          echo "=== STEP 4: Verify final state ==="
+          # Step 4 — Verify final state
           FINAL=$(curl -s "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?per_page=100" \
             -H "Authorization: Bearer ${CF_API_TOKEN}")
-          echo "$FINAL" | jq -r '.result[] | select(.name | ascii_downcase | test("moon\\.hive|bodylog\\.hive|clock\\.hive|secret\\.hive|aesthetic\\.hive")) | "  \(.type) \(.name) -> \(.content) (proxied=\(.proxied))"' 2>/dev/null || echo "  (jq error)"
+          VERIFIED=$(echo "$FINAL" | jq -r '.result[] | select(.name | ascii_downcase | test("moon\\.hive|bodylog\\.hive|clock\\.hive|secret\\.hive|aesthetic\\.hive")) | "\(.type) \(.name)->\(.content) proxied=\(.proxied)"' 2>/dev/null)
+          echo "::notice::FINAL STATE: $(echo $VERIFIED | tr '\n' '|')"
 
-          echo ""
           if [ "$FAILED" = "1" ]; then
-            echo "RESULT: ONE OR MORE CREATES FAILED"
+            echo "::error::One or more creates failed — see notices above"
             exit 1
-          else
-            echo "RESULT: ALL 5 ALIASES REPLACED SUCCESSFULLY"
           fi
