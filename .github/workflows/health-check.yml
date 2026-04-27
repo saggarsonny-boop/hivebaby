@@ -55,6 +55,8 @@ jobs:
           check_url "HiveAestheticBestie" "https://hiveaestheticbestie.hive.baby"
           check_url "HiveMicroRitual"     "https://hivemicroritual.hive.baby"
           check_url "SovereignArbitrage"  "https://sovereignarbitrage.hive.baby"
+          check_url "HiveIMR"             "https://hiveimr.hive.baby/api/health"
+          check_url "HivePlainScan"       "https://plainscan.hive.baby/api/health"
           check_url "QueenBee"            "https://queenbee.hive.baby"
           # UD
           check_url "ud.hive.baby"        "https://ud.hive.baby"

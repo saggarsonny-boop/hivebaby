@@ -1,0 +1,317 @@
+name: Ops — Set up hive-plainscan Vercel project + DNS
+# v2 — re-run after adding per-project vercel.json (.next outputDirectory override)
+
+on:
+  workflow_dispatch:
+    inputs:
+      trigger_deploy:
+        description: 'Trigger initial deployment from main after setup'
+        type: boolean
+        default: true
+  push:
+    paths:
+      - '.github/workflows/setup-hive-plainscan.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROJECT_NAME: hive-plainscan
+      ROOT_DIR: apps/hive-plainscan
+      DOMAIN_PRIMARY: plainscan.hive.baby
+      DOMAIN_ALIAS: scan.hive.baby
+      REPO: saggarsonny-boop/hivebaby
+      FRAMEWORK: nextjs
+      VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CF_TOKEN_A: ${{ secrets.CF_API_TOKEN }}
+      CF_TOKEN_B: ${{ secrets.CF_TOKEN }}
+      CF_TOKEN_C: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ZONE_INPUT: ${{ secrets.CF_ZONE }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      OUT_DIR: .ops/deployment-debug
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve tokens
+        run: |
+          VERCEL_TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "ERROR: neither VERCEL_TOKEN_MAIN nor VERCEL_TOKEN is set"
+            exit 1
+          fi
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ERROR: ANTHROPIC_API_KEY secret missing"
+            exit 1
+          fi
+          echo "Vercel token resolved (length=${#VERCEL_TOKEN})"
+          echo "Anthropic key resolved (length=${#ANTHROPIC_API_KEY})"
+          CF="${CF_TOKEN_A:-${CF_TOKEN_B:-$CF_TOKEN_C}}"
+          if [ -n "$CF" ]; then
+            echo "Cloudflare token resolved (length=${#CF}) — DNS step will run"
+            echo "CF_TOKEN_RESOLVED=$CF" >> "$GITHUB_ENV"
+          else
+            echo "WARN: no CF token — DNS step will be skipped (manual CNAME required)"
+          fi
+          ZONE="${CF_ZONE_INPUT:-${CLOUDFLARE_ZONE_ID:-bcb5522993ecf90a4f1d5dfe101e5a5c}}"
+          echo "VERCEL_TOKEN=$VERCEL_TOKEN" >> "$GITHUB_ENV"
+          echo "ZONE=$ZONE" >> "$GITHUB_ENV"
+
+      - name: Find or create Vercel project
+        id: project
+        run: |
+          set -e
+          RESP=$(curl -s "https://api.vercel.com/v9/projects?search=$PROJECT_NAME" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+          PROJECT_ID=$(echo "$RESP" | jq -r --arg n "$PROJECT_NAME" \
+            '.projects[]? | select(.name == $n) | .id' | head -1)
+
+          if [ -n "$PROJECT_ID" ]; then
+            echo "✓ Project exists: $PROJECT_ID"
+          else
+            echo "→ Creating project '$PROJECT_NAME'"
+            BODY=$(jq -n \
+              --arg name "$PROJECT_NAME" \
+              --arg framework "$FRAMEWORK" \
+              --arg root "$ROOT_DIR" \
+              --arg repo "$REPO" \
+              '{
+                name: $name,
+                framework: $framework,
+                rootDirectory: $root,
+                gitRepository: {
+                  type: "github",
+                  repo: $repo
+                }
+              }')
+            HTTP=$(curl -s -o /tmp/create.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-binary "$BODY")
+            echo "  HTTP $HTTP"
+            jq . /tmp/create.json || cat /tmp/create.json
+            if [ "$HTTP" != "200" ] && [ "$HTTP" != "201" ]; then
+              echo "ERROR: project create failed"
+              exit 1
+            fi
+            PROJECT_ID=$(jq -r '.id' /tmp/create.json)
+            echo "✓ Created: $PROJECT_ID"
+          fi
+          [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ] || { echo "no project ID"; exit 1; }
+          echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+
+      - name: Ensure rootDirectory + framework set
+        run: |
+          BODY=$(jq -n \
+            --arg root "$ROOT_DIR" \
+            --arg fw "$FRAMEWORK" \
+            '{rootDirectory: $root, framework: $fw}')
+          HTTP=$(curl -s -o /tmp/cfg.json -w "%{http_code}" \
+            -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          echo "PATCH project HTTP $HTTP"
+          jq '{rootDirectory, framework}' /tmp/cfg.json || cat /tmp/cfg.json
+
+      - name: Upsert ANTHROPIC_API_KEY env var
+        run: |
+          set -e
+          KEY=ANTHROPIC_API_KEY
+          VAL="$ANTHROPIC_API_KEY"
+          BODY=$(jq -n --arg k "$KEY" --arg v "$VAL" \
+            '{key:$k, value:$v, type:"encrypted", target:["production","preview","development"]}')
+          HTTP=$(curl -s -o /tmp/env.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
+            echo "✓ $KEY created"
+          elif [ "$HTTP" = "409" ]; then
+            echo "$KEY exists — patching"
+            ENV_ID=$(jq -r '.error.envVarId // empty' /tmp/env.json)
+            if [ -z "$ENV_ID" ]; then
+              ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                | jq -r --arg k "$KEY" '.envs[]? | select(.key==$k) | .id' | head -1)
+            fi
+            if [ -n "$ENV_ID" ]; then
+              PBODY=$(jq -n --arg v "$VAL" \
+                '{value:$v, target:["production","preview","development"]}')
+              PHTTP=$(curl -s -o /tmp/env_patch.json -w "%{http_code}" \
+                -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ENV_ID" \
+                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                -H "Content-Type: application/json" \
+                --data-binary "$PBODY")
+              echo "✓ $KEY patched (HTTP $PHTTP)"
+            else
+              echo "⚠ no env id for $KEY"
+            fi
+          else
+            echo "⚠ $KEY HTTP $HTTP"
+            cat /tmp/env.json
+          fi
+
+      - name: Disable deployment protection
+        run: |
+          BODY='{"ssoProtection":null,"passwordProtection":null}'
+          HTTP=$(curl -s -o /tmp/prot.json -w "%{http_code}" \
+            -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          echo "PATCH protection HTTP $HTTP"
+          jq '{ssoProtection, passwordProtection}' /tmp/prot.json || cat /tmp/prot.json
+
+      - name: Attach domains (primary + alias)
+        run: |
+          attach_domain() {
+            local DOMAIN="$1"
+            BODY=$(jq -n --arg n "$DOMAIN" '{name:$n}')
+            HTTP=$(curl -s -o /tmp/dom.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v10/projects/$PROJECT_ID/domains" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-binary "$BODY")
+            echo "Add $DOMAIN HTTP $HTTP"
+            if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
+              echo "  ✓ Attached"
+            elif [ "$HTTP" = "409" ]; then
+              ERR=$(jq -r '.error.code // ""' /tmp/dom.json)
+              if [ "$ERR" = "domain_already_in_use" ] || [ "$ERR" = "domain_already_exists" ]; then
+                echo "  ✓ Already attached"
+              else
+                echo "  ⚠ Conflict:"
+                cat /tmp/dom.json
+              fi
+            else
+              echo "  ⚠ HTTP $HTTP:"
+              cat /tmp/dom.json
+            fi
+          }
+          attach_domain "$DOMAIN_PRIMARY"
+          attach_domain "$DOMAIN_ALIAS"
+
+      - name: Cloudflare CNAME upsert (primary + alias)
+        if: env.CF_TOKEN_RESOLVED != ''
+        run: |
+          upsert_cname() {
+            local FQDN="$1"
+            local TARGET="cname.vercel-dns.com"
+            EXISTING=$(curl -s \
+              "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?type=CNAME&name=$FQDN" \
+              -H "Authorization: Bearer $CF_TOKEN_RESOLVED")
+            ID=$(echo "$EXISTING" | jq -r '.result[0].id // empty')
+            BODY=$(jq -n --arg n "$FQDN" --arg t "$TARGET" \
+              '{type:"CNAME", name:$n, content:$t, ttl:1, proxied:false}')
+            if [ -n "$ID" ]; then
+              echo "  Update $FQDN ($ID) → $TARGET"
+              HTTP=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+                -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records/$ID" \
+                -H "Authorization: Bearer $CF_TOKEN_RESOLVED" \
+                -H "Content-Type: application/json" \
+                --data-binary "$BODY")
+            else
+              echo "  Create $FQDN → $TARGET"
+              HTTP=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+                -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records" \
+                -H "Authorization: Bearer $CF_TOKEN_RESOLVED" \
+                -H "Content-Type: application/json" \
+                --data-binary "$BODY")
+            fi
+            echo "  CF HTTP $HTTP"
+            jq '{success, errors, "result.name": .result.name, "result.content": .result.content, "result.proxied": .result.proxied}' /tmp/cf.json || cat /tmp/cf.json
+          }
+          upsert_cname "$DOMAIN_PRIMARY"
+          upsert_cname "$DOMAIN_ALIAS"
+
+      - name: Trigger production deployment from current ref
+        if: ${{ inputs.trigger_deploy != false }}
+        continue-on-error: true
+        run: |
+          REF="${GITHUB_REF_NAME:-main}"
+          echo "Deploying from ref: $REF"
+          BODY=$(jq -n --arg n "$PROJECT_NAME" --arg repo "$REPO" --arg ref "$REF" \
+            '{
+              name: $n,
+              gitSource: { type: "github", repo: $repo, ref: $ref },
+              target: "production"
+            }')
+          HTTP=$(curl -s -o /tmp/dep.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          echo "Deployment HTTP $HTTP"
+          jq '{id, url, readyState, alias, error}' /tmp/dep.json || cat /tmp/dep.json
+
+      - name: Poll https://plainscan.hive.baby/api/health (4 min)
+        run: |
+          mkdir -p "$OUT_DIR"
+          DEADLINE=$(( $(date +%s) + 240 ))
+          STATUS=000
+          BODY=""
+          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+            STATUS=$(curl -s -o /tmp/probe.body -w "%{http_code}" "https://$DOMAIN_PRIMARY/api/health" || echo "000")
+            BODY=$(head -c 200 /tmp/probe.body 2>/dev/null || echo "")
+            REMAINING=$(( DEADLINE - $(date +%s) ))
+            echo "[$(date +%T)] HTTP $STATUS  body: $BODY  (remaining ${REMAINING}s)"
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ Live"
+              break
+            fi
+            sleep 6
+          done
+          STATUS_ALIAS=$(curl -s -o /tmp/probe2.body -w "%{http_code}" "https://$DOMAIN_ALIAS/api/health" || echo "000")
+          BODY_ALIAS=$(head -c 200 /tmp/probe2.body 2>/dev/null || echo "")
+          jq -n \
+            --arg primary "$DOMAIN_PRIMARY" \
+            --arg alias "$DOMAIN_ALIAS" \
+            --arg ps "$STATUS" \
+            --arg pb "$BODY" \
+            --arg as "$STATUS_ALIAS" \
+            --arg ab "$BODY_ALIAS" \
+            '{
+              project: "hive-plainscan",
+              primary: { domain: $primary, final_status: ($ps|tonumber? // 0), final_body: $pb },
+              alias:   { domain: $alias,   final_status: ($as|tonumber? // 0), final_body: $ab },
+              polled_at: (now | todate)
+            }' > "$OUT_DIR/setup-hive-plainscan-result.json"
+          echo "===== Final ====="
+          cat "$OUT_DIR/setup-hive-plainscan-result.json"
+
+      - name: Commit results back
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT_DIR" || true
+          if ! git diff --cached --quiet; then
+            git commit -m "ops: hive-plainscan setup result"
+            git pull --rebase origin "$GITHUB_REF_NAME" 2>&1 || true
+            git push origin "HEAD:$GITHUB_REF_NAME" || true
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "----------------------------------------"
+          echo "Project ID:       ${PROJECT_ID:-unknown}"
+          echo "Primary domain:   $DOMAIN_PRIMARY"
+          echo "Alias domain:     $DOMAIN_ALIAS"
+          echo "Root dir:         $ROOT_DIR"
+          echo "Repo:             $REPO"
+          echo "----------------------------------------"
+          echo "Verify:"
+          echo "  1. Vercel dashboard → hive-plainscan → 'production' env has ANTHROPIC_API_KEY"
+          echo "  2. https://plainscan.hive.baby/api/health → {status:'ok',engine:'HivePlainScan'}"
+          echo "  3. https://scan.hive.baby/api/health resolves to same app"
+          echo "  4. https://plainscan.hive.baby/plainscan renders the UI"

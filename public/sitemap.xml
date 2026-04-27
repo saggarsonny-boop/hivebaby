@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://hive.baby/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://hive.baby/about.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://hive.baby/contribute.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://hive.baby/patrons.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://hive.baby/privacy.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+
+  <url><loc>https://hivemoon.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://hivefield.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://hiveclock.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://hiveclarity.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://hivestrength.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://hivebodylog.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://hiveenginebuilder.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://creatorconsole.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://secretbox.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://whotextedme.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://support.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://hivememe.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://hivephoto.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://hiveaestheticbestie.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://hivemicroritual.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://sovereignarbitrage.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://hiveimr.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://plainscan.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+
+  <url><loc>https://ud.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://reader.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://converter.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://creator.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://validator.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://utilities.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://signer.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://universaldocument.hive.baby/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+</urlset>
