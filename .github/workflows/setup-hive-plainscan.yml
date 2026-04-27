@@ -1,4 +1,5 @@
 name: Ops — Set up hive-plainscan Vercel project + DNS
+# v2 — re-run after adding per-project vercel.json (.next outputDirectory override)
 
 on:
   workflow_dispatch:
