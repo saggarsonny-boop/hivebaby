@@ -1,4 +1,4 @@
-name: Cloudflare — Replace CNAME aliases (delete + recreate)
+name: Cloudflare - Replace CNAME aliases
 
 on:
   workflow_dispatch:
@@ -14,81 +14,55 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ZONE: ${{ secrets.CF_ZONE }}
         run: |
-          set -e
           ZONE="${CF_ZONE:-bcb5522993ecf90a4f1d5dfe101e5a5c}"
-
-          if [ -z "$CF_API_TOKEN" ]; then
-            echo "ERROR: CF_API_TOKEN secret not set"; exit 1
-          fi
+          if [ -z "$CF_API_TOKEN" ]; then echo "ERROR: CF_API_TOKEN not set"; exit 1; fi
           echo "Zone: $ZONE"
 
-          # Target names to replace
-          NAMES=("moon.hive.baby" "bodylog.hive.baby" "clock.hive.baby" "secret.hive.baby" "aesthetic.hive.baby")
-
-          # --- STEP 1: List and delete existing records ---
           echo ""
-          echo "=== STEP 1: List existing records ==="
+          echo "=== STEP 1: List matching records ==="
           ALL=$(curl -s \
             "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?per_page=100" \
             -H "Authorization: Bearer ${CF_API_TOKEN}")
 
-          echo "$ALL" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-for r in d.get('result',[]):
-    if any(x in r['name'] for x in ['moon.','bodylog.','clock.','secret.','aesthetic.']):
-        print(r['id'], r['type'], r['name'], '->', r['content'])
-" || true
+          echo "$ALL" | jq -r '.result[] | select(.name | test("moon\\.|bodylog\\.|clock\\.|secret\\.|aesthetic\\.")) | [.id, .type, .name, .content] | @tsv'
 
           echo ""
           echo "=== STEP 2: Delete existing records ==="
-          for NAME in "${NAMES[@]}"; do
-            IDS=$(echo "$ALL" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-for r in d.get('result',[]):
-    if r['name'] == '${NAME}':
-        print(r['id'])
-" 2>/dev/null || true)
+          for NAME in moon.hive.baby bodylog.hive.baby clock.hive.baby secret.hive.baby aesthetic.hive.baby; do
+            IDS=$(echo "$ALL" | jq -r --arg n "$NAME" '.result[] | select(.name == $n) | .id')
             if [ -z "$IDS" ]; then
               echo "  $NAME: no existing record"
               continue
             fi
             for ID in $IDS; do
-              echo "  Deleting $NAME ($ID)"
-              DEL=$(curl -s -X DELETE \
+              echo "  Deleting $NAME (id=$ID)"
+              RESULT=$(curl -s -X DELETE \
                 "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records/${ID}" \
-                -H "Authorization: Bearer ${CF_API_TOKEN}")
-              SUCCESS=$(echo "$DEL" | python3 -c "import json,sys; print(json.load(sys.stdin).get('success','?'))" 2>/dev/null || echo '?')
-              echo "    deleted: success=$SUCCESS"
+                -H "Authorization: Bearer ${CF_API_TOKEN}" | jq -c '{success,errors}')
+              echo "    $RESULT"
             done
           done
 
-          # --- STEP 3: Recreate correctly ---
           echo ""
-          echo "=== STEP 3: Create correct CNAME records ==="
-          declare -A TARGETS
-          TARGETS["moon.hive.baby"]="hivemoon.hive.baby"
-          TARGETS["bodylog.hive.baby"]="hivebodylog.hive.baby"
-          TARGETS["clock.hive.baby"]="hiveclock.hive.baby"
-          TARGETS["secret.hive.baby"]="secretbox.hive.baby"
-          TARGETS["aesthetic.hive.baby"]="hiveaestheticbestie.hive.baby"
-
-          for NAME in "${!TARGETS[@]}"; do
-            TARGET="${TARGETS[$NAME]}"
+          echo "=== STEP 3: Create correct records ==="
+          create_cname() {
+            local NAME=$1 TARGET=$2
             echo "  Creating $NAME -> $TARGET"
-            STATUS=$(curl -s -o /tmp/cf_create.json -w "%{http_code}" \
+            STATUS=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
               -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records" \
               -H "Authorization: Bearer ${CF_API_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "{\"type\":\"CNAME\",\"name\":\"${NAME}\",\"content\":\"${TARGET}\",\"ttl\":1,\"proxied\":false}")
-            RESULT=$(python3 -c "import json,sys; d=json.load(open('/tmp/cf_create.json')); print('success='+str(d.get('success')),'id='+str(d.get('result',{}).get('id','?')))" 2>/dev/null || cat /tmp/cf_create.json)
+            RESULT=$(jq -c '{success,id:.result.id,name:.result.name,content:.result.content,errors}' /tmp/cf.json 2>/dev/null || cat /tmp/cf.json)
             echo "    HTTP $STATUS: $RESULT"
-            if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ]; then
-              echo "    FAILED for $NAME"; exit 1
-            fi
-            echo "    OK"
-          done
+            if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ]; then exit 1; fi
+          }
+
+          create_cname moon.hive.baby      hivemoon.hive.baby
+          create_cname bodylog.hive.baby   hivebodylog.hive.baby
+          create_cname clock.hive.baby     hiveclock.hive.baby
+          create_cname secret.hive.baby    secretbox.hive.baby
+          create_cname aesthetic.hive.baby hiveaestheticbestie.hive.baby
 
           echo ""
-          echo "=== DONE: all 5 aliases replaced ==="
+          echo "=== DONE ==="
