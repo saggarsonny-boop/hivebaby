@@ -1,0 +1,63 @@
+name: Cloudflare — Add short CNAME aliases
+
+on:
+  workflow_dispatch:
+
+jobs:
+  add-cnames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Add CNAME aliases via Cloudflare API
+        env:
+          CF_TOKEN: ${{ secrets.CF_TOKEN }}
+          CF_ZONE: ${{ secrets.CF_ZONE }}
+        run: |
+          if [ -z "$CF_TOKEN" ]; then echo "ERROR: CF_TOKEN secret not set"; exit 1; fi
+          if [ -z "$CF_ZONE" ]; then echo "ERROR: CF_ZONE secret not set"; exit 1; fi
+
+          declare -A ALIASES
+          ALIASES["moon.hive.baby"]="hivemoon.hive.baby"
+          ALIASES["bodylog.hive.baby"]="hivebodylog.hive.baby"
+          ALIASES["clock.hive.baby"]="hiveclock.hive.baby"
+          ALIASES["secret.hive.baby"]="secretbox.hive.baby"
+          ALIASES["aesthetic.hive.baby"]="hiveaestheticbestie.hive.baby"
+
+          for NAME in "${!ALIASES[@]}"; do
+            TARGET="${ALIASES[$NAME]}"
+            echo "→ $NAME → $TARGET"
+
+            # Check if record already exists
+            EXISTING=$(curl -s \
+              "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?type=CNAME&name=${NAME}" \
+              -H "Authorization: Bearer ${CF_TOKEN}" \
+              -H "Content-Type: application/json")
+            EXISTING_ID=$(echo "$EXISTING" | jq -r '.result[0].id // empty')
+
+            if [ -n "$EXISTING_ID" ]; then
+              echo "  Record exists ($EXISTING_ID) — updating"
+              STATUS=$(curl -s -o /tmp/cf_resp.json -w "%{http_code}" \
+                -X PUT "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records/${EXISTING_ID}" \
+                -H "Authorization: Bearer ${CF_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "{\"type\":\"CNAME\",\"name\":\"${NAME}\",\"content\":\"${TARGET}\",\"ttl\":1,\"proxied\":false}")
+            else
+              echo "  Creating new record"
+              STATUS=$(curl -s -o /tmp/cf_resp.json -w "%{http_code}" \
+                -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records" \
+                -H "Authorization: Bearer ${CF_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "{\"type\":\"CNAME\",\"name\":\"${NAME}\",\"content\":\"${TARGET}\",\"ttl\":1,\"proxied\":false}")
+            fi
+
+            RESULT=$(cat /tmp/cf_resp.json | jq -c '{success,errors,id:.result.id,name:.result.name,content:.result.content}' 2>/dev/null || cat /tmp/cf_resp.json)
+            echo "  HTTP $STATUS: $RESULT"
+            if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ]; then
+              echo "  ✗ FAILED for $NAME (HTTP $STATUS)"; exit 1
+            fi
+            echo "  ✓ Done"
+          done
+
+          echo ""
+          echo "All 5 CNAME aliases created/updated."
