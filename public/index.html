@@ -162,10 +162,23 @@ body {
 #tooltip.soon-tt { border-color: rgba(74, 127, 165, 0.3); }
 #tooltip.patron-tt { border-color: rgba(184, 115, 51, 0.5); }
 #tooltip .tt-name    { font-size: 14px; font-weight: 700; color: #e8f4ff; }
-#tooltip .tt-tagline { font-size: 12px; color: #4a7fa5; margin-top: 5px; line-height: 1.5; }
+#tooltip .tt-tagline { font-size: 12px; color: #4a7fa5; margin-top: 5px; line-height: 1.5; white-space: pre-line; }
 #tooltip .tt-code    { font-size: 11px; color: rgba(74,127,165,0.4); font-family: monospace; margin-top: 4px; letter-spacing:.1em; }
 #tooltip .tt-action  { font-size: 11px; color: rgba(212,175,55,.65); margin-top: 8px; }
 #tooltip .tt-action.soon-action { color: rgba(74,127,165,.5); }
+
+/* HiveTestingStation — always-visible CSS beacon */
+#ts-beacon {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ffcc;
+  box-shadow: 0 0 8px 3px rgba(0,255,204,0.55), 0 0 18px 6px rgba(0,255,204,0.18);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 8;
+}
 
 /* Footer: capsule with matching ambient pulse */
 #footer {
@@ -634,6 +647,9 @@ body {
   <div class="tt-action"></div>
 </div>
 
+<!-- HiveTestingStation beacon — always-visible CSS dot, positioned by JS -->
+<div id="ts-beacon"></div>
+
 <!-- Footer capsule -->
 <div id="footer">
   <a href="/about">A social experiment</a><span> · </span><a href="/contribute">Contribute</a><span> · </span><a href="/patrons">Patrons</a><span> · </span><a href="/privacy">Privacy</a>
@@ -1034,15 +1050,16 @@ function updateISS() {
 }
 
 // ─── HiveTestingStation Satellite ─────────────────────────────────────────────
-const TS_R = 1.15, TS_INC = 72 * Math.PI / 180, TS_PERIOD = 67;
+// Orbit: R=1.58 (beyond Space Station at 1.38), 55° inc, 55s period
+const TS_R = 1.58, TS_INC = 55 * Math.PI / 180, TS_PERIOD = 55;
 const tsOffset = Math.random() * Math.PI * 2;
+// Invisible mesh — position tracking + raycasting only; CSS beacon provides visual
 const tsMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.009, 8, 8),
-  new THREE.MeshBasicMaterial({ color: 0x00ffcc })
+  new THREE.SphereGeometry(0.018, 8, 8),
+  new THREE.MeshBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0 })
 );
-const tsGlow = new THREE.PointLight(0x00ffcc, 1.8, 0.2);
-tsMesh.add(tsGlow);
 scene.add(tsMesh);
+const tsBcn = document.getElementById('ts-beacon');
 function updateTestingSatellite() {
   const theta = (2 * Math.PI * Date.now() / 1000 / TS_PERIOD + tsOffset) % (2 * Math.PI);
   tsMesh.position.set(
@@ -1050,6 +1067,12 @@ function updateTestingSatellite() {
     TS_R * Math.sin(theta) * Math.sin(TS_INC),
     TS_R * Math.sin(theta) * Math.cos(TS_INC)
   );
+  // Keep CSS beacon locked to projected world position every frame
+  if (tsBcn) {
+    const p = tsMesh.position.clone().project(camera);
+    tsBcn.style.left = ((p.x * 0.5 + 0.5) * window.innerWidth) + 'px';
+    tsBcn.style.top  = ((-p.y * 0.5 + 0.5) * window.innerHeight) + 'px';
+  }
 }
 
 // ─── Space Station ────────────────────────────────────────────────────────────
@@ -1718,8 +1741,8 @@ function updateHover(cx,cy){
     const hitLabel = hitMesh.userData.stationLabel;
     setStationHover(hitMesh);
     tooltip.className='';
-    tooltip.querySelector('.tt-name').textContent = hitLabel ? '🛸  ' + hitLabel : '🛸  Space Station';
-    tooltip.querySelector('.tt-tagline').textContent = hitLabel ? 'Hidden engine. Password protected.' : 'Internal hub. Password protected.';
+    tooltip.querySelector('.tt-name').textContent = hitLabel ? '🛸  ' + hitLabel : '🛸  Space Station — Private';
+    tooltip.querySelector('.tt-tagline').textContent = hitLabel ? 'Hidden engine. Password protected.' : 'Queen Bee\nCreator Console\nHiveEngineBuilder\nHive Production List';
     tooltip.querySelector('.tt-code').textContent='';
     tooltip.querySelector('.tt-action').textContent='Click to enter →';
     tooltip.querySelector('.tt-action').className='tt-action';
@@ -1734,8 +1757,8 @@ function updateHover(cx,cy){
   const tsx=(tsp.x*0.5+0.5)*window.innerWidth, tsy=(-tsp.y*0.5+0.5)*window.innerHeight;
   if(tsp.z>-1&&tsp.z<1&&Math.hypot(cx-tsx,cy-tsy)<22){
     tooltip.className='';
-    tooltip.querySelector('.tt-name').textContent='\u{1F6F0}️  HiveTestingStation';
-    tooltip.querySelector('.tt-tagline').textContent='Beta testing hub. Help shape new engines.';
+    tooltip.querySelector('.tt-name').textContent='🛰️  HiveTestingStation';
+    tooltip.querySelector('.tt-tagline').textContent='Help build the Hive.\nFirst 100 testers per engine\nget free lifetime access.';
     tooltip.querySelector('.tt-code').textContent='';
     tooltip.querySelector('.tt-action').textContent='Click to open →';
     tooltip.querySelector('.tt-action').className='tt-action';
