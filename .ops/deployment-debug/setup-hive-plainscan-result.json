@@ -1,0 +1,14 @@
+{
+  "project": "hive-plainscan",
+  "primary": {
+    "domain": "plainscan.hive.baby",
+    "final_status": 0,
+    "final_body": ""
+  },
+  "alias": {
+    "domain": "scan.hive.baby",
+    "final_status": 0,
+    "final_body": ""
+  },
+  "polled_at": "2026-04-27T16:34:46Z"
+}
