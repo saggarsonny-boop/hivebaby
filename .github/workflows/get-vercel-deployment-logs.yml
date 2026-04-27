@@ -1,0 +1,62 @@
+name: Ops — Get Vercel deployment logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: 'Vercel deployment ID (e.g. dpl_xxx)'
+        required: true
+        default: 'dpl_FmoKZD5WDZstGzQ9dpUCxFinXW4Y'
+      limit:
+        description: 'Number of events to fetch'
+        required: false
+        default: '50'
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+      DEPLOYMENT_ID: ${{ inputs.deployment_id }}
+      LIMIT: ${{ inputs.limit }}
+
+    steps:
+      - name: Resolve token
+        run: |
+          TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: neither VERCEL_TOKEN_MAIN nor VERCEL_TOKEN is set"
+            exit 1
+          fi
+          echo "Token resolved (length=${#TOKEN})"
+          echo "VERCEL_TOKEN_MAIN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Fetch error / stdout / stderr events
+        run: |
+          curl -s "https://api.vercel.com/v2/deployments/${DEPLOYMENT_ID}/events?limit=${LIMIT}" \
+            -H "Authorization: Bearer $VERCEL_TOKEN_MAIN" | \
+            python3 -c "
+          import json,sys
+          events=json.load(sys.stdin)
+          for e in events:
+              if e.get('type') in ['error','stderr','stdout']:
+                  print(e.get('type',''), e.get('text','') or e.get('payload',{}).get('text',''))
+          "
+
+      - name: All events (raw, for context)
+        if: always()
+        run: |
+          echo "===== All event types and counts ====="
+          curl -s "https://api.vercel.com/v2/deployments/${DEPLOYMENT_ID}/events?limit=${LIMIT}" \
+            -H "Authorization: Bearer $VERCEL_TOKEN_MAIN" | \
+            jq -r '.[] | .type' | sort | uniq -c | sort -rn
+
+      - name: Deployment status
+        if: always()
+        run: |
+          echo "===== Deployment metadata ====="
+          curl -s "https://api.vercel.com/v13/deployments/${DEPLOYMENT_ID}" \
+            -H "Authorization: Bearer $VERCEL_TOKEN_MAIN" \
+            | jq '{id, name, url, readyState, errorMessage, errorCode, errorStep, target, source, createdAt}'
