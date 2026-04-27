@@ -1,0 +1,69 @@
+name: Ops — Fix hive-imr Vercel outputDirectory + remove empty public/
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-hive-imr-output-dir.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      PROJECT: hive-imr
+      OUT_DIR: .ops/deployment-debug
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify token
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "VERCEL_TOKEN_MAIN secret missing"; exit 1
+          fi
+
+      - name: Show current Vercel project settings
+        run: |
+          curl -s "https://api.vercel.com/v9/projects/$PROJECT" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" > /tmp/before.json
+          echo "===== Before patch ====="
+          jq '{outputDirectory, framework, rootDirectory, buildCommand, installCommand, devCommand}' /tmp/before.json
+
+      - name: Patch outputDirectory to null (framework default)
+        run: |
+          curl -s -X PATCH "https://api.vercel.com/v9/projects/$PROJECT" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"outputDirectory":null}' > /tmp/after.json
+          echo "===== After patch ====="
+          jq '{outputDirectory, framework, rootDirectory}' /tmp/after.json
+
+      - name: Remove empty hive-imr/public/ (commit + push triggers Vercel redeploy)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ -f hive-imr/public/.gitkeep ]; then
+            git rm hive-imr/public/.gitkeep
+            rmdir hive-imr/public 2>/dev/null || true
+            git commit -m "fix(hive-imr): remove empty public/ — was hijacking Vercel outputDirectory autodetect"
+          fi
+
+          # Save the redeploy reason as evidence (separate path so this workflow doesn't re-trigger)
+          mkdir -p "$OUT_DIR"
+          cp /tmp/before.json "$OUT_DIR/before-output-dir-patch.json"
+          cp /tmp/after.json  "$OUT_DIR/after-output-dir-patch.json"
+          git add "$OUT_DIR"
+          if ! git diff --cached --quiet; then
+            git commit -m "ops: record output-dir patch evidence"
+          fi
+
+          git push origin HEAD:main || echo "Nothing to push"
+
+      - name: Show pushed HEAD (Vercel will pick this up via its GitHub webhook)
+        run: |
+          git log -1 --oneline
