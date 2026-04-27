@@ -1,0 +1,124 @@
+name: Ops — Wire hiveimr.hive.baby domain + DNS + verify
+
+on:
+  push:
+    paths:
+      - '.github/workflows/wire-hive-imr-domain.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      CF_TOKEN_A: ${{ secrets.CF_API_TOKEN }}
+      CF_TOKEN_B: ${{ secrets.CF_TOKEN }}
+      CF_TOKEN_C: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      PROJECT: hive-imr
+      DOMAIN: hiveimr.hive.baby
+      CNAME_TARGET: cname.vercel-dns.com
+      ZONE: bcb5522993ecf90a4f1d5dfe101e5a5c
+      OUT_DIR: .ops/deployment-debug
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve tokens
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then echo "VERCEL_TOKEN_MAIN missing"; exit 1; fi
+          CF="${CF_TOKEN_A:-${CF_TOKEN_B:-$CF_TOKEN_C}}"
+          if [ -z "$CF" ]; then
+            echo "WARN: no CF token (CF_API_TOKEN / CF_TOKEN / CLOUDFLARE_API_TOKEN); DNS step will be skipped"
+          else
+            echo "CF token resolved (length=${#CF})"
+          fi
+          echo "CF_TOKEN=$CF" >> "$GITHUB_ENV"
+
+      - name: POST domain to Vercel project (idempotent)
+        run: |
+          BODY=$(jq -n --arg n "$DOMAIN" '{name:$n}')
+          HTTP=$(curl -s -o /tmp/dom.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v10/projects/$PROJECT/domains" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          echo "Vercel add-domain HTTP $HTTP"
+          jq . /tmp/dom.json || cat /tmp/dom.json
+          if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
+            echo "✓ Domain attached"
+          elif [ "$HTTP" = "409" ]; then
+            ERR=$(jq -r '.error.code // ""' /tmp/dom.json)
+            if [ "$ERR" = "domain_already_in_use" ] || [ "$ERR" = "domain_already_exists" ]; then
+              echo "✓ Domain already attached"
+            else
+              echo "⚠ Conflict — see body above"
+            fi
+          else
+            echo "⚠ Unexpected HTTP $HTTP"
+          fi
+
+      - name: Cloudflare CNAME upsert
+        if: env.CF_TOKEN != ''
+        run: |
+          NAME="$DOMAIN"
+          EXISTING=$(curl -s \
+            "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?type=CNAME&name=$NAME" \
+            -H "Authorization: Bearer $CF_TOKEN")
+          ID=$(echo "$EXISTING" | jq -r '.result[0].id // empty')
+          BODY=$(jq -n --arg n "$NAME" --arg t "$CNAME_TARGET" \
+            '{type:"CNAME", name:$n, content:$t, ttl:1, proxied:false}')
+          if [ -n "$ID" ]; then
+            echo "Updating existing CNAME ($ID) → $CNAME_TARGET"
+            HTTP=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+              -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records/$ID" \
+              -H "Authorization: Bearer $CF_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-binary "$BODY")
+          else
+            echo "Creating CNAME → $CNAME_TARGET"
+            HTTP=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+              -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records" \
+              -H "Authorization: Bearer $CF_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-binary "$BODY")
+          fi
+          echo "CF HTTP $HTTP"
+          jq '{success, errors, "result.name": .result.name, "result.content": .result.content, "result.proxied": .result.proxied}' /tmp/cf.json || cat /tmp/cf.json
+
+      - name: Poll https://hiveimr.hive.baby/api/health (2 min)
+        run: |
+          mkdir -p "$OUT_DIR"
+          DEADLINE=$(( $(date +%s) + 120 ))
+          STATUS=000
+          BODY=""
+          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+            STATUS=$(curl -s -o /tmp/probe.body -w "%{http_code}" "https://$DOMAIN/api/health" || echo "000")
+            BODY=$(head -c 200 /tmp/probe.body 2>/dev/null || echo "")
+            REMAINING=$(( DEADLINE - $(date +%s) ))
+            echo "[$(date +%T)] HTTP $STATUS  body: $BODY  (remaining ${REMAINING}s)"
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ Live"
+              break
+            fi
+            sleep 5
+          done
+          jq -n --arg domain "$DOMAIN" --arg status "$STATUS" --arg body "$BODY" \
+            '{domain:$domain, final_status:($status|tonumber? // 0), final_body:$body, polled_at: now | todate}' \
+            > "$OUT_DIR/wire-domain-result.json"
+          echo "===== Final ====="
+          cat "$OUT_DIR/wire-domain-result.json"
+
+      - name: Commit results back
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT_DIR"
+          if ! git diff --cached --quiet; then
+            git commit -m "ops: hiveimr.hive.baby wire-up result"
+            git pull --rebase origin main 2>&1 || true
+            git push origin HEAD:main || true
+          fi
