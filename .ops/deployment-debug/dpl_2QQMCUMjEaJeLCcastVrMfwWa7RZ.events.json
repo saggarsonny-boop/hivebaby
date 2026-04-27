@@ -1,0 +1,307 @@
+[
+  {
+    "type": "stdout",
+    "created": 1777304806394,
+    "text": "Running build in Washington, D.C., USA (East) – iad1"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304806395,
+    "text": "Build machine configuration: 4 cores, 8 GB"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304806480,
+    "text": "Cloning github.com/saggarsonny-boop/hivebaby (Branch: main, Commit: f33e07e)"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304806480,
+    "text": "Previous build caches not available."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304806840,
+    "text": "Warning: Failed to fetch one or more git submodules"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304806841,
+    "text": "Cloning completed: 360.000ms"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304807100,
+    "text": "Running \"vercel build\""
+  },
+  {
+    "type": "stderr",
+    "created": 1777304807718,
+    "text": "Vercel CLI 51.6.1"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304807943,
+    "text": "Installing dependencies..."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818216,
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818216,
+    "text": "added 370 packages in 10s"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818216,
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818216,
+    "text": "146 packages are looking for funding"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818216,
+    "text": "  run `npm fund` for details"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818270,
+    "text": "Detected Next.js version: 16.2.3"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818276,
+    "text": "Running \"npm run build\""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818372,
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818372,
+    "text": "> hive-imr@0.1.0 build"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818372,
+    "text": "> next build"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818372,
+    "text": ""
+  },
+  {
+    "type": "stderr",
+    "created": 1777304818729,
+    "text": "⚠ Both `outputFileTracingRoot` and `turbopack.root` are set, but they must have the same value."
+  },
+  {
+    "type": "stderr",
+    "created": 1777304818729,
+    "text": "Using `outputFileTracingRoot` value: /vercel/path0."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818826,
+    "text": "  Applying modifyConfig from Vercel"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818830,
+    "text": "Attention: Next.js now collects completely anonymous telemetry regarding usage."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818830,
+    "text": "This information is used to shape Next.js' roadmap and prioritize features."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818830,
+    "text": "You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818830,
+    "text": "https://nextjs.org/telemetry"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818830,
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818845,
+    "text": "▲ Next.js 16.2.3 (Turbopack)"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818845,
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304818870,
+    "text": "  Creating an optimized production build ..."
+  },
+  {
+    "type": "stderr",
+    "created": 1777304819061,
+    "text": "⚠ Both `outputFileTracingRoot` and `turbopack.root` are set, but they must have the same value."
+  },
+  {
+    "type": "stderr",
+    "created": 1777304819062,
+    "text": "Using `outputFileTracingRoot` value: /vercel/path0."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304821489,
+    "text": "✓ Compiled successfully in 2.3s"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304821490,
+    "text": "  Skipping validation of types"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304821497,
+    "text": "  Finished TypeScript config validation in 6ms ..."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304821500,
+    "text": "  Collecting page data using 3 workers ..."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304821952,
+    "text": "  Generating static pages using 3 workers (0/3) ..."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822095,
+    "text": "✓ Generating static pages using 3 workers (3/3) in 143ms"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822100,
+    "text": "  Finalizing page optimization ..."
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822124,
+    "text": "  Running onBuildComplete from Vercel"
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822141,
+    "text": "Detected .env file, it is strongly recommended to use Vercel's env handling instead"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822162,
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": "Route (app)"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": "┌ ○ /"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": "├ ○ /_not-found"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": "├ ƒ /api/ai/generate"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": "└ ƒ /api/health"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": ""
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": "○  (Static)   prerendered as static content"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822164,
+    "text": "ƒ  (Dynamic)  server-rendered on demand"
+  },
+  {
+    "type": "stdout",
+    "created": 1777304822165,
+    "text": ""
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822649,
+    "text": "Error: The file \"/vercel/path0/hive-imr/public/routes-manifest.json\" couldn't be found. This is usually caused by one of the following:"
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822649,
+    "text": ""
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822649,
+    "text": "1. The \"Output Directory\" setting in your project is misconfigured. Ensure it matches your Next.js \"distDir\" configuration (defaults to \".next\")."
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822650,
+    "text": ""
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822650,
+    "text": "2. If using Turborepo, ensure your task outputs include the Next.js build directory. Add \".next/**\" (or your custom distDir) to the \"outputs\" array in turbo.json for the build task."
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822650,
+    "text": ""
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822650,
+    "text": "3. The build command did not complete successfully. Check the build logs above for errors."
+  },
+  {
+    "type": "stderr",
+    "created": 1777304822650,
+    "text": "Learn More: https://err.sh/vercel/vercel/now-next-routes-manifest"
+  }
+]

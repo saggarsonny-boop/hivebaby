@@ -1,0 +1,18 @@
+{
+  "id": "dpl_2QQMCUMjEaJeLCcastVrMfwWa7RZ",
+  "name": "hive-imr",
+  "url": "hive-r2abe3aly-saggarsonny-3909s-projects.vercel.app",
+  "target": "production",
+  "readyState": "ERROR",
+  "readySubstate": null,
+  "errorMessage": "The file \"/vercel/path0/hive-imr/public/routes-manifest.json\" couldn't be found. This is usually caused by one of the following:\n\n1. The \"Output Directory\" setting in your project is misconfigured. Ensure it matches your Next.js \"distDir\" configuration (defaults to \".next\").\n\n2. If using Turborepo, ensure your task outputs include the Next.js build directory. Add \".next/**\" (or your custom distDir) to the \"outputs\" array in turbo.json for the build task.\n\n3. The build command did not complete successfully. Check the build logs above for errors.",
+  "errorCode": "NEXT_NO_ROUTES_MANIFEST",
+  "errorStep": "buildStep",
+  "errorLink": "https://err.sh/vercel/vercel/now-next-routes-manifest",
+  "createdAt": 1777304805513,
+  "buildingAt": 1777304806662,
+  "ready": 1777304823021,
+  "source": "git",
+  "git_commit": "f33e07eac0af3d3b7b724ea9316fb6850c2d667b",
+  "git_ref": "main"
+}
