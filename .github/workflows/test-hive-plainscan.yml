@@ -1,0 +1,189 @@
+name: Ops — Functional test hive-plainscan (Part 14)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Base URL to test (default = primary production domain)'
+        required: false
+        default: 'https://plainscan.hive.baby'
+      alias_url:
+        description: 'Alias URL to test (or empty to skip)'
+        required: false
+        default: 'https://scan.hive.baby'
+  push:
+    paths:
+      - '.github/workflows/test-hive-plainscan.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      OUT_DIR: .ops/deployment-debug
+      DEFAULT_PRIMARY: https://hive-plainscan-git-claude-bui-f4698a-saggarsonny-3909s-projects.vercel.app
+      DEFAULT_ALIAS: https://scan.hive.baby
+      INPUT_PRIMARY: ${{ inputs.target_url }}
+      INPUT_ALIAS: ${{ inputs.alias_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve target URLs
+        run: |
+          PRIMARY="${INPUT_PRIMARY:-$DEFAULT_PRIMARY}"
+          ALIAS="${INPUT_ALIAS:-$DEFAULT_ALIAS}"
+          # Probe the requested production URL; if it fails, fall back to preview.
+          PROBE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 8 "$PRIMARY/api/health" || echo "000")
+          if [ "$PROBE" != "200" ]; then
+            echo "WARN: $PRIMARY/api/health -> HTTP $PROBE; falling back to preview"
+            PRIMARY="$DEFAULT_PRIMARY"
+          fi
+          echo "PRIMARY=$PRIMARY" >> "$GITHUB_ENV"
+          echo "ALIAS=$ALIAS"     >> "$GITHUB_ENV"
+          echo "primary=$PRIMARY"
+          echo "alias=$ALIAS"
+
+      - name: Run Part 14 functional test
+        id: t14
+        run: |
+          set +e
+          mkdir -p "$OUT_DIR"
+          PASS=0
+          FAIL=0
+          : > /tmp/results.txt
+
+          add_pass() { echo "PASS  $1" >> /tmp/results.txt; PASS=$((PASS+1)); }
+          add_fail() { echo "FAIL  $1 -- $2" >> /tmp/results.txt; FAIL=$((FAIL+1)); }
+
+          # 1. /api/health
+          HEALTH=$(curl -s --max-time 20 "$PRIMARY/api/health")
+          if echo "$HEALTH" | jq -e '.status=="ok" and .engine=="HivePlainScan"' >/dev/null 2>&1; then
+            add_pass "/api/health returns { status: ok, engine: HivePlainScan }"
+          else
+            add_fail "/api/health" "got: $(echo "$HEALTH" | head -c 200)"
+          fi
+
+          # 2. alias resolves to same app (best effort)
+          if [ -n "$ALIAS" ]; then
+            AHEALTH=$(curl -s --max-time 20 "$ALIAS/api/health")
+            if echo "$AHEALTH" | jq -e '.engine=="HivePlainScan"' >/dev/null 2>&1; then
+              add_pass "alias $ALIAS resolves to same app"
+            else
+              add_fail "alias $ALIAS" "got: $(echo "$AHEALTH" | head -c 200)"
+            fi
+          fi
+
+          # 3. /api/explain with sample lumbar MRI report
+          SAMPLE='LUMBAR SPINE MRI WITHOUT CONTRAST
+
+FINDINGS:
+L3-L4: Mild disc bulge with mild bilateral foraminal narrowing.
+L4-L5: Moderate disc herniation with moderate left foraminal stenosis. Contact with the left L5 nerve root.
+L5-S1: Grade 1 degenerative spondylolisthesis. Moderate central canal stenosis. Facet arthropathy bilaterally.
+
+IMPRESSION:
+Multilevel degenerative changes most significant at L4-L5 and L5-S1. Left L5 nerve root impingement at L4-L5. Moderate central stenosis at L5-S1.'
+          PAYLOAD=$(jq -nc --arg t "$SAMPLE" '{reportText:$t}')
+          EXPLAIN=$(curl -s --max-time 90 -X POST "$PRIMARY/api/explain" \
+            -H "Content-Type: application/json" \
+            --data-binary "$PAYLOAD")
+          echo "$EXPLAIN" > "$OUT_DIR/plainscan-explain-response.json"
+
+          if echo "$EXPLAIN" | jq -e '. | type == "object"' >/dev/null 2>&1; then
+            if echo "$EXPLAIN" | jq -e '.error' >/dev/null 2>&1; then
+              add_fail "JSON parses without error" "API error: $(echo "$EXPLAIN" | jq -r .error)"
+            else
+              add_pass "JSON parses without error"
+            fi
+          else
+            add_fail "JSON parses without error" "non-JSON: $(echo "$EXPLAIN" | head -c 200)"
+          fi
+
+          HAS_L34=$(echo "$EXPLAIN" | jq -e '.findings[]? | select(.level | tostring | test("L3.?L?4|L3/L4"; "i"))' >/dev/null 2>&1 && echo yes || echo no)
+          HAS_L45=$(echo "$EXPLAIN" | jq -e '.findings[]? | select(.level | tostring | test("L4.?L?5|L4/L5"; "i"))' >/dev/null 2>&1 && echo yes || echo no)
+          HAS_L5S=$(echo "$EXPLAIN" | jq -e '.findings[]? | select(.level | tostring | test("L5.?S?1|L5/S1"; "i"))' >/dev/null 2>&1 && echo yes || echo no)
+          if [ "$HAS_L34" = "yes" ] && [ "$HAS_L45" = "yes" ] && [ "$HAS_L5S" = "yes" ]; then
+            add_pass "All three levels (L3-L4, L4-L5, L5-S1) appear as separate findings rows"
+          else
+            add_fail "Three levels as separate rows" "L3-L4=$HAS_L34 L4-L5=$HAS_L45 L5-S1=$HAS_L5S"
+          fi
+
+          NO_PLAIN=$(echo "$EXPLAIN" | jq '[.findings[]? | select(.plainLanguage == null or .plainLanguage == "")] | length' 2>/dev/null || echo -1)
+          if [ "$NO_PLAIN" = "0" ]; then
+            add_pass "Each finding has a plain-English translation"
+          else
+            add_fail "Plain-English on every finding" "$NO_PLAIN findings missing plainLanguage"
+          fi
+
+          QCOUNT=$(echo "$EXPLAIN" | jq '.questionsForDoctor | length' 2>/dev/null || echo 0)
+          if [ "$QCOUNT" -ge 5 ] && [ "$QCOUNT" -le 7 ]; then
+            add_pass "Questions for doctor section has 5-7 questions ($QCOUNT)"
+          else
+            add_fail "Questions for doctor count" "got $QCOUNT (expected 5-7)"
+          fi
+
+          DISC=$(echo "$EXPLAIN" | jq -r '.disclaimer // empty')
+          if [ -n "$DISC" ]; then
+            add_pass "Disclaimer present in API response"
+          else
+            add_fail "Disclaimer present" "empty disclaimer field"
+          fi
+
+          # 4. /plainscan page renders
+          PAGE_HTTP=$(curl -s -o /tmp/page.html -w "%{http_code}" --max-time 20 "$PRIMARY/plainscan")
+          if [ "$PAGE_HTTP" = "200" ] && grep -q "HivePlainScan" /tmp/page.html; then
+            add_pass "/plainscan page renders (HTTP 200, brand present)"
+          else
+            add_fail "/plainscan page" "HTTP=$PAGE_HTTP"
+          fi
+
+          if grep -qE '<title>[^<]*HivePlainScan[^<]*</title>' /tmp/page.html 2>/dev/null; then
+            add_pass "SEO title contains HivePlainScan"
+          else
+            add_fail "SEO title" "title tag not found or missing brand"
+          fi
+
+          # 5. Disclaimer renders on screen below results
+          if grep -q "This is not medical advice" /tmp/page.html 2>/dev/null; then
+            add_pass "Disclaimer renders on screen (footer)"
+          else
+            add_fail "Disclaimer on screen" "marker text not in HTML"
+          fi
+
+          # Summary
+          {
+            echo "============================================================"
+            echo "Part 14 results — $PASS passed, $FAIL failed"
+            echo "Target: $PRIMARY"
+            echo "Alias:  $ALIAS"
+            echo "============================================================"
+            cat /tmp/results.txt
+            echo "============================================================"
+          } | tee "$OUT_DIR/plainscan-part14-results.txt"
+
+          echo "pass=$PASS" >> "$GITHUB_OUTPUT"
+          echo "fail=$FAIL" >> "$GITHUB_OUTPUT"
+
+      - name: Commit results back
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT_DIR" || true
+          if ! git diff --cached --quiet; then
+            git commit -m "ops(plainscan): Part 14 functional test results"
+            git pull --rebase origin "$GITHUB_REF_NAME" 2>&1 || true
+            git push origin "HEAD:$GITHUB_REF_NAME" || true
+          fi
+
+      - name: Fail job if any test failed
+        run: |
+          FAIL=${{ steps.t14.outputs.fail }}
+          if [ "$FAIL" -gt 0 ]; then
+            echo "$FAIL test(s) failed — see plainscan-part14-results.txt"
+            exit 1
+          fi
+          echo "All Part 14 tests passed"
