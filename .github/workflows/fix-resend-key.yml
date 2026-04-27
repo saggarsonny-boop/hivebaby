@@ -1,0 +1,185 @@
+name: Ops - Fix RESEND_API_KEY on hive-testing-station
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix-resend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Step 1 — List all Vercel projects
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+        run: |
+          echo "=== All Vercel projects ==="
+          curl -s "https://api.vercel.com/v9/projects?limit=100" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for p in d.get('projects',[]):
+    print(p['name'], p['id'])
+"
+
+      - name: Step 2 — Find project IDs
+        id: ids
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+        run: |
+          PROJECTS=$(curl -s "https://api.vercel.com/v9/projects?limit=100" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+
+          TESTING_ID=$(echo "$PROJECTS" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for p in d.get('projects',[]):
+    if 'test' in p['name'].lower():
+        print(p['id'])
+        break
+")
+
+          SUPPORT_ID=$(echo "$PROJECTS" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for p in d.get('projects',[]):
+    if 'support' in p['name'].lower():
+        print(p['id'])
+        break
+")
+
+          echo "hive-testing-station ID: $TESTING_ID"
+          echo "hive-support ID: $SUPPORT_ID"
+          echo "testing_id=$TESTING_ID" >> "$GITHUB_OUTPUT"
+          echo "support_id=$SUPPORT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Step 3 — Check env vars on hive-testing-station
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          TESTING_ID: ${{ steps.ids.outputs.testing_id }}
+        run: |
+          echo "=== Env vars on hive-testing-station ($TESTING_ID) ==="
+          curl -s "https://api.vercel.com/v9/projects/$TESTING_ID/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for e in d.get('envs',[]):
+    val = e.get('value','')
+    status = 'SET' if val and val != '' else 'EMPTY'
+    print(e['key'], status, e.get('target', []))
+"
+
+      - name: Step 4 — Decrypt RESEND_API_KEY from hive-support
+        id: resend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          SUPPORT_ID: ${{ steps.ids.outputs.support_id }}
+        run: |
+          ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$SUPPORT_ID/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for e in d.get('envs',[]):
+    if e['key'] == 'RESEND_API_KEY':
+        print(e['id'])
+        break
+")
+          echo "RESEND_API_KEY env ID from hive-support: $ENV_ID"
+
+          RESEND_REAL=$(curl -s "https://api.vercel.com/v9/projects/$SUPPORT_ID/env/$ENV_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin).get('value',''))")
+
+          echo "RESEND_API_KEY retrieved: ${RESEND_REAL:0:8}..."
+          echo "resend_key=$RESEND_REAL" >> "$GITHUB_OUTPUT"
+
+      - name: Step 5 — Set RESEND_API_KEY on hive-testing-station
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          TESTING_ID: ${{ steps.ids.outputs.testing_id }}
+          RESEND_KEY: ${{ steps.resend.outputs.resend_key }}
+        run: |
+          EXISTING_ID=$(curl -s "https://api.vercel.com/v9/projects/$TESTING_ID/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for e in d.get('envs',[]):
+    if e['key'] == 'RESEND_API_KEY':
+        print(e['id'])
+        break
+")
+
+          if [ -n "$EXISTING_ID" ]; then
+            echo "Removing existing RESEND_API_KEY (ID: $EXISTING_ID)"
+            curl -s -X DELETE \
+              "https://api.vercel.com/v9/projects/$TESTING_ID/env/$EXISTING_ID" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" -o /dev/null
+          fi
+
+          RESULT=$(curl -s -X POST \
+            "https://api.vercel.com/v9/projects/$TESTING_ID/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"key\":\"RESEND_API_KEY\",\"value\":\"$RESEND_KEY\",\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+
+          echo "$RESULT" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+if d.get('key'):
+    print('OK: RESEND_API_KEY set on hive-testing-station')
+else:
+    print('ERROR:', json.dumps(d))
+"
+
+      - name: Step 6 — Trigger redeploy of hive-testing-station
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          TESTING_ID: ${{ steps.ids.outputs.testing_id }}
+        run: |
+          DEPLOY_ID=$(curl -s \
+            "https://api.vercel.com/v6/deployments?projectId=$TESTING_ID&limit=1&target=production" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+deps=d.get('deployments',[])
+if deps: print(deps[0]['uid'])
+")
+          echo "Latest deployment: $DEPLOY_ID"
+
+          REDEPLOY=$(curl -s -X POST \
+            "https://api.vercel.com/v13/deployments?forceNew=1&withLatestCommit=1" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"deploymentId\":\"$DEPLOY_ID\",\"name\":\"hive-testing-station\"}")
+
+          echo "$REDEPLOY" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print('New deployment:', d.get('url', d.get('error',{}).get('message','unknown')))
+"
+
+      - name: Step 7 — Wait 90s then verify
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          TESTING_ID: ${{ steps.ids.outputs.testing_id }}
+        run: |
+          echo "Waiting 90s for redeployment..."
+          sleep 90
+          echo "=== Final env var check ==="
+          curl -s "https://api.vercel.com/v9/projects/$TESTING_ID/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for e in d.get('envs',[]):
+    val = e.get('value','')
+    status = 'SET' if val and val != '' else 'EMPTY'
+    print(e['key'], status)
+"
+          echo "=== /api/health check ==="
+          curl -s --max-time 15 https://test.hive.baby/api/health || echo "health check failed"
