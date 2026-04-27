@@ -1066,9 +1066,10 @@ function updateTestingSatellite() {
   const next = (idx + 1) % TS_PALETTE.length;
   const f    = phase - Math.floor(phase);
   const s    = f * f * (3 - 2 * f); // smoothstep
-  _tsCol.lerpColors(TS_PALETTE[idx], TS_PALETTE[next], s);
-  tsMesh.material.color.copy(_tsCol);
-  tsLight.color.copy(_tsCol);
+  const ca = TS_PALETTE[idx], cb = TS_PALETTE[next];
+  const cr = ca.r + (cb.r - ca.r) * s, cg = ca.g + (cb.g - ca.g) * s, cb2 = ca.b + (cb.b - ca.b) * s;
+  tsMesh.material.color.setRGB(cr, cg, cb2);
+  tsLight.color.setRGB(cr, cg, cb2);
 }
 
 // ─── Space Station ────────────────────────────────────────────────────────────
