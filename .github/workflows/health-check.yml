@@ -1,4 +1,4 @@
-name: Health Check — All Hive Properties
+name: Health Check - All Hive Properties
 
 on:
   push:
@@ -8,107 +8,102 @@ on:
 
 permissions:
   issues: write
+  contents: read
 
 jobs:
   health-check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      failed: ${{ steps.check.outputs.failed }}
 
     steps:
-      - name: Check all URLs
+      - name: Check all URLs and APIs
+        id: check
         run: |
           > /tmp/failures.txt
           FAILED=0
 
           check_url() {
-            local NAME="$1"
-            local URL="$2"
-            STATUS=$(curl -s -o /tmp/resp_body.txt -w "%{http_code}" \
-              --max-time 20 -L --retry 1 "$URL" 2>/dev/null)
+            local NAME="$1" URL="$2"
+            STATUS=$(curl -s -o /tmp/rb.txt -w "%{http_code}" --max-time 20 -L "$URL" 2>/dev/null)
             if [ "$STATUS" = "500" ] || [ "$STATUS" = "000" ]; then
-              echo "FAIL: $URL returned $STATUS"
-              BODY=$(head -c 150 /tmp/resp_body.txt | tr -d '\000')
-              printf "**%s** — %s\n- Status: HTTP %s\n- Body: \`%s\`\n\n" \
-                "$NAME" "$URL" "$STATUS" "$BODY" >> /tmp/failures.txt
+              echo "FAIL: $NAME -> $STATUS"
+              BODY=$(head -c 120 /tmp/rb.txt | tr -d '\000')
+              printf '**%s** - %s\n- HTTP %s\n- Body: `%s`\n\n' "$NAME" "$URL" "$STATUS" "$BODY" >> /tmp/failures.txt
               FAILED=1
             else
-              echo "OK: $URL → $STATUS"
+              echo "OK:   $NAME -> $STATUS"
             fi
           }
 
-          # ── Core properties ─────────────────────────────────────────────────────────────────────
-          check_url "hive.baby"              "https://hive.baby"
-          check_url "HivePhoto"              "https://hivephoto.hive.baby"
-          check_url "HiveTestingStation"     "https://test.hive.baby"
-          check_url "HiveMoon"               "https://hivemoon.hive.baby"
-          check_url "HiveField"              "https://hivefield.hive.baby"
-          check_url "HiveClock"              "https://hiveclock.hive.baby"
-          check_url "HiveClarity"            "https://hiveclarity.hive.baby"
-          check_url "HiveStrength"           "https://hivestrength.hive.baby"
-          check_url "HiveBodyLog"            "https://hivebodylog.hive.baby"
-          check_url "HiveCreatorConsole"     "https://creatorconsole.hive.baby"
-          check_url "HiveSecretBox"          "https://secretbox.hive.baby"
-          check_url "WhoTextedMe"            "https://whotextedme.hive.baby"
-          check_url "HiveAdminSupport"       "https://support.hive.baby"
-          check_url "HiveMeme"               "https://hivememe.hive.baby"
-          check_url "HiveAestheticBestie"    "https://hiveaestheticbestie.hive.baby"
-          check_url "HiveMicroRitual"        "https://hivemicroritual.hive.baby"
-          check_url "SovereignArbitrage"     "https://sovereignarbitrage.hive.baby"
-          check_url "QueenBee"               "https://queenbee.hive.baby"
-          # ── UD ecosystem ───────────────────────────────────────────────────────────────
-          check_url "ud.hive.baby"           "https://ud.hive.baby"
-          check_url "UDUtilities"            "https://utilities.hive.baby"
-          check_url "UDConverter"            "https://converter.hive.baby"
-          check_url "UDReader"               "https://reader.hive.baby"
-          check_url "UDSigner"               "https://signer.hive.baby"
-          check_url "UDValidator"            "https://validator.hive.baby"
-          check_url "UDCreator"              "https://creator.hive.baby"
-          check_url "UniversalDocumentInc"   "https://universaldocument.hive.baby"
-          # ── Short aliases ─────────────────────────────────────────────────────────────────
-          check_url "moon.hive.baby"         "https://moon.hive.baby"
-          check_url "clock.hive.baby"        "https://clock.hive.baby"
-          check_url "bodylog.hive.baby"      "https://bodylog.hive.baby"
-          check_url "secret.hive.baby"       "https://secret.hive.baby"
-          check_url "aesthetic.hive.baby"    "https://aesthetic.hive.baby"
-          # ── API endpoints ─────────────────────────────────────────────────────────────────
-          check_url "HiveMoon API"           "https://hivemoon.hive.baby/api/moon"
+          # Core
+          check_url "hive.baby"           "https://hive.baby"
+          check_url "HivePhoto"           "https://hivephoto.hive.baby"
+          check_url "HiveTestingStation"  "https://test.hive.baby"
+          check_url "HiveMoon"            "https://hivemoon.hive.baby"
+          check_url "HiveField"           "https://hivefield.hive.baby"
+          check_url "HiveClock"           "https://hiveclock.hive.baby"
+          check_url "HiveClarity"         "https://hiveclarity.hive.baby"
+          check_url "HiveStrength"        "https://hivestrength.hive.baby"
+          check_url "HiveBodyLog"         "https://hivebodylog.hive.baby"
+          check_url "HiveCreatorConsole"  "https://creatorconsole.hive.baby"
+          check_url "HiveSecretBox"       "https://secretbox.hive.baby"
+          check_url "WhoTextedMe"         "https://whotextedme.hive.baby"
+          check_url "HiveAdminSupport"    "https://support.hive.baby"
+          check_url "HiveMeme"            "https://hivememe.hive.baby"
+          check_url "HiveAestheticBestie" "https://hiveaestheticbestie.hive.baby"
+          check_url "HiveMicroRitual"     "https://hivemicroritual.hive.baby"
+          check_url "SovereignArbitrage"  "https://sovereignarbitrage.hive.baby"
+          check_url "QueenBee"            "https://queenbee.hive.baby"
+          # UD
+          check_url "ud.hive.baby"        "https://ud.hive.baby"
+          check_url "UDUtilities"         "https://utilities.hive.baby"
+          check_url "UDConverter"         "https://converter.hive.baby"
+          check_url "UDReader"            "https://reader.hive.baby"
+          check_url "UDSigner"            "https://signer.hive.baby"
+          check_url "UDValidator"         "https://validator.hive.baby"
+          check_url "UDCreator"           "https://creator.hive.baby"
+          check_url "UniversalDocumentInc" "https://universaldocument.hive.baby"
+          # Short aliases
+          check_url "moon.hive.baby"      "https://moon.hive.baby"
+          check_url "clock.hive.baby"     "https://clock.hive.baby"
+          check_url "bodylog.hive.baby"   "https://bodylog.hive.baby"
+          check_url "secret.hive.baby"    "https://secret.hive.baby"
+          check_url "aesthetic.hive.baby" "https://aesthetic.hive.baby"
+          # API
+          check_url "HiveMoon API"        "https://hivemoon.hive.baby/api/moon"
 
-          echo "FAILED=$FAILED" >> "$GITHUB_ENV"
-
-      - name: Check API smoke tests
-        run: |
-          # POST /api/apply with honeypot filled — must return 400, NOT 500
-          STATUS=$(curl -s -o /tmp/api_body.txt -w "%{http_code}" \
-            -X POST "https://test.hive.baby/api/apply" \
+          # API smoke: honeypot -> must NOT be 500
+          S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" -X POST "https://test.hive.baby/api/apply" \
             -H "Content-Type: application/json" \
             -d '{"name":"hc","email":"hc@hive.baby","engineSlug":"hivephoto","country":"GB","device":"desktop","browser":"chrome","agreedFeedback":true,"honeypot":"bot"}' \
             --max-time 20 2>/dev/null)
-          if [ "$STATUS" = "500" ] || [ "$STATUS" = "000" ]; then
-            echo "FAIL: test.hive.baby/api/apply (honeypot) returned $STATUS"
-            BODY=$(head -c 150 /tmp/api_body.txt | tr -d '\000')
-            printf "**test.hive.baby/api/apply (honeypot)**\n- Status: HTTP %s (crash — expected 400)\n- Body: \`%s\`\n\n" \
-              "$STATUS" "$BODY" >> /tmp/failures.txt
-            echo "FAILED=1" >> "$GITHUB_ENV"
+          if [ "$S" = "500" ] || [ "$S" = "000" ]; then
+            echo "FAIL: apply honeypot -> $S (crash)"
+            printf '**test.hive.baby/api/apply (honeypot)**\n- HTTP %s (crash, expected 400)\n- Body: `%s`\n\n' \
+              "$S" "$(head -c 120 /tmp/rb.txt | tr -d '\000')" >> /tmp/failures.txt
+            FAILED=1
           else
-            echo "OK: test.hive.baby/api/apply (honeypot) → $STATUS (expected 400)"
+            echo "OK:   apply honeypot -> $S"
           fi
 
-          # /api/verify with fake token — must NOT crash
-          STATUS=$(curl -s -o /tmp/api_body2.txt -w "%{http_code}" \
-            "https://test.hive.baby/api/verify?token=healthcheck-fake-$(date +%s)" \
-            --max-time 20 -L 2>/dev/null)
-          if [ "$STATUS" = "500" ]; then
-            BODY=$(head -c 150 /tmp/api_body2.txt | tr -d '\000')
-            echo "FAIL: test.hive.baby/api/verify returned 500"
-            printf "**test.hive.baby/api/verify (fake token)**\n- Status: HTTP %s (crash)\n- Body: \`%s\`\n\n" \
-              "$STATUS" "$BODY" >> /tmp/failures.txt
-            echo "FAILED=1" >> "$GITHUB_ENV"
+          # API smoke: fake verify token -> must NOT be 500
+          S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" \
+            "https://test.hive.baby/api/verify?token=hc-fake-$(date +%s)" \
+            --max-time 20 2>/dev/null)
+          if [ "$S" = "500" ]; then
+            echo "FAIL: verify fake token -> $S"
+            printf '**test.hive.baby/api/verify (fake token)**\n- HTTP %s (crash)\n\n' "$S" >> /tmp/failures.txt
+            FAILED=1
           else
-            echo "OK: test.hive.baby/api/verify (fake token) → $STATUS"
+            echo "OK:   verify fake token -> $S"
           fi
+
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
 
       - name: Ensure bug label exists
-        if: always()
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -116,37 +111,30 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/labels" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"name":"bug","color":"d73a4a","description":"Something is broken"}' \
-            -o /dev/null || true
+            -d '{"name":"bug","color":"d73a4a"}' -o /dev/null
 
-      - name: Create GitHub issue on failure
-        if: env.FAILED == '1'
+      - name: Create issue on failure
+        if: steps.check.outputs.failed == '1'
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          FAILURES=$(cat /tmp/failures.txt)
-          TITLE="Health check failed — $(date -u '+%Y-%m-%d %H:%M UTC')"
-
-          BODY=$(jq -n \
-            --arg title "$TITLE" \
-            --arg failures "$FAILURES" \
-            --arg run_id "${{ github.run_id }}" \
-            --arg repo "${{ github.repository }}" \
-            --arg trigger "${{ github.event_name }}" \
-            --arg ts "$(date -u '+%Y-%m-%d %H:%M UTC')" \
-            '{
-              title: $title,
-              labels: ["bug"],
-              body: ("## Health check failures\n\n**Run:** [" + $run_id + "](https://github.com/" + $repo + "/actions/runs/" + $run_id + ")\n**Trigger:** " + $trigger + "\n**Time:** " + $ts + "\n\n---\n\n" + $failures + "\n---\n*Auto-generated by health-check.yml. Close once resolved.*")
-            }')
-
+          DETAILS=$(cat /tmp/failures.txt)
+          TITLE="Health check failed - $(date -u '+%Y-%m-%d %H:%M UTC')"
+          BODY="## Hive health check failures\n\n**Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n**Time:** $(date -u '+%Y-%m-%d %H:%M UTC')\n\n---\n\n${DETAILS}\n\n---\n*Auto-generated. Close once resolved.*"
           curl -s -X POST \
             "https://api.github.com/repos/${{ github.repository }}/issues" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "$BODY" \
-            | jq -r '"Issue created: " + (.html_url // "failed")'
+            -d "{\"title\":$(printf '%s' "$TITLE" | jq -Rs .),\"body\":$(printf '%s' "$BODY" | jq -Rs .),\"labels\":[\"bug\"]}" \
+            | jq -r '.html_url // "issue creation failed"'
 
-      - name: All clear
-        if: env.FAILED != '1'
-        run: echo "✓ All Hive properties healthy"
+      - name: Report result
+        run: |
+          if [ "${{ steps.check.outputs.failed }}" = "1" ]; then
+            echo "FAILURES detected - see /tmp/failures.txt"
+            cat /tmp/failures.txt
+            exit 1
+          else
+            echo "All Hive properties healthy"
+          fi

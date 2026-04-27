@@ -1,18 +1,18 @@
-name: Ops — Setup hive-testing-station env vars and seed DB
+name: Ops - Setup hive-testing-station Vercel env vars
 
 on:
   workflow_dispatch:
     inputs:
       database_url:
-        description: 'Neon DATABASE_URL for testing station (leave blank to use secret)'
+        description: 'Neon DATABASE_URL (leave blank to use repo secret)'
         required: false
         default: ''
       resend_api_key:
-        description: 'Resend API key (leave blank to use secret)'
+        description: 'Resend API key (leave blank to use repo secret)'
         required: false
         default: ''
       stripe_secret_key:
-        description: 'Stripe secret key (leave blank to use secret)'
+        description: 'Stripe secret key (leave blank to use repo secret)'
         required: false
         default: ''
 
@@ -20,120 +20,104 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN || secrets.VERCEL_TOKEN }}
-      DATABASE_URL: ${{ inputs.database_url || secrets.TESTING_STATION_DATABASE_URL || secrets.DATABASE_URL }}
-      RESEND_API_KEY: ${{ inputs.resend_api_key || secrets.RESEND_API_KEY }}
-      STRIPE_SECRET_KEY: ${{ inputs.stripe_secret_key || secrets.STRIPE_SECRET_KEY }}
-      ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
 
     steps:
-      - name: Validate token
+      - name: Validate Vercel token
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
         run: |
           if [ -z "$VERCEL_TOKEN" ]; then
-            echo "::error::VERCEL_TOKEN_MAIN or VERCEL_TOKEN secret not set"
+            echo "ERROR: VERCEL_TOKEN_MAIN secret is not set"
             exit 1
           fi
-          echo "✓ Vercel token available (length=${#VERCEL_TOKEN})"
+          echo "Vercel token present (${#VERCEL_TOKEN} chars)"
 
-      - name: Find testing station project ID
+      - name: Find hive-testing-station project ID
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
         run: |
           RESP=$(curl -s "https://api.vercel.com/v9/projects?search=hive-testing-station" \
             -H "Authorization: Bearer $VERCEL_TOKEN")
-          PROJECT_ID=$(echo "$RESP" | jq -r '.projects[]? | select(.name | test("hive-testing-station|testing.station|testing-station"; "i")) | .id' | head -1)
+          PROJECT_ID=$(echo "$RESP" | jq -r '.projects[]? | select(.name | ascii_downcase | contains("testing-station")) | .id' | head -1)
           if [ -z "$PROJECT_ID" ]; then
-            echo "::notice::All projects found:"
+            echo "Projects available:"
             echo "$RESP" | jq -r '.projects[].name' | head -20
-            PROJECT_ID=$(echo "$RESP" | jq -r '.projects[0].id // empty')
-            echo "::warning::Could not find hive-testing-station — tried first project"
-          fi
-          if [ -z "$PROJECT_ID" ]; then
-            echo "::error::Could not find Vercel project. Check token permissions."
-            echo "$RESP" | jq '.'
             exit 1
           fi
-          echo "::notice::Found project ID: $PROJECT_ID"
+          echo "Found: $PROJECT_ID"
           echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
 
-      - name: Disable deployment protection
-        run: |
-          echo "→ Disabling Vercel deployment protection on $PROJECT_ID"
-          RESP=$(curl -s -o /tmp/prot_resp.json -w "%{http_code}" \
-            -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{"ssoProtection":null,"passwordProtection":null}')
-          echo "  HTTP $RESP"
-          echo "::notice::DISABLE_PROTECTION HTTP=$RESP body=$(cat /tmp/prot_resp.json | head -c 200)"
-          if [ "$RESP" = "200" ]; then
-            echo "  ✓ Deployment protection disabled"
-          else
-            echo "  ⚠ Unexpected HTTP $RESP — may require manual disable in Vercel dashboard"
-            echo "    Vercel → hive-testing-station → Settings → Deployment Protection → Off"
-          fi
-
       - name: List current env vars
+        continue-on-error: true
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
         run: |
-          echo "→ Current env vars on project $PROJECT_ID:"
+          echo "Current env vars on $PROJECT_ID:"
           curl -s "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
             -H "Authorization: Bearer $VERCEL_TOKEN" \
-            | jq -r '.envs[]? | "\(.key) = \(if .value and (.value | length) > 0 then "SET(\(.value | length) chars)" else "EMPTY" end)"' \
-            | sort
+            | jq -r '.envs[]? | .key' | sort
 
       - name: Set env vars
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          IN_DATABASE_URL: ${{ inputs.database_url }}
+          SEC_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          IN_RESEND_API_KEY: ${{ inputs.resend_api_key }}
+          SEC_RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          IN_STRIPE_SECRET_KEY: ${{ inputs.stripe_secret_key }}
+          SEC_STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          SEC_CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          set_env() {
-            local KEY="$1"
-            local VALUE="$2"
-            if [ -z "$VALUE" ]; then
-              echo "  ⚠ $KEY — no value provided, skipping"
-              return
-            fi
-            STATUS=$(curl -s -o /tmp/env_resp.json -w "%{http_code}" \
+          upsert_env() {
+            local KEY="$1" VALUE="$2"
+            [ -z "$VALUE" ] && { echo "  SKIP $KEY"; return; }
+            HTTP=$(curl -s -o /tmp/ev.json -w "%{http_code}" \
               -X POST "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
               -H "Authorization: Bearer $VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"key\":\"$KEY\",\"value\":$(echo "$VALUE" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
-            if [ "$STATUS" = "409" ]; then
-              ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+              --data-binary "{\"key\":\"$KEY\",\"value\":$(printf '%s' "$VALUE" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+            if [ "$HTTP" = "409" ]; then
+              EID=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
                 -H "Authorization: Bearer $VERCEL_TOKEN" \
                 | jq -r --arg K "$KEY" '.envs[]? | select(.key==$K) | .id' | head -1)
-              if [ -n "$ENV_ID" ]; then
-                curl -s -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ENV_ID" \
+              if [ -n "$EID" ]; then
+                curl -s -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$EID" \
                   -H "Authorization: Bearer $VERCEL_TOKEN" \
                   -H "Content-Type: application/json" \
-                  -d "{\"value\":$(echo "$VALUE" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" > /dev/null
-                echo "  ✓ $KEY — updated"
+                  --data-binary "{\"value\":$(printf '%s' "$VALUE" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" > /dev/null
+                echo "  UPDATED $KEY"
               fi
-            elif [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
-              echo "  ✓ $KEY — created"
+            elif [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
+              echo "  CREATED $KEY"
             else
-              echo "  ✗ $KEY — HTTP $STATUS: $(cat /tmp/env_resp.json)"
+              echo "  FAILED $KEY HTTP=$HTTP: $(cat /tmp/ev.json)"
             fi
-            echo "::notice::ENV $KEY HTTP=$STATUS"
           }
 
-          ADMIN_SEC="${ADMIN_SECRET:-$(openssl rand -hex 16)}"
-          CRON_SEC="$(openssl rand -hex 16)"
+          DATABASE_URL="${IN_DATABASE_URL:-$SEC_DATABASE_URL}"
+          RESEND_API_KEY="${IN_RESEND_API_KEY:-$SEC_RESEND_API_KEY}"
+          STRIPE_SECRET_KEY="${IN_STRIPE_SECRET_KEY:-$SEC_STRIPE_SECRET_KEY}"
+          CRON_SECRET="${SEC_CRON_SECRET:-$(openssl rand -hex 16)}"
+          ADMIN_SECRET="$(openssl rand -hex 16)"
 
-          set_env "DATABASE_URL"          "$DATABASE_URL"
-          set_env "RESEND_API_KEY"        "$RESEND_API_KEY"
-          set_env "STRIPE_SECRET_KEY"     "$STRIPE_SECRET_KEY"
-          set_env "ADMIN_SECRET"          "$ADMIN_SEC"
-          set_env "NEXT_PUBLIC_APP_URL"   "https://test.hive.baby"
-          set_env "CRON_SECRET"           "$CRON_SEC"
+          upsert_env "DATABASE_URL"        "$DATABASE_URL"
+          upsert_env "RESEND_API_KEY"      "$RESEND_API_KEY"
+          upsert_env "STRIPE_SECRET_KEY"   "$STRIPE_SECRET_KEY"
+          upsert_env "CRON_SECRET"         "$CRON_SECRET"
+          upsert_env "ADMIN_SECRET"        "$ADMIN_SECRET"
+          upsert_env "NEXT_PUBLIC_APP_URL" "https://test.hive.baby"
 
-          # Save CRON_SECRET so migrate step can use it
-          echo "CRON_SECRET=$CRON_SEC" >> "$GITHUB_ENV"
-          echo "::notice::CRON_SECRET saved for migrate step"
+          echo "CRON_SECRET=$CRON_SECRET" >> "$GITHUB_ENV"
 
       - name: Trigger redeploy
+        continue-on-error: true
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
         run: |
-          echo "→ Triggering redeploy"
           LATEST=$(curl -s "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&limit=1&target=production" \
             -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.deployments[0].uid // empty')
           if [ -z "$LATEST" ]; then
-            echo "  No production deployment found — skipping redeploy (will deploy on next git push)"
+            echo "No production deployment found - skipping"
             exit 0
           fi
           PROJ_NAME=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT_ID" \
@@ -142,33 +126,23 @@ jobs:
             -H "Authorization: Bearer $VERCEL_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"name\":\"$PROJ_NAME\",\"deploymentId\":\"$LATEST\",\"target\":\"production\"}")
-          NEW_ID=$(echo "$RESP" | jq -r '.id // empty')
-          echo "::notice::REDEPLOY id=$NEW_ID"
-          echo "  ✓ Redeploy triggered: $NEW_ID"
+          echo "Redeploy triggered: $(echo "$RESP" | jq -r '.id // "failed"')"
 
-      - name: Wait for deployment and seed database
+      - name: Wait and run migrations
+        continue-on-error: true
         run: |
-          echo "→ Waiting 90s for deployment to complete..."
+          echo "Waiting 90s for deployment..."
           sleep 90
-
-          echo "→ POSTing to test.hive.baby/api/migrate"
-          MIGRATE_RESP=$(curl -s -o /tmp/migrate.json -w "%{http_code}" \
+          RESP=$(curl -s -w "\nHTTP=%{http_code}" \
             -X POST "https://test.hive.baby/api/migrate" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $CRON_SECRET" \
             --max-time 30)
-          echo "  HTTP $MIGRATE_RESP"
-          echo "::notice::MIGRATE HTTP=$MIGRATE_RESP body=$(cat /tmp/migrate.json | head -c 500)"
+          echo "Migrate response: $RESP"
 
-          if [ "$MIGRATE_RESP" = "200" ]; then
-            echo "  ✓ Database migrated and seeded"
-          else
-            echo "  ⚠ Migrate returned HTTP $MIGRATE_RESP — may need more time or manual run"
-          fi
-
-      - name: Final smoke test
+      - name: Smoke test
+        continue-on-error: true
         run: |
-          echo "→ Smoke testing test.hive.baby"
           CODE=$(curl -s -o /dev/null -w "%{http_code}" https://test.hive.baby --max-time 15)
-          echo "::notice::SMOKE_TEST HTTP=$CODE"
-          echo "  test.hive.baby → HTTP $CODE"
+          echo "test.hive.baby -> HTTP $CODE"
+          [ "$CODE" = "200" ] && echo "PASS" || echo "WARN: non-200 response"
