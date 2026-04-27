@@ -1,4 +1,5 @@
-
+"use client";
+// @ts-nocheck
 import { useState, useEffect, useRef, useCallback } from "react";
 
 /* ─── STYLES ──────────────────────────────────────────────── */
@@ -37,7 +38,7 @@ const injectStyles = () => {
   `;
   document.head.appendChild(s);
 };
-injectStyles();
+if (typeof document !== "undefined") injectStyles();
 
 /* ─── ROLE CONFIG ─────────────────────────────────────────── */
 const ROLE_CONFIG = {
@@ -348,7 +349,7 @@ const useAIStream=()=>{
     const ctrl=new AbortController();abort.current=ctrl;
     setSt({status:"streaming",text:"",error:null});
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,stream:true,messages:[{role:"user",content:prompt}]})});
+      const res=await fetch("/api/ai/generate",{method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,body:JSON.stringify({prompt})});
       if(!res.ok) throw new Error(`API ${res.status}`);
       const reader=res.body.getReader();const dec=new TextDecoder();let acc="";
       while(true){
