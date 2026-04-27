@@ -33,16 +33,14 @@ jobs:
 
       - name: Find testing station project ID
         run: |
-          # Search for project by name
           RESP=$(curl -s "https://api.vercel.com/v9/projects?search=hive-testing-station" \
             -H "Authorization: Bearer $VERCEL_TOKEN")
           PROJECT_ID=$(echo "$RESP" | jq -r '.projects[]? | select(.name | test("hive-testing-station|testing.station|testing-station"; "i")) | .id' | head -1)
           if [ -z "$PROJECT_ID" ]; then
             echo "::notice::All projects found:"
             echo "$RESP" | jq -r '.projects[].name' | head -20
-            # Try all projects
             PROJECT_ID=$(echo "$RESP" | jq -r '.projects[0].id // empty')
-            echo "::warning::Could not find hive-testing-station — searched all projects"
+            echo "::warning::Could not find hive-testing-station — tried first project"
           fi
           if [ -z "$PROJECT_ID" ]; then
             echo "::error::Could not find Vercel project. Check token permissions."
@@ -51,6 +49,23 @@ jobs:
           fi
           echo "::notice::Found project ID: $PROJECT_ID"
           echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+
+      - name: Disable deployment protection
+        run: |
+          echo "→ Disabling Vercel deployment protection on $PROJECT_ID"
+          RESP=$(curl -s -o /tmp/prot_resp.json -w "%{http_code}" \
+            -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"ssoProtection":null,"passwordProtection":null}')
+          echo "  HTTP $RESP"
+          echo "::notice::DISABLE_PROTECTION HTTP=$RESP body=$(cat /tmp/prot_resp.json | head -c 200)"
+          if [ "$RESP" = "200" ]; then
+            echo "  ✓ Deployment protection disabled"
+          else
+            echo "  ⚠ Unexpected HTTP $RESP — may require manual disable in Vercel dashboard"
+            echo "    Vercel → hive-testing-station → Settings → Deployment Protection → Off"
+          fi
 
       - name: List current env vars
         run: |
@@ -94,12 +109,17 @@ jobs:
           }
 
           ADMIN_SEC="${ADMIN_SECRET:-$(openssl rand -hex 16)}"
+          CRON_SEC="$(openssl rand -hex 16)"
 
           set_env "DATABASE_URL"          "$DATABASE_URL"
           set_env "RESEND_API_KEY"        "$RESEND_API_KEY"
           set_env "ADMIN_SECRET"          "$ADMIN_SEC"
           set_env "NEXT_PUBLIC_APP_URL"   "https://test.hive.baby"
-          set_env "CRON_SECRET"           "$(openssl rand -hex 16)"
+          set_env "CRON_SECRET"           "$CRON_SEC"
+
+          # Save CRON_SECRET so migrate step can use it
+          echo "CRON_SECRET=$CRON_SEC" >> "$GITHUB_ENV"
+          echo "::notice::CRON_SECRET saved for migrate step"
 
       - name: Trigger redeploy
         run: |
@@ -107,7 +127,7 @@ jobs:
           LATEST=$(curl -s "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&limit=1&target=production" \
             -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.deployments[0].uid // empty')
           if [ -z "$LATEST" ]; then
-            echo "  No production deployment found — cannot redeploy"
+            echo "  No production deployment found — skipping redeploy (will deploy on next git push)"
             exit 0
           fi
           PROJ_NAME=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT_ID" \
@@ -122,13 +142,14 @@ jobs:
 
       - name: Wait for deployment and seed database
         run: |
-          echo "→ Waiting 60s for deployment to complete..."
-          sleep 60
+          echo "→ Waiting 90s for deployment to complete..."
+          sleep 90
 
           echo "→ POSTing to test.hive.baby/api/migrate"
           MIGRATE_RESP=$(curl -s -o /tmp/migrate.json -w "%{http_code}" \
             -X POST "https://test.hive.baby/api/migrate" \
             -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             --max-time 30)
           echo "  HTTP $MIGRATE_RESP"
           echo "::notice::MIGRATE HTTP=$MIGRATE_RESP body=$(cat /tmp/migrate.json | head -c 500)"
@@ -136,7 +157,7 @@ jobs:
           if [ "$MIGRATE_RESP" = "200" ]; then
             echo "  ✓ Database migrated and seeded"
           else
-            echo "  ⚠ Migrate returned HTTP $MIGRATE_RESP — may need manual run or more time"
+            echo "  ⚠ Migrate returned HTTP $MIGRATE_RESP — may need more time or manual run"
           fi
 
       - name: Final smoke test
