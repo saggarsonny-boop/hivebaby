@@ -39,9 +39,9 @@
 - Certificate issuance completed and domain now returns HTTP 200 in fleet probe.
 - `creatorconsole.hive.baby` returns HTTP 307 consistently and requires owner confirmation that this redirect is intentional.
 
-- Total engines: 27
+- Total engines: 28
 - Live and working: 24
-- Building: 2 (HiveMeme, HiveMemorySpace)
+- Building: 3 (HiveMeme, HiveMemorySpace, HiveIMR)
 - Planned: 1 (QueenBee)
 
 ## TIER 1

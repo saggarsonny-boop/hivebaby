@@ -50,6 +50,7 @@ Account: saggarsonny-boop
 | hive-memory-space | HiveMemorySpace | hivememoryspace.hive.baby | BUILDING | Next.js + Anthropic |
 | sovereign-arbitrage | SovereignArbitrage | sovereignarbitrage.hive.baby | LIVE | Next.js + Anthropic |
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind |
+| hivebaby/hive-imr | HiveIMR | hiveimr.hive.baby | BUILDING | Next.js + Anthropic + Neon |
 
 ## Naming Standards (canonical — all future engines must follow)
 
