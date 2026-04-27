@@ -1,0 +1,90 @@
+name: Ops — Poll hive-imr redeploy after vercel.json fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/check-hive-imr-redeploy.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      PROJECT: hive-imr
+      OUT_DIR: .ops/deployment-debug
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve project ID
+        run: |
+          curl -s "https://api.vercel.com/v9/projects/$PROJECT" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" > /tmp/proj.json
+          PID=$(jq -r '.id' /tmp/proj.json)
+          echo "PROJECT_ID=$PID" >> "$GITHUB_ENV"
+          echo "Project ID: $PID"
+
+      - name: Wait for new deployment to register, then poll until terminal
+        run: |
+          sleep 15
+          mkdir -p "$OUT_DIR"
+          for i in $(seq 1 36); do
+            curl -s "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&limit=1" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" > /tmp/list.json
+            DID=$(jq -r '.deployments[0].uid' /tmp/list.json)
+            STATE=$(jq -r '.deployments[0].state' /tmp/list.json)
+            URL=$(jq -r '.deployments[0].url' /tmp/list.json)
+            CREATED=$(jq -r '.deployments[0].created' /tmp/list.json)
+            echo "[$i/36] $DID  state=$STATE  url=$URL"
+
+            if [ "$STATE" = "READY" ] || [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; then
+              echo "Final state reached."
+              echo "DEPLOYMENT_ID=$DID" >> "$GITHUB_ENV"
+              echo "FINAL_STATE=$STATE" >> "$GITHUB_ENV"
+              break
+            fi
+            sleep 15
+          done
+
+      - name: Capture deployment metadata
+        if: env.DEPLOYMENT_ID != ''
+        run: |
+          curl -s "https://api.vercel.com/v13/deployments/$DEPLOYMENT_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | jq '{id, url, target, readyState, errorMessage, errorCode, errorStep, "git_commit": .meta.githubCommitSha}' \
+            > "$OUT_DIR/post-vercel-fix.metadata.json"
+          echo "===== Final metadata ====="
+          cat "$OUT_DIR/post-vercel-fix.metadata.json"
+
+          curl -s "https://api.vercel.com/v2/deployments/$DEPLOYMENT_ID/events?limit=200" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            | jq '[.[] | select(.type=="error" or .type=="stderr" or .type=="stdout" or .type=="fatal") | {type, text: (.text // .payload.text // "")}]' \
+            > "$OUT_DIR/post-vercel-fix.events.json"
+          echo "===== Last 25 stdout/stderr/error events ====="
+          jq -r '.[-25:] | .[] | "[\(.type)] \(.text)"' "$OUT_DIR/post-vercel-fix.events.json"
+
+      - name: Probe live URL (only if READY)
+        if: env.FINAL_STATE == 'READY'
+        run: |
+          DOMAIN="hiveimr.hive.baby"
+          echo "Health check via deployment URL:"
+          curl -sS -w "\nHTTP %{http_code}\n" "https://$(jq -r '.url' "$OUT_DIR/post-vercel-fix.metadata.json")/api/health" || true
+          echo
+          echo "Health check via custom domain (if DNS set):"
+          curl -sS -w "\nHTTP %{http_code}\n" "https://$DOMAIN/api/health" || true
+
+      - name: Commit results back to main
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT_DIR"
+          if ! git diff --cached --quiet; then
+            git commit -m "ops: post-vercel-fix deployment status"
+            git pull --rebase origin main 2>&1 || true
+            git push origin HEAD:main || true
+          fi
