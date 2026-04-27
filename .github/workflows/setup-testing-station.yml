@@ -11,6 +11,10 @@ on:
         description: 'Resend API key (leave blank to use secret)'
         required: false
         default: ''
+      stripe_secret_key:
+        description: 'Stripe secret key (leave blank to use secret)'
+        required: false
+        default: ''
 
 jobs:
   setup:
@@ -20,6 +24,7 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN || secrets.VERCEL_TOKEN }}
       DATABASE_URL: ${{ inputs.database_url || secrets.TESTING_STATION_DATABASE_URL || secrets.DATABASE_URL }}
       RESEND_API_KEY: ${{ inputs.resend_api_key || secrets.RESEND_API_KEY }}
+      STRIPE_SECRET_KEY: ${{ inputs.stripe_secret_key || secrets.STRIPE_SECRET_KEY }}
       ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
 
     steps:
@@ -113,6 +118,7 @@ jobs:
 
           set_env "DATABASE_URL"          "$DATABASE_URL"
           set_env "RESEND_API_KEY"        "$RESEND_API_KEY"
+          set_env "STRIPE_SECRET_KEY"     "$STRIPE_SECRET_KEY"
           set_env "ADMIN_SECRET"          "$ADMIN_SEC"
           set_env "NEXT_PUBLIC_APP_URL"   "https://test.hive.baby"
           set_env "CRON_SECRET"           "$CRON_SEC"
