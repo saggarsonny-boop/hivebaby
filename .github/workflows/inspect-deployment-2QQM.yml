@@ -1,0 +1,71 @@
+name: Ops — Auto-inspect deployment dpl_2QQMCUMjEaJeLCcastVrMfwWa7RZ
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-deployment-2QQM.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      DEPLOYMENT_ID: dpl_2QQMCUMjEaJeLCcastVrMfwWa7RZ
+      OUT_DIR: .ops/deployment-debug
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify token
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "VERCEL_TOKEN_MAIN secret not set"; exit 1
+          fi
+          echo "Token resolved (length=${#VERCEL_TOKEN})"
+
+      - name: Fetch deployment metadata + filtered events
+        run: |
+          mkdir -p "$OUT_DIR"
+
+          curl -s "https://api.vercel.com/v13/deployments/$DEPLOYMENT_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" > /tmp/meta.json
+
+          jq '{
+            id, name, url, target,
+            readyState, readySubstate,
+            errorMessage, errorCode, errorStep, errorLink,
+            createdAt, buildingAt, ready,
+            source,
+            "git_commit": .meta.githubCommitSha,
+            "git_ref": .meta.githubCommitRef
+          }' /tmp/meta.json > "$OUT_DIR/${DEPLOYMENT_ID}.metadata.json"
+
+          curl -s "https://api.vercel.com/v2/deployments/$DEPLOYMENT_ID/events?limit=200" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" > /tmp/events.json
+
+          jq '[.[]
+                | select(.type=="error" or .type=="stderr" or .type=="stdout" or .type=="fatal")
+                | {type, created, text: (.text // .payload.text // "")}]' \
+            /tmp/events.json > "$OUT_DIR/${DEPLOYMENT_ID}.events.json"
+
+          echo "===== Metadata summary ====="
+          cat "$OUT_DIR/${DEPLOYMENT_ID}.metadata.json"
+          echo
+          echo "===== Last 20 error/stderr/stdout events ====="
+          jq -r '.[-20:] | .[] | "[\(.type)] \(.text)"' "$OUT_DIR/${DEPLOYMENT_ID}.events.json"
+
+      - name: Commit results back to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT_DIR"
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "debug: deployment ${DEPLOYMENT_ID} metadata + events"
+            git push origin HEAD:main
+          fi
