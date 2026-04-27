@@ -12,10 +12,23 @@ jobs:
       - name: Add CNAME aliases via Cloudflare API
         env:
           CF_TOKEN: ${{ secrets.CF_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ZONE: ${{ secrets.CF_ZONE }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: |
-          if [ -z "$CF_TOKEN" ]; then echo "ERROR: CF_TOKEN secret not set"; exit 1; fi
-          if [ -z "$CF_ZONE" ]; then echo "ERROR: CF_ZONE secret not set"; exit 1; fi
+          # Resolve token (try all known secret names)
+          TOKEN="${CF_TOKEN:-${CF_API_TOKEN:-$CLOUDFLARE_API_TOKEN}}"
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: No Cloudflare token found."
+            echo "Set one of these secrets: CF_TOKEN, CF_API_TOKEN, or CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+          echo "Token resolved (length=${#TOKEN})"
+
+          # Resolve zone ID (try secrets first, then fall back to known value from CLAUDE.md)
+          ZONE="${CF_ZONE:-${CLOUDFLARE_ZONE_ID:-bcb5522993ecf90a4f1d5dfe101e5a5c}}"
+          echo "Zone: ${ZONE}"
 
           declare -A ALIASES
           ALIASES["moon.hive.baby"]="hivemoon.hive.baby"
@@ -30,23 +43,23 @@ jobs:
 
             # Check if record already exists
             EXISTING=$(curl -s \
-              "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records?type=CNAME&name=${NAME}" \
-              -H "Authorization: Bearer ${CF_TOKEN}" \
+              "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?type=CNAME&name=${NAME}" \
+              -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/json")
             EXISTING_ID=$(echo "$EXISTING" | jq -r '.result[0].id // empty')
 
             if [ -n "$EXISTING_ID" ]; then
               echo "  Record exists ($EXISTING_ID) — updating"
               STATUS=$(curl -s -o /tmp/cf_resp.json -w "%{http_code}" \
-                -X PUT "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records/${EXISTING_ID}" \
-                -H "Authorization: Bearer ${CF_TOKEN}" \
+                -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records/${EXISTING_ID}" \
+                -H "Authorization: Bearer ${TOKEN}" \
                 -H "Content-Type: application/json" \
                 -d "{\"type\":\"CNAME\",\"name\":\"${NAME}\",\"content\":\"${TARGET}\",\"ttl\":1,\"proxied\":false}")
             else
               echo "  Creating new record"
               STATUS=$(curl -s -o /tmp/cf_resp.json -w "%{http_code}" \
-                -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records" \
-                -H "Authorization: Bearer ${CF_TOKEN}" \
+                -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records" \
+                -H "Authorization: Bearer ${TOKEN}" \
                 -H "Content-Type: application/json" \
                 -d "{\"type\":\"CNAME\",\"name\":\"${NAME}\",\"content\":\"${TARGET}\",\"ttl\":1,\"proxied\":false}")
             fi
