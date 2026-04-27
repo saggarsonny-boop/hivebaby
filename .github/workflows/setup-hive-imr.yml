@@ -1,0 +1,234 @@
+name: Ops — Set up hive-imr Vercel project
+
+on:
+  workflow_dispatch:
+    inputs:
+      trigger_deploy:
+        description: 'Trigger initial deployment from main after setup'
+        type: boolean
+        default: true
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROJECT_NAME: hive-imr
+      ROOT_DIR: hive-imr
+      DOMAIN: hiveimr.hive.baby
+      REPO: saggarsonny-boop/hivebaby
+      FRAMEWORK: nextjs
+      VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_MODEL: claude-opus-4-5
+      CF_TOKEN: ${{ secrets.CF_TOKEN }}
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ZONE: ${{ secrets.CF_ZONE }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+
+    steps:
+      - name: Resolve tokens
+        run: |
+          VERCEL_TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "ERROR: neither VERCEL_TOKEN_MAIN nor VERCEL_TOKEN is set"
+            exit 1
+          fi
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ERROR: ANTHROPIC_API_KEY secret missing"
+            exit 1
+          fi
+          echo "Vercel token resolved (length=${#VERCEL_TOKEN})"
+          echo "Anthropic key resolved (length=${#ANTHROPIC_API_KEY})"
+          CF="${CF_TOKEN:-${CF_API_TOKEN:-$CLOUDFLARE_API_TOKEN}}"
+          if [ -n "$CF" ]; then
+            echo "Cloudflare token resolved (length=${#CF}) — DNS step will run"
+            echo "CF_TOKEN_RESOLVED=$CF" >> "$GITHUB_ENV"
+          else
+            echo "No Cloudflare token — DNS step will be skipped (manual CNAME required)"
+          fi
+          ZONE="${CF_ZONE:-${CLOUDFLARE_ZONE_ID:-bcb5522993ecf90a4f1d5dfe101e5a5c}}"
+          echo "VERCEL_TOKEN=$VERCEL_TOKEN" >> "$GITHUB_ENV"
+          echo "ZONE=$ZONE" >> "$GITHUB_ENV"
+
+      - name: Find or create project
+        id: project
+        run: |
+          set -e
+          # Look up by name (search returns substring matches; filter exact)
+          RESP=$(curl -s "https://api.vercel.com/v9/projects?search=$PROJECT_NAME" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+          PROJECT_ID=$(echo "$RESP" | jq -r --arg n "$PROJECT_NAME" \
+            '.projects[]? | select(.name == $n) | .id' | head -1)
+
+          if [ -n "$PROJECT_ID" ]; then
+            echo "✓ Project exists: $PROJECT_ID"
+          else
+            echo "→ Creating project '$PROJECT_NAME'"
+            BODY=$(jq -n \
+              --arg name "$PROJECT_NAME" \
+              --arg framework "$FRAMEWORK" \
+              --arg root "$ROOT_DIR" \
+              --arg repo "$REPO" \
+              '{
+                name: $name,
+                framework: $framework,
+                rootDirectory: $root,
+                gitRepository: {
+                  type: "github",
+                  repo: $repo
+                }
+              }')
+            HTTP=$(curl -s -o /tmp/create.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-binary "$BODY")
+            echo "  HTTP $HTTP"
+            cat /tmp/create.json | jq . || cat /tmp/create.json
+            if [ "$HTTP" != "200" ] && [ "$HTTP" != "201" ]; then
+              echo "ERROR: project create failed"
+              exit 1
+            fi
+            PROJECT_ID=$(jq -r '.id' /tmp/create.json)
+            echo "✓ Created: $PROJECT_ID"
+          fi
+
+          [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ] || { echo "no project ID"; exit 1; }
+          echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+          echo "project_id=$PROJECT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Upsert ANTHROPIC_API_KEY env var
+        run: |
+          set -e
+          upsert_env() {
+            local KEY="$1" VAL="$2"
+            if [ -z "$VAL" ]; then echo "  SKIP $KEY (empty)"; return; fi
+            BODY=$(jq -n --arg k "$KEY" --arg v "$VAL" \
+              '{key:$k, value:$v, type:"encrypted", target:["production","preview","development"]}')
+            HTTP=$(curl -s -o /tmp/env.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-binary "$BODY")
+            if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
+              echo "  ✓ $KEY created"
+              return
+            fi
+            if [ "$HTTP" = "409" ]; then
+              echo "  $KEY exists — patching"
+              ENV_ID=$(jq -r '.error.envVarId // empty' /tmp/env.json)
+              if [ -z "$ENV_ID" ]; then
+                ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+                  -H "Authorization: Bearer $VERCEL_TOKEN" \
+                  | jq -r --arg k "$KEY" '.envs[]? | select(.key==$k) | .id' | head -1)
+              fi
+              if [ -z "$ENV_ID" ]; then echo "  ⚠ no env id for $KEY"; return; fi
+              PBODY=$(jq -n --arg v "$VAL" \
+                '{value:$v, target:["production","preview","development"]}')
+              PHTTP=$(curl -s -o /tmp/env_patch.json -w "%{http_code}" \
+                -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ENV_ID" \
+                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                -H "Content-Type: application/json" \
+                --data-binary "$PBODY")
+              echo "  ✓ $KEY patched (HTTP $PHTTP)"
+              return
+            fi
+            echo "  ⚠ $KEY HTTP $HTTP"
+            cat /tmp/env.json
+          }
+          upsert_env ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
+          upsert_env ANTHROPIC_MODEL    "$ANTHROPIC_MODEL"
+
+      - name: Disable deployment protection
+        run: |
+          BODY='{"ssoProtection":null,"passwordProtection":null}'
+          HTTP=$(curl -s -o /tmp/prot.json -w "%{http_code}" \
+            -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          echo "PATCH protection HTTP $HTTP"
+          jq '{ssoProtection, passwordProtection}' /tmp/prot.json || cat /tmp/prot.json
+
+      - name: Add domain to project
+        run: |
+          BODY=$(jq -n --arg n "$DOMAIN" '{name:$n}')
+          HTTP=$(curl -s -o /tmp/dom.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v10/projects/$PROJECT_ID/domains" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          echo "Add domain HTTP $HTTP"
+          if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
+            echo "✓ Domain $DOMAIN attached"
+          elif [ "$HTTP" = "409" ]; then
+            echo "✓ Domain $DOMAIN already attached"
+          else
+            echo "⚠ Domain HTTP $HTTP:"
+            cat /tmp/dom.json
+          fi
+
+      - name: Cloudflare CNAME (best effort)
+        if: env.CF_TOKEN_RESOLVED != ''
+        run: |
+          NAME="$DOMAIN"
+          TARGET="cname.vercel-dns.com"
+          EXISTING=$(curl -s \
+            "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?type=CNAME&name=$NAME" \
+            -H "Authorization: Bearer $CF_TOKEN_RESOLVED")
+          ID=$(echo "$EXISTING" | jq -r '.result[0].id // empty')
+          BODY=$(jq -n --arg n "$NAME" --arg t "$TARGET" \
+            '{type:"CNAME", name:$n, content:$t, ttl:1, proxied:false}')
+          if [ -n "$ID" ]; then
+            HTTP=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+              -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records/$ID" \
+              -H "Authorization: Bearer $CF_TOKEN_RESOLVED" \
+              -H "Content-Type: application/json" \
+              --data-binary "$BODY")
+            echo "PUT CNAME HTTP $HTTP"
+          else
+            HTTP=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+              -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records" \
+              -H "Authorization: Bearer $CF_TOKEN_RESOLVED" \
+              -H "Content-Type: application/json" \
+              --data-binary "$BODY")
+            echo "POST CNAME HTTP $HTTP"
+          fi
+          jq '{success, errors, "result.name": .result.name, "result.content": .result.content}' /tmp/cf.json
+
+      - name: Trigger deployment from main
+        if: ${{ inputs.trigger_deploy }}
+        continue-on-error: true
+        run: |
+          BODY=$(jq -n --arg n "$PROJECT_NAME" --arg repo "$REPO" \
+            '{
+              name: $n,
+              gitSource: { type: "github", repo: $repo, ref: "main" },
+              target: "production"
+            }')
+          HTTP=$(curl -s -o /tmp/dep.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          echo "Deployment HTTP $HTTP"
+          jq '{id, url, readyState, "alias": .alias, error}' /tmp/dep.json || cat /tmp/dep.json
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "----------------------------------------"
+          echo "Project ID:   ${PROJECT_ID:-unknown}"
+          echo "Domain:       $DOMAIN"
+          echo "Root dir:     $ROOT_DIR"
+          echo "Repo:         $REPO"
+          echo "----------------------------------------"
+          echo "Verify steps:"
+          echo "  1. Vercel dashboard → hive-imr → check 'production' env has ANTHROPIC_API_KEY"
+          echo "  2. https://hiveimr.hive.baby/api/health should return {ok:true,...}"
+          echo "  3. https://hiveimr.hive.baby/ should render HiveIMR with Marcus/Dorothy/Raymond"
+          echo "  4. AI panel — click 'Generate with AI' — should stream"
+          echo "  5. Update CLAUDE.md hivebaby/hive-imr row from BUILDING → LIVE"
