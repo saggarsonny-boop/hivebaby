@@ -1,0 +1,132 @@
+name: SSRN Watcher — Universal Document Paper
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      abstract_id:
+        description: 'SSRN Abstract ID (leave blank to auto-search)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  ssrn-watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check SSRN paper status
+        id: check
+        run: |
+          ABSTRACT_ID="${{ github.event.inputs.abstract_id }}"
+          PUBLISHED=0
+          STATUS="unknown"
+
+          fetch_and_check() {
+            local URL="$1"
+            echo "Fetching: $URL"
+            BODY=$(curl -s -L --max-time 20 \
+              -H "User-Agent: Mozilla/5.0 (compatible; HiveBot/1.0)" \
+              "$URL" 2>/dev/null)
+
+            # Strong publication signals
+            if echo "$BODY" | grep -qiE "published in|journal of|volume [0-9]|doi\.org|forthcoming|accepted for publication"; then
+              STATUS="published"
+              PUBLISHED=1
+              return
+            fi
+
+            # Download available (paper is public and accessible)
+            if echo "$BODY" | grep -qiE "download pdf|full text pdf|one-click download"; then
+              if ! echo "$BODY" | grep -qiE "under review|draft|not available for download|submit.*review"; then
+                STATUS="published"
+                PUBLISHED=1
+                return
+              fi
+            fi
+
+            # Under review / working paper
+            if echo "$BODY" | grep -qiE "under review|working paper|ssrn working paper"; then
+              STATUS="under_review"
+              return
+            fi
+
+            # Page not found / not yet submitted
+            if echo "$BODY" | grep -qiE "404|page not found|no papers found"; then
+              STATUS="not_found"
+              return
+            fi
+
+            STATUS="pending"
+          }
+
+          if [ -n "$ABSTRACT_ID" ]; then
+            fetch_and_check "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=$ABSTRACT_ID"
+          else
+            # Search by title + author
+            fetch_and_check "https://papers.ssrn.com/sol3/results.cfm?RequestTimeout=50000&new=1&nlo=&nlp=&npp=10&form_name=journalBrowse&svx=Saggar&txtSearch=Universal+Document&search=Search"
+          fi
+
+          echo "SSRN status: $STATUS"
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "published=$PUBLISHED" >> "$GITHUB_OUTPUT"
+
+      - name: Check for existing open ssrn-alert issues
+        id: dedup
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COUNT=$(curl -s \
+            "https://api.github.com/repos/saggarsonny-boop/hivebaby/issues?labels=ssrn-alert&state=open" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            | jq 'length // 0')
+          echo "open_alerts=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Existing open ssrn-alert issues: $COUNT"
+
+      - name: Ensure ssrn-alert label exists
+        if: steps.check.outputs.published == '1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s -X POST \
+            "https://api.github.com/repos/saggarsonny-boop/hivebaby/labels" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"ssrn-alert","color":"0075ca","description":"SSRN paper status alert"}' \
+            -o /dev/null || true
+
+      - name: Create SSRN LIVE issue
+        if: steps.check.outputs.published == '1' && steps.dedup.outputs.open_alerts == '0'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY=$(jq -n \
+            --arg ts "$(date -u '+%Y-%m-%d %H:%M UTC')" \
+            --arg run_id "${{ github.run_id }}" \
+            --arg repo "${{ github.repository }}" \
+            '{
+              title: "SSRN LIVE — Universal Document paper published — take action now",
+              labels: ["ssrn-alert"],
+              body: ("## SSRN Paper is Live\n\n**Detected:** " + $ts + "\n**Run:** [" + $run_id + "](https://github.com/" + $repo + "/actions/runs/" + $run_id + ")\n\n---\n\n## Immediate Actions\n\n### 1. Update universaldocument.hive.baby\n- [ ] Change SSRN button from \"Submitted\" to \"Read Paper\"\n- [ ] Add direct DOI / abstract link\n- [ ] Update `ud-inc` repo and redeploy\n\n### 2. Six outreach emails\n- [ ] **Email 1 — Academic contacts**: Law school faculty, health informatics researchers, send personal note with abstract link\n- [ ] **Email 2 — Health tech press**: HIMSS, Health IT Analyst, mHealth Intelligence — press release + paper link\n- [ ] **Email 3 — Legal sector**: Legal technology journalists, LegalTech News, Above the Law\n- [ ] **Email 4 — LinkedIn**: Announcement post with key findings and paper link\n- [ ] **Email 5 — Medium**: Add SSRN link and \"Published\" update to both Part 1 and Part 2 articles\n- [ ] **Email 6 — Direct network**: Personal contacts, potential consulting clients — one-line note with link\n\n### 3. Social / content updates\n- [ ] LinkedIn post (tag relevant institutions and journals)\n- [ ] HiveAdminSupport auto-reply updated to mention published paper\n- [ ] hive.baby planet tooltip for UD cell updated with paper link\n\n---\n*Auto-generated by ssrn-watcher.yml. Close once all actions completed.*")
+            }')
+
+          curl -s -X POST \
+            "https://api.github.com/repos/saggarsonny-boop/hivebaby/issues" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            | jq -r '"Issue created: " + (.html_url // "failed")'
+
+      - name: Status report
+        run: |
+          echo "SSRN status: ${{ steps.check.outputs.status }}"
+          if [ "${{ steps.check.outputs.published }}" = "1" ]; then
+            echo "Paper appears LIVE — issue created (if not duplicate)"
+          else
+            echo "Paper not yet published (status: ${{ steps.check.outputs.status }}) — will check again tomorrow"
+          fi
