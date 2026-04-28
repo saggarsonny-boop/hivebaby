@@ -1,6 +1,6 @@
 "use client";
 // @ts-nocheck
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useContext, createContext } from "react";
 
 /* ─── STYLES ──────────────────────────────────────────────── */
 const injectStyles = () => {
@@ -332,6 +332,8 @@ const PATIENTS = [
   },
 ];
 
+const PatientsCtx = createContext(PATIENTS);
+
 /* ─── UTILS ───────────────────────────────────────────────── */
 const CTX_COLOR={ed:"#E53030",inpatient:"#0FA896",radiology:"#0BB4CC",pathology:"#8B52F5"};
 const CTX_LABEL={ed:"ED",inpatient:"Inpatient",radiology:"Radiology",pathology:"Pathology"};
@@ -368,10 +370,16 @@ const useAIStream=()=>{
 };
 
 /* ─── AI PANEL ────────────────────────────────────────────── */
-const AIPanel=({title,desc,getPrompt,onDismiss,currentUser})=>{
+const AIPanel=({title,desc,getPrompt,onDismiss,currentUser,patientId,role})=>{
   const{status,text,error,generate,reset}=useAIStream();
   const[edited,setEdited]=useState("");const[signed,setSigned]=useState(null);
   const isStreaming=status==="streaming";const isDone=status==="done";
+  const acceptAndSign=()=>{
+    const ts=nowTime();
+    const finalText=edited||text;
+    setSigned({user:currentUser,ts,text:finalText});
+    fetch("/api/ai/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({patientId:patientId??null,role:role||"unknown",promptType:title,prompt:getPrompt(),output:text,edited:edited||null,signed:true,signedBy:currentUser,signedAt:new Date().toISOString()})}).catch(()=>{});
+  };
   return(
     <div style={{background:"var(--surf2)",border:"1px solid var(--ai)",borderRadius:8,padding:16,boxShadow:"0 0 0 1px #7C3AED15,0 8px 32px #00000060"}}>
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
@@ -385,7 +393,7 @@ const AIPanel=({title,desc,getPrompt,onDismiss,currentUser})=>{
       {signed&&(<div style={{marginBottom:12}}><div style={{background:"var(--green)0C",border:"1px solid var(--green)30",borderRadius:6,padding:"10px 12px",fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{signed.text}</div><div style={{marginTop:8,display:"flex",gap:8,fontSize:11,color:"var(--green)"}}><span style={{fontWeight:700}}>✓ Signed</span><span style={{color:"var(--tx3)"}}>·</span><span>{signed.user}</span><span style={{color:"var(--tx3)"}}>·</span><span style={{fontFamily:"var(--ffm)"}}>{signed.ts}</span><span style={{color:"var(--tx3)"}}>·</span><span style={{color:"var(--tx3)"}}>Audit-logged</span></div></div>)}
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
         {status==="idle"&&<button onClick={()=>{setEdited("");setSigned(null);generate(getPrompt());}} style={{display:"flex",alignItems:"center",gap:7,padding:"7px 16px",borderRadius:5,background:"var(--ai)",color:"#fff",fontSize:12,fontWeight:600}}><span>✦</span>Generate with AI</button>}
-        {isDone&&!signed&&<><button onClick={()=>setSigned({user:currentUser,ts:nowTime(),text:edited||text})} style={{padding:"7px 16px",borderRadius:5,background:"var(--green)",color:"#fff",fontSize:12,fontWeight:600}}>Accept & Sign</button><button onClick={()=>{setEdited("");setSigned(null);generate(getPrompt());}} style={{padding:"7px 14px",borderRadius:5,border:"1px solid var(--bdr)",color:"var(--tx2)",fontSize:12}}>Regenerate</button></>}
+        {isDone&&!signed&&<><button onClick={acceptAndSign} style={{padding:"7px 16px",borderRadius:5,background:"var(--green)",color:"#fff",fontSize:12,fontWeight:600}}>Accept & Sign</button><button onClick={()=>{setEdited("");setSigned(null);generate(getPrompt());}} style={{padding:"7px 14px",borderRadius:5,border:"1px solid var(--bdr)",color:"var(--tx2)",fontSize:12}}>Regenerate</button></>}
         {isStreaming&&<button onClick={reset} style={{padding:"7px 14px",borderRadius:5,border:"1px solid var(--red)40",color:"var(--red)",fontSize:12}}>Stop</button>}
         {signed&&<button onClick={()=>setSigned(null)} style={{padding:"7px 14px",borderRadius:5,border:"1px solid var(--bdr)",color:"var(--tx3)",fontSize:11}}>Edit</button>}
         <span style={{marginLeft:"auto",fontSize:10,color:"var(--tx3)"}}>hiveIMR AI · Human review required</span>
@@ -482,7 +490,11 @@ const OrderEntryTab=({patient,canWrite,currentUser})=>{
   const addToCart=(o)=>{if(!cart.find(c=>c.id===o.id)) setCart(c=>[...c,{...o,priority,dx,note:""}]);};
   const removeFromCart=(id)=>setCart(c=>c.filter(x=>x.id!==id));
 
-  const handleSubmit=()=>{setSubmitted(true);setTimeout(()=>setSubmitted(false),3000);setCart([]);};
+  const handleSubmit=()=>{
+    const submittedCart=cart;
+    setSubmitted(true);setTimeout(()=>setSubmitted(false),3000);setCart([]);
+    fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({patientId:patient.id,orderType:"bundle",orderData:submittedCart,priority,dx,note:null,submittedBy:currentUser})}).catch(()=>{});
+  };
 
   const catColor={labs_inhouse:"var(--lab)",labs_outside:"var(--cyan)",imaging:"var(--acc)",consults:"var(--purple)",procedures:"var(--amber)"};
 
@@ -943,7 +955,7 @@ const ClinicalView=({patient,setMod,currentUser,readOnly,roleConf,role})=>{
         </Sec>
         <Sec title="Medications" accent="var(--cyan)">{patient.meds.map((m,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:7,padding:"5px 0",borderBottom:"1px solid var(--bdr2)"}}><span style={{fontSize:12,flex:1}}>{m.name}</span><span style={{fontSize:10,color:"var(--tx3)"}}>{m.given}</span><Pill color={statusColor(m.status)} small>{m.status}</Pill></div>))}</Sec>
         <Sec title="Active Orders" accent="var(--acc)">{patient.orders.map((o,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:7,padding:"5px 0",borderBottom:"1px solid var(--bdr2)"}}><div style={{width:5,height:5,borderRadius:2,flexShrink:0,background:statusColor(o.priority||"routine")}}/><span style={{fontSize:11,flex:1}}>{o.name}</span><span style={{fontSize:9,color:"var(--tx3)"}}>{o.owner?.split(" ")[0]}</span><Pill color={statusColor(o.status)} small>{o.status}</Pill></div>))}</Sec>
-        {showNoteAI&&(<div style={{gridColumn:"1/-1"}}><AIPanel title="Progress Note" desc="Draft progress note from clinical data." getPrompt={()=>`A&P progress note for ${patient.name}, ${patient.age}yo. CC: ${patient.cc}. Problems: ${patient.problems.filter(p=>p.active).map(p=>p.name+" ("+p.icd+")").join(", ")}. Vitals: BP ${patient.vitals.bp}, HR ${patient.vitals.hr}, SpO2 ${patient.vitals.spo2}. Labs: ${patient.labs.map(l=>`${l.name} ${l.val} [${l.flag}]`).join(" | ")}. Under 200 words, mark [VERIFY] where needed.`} onDismiss={()=>setShowNoteAI(false)} currentUser={currentUser}/></div>)}
+        {showNoteAI&&(<div style={{gridColumn:"1/-1"}}><AIPanel title="Progress Note" desc="Draft progress note from clinical data." getPrompt={()=>`A&P progress note for ${patient.name}, ${patient.age}yo. CC: ${patient.cc}. Problems: ${patient.problems.filter(p=>p.active).map(p=>p.name+" ("+p.icd+")").join(", ")}. Vitals: BP ${patient.vitals.bp}, HR ${patient.vitals.hr}, SpO2 ${patient.vitals.spo2}. Labs: ${patient.labs.map(l=>`${l.name} ${l.val} [${l.flag}]`).join(" | ")}. Under 200 words, mark [VERIFY] where needed.`} onDismiss={()=>setShowNoteAI(false)} currentUser={currentUser} patientId={patient.id} role={role}/></div>)}
       </div>
     </div>
   );
@@ -951,6 +963,7 @@ const ClinicalView=({patient,setMod,currentUser,readOnly,roleConf,role})=>{
 
 /* ─── DASHBOARD ───────────────────────────────────────────── */
 const Dashboard=({onSelect,roleConf,role,setMod})=>{
+  const PATIENTS=useContext(PatientsCtx);
   const isNurse=role==="nurse";
   const allTasks=Object.values(NURSING_DATA).flatMap(nd=>nd.tasks);
   const odCount=allTasks.filter(t=>t.status==="overdue").length;
@@ -990,6 +1003,7 @@ const RADIOLOGY_QUEUE=[
 ];
 
 const Radiology=({currentUser,roleConf,role})=>{
+  const PATIENTS=useContext(PatientsCtx);
   const[active,setActive]=useState(RADIOLOGY_QUEUE[1]);
   const[reportState,setReportState]=useState("prelim");
   const[showAI,setShowAI]=useState(false);
@@ -1039,7 +1053,7 @@ const Radiology=({currentUser,roleConf,role})=>{
           <div style={{background:"var(--surf2)",border:"1px solid var(--bdr2)",borderRadius:7,padding:12}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,flexWrap:"wrap"}}><span style={{fontWeight:700,fontSize:13}}>Report</span><Pill color={stateColor[reportState]} small>{stateLabel[reportState]}</Pill>{isOwner&&active?.flags.includes("COMPARISON AVAILABLE")&&<Pill color="var(--cyan)" small>Comparison</Pill>}<div style={{marginLeft:"auto",display:"flex",gap:6}}>{isOwner&&<button onClick={()=>setShowAI(v=>!v)} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,padding:"3px 9px",borderRadius:4,background:showAI?"var(--ai)30":"var(--ai)18",border:`1px solid ${showAI?"var(--ai)":"var(--ai)40"}`,color:"var(--ai)",fontWeight:600}}><span>✦</span>AI Impression</button>}{isOwner&&reportState!=="final"&&<Btn small color="var(--green)" onClick={()=>setReportState("final")}>Sign Final</Btn>}</div></div>
             {patient?.imaging.filter(i=>i.state!=="ordered").map((img,i)=>(<div key={i} style={{marginBottom:8,padding:"7px 10px",background:"var(--surf3)",borderRadius:5,borderLeft:`3px solid ${flagColor(img.flag)}`}}><div style={{fontSize:9,fontWeight:700,color:flagColor(img.flag),letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:3}}>{img.type} · {img.ts}</div><div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6}}>{img.desc}</div></div>))}
-            {showAI&&isOwner?(<AIPanel title="Radiology Impression" desc="Generate structured impression from findings and clinical context." getPrompt={()=>`Radiology IMPRESSION section for ${active?.study}. Clinical: ${active?.clinical}. Findings: ${patient?.imaging.map(i=>`${i.type}: ${i.desc}`).join(" | ")}. 3-5 sentences, standard radiology language.`} onDismiss={()=>setShowAI(false)} currentUser={currentUser}/>) : (<div><div style={{fontSize:9,fontWeight:700,color:"var(--tx3)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:5}}>IMPRESSION</div><textarea style={{width:"100%",background:"var(--surf3)",border:"1px solid var(--bdr)",borderRadius:5,padding:"7px 10px",color:"var(--tx)",fontSize:12,resize:"vertical",minHeight:52,lineHeight:1.6}} placeholder="Dictate or use AI Impression…"/></div>)}
+            {showAI&&isOwner?(<AIPanel title="Radiology Impression" desc="Generate structured impression from findings and clinical context." getPrompt={()=>`Radiology IMPRESSION section for ${active?.study}. Clinical: ${active?.clinical}. Findings: ${patient?.imaging.map(i=>`${i.type}: ${i.desc}`).join(" | ")}. 3-5 sentences, standard radiology language.`} onDismiss={()=>setShowAI(false)} currentUser={currentUser} patientId={patient?.id} role={role}/>) : (<div><div style={{fontSize:9,fontWeight:700,color:"var(--tx3)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:5}}>IMPRESSION</div><textarea style={{width:"100%",background:"var(--surf3)",border:"1px solid var(--bdr)",borderRadius:5,padding:"7px 10px",color:"var(--tx)",fontSize:12,resize:"vertical",minHeight:52,lineHeight:1.6}} placeholder="Dictate or use AI Impression…"/></div>)}
           </div>
         </div>
       </div>
@@ -1049,6 +1063,7 @@ const Radiology=({currentUser,roleConf,role})=>{
 
 /* ─── NURSING MODULES (compact) ──────────────────────────── */
 const ShiftBoard=({onSelectPatient,chartPatient,setChartPatient})=>{
+  const PATIENTS=useContext(PatientsCtx);
   const pts=PATIENTS.filter(p=>NURSING_DATA[p.id]);
   const allTasks=pts.flatMap(p=>(NURSING_DATA[p.id]?.tasks||[]).map(t=>({...t,patient:p})));
   const overdue=allTasks.filter(t=>t.status==="overdue");const due=allTasks.filter(t=>t.status==="due");const done=allTasks.filter(t=>t.status==="done");
@@ -1123,7 +1138,7 @@ const NursingHandoff=({patient,setMod})=>{
       <Sec title="Watch / Unresolved" accent="var(--red)">{odTasks.map(t=>(<div key={t.id} style={{display:"flex",gap:6,padding:"5px 0",borderBottom:"1px solid var(--bdr2)"}}><span style={{color:"var(--red)"}}>⚠</span><div><div style={{fontSize:11,fontWeight:600,color:"var(--red)"}}>{t.label}</div><div style={{fontSize:10,color:"var(--tx3)"}}>Overdue since {t.due}</div></div></div>))}{patient.handoff.watch.map((w,i)=>(<div key={i} style={{display:"flex",gap:6,padding:"5px 0",borderBottom:"1px solid var(--bdr2)"}}><span style={{color:"var(--amber)"}}>⚠</span><span style={{fontSize:11}}>{w}</span></div>))}{odTasks.length===0&&patient.handoff.watch.length===0&&<div style={{color:"var(--green)",fontSize:12}}>✓ No watch items</div>}</Sec>
       <Sec title="Done This Shift" accent="var(--green)">{doneTasks.map(t=>(<div key={t.id} style={{display:"flex",gap:6,padding:"4px 0",borderBottom:"1px solid var(--bdr2)"}}><span style={{color:"var(--green)",fontWeight:700,fontSize:11}}>✓</span><span style={{fontSize:11,color:"var(--tx3)",textDecoration:"line-through"}}>{t.label}</span></div>))}{doneTasks.length===0&&<div style={{color:"var(--tx3)",fontSize:11}}>None yet.</div>}</Sec>
       <Sec title="Pending for Next Shift" accent="var(--amber)">{[...pendingTasks,...patient.handoff.pending.map(p=>({id:"h_"+p,label:p,due:""}))].map((t,i)=>(<div key={t.id} style={{display:"flex",gap:6,padding:"5px 0",borderBottom:"1px solid var(--bdr2)"}}><span style={{color:"var(--amber)"}}>◌</span><div><div style={{fontSize:11}}>{t.label}</div>{t.due&&<div style={{fontSize:9,color:"var(--tx3)"}}>Due {t.due}</div>}</div></div>))}</Sec>
-      <div style={{gridColumn:"1/-1"}}><Sec title="SBAR Handoff Note" accent="var(--nurse)" action={<Btn small outline color="var(--nurse)" onClick={()=>setShowAI(v=>!v)}>{showAI?"Hide AI":"✦ AI Draft"}</Btn>}>{showAI&&<div style={{marginBottom:8}}><AIPanel title="SBAR Handoff" desc="Generate SBAR nursing handoff from shift data." getPrompt={()=>`SBAR nursing handoff for ${patient.name}, ${patient.age}yo, ${nd.room}. Dx: ${patient.cc}. Code: ${patient.code}. Vitals: BP ${patient.vitals.bp}, HR ${patient.vitals.hr}, SpO2 ${patient.vitals.spo2}, Pain ${nd.painScore}/10. I/O: ${nd.io.in}mL in / ${nd.io.out}mL out. Overdue: ${nd.tasks.filter(t=>t.status==="overdue").map(t=>t.label).join(", ")||"None"}. Under 150 words.`} onDismiss={()=>setShowAI(false)} currentUser="Alex Torres, RN"/></div>}{!showAI&&<div style={{background:"var(--surf3)",borderRadius:5,padding:"8px 11px",fontSize:12,color:nd.handoffNotes?"var(--tx2)":"var(--tx3)",lineHeight:1.7,border:"1px solid var(--nurse)1A",minHeight:44}}>{nd.handoffNotes||"No handoff note yet."}</div>}</Sec></div>
+      <div style={{gridColumn:"1/-1"}}><Sec title="SBAR Handoff Note" accent="var(--nurse)" action={<Btn small outline color="var(--nurse)" onClick={()=>setShowAI(v=>!v)}>{showAI?"Hide AI":"✦ AI Draft"}</Btn>}>{showAI&&<div style={{marginBottom:8}}><AIPanel title="SBAR Handoff" desc="Generate SBAR nursing handoff from shift data." getPrompt={()=>`SBAR nursing handoff for ${patient.name}, ${patient.age}yo, ${nd.room}. Dx: ${patient.cc}. Code: ${patient.code}. Vitals: BP ${patient.vitals.bp}, HR ${patient.vitals.hr}, SpO2 ${patient.vitals.spo2}, Pain ${nd.painScore}/10. I/O: ${nd.io.in}mL in / ${nd.io.out}mL out. Overdue: ${nd.tasks.filter(t=>t.status==="overdue").map(t=>t.label).join(", ")||"None"}. Under 150 words.`} onDismiss={()=>setShowAI(false)} currentUser="Alex Torres, RN" patientId={patient.id} role="nurse"/></div>}{!showAI&&<div style={{background:"var(--surf3)",borderRadius:5,padding:"8px 11px",fontSize:12,color:nd.handoffNotes?"var(--tx2)":"var(--tx3)",lineHeight:1.7,border:"1px solid var(--nurse)1A",minHeight:44}}>{nd.handoffNotes||"No handoff note yet."}</div>}</Sec></div>
       <div style={{gridColumn:"1/-1"}}><HCard style={{padding:10}}><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><span style={{fontSize:11,fontWeight:700,color:"var(--nurse)"}}>Completeness</span><div style={{flex:1,display:"flex",gap:7,flexWrap:"wrap"}}>{[{l:"Vitals charted",ok:nd.lastVitals!=="—"},{l:"Pain assessed",ok:nd.lastPain!=="—"},{l:"I/O documented",ok:nd.io.in>0||nd.io.out>0},{l:"Shift note",ok:!!nd.handoffNotes},{l:"Overdue addressed",ok:odTasks.length===0}].map((c,i)=>(<div key={i} style={{display:"flex",gap:4,fontSize:11}}><span style={{color:c.ok?"var(--green)":"var(--red)"}}>{c.ok?"✓":"✗"}</span><span style={{color:c.ok?"var(--tx)":"var(--tx3)"}}>{c.l}</span></div>))}</div></div></HCard></div>
     </div>
   </div>);
@@ -1142,7 +1157,7 @@ const Handoff=({patient,setMod,currentUser,roleConf})=>{
     <div style={{background:"var(--surf2)",border:"1px solid var(--bdr)",borderRadius:6,padding:"9px 12px",marginBottom:10,borderLeft:`3px solid ${CTX_COLOR[patient.ctx]}`}}>
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}><span style={{fontWeight:700,fontSize:13}}>{patient.name}</span><span style={{color:"var(--tx2)",fontSize:12}}>{patient.age}yo · MRN {patient.mrn}</span><Pill color={CTX_COLOR[patient.ctx]}>{CTX_LABEL[patient.ctx]}</Pill>{patient.code!=="Full Code"&&<Pill color="var(--amber)">{patient.code}</Pill>}</div>
     </div>
-    {showAI&&<div style={{marginBottom:10}}><AIPanel title="Physician Handoff" desc="Generate complete physician handoff." getPrompt={()=>`Physician handoff for ${patient.name}, ${patient.age}yo. CC: ${patient.cc}. Problems: ${patient.problems.filter(p=>p.active).map(p=>p.name).join(", ")}. Vitals: BP ${patient.vitals.bp}, SpO2 ${patient.vitals.spo2}. Labs: ${patient.labs.map(l=>`${l.name} ${l.val} [${l.flag}]`).join(" | ")}.\n\nONE-LINER:\nWATCH ITEMS:\nPENDING:\nTO-DO:\n\nDirect, no markdown.`} onDismiss={()=>setShowAI(false)} currentUser={currentUser}/></div>}
+    {showAI&&<div style={{marginBottom:10}}><AIPanel title="Physician Handoff" desc="Generate complete physician handoff." getPrompt={()=>`Physician handoff for ${patient.name}, ${patient.age}yo. CC: ${patient.cc}. Problems: ${patient.problems.filter(p=>p.active).map(p=>p.name).join(", ")}. Vitals: BP ${patient.vitals.bp}, SpO2 ${patient.vitals.spo2}. Labs: ${patient.labs.map(l=>`${l.name} ${l.val} [${l.flag}]`).join(" | ")}.\n\nONE-LINER:\nWATCH ITEMS:\nPENDING:\nTO-DO:\n\nDirect, no markdown.`} onDismiss={()=>setShowAI(false)} currentUser={currentUser} patientId={patient.id} role="physician"/></div>}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
       <div style={{gridColumn:"1/-1"}}><Sec title="One-Liner" accent="var(--acc)"><div style={{background:"var(--surf3)",borderRadius:5,padding:"9px 12px",border:"1px solid var(--acc)1A",fontSize:14,lineHeight:1.7}}>{h.one_liner}</div></Sec></div>
       <Sec title="Watch Items" accent="var(--amber)">{h.watch.map((w,i)=>(<div key={i} style={{display:"flex",gap:6,padding:"6px 0",borderBottom:"1px solid var(--bdr2)"}}><span style={{color:"var(--amber)"}}>⚠</span><span style={{fontSize:13,lineHeight:1.5}}>{w}</span></div>))}</Sec>
@@ -1230,7 +1245,7 @@ const UM=({patient,setMod,currentUser,roleConf,role})=>{
   const um=patient.um;
   return(<div className="mod-enter"><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:7}}><div><h2 style={{fontWeight:700,fontSize:20,marginBottom:1}}>UM / Prior Auth</h2><div style={{fontSize:12,color:"var(--tx2)"}}>Payer: {um.payer} · {um.loc}</div></div>{isOwner&&<div style={{display:"flex",gap:6,alignItems:"center"}}><Pill color={um.statusOk?"var(--green)":"var(--amber)"}>{um.status}</Pill>{roleConf.aiEnabled&&<button onClick={()=>setShowAI(v=>!v)} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:4,fontSize:11,fontWeight:600,background:showAI?"var(--ai)30":"var(--ai)18",border:`1px solid ${showAI?"var(--ai)":"var(--ai)40"}`,color:"var(--ai)"}}><span>✦</span>Generate</button>}</div>}</div>
   <div style={{background:"var(--surf2)",border:"1px solid var(--bdr)",borderRadius:6,padding:"8px 12px",marginBottom:10,borderLeft:`3px solid ${CTX_COLOR[patient.ctx]}`}}><div style={{fontWeight:700,fontSize:12,marginBottom:1}}>{patient.name} · {patient.age}yo</div><div style={{fontSize:11,color:"var(--tx2)"}}>{patient.attending}</div></div>
-  {showAI&&isOwner&&<div style={{marginBottom:10}}><AIPanel title="Prior Authorization Letter" desc="Generate prior auth from clinical data." getPrompt={()=>`Prior auth letter for ${patient.name}, ${patient.age}yo. Payer: ${um.payer}. LOC: ${um.loc}. Dx: ${patient.cc}. Criteria met: ${um.met.join("; ")}. Missing: ${um.missing.join("; ")||"None"}. Under 250 words, flag missing with [PENDING].`} onDismiss={()=>setShowAI(false)} currentUser={currentUser}/></div>}
+  {showAI&&isOwner&&<div style={{marginBottom:10}}><AIPanel title="Prior Authorization Letter" desc="Generate prior auth from clinical data." getPrompt={()=>`Prior auth letter for ${patient.name}, ${patient.age}yo. Payer: ${um.payer}. LOC: ${um.loc}. Dx: ${patient.cc}. Criteria met: ${um.met.join("; ")}. Missing: ${um.missing.join("; ")||"None"}. Under 250 words, flag missing with [PENDING].`} onDismiss={()=>setShowAI(false)} currentUser={currentUser} patientId={patient.id} role={role}/></div>}
   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><Sec title="Criteria Met" accent="var(--green)">{um.met.map((c,i)=>(<div key={i} style={{display:"flex",gap:6,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--bdr2)"}}><span style={{color:"var(--green)",fontWeight:700,fontSize:11}}>✓</span><span style={{fontSize:12}}>{c}</span></div>))}</Sec><Sec title="Missing" accent="var(--red)">{um.missing.length>0?um.missing.map((m,i)=>(<div key={i} style={{display:"flex",gap:6,alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--bdr2)"}}><span style={{color:"var(--red)",fontSize:11}}>✗</span><span style={{fontSize:12}}>{m}</span></div>)):<div style={{color:"var(--green)",fontSize:12}}>✓ No missing documentation</div>}</Sec></div></div>);
 };
 
@@ -1341,8 +1356,17 @@ export default function App(){
   const[mod,setMod]=useState("dashboard");
   const[patient,setPatient]=useState(null);
   const[chartPatient,setChartPatient]=useState(null);
+  const[patients,setPatients]=useState(PATIENTS);
   const roleConf=ROLE_CONFIG[role];
   const currentUser=ROLES.find(r=>r.id===role)?.label||"Unknown";
+
+  useEffect(()=>{
+    let cancelled=false;
+    fetch("/api/patients").then(r=>r.ok?r.json():Promise.reject(r.status)).then(d=>{
+      if(!cancelled && Array.isArray(d?.patients) && d.patients.length>0) setPatients(d.patients);
+    }).catch(()=>{ /* keep hardcoded fallback */ });
+    return()=>{cancelled=true;};
+  },[]);
 
   useEffect(()=>{
     const nc=ROLE_CONFIG[role];setMod(nc.defaultMod);setChartPatient(null);
@@ -1379,10 +1403,10 @@ export default function App(){
     }
   };
 
-  return(<div style={{minHeight:"100vh",background:"var(--bg)"}}>
+  return(<PatientsCtx.Provider value={patients}><div style={{minHeight:"100vh",background:"var(--bg)"}}>
     <Topbar role={role} setRole={setRole} roleConf={roleConf}/>
     <Sidebar active={mod} setActive={setMod} patient={patient} roleConf={roleConf} role={role}/>
     <main style={{marginLeft:194,marginTop:52,padding:"18px 22px",minHeight:"calc(100vh - 52px)",paddingBottom:chartPatient?"170px":"18px"}}>{renderMod()}</main>
     {chartPatient&&<QuickChartDrawer patient={chartPatient} nd={NURSING_DATA[chartPatient.id]} onClose={()=>setChartPatient(null)} onSave={()=>setChartPatient(null)}/>}
-  </div>);
+  </div></PatientsCtx.Provider>);
 }
