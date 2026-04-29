@@ -1,0 +1,58 @@
+name: Reddit Monitor - Hive Lead Finder
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  reddit-monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout hivebaby
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Ensure labels exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          create_label() {
+            curl -s -X POST \
+              "https://api.github.com/repos/${{ github.repository }}/labels" \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"$1\",\"color\":\"$2\",\"description\":\"$3\"}" \
+              -o /dev/null || true
+          }
+          create_label "reddit-lead"           "0075ca" "Reddit thread worth a reply"
+          create_label "HiveMoon"              "c8960a" "HiveMoon engine lead"
+          create_label "HiveField"             "b60205" "HiveField engine lead"
+          create_label "HiveClock"             "0e8a16" "HiveClock engine lead"
+          create_label "HiveClarity"           "1d76db" "HiveClarity engine lead"
+          create_label "HiveStrength"          "e4e669" "HiveStrength engine lead"
+          create_label "HiveBodyLog"           "f9d0c4" "HiveBodyLog engine lead"
+          create_label "WhoTextedMe"           "d93f0b" "WhoTextedMe engine lead"
+          create_label "HivePhoto"             "0052cc" "HivePhoto engine lead"
+          create_label "HiveAestheticBestie"   "e99695" "HiveAestheticBestie engine lead"
+          create_label "HiveMicroRitual"       "c2e0c6" "HiveMicroRitual engine lead"
+          create_label "SovereignArbitrage"    "5319e7" "SovereignArbitrage engine lead"
+          create_label "UniversalDocument"     "bfd4f2" "Universal Document suite lead"
+          create_label "HiveEngineBuilder"     "fef2c0" "HiveEngineBuilder engine lead"
+
+      - name: Run Reddit monitor
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python scripts/reddit_monitor.py
