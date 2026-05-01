@@ -291,13 +291,70 @@ Copy and paste this as your comment:
     return issue_title, body
 
 
+# -- Email summary ------------------------------------------------------------
+
+def send_summary_email(issues_created: int, issues_skipped: int) -> None:
+    api_key = os.environ.get("RESEND_API_KEY")
+    if not api_key:
+        print("  RESEND_API_KEY not set — skipping email summary")
+        return
+
+    issues_url = (
+        f"https://github.com/{GITHUB_REPO}/issues"
+        "?q=is%3Aopen+label%3Areddit-lead"
+    )
+
+    if issues_created == 0:
+        subject = "Reddit Monitor — no new leads today"
+        body    = (
+            f"Daily Reddit scan complete.\n\n"
+            f"New leads:              0\n"
+            f"Already filed (skipped): {issues_skipped}\n\n"
+            "Nothing to post today."
+        )
+    else:
+        s = "s" if issues_created != 1 else ""
+        subject = f"Reddit Monitor — {issues_created} new lead{s} filed"
+        body    = (
+            f"Daily Reddit scan found {issues_created} new thread{s} worth a reply.\n\n"
+            f"New leads:              {issues_created}\n"
+            f"Already filed (skipped): {issues_skipped}\n\n"
+            f"Review and reply:\n{issues_url}\n\n"
+            "Each issue has a pre-written reply ready to copy. ~2 minutes per lead."
+        )
+
+    payload = json.dumps({
+        "from":    "hive@hive.baby",
+        "to":      ["saggarsonny@gmail.com"],
+        "subject": subject,
+        "text":    body,
+    }).encode()
+
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type":  "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            print(f"  Email sent (HTTP {resp.status}): {subject}")
+    except urllib.error.HTTPError as e:
+        print(f"  Email error {e.code}: {e.read().decode(errors='replace')[:200]}")
+    except Exception as e:
+        print(f"  Email error: {e}")
+
+
 # -- Main ---------------------------------------------------------------------
 
 def main() -> None:
     print("Reddit Monitor starting...")
     print(f"Repo: {GITHUB_REPO}")
 
-    seen_urls     = get_existing_lead_urls()
+    seen_urls      = get_existing_lead_urls()
     issues_created = 0
     issues_skipped = 0
 
@@ -334,6 +391,8 @@ def main() -> None:
                     time.sleep(0.5)
 
     print(f"\nDone. Created: {issues_created} | Skipped (deduplicated): {issues_skipped}")
+    print("\nSending email summary...")
+    send_summary_email(issues_created, issues_skipped)
 
 
 if __name__ == "__main__":
