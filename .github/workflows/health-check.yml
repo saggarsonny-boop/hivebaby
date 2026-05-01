@@ -24,7 +24,7 @@ jobs:
             local NAME="$1"
             local URL="$2"
             STATUS=$(curl -s -o /tmp/resp_body.txt -w "%{http_code}" \
-              --max-time 20 -L --retry 1 "$URL" 2>/dev/null)
+              --max-time 20 -L --retry 1 "$URL" 2>/dev/null) || STATUS="000"
             if [ "$STATUS" = "500" ] || [ "$STATUS" = "000" ]; then
               echo "FAIL: $URL returned $STATUS"
               BODY=$(head -c 150 /tmp/resp_body.txt | tr -d '\000')
@@ -54,7 +54,9 @@ jobs:
           check_url "HiveAestheticBestie"    "https://hiveaestheticbestie.hive.baby"
           check_url "HiveMicroRitual"        "https://hivemicroritual.hive.baby"
           check_url "SovereignArbitrage"     "https://sovereignarbitrage.hive.baby"
-          check_url "QueenBee"               "https://queenbee.hive.baby"
+          check_url "HiveIMR"               "https://hiveimr.hive.baby/api/health"
+          check_url "HivePlainScan"         "https://plainscan.hive.baby/api/health"
+          check_url "QueenBee"              "https://queenbee.hive.baby"
           # ── UD ecosystem ───────────────────────────────────────────────────────────────
           check_url "ud.hive.baby"           "https://ud.hive.baby"
           check_url "UDUtilities"            "https://utilities.hive.baby"
@@ -125,6 +127,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           FAILURES=$(cat /tmp/failures.txt)
+
+          # Dedup: skip if an open bug issue already contains the same failure
+          EXISTING=$(curl -s \
+            "https://api.github.com/repos/${{ github.repository }}/issues?labels=bug&state=open&per_page=10" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json")
+          FIRST_FAILURE=$(echo "$FAILURES" | head -1)
+          ALREADY_OPEN=$(echo "$EXISTING" | jq --arg v "$FIRST_FAILURE" '[.[] | select(.body | contains($v))] | length')
+          if [ "${ALREADY_OPEN:-0}" -gt 0 ]; then
+            echo "Open issue already exists for this failure — skipping duplicate"
+            exit 0
+          fi
+
           TITLE="Health check failed — $(date -u '+%Y-%m-%d %H:%M UTC')"
 
           BODY=$(jq -n \
