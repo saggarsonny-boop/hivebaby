@@ -1,0 +1,6 @@
+monitored_workflows: all
+auto_fix_enabled: true
+auto_fix_whitelist:
+  - .github/workflows/*.yml
+alert_on_unknown: true
+max_auto_prs_per_day: 5
