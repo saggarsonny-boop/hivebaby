@@ -1,0 +1,171 @@
+name: Cloudflare — Mint scoped token & rotate CF_TOKEN
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mint CF API token and rotate GitHub secret
+        env:
+          CF_GLOBAL_KEY: ${{ secrets.CF_GLOBAL_KEY }}
+          CF_EMAIL:      ${{ secrets.CF_EMAIL }}
+          CF_ZONE:       ${{ secrets.CF_ZONE }}
+          GH_PAT:        ${{ secrets.GH_PAT }}
+          REPO:          ${{ github.repository }}
+        run: |
+          set -uo pipefail
+
+          die() { echo "::error::$1"; exit 1; }
+
+          [ -n "${CF_GLOBAL_KEY:-}" ] || die "CF_GLOBAL_KEY secret missing"
+          [ -n "${CF_EMAIL:-}" ]      || die "CF_EMAIL secret missing"
+          [ -n "${CF_ZONE:-}" ]       || die "CF_ZONE secret missing"
+          [ -n "${GH_PAT:-}" ]        || die "GH_PAT secret missing"
+
+          # ---- 1. Look up DNS:Write + Zone:Read permission group IDs.
+          echo "===== 1. Fetching permission groups ====="
+          PERMS=$(curl -s \
+            -H "X-Auth-Email: $CF_EMAIL" \
+            -H "X-Auth-Key: $CF_GLOBAL_KEY" \
+            -H "Content-Type: application/json" \
+            "https://api.cloudflare.com/client/v4/user/tokens/permission_groups")
+
+          PERMS_OK=$(echo "$PERMS" | jq -r '.success // false')
+          if [ "$PERMS_OK" != "true" ]; then
+            echo "Permission group fetch failed:"
+            echo "$PERMS" | jq '{success, errors}'
+            die "Cloudflare did not accept the Global API Key for permission_groups."
+          fi
+
+          DNS_EDIT_ID=$(echo "$PERMS"  | jq -r '.result[] | select(.name=="DNS Write") | .id' | head -1)
+          ZONE_READ_ID=$(echo "$PERMS" | jq -r '.result[] | select(.name=="Zone Read") | .id' | head -1)
+
+          if [ -z "$DNS_EDIT_ID" ] || [ -z "$ZONE_READ_ID" ]; then
+            echo "Available zone-scoped permission groups (for debugging):"
+            echo "$PERMS" | jq '.result[] | select((.scopes // []) | any(. | tostring | contains("zone"))) | {id, name}'
+            die "Could not resolve DNS Write or Zone Read permission group ID."
+          fi
+          echo "DNS Write group:  $DNS_EDIT_ID"
+          echo "Zone Read group:  $ZONE_READ_ID"
+
+          # ---- 2. Mint the new token, scoped to hive.baby only.
+          echo
+          echo "===== 2. Minting new API token ====="
+          PAYLOAD=$(jq -n \
+            --arg dnsId  "$DNS_EDIT_ID" \
+            --arg zoneId "$ZONE_READ_ID" \
+            --arg zone   "$CF_ZONE" \
+            --arg name   "hive.baby DNS Edit (auto-minted by cf-mint-and-rotate-token)" \
+            '{
+              name: $name,
+              policies: [
+                {
+                  effect: "allow",
+                  resources: { ("com.cloudflare.api.account.zone." + $zone): "*" },
+                  permission_groups: [ {id: $dnsId}, {id: $zoneId} ]
+                }
+              ]
+            }')
+
+          MINT_RESP=$(curl -s -X POST \
+            -H "X-Auth-Email: $CF_EMAIL" \
+            -H "X-Auth-Key: $CF_GLOBAL_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "https://api.cloudflare.com/client/v4/user/tokens")
+
+          MINT_OK=$(echo "$MINT_RESP" | jq -r '.success // false')
+          if [ "$MINT_OK" != "true" ]; then
+            echo "Mint failed:"
+            echo "$MINT_RESP" | jq '{success, errors, messages}'
+            die "POST /user/tokens did not succeed."
+          fi
+
+          NEW_TOKEN=$(echo "$MINT_RESP" | jq -r '.result.value')
+          # CRITICAL — mask the token value before any subsequent line could leak it.
+          echo "::add-mask::$NEW_TOKEN"
+          NEW_TOKEN_ID=$(echo "$MINT_RESP" | jq -r '.result.id')
+          NEW_TOKEN_STATUS=$(echo "$MINT_RESP" | jq -r '.result.status')
+          echo "New token ID:     $NEW_TOKEN_ID"
+          echo "New token status: $NEW_TOKEN_STATUS"
+          echo "New token policy: Zone:DNS:Edit + Zone:Read, scoped to hive.baby only"
+
+          # Sanity: re-verify the new token via /user/tokens/verify (ID-only output).
+          VERIFY=$(curl -s \
+            -H "Authorization: Bearer $NEW_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://api.cloudflare.com/client/v4/user/tokens/verify")
+          VERIFY_ID=$(echo "$VERIFY" | jq -r '.result.id // empty')
+          VERIFY_STATUS=$(echo "$VERIFY" | jq -r '.result.status // empty')
+          [ "$VERIFY_ID" = "$NEW_TOKEN_ID" ] || die "Verify call did not return matching ID"
+          echo "Verify result:    id=$VERIFY_ID status=$VERIFY_STATUS"
+
+          # ---- 3. Encrypt the new token with the GitHub repo's libsodium public key.
+          echo
+          echo "===== 3. Fetching GitHub repo public key ====="
+          PUB_RESP=$(curl -s \
+            -H "Authorization: Bearer $GH_PAT" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$REPO/actions/secrets/public-key")
+
+          PUB_KEY=$(echo "$PUB_RESP" | jq -r '.key // empty')
+          KEY_ID=$(echo  "$PUB_RESP" | jq -r '.key_id // empty')
+          [ -n "$PUB_KEY" ] && [ -n "$KEY_ID" ] || {
+            echo "$PUB_RESP" | jq '.'
+            die "Could not fetch GitHub repo public key (GH_PAT scope?)."
+          }
+          echo "Public key fetched (key_id=$KEY_ID)"
+
+          echo
+          echo "===== 4. Sealing token with libsodium ====="
+          pip install --quiet pynacl >/dev/null 2>&1 || die "pip install pynacl failed"
+
+          ENCRYPTED=$(NEW_TOKEN="$NEW_TOKEN" PUB_KEY="$PUB_KEY" python3 - <<'PY'
+import base64, os
+from nacl import encoding, public
+pk = public.PublicKey(os.environ["PUB_KEY"].encode("utf-8"), encoding.Base64Encoder())
+sealed = public.SealedBox(pk).encrypt(os.environ["NEW_TOKEN"].encode("utf-8"))
+print(base64.b64encode(sealed).decode("utf-8"))
+PY
+          )
+          [ -n "$ENCRYPTED" ] || die "Encryption produced empty result"
+          echo "Token sealed (ciphertext length=${#ENCRYPTED})"
+
+          # ---- 5. PUT the new value into the CF_TOKEN repo secret.
+          echo
+          echo "===== 5. Writing CF_TOKEN secret via GitHub API ====="
+          PUT_PAYLOAD=$(jq -n \
+            --arg ev  "$ENCRYPTED" \
+            --arg kid "$KEY_ID" \
+            '{encrypted_value: $ev, key_id: $kid}')
+
+          PUT_STATUS=$(curl -s -o /tmp/put_resp.txt -w "%{http_code}" -X PUT \
+            -H "Authorization: Bearer $GH_PAT" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            -d "$PUT_PAYLOAD" \
+            "https://api.github.com/repos/$REPO/actions/secrets/CF_TOKEN")
+
+          case "$PUT_STATUS" in
+            201) echo "✓ CF_TOKEN created (HTTP 201)";;
+            204) echo "✓ CF_TOKEN updated (HTTP 204)";;
+            *)
+              echo "PUT response body:"
+              cat /tmp/put_resp.txt 2>/dev/null || true
+              die "Failed to write CF_TOKEN (HTTP $PUT_STATUS)"
+              ;;
+          esac
+
+          echo
+          echo "===== Done ====="
+          echo "Old CF_TOKEN id was: 3250c89762749f680a3d148894fd8aa1 (read-only, see prior verify run)"
+          echo "New CF_TOKEN id is:  $NEW_TOKEN_ID  (Zone:DNS:Edit + Zone:Read on hive.baby)"
+          echo "Next step: redispatch .github/workflows/add-cname-aliases.yml"
