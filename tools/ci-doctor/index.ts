@@ -126,8 +126,11 @@ export async function fetchFailure(runId: number): Promise<FailureContext> {
 
 // ---------- diagnose ----------
 
+// Covers every secret prefix actually in use across the hivebaby repo.
+// Audit source: `grep -rhoE 'secrets\.[A-Z_][A-Z0-9_]+' .github/workflows scripts`.
+// If you add a new family of secrets, append its prefix here.
 const ENV_VAR_RE =
-  /\b(ANTHROPIC[A-Z0-9_]*|STRIPE[A-Z0-9_]*|CLERK[A-Z0-9_]*|CF_[A-Z0-9_]+|VERCEL[A-Z0-9_]*|DATABASE_URL)\b/;
+  /\b(ANTHROPIC[A-Z0-9_]*|STRIPE[A-Z0-9_]*|CLERK[A-Z0-9_]*|CF_[A-Z0-9_]+|CLOUDFLARE[A-Z0-9_]*|VERCEL[A-Z0-9_]*|RESEND[A-Z0-9_]*|NEON[A-Z0-9_]*|DATABASE_URL|CRON_SECRET|GH_PAT|GITHUB_TOKEN)\b/;
 
 export function diagnose(log: string): Diagnosis {
   const lines = log.split('\n');
