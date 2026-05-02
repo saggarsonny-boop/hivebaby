@@ -41,6 +41,9 @@ def send_email(subject: str, body: str, api_key: str) -> bool:
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type":  "application/json",
+            # api.resend.com sits behind Cloudflare; default Python-urllib UA
+            # is on its known-bot list and gets 403/error code 1010.
+            "User-Agent":    "hive-digest/1.0 (+https://hive.baby)",
         },
     )
     try:
@@ -71,7 +74,8 @@ def mark_sent(conn, ids: list) -> None:
     conn.commit()
 
 
-def run_tier1(conn, api_key: str) -> None:
+def run_tier1(conn, api_key: str) -> int:
+    """Returns count of email send failures (0 on full success)."""
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             """
@@ -84,13 +88,18 @@ def run_tier1(conn, api_key: str) -> None:
         )
         rows = cur.fetchall()
     print(f"Tier 1 unsent: {len(rows)}")
+    failures = 0
     for row in rows:
         ok = send_email(row["subject"], fmt_alert(row), api_key)
         if ok:
             mark_sent(conn, [row["id"]])
+        else:
+            failures += 1
+    return failures
 
 
-def run_digest(conn, tier: int, interval: str, label: str, api_key: str) -> None:
+def run_digest(conn, tier: int, interval: str, label: str, api_key: str) -> int:
+    """Returns count of email send failures (0 on full success or empty queue)."""
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             f"""
@@ -106,7 +115,7 @@ def run_digest(conn, tier: int, interval: str, label: str, api_key: str) -> None
         rows = cur.fetchall()
     print(f"Tier {tier} unsent ({interval}): {len(rows)}")
     if not rows:
-        return
+        return 0
     today = datetime.now(timezone.utc).date().isoformat()
     subject = f"HIVE {label} — {today}"
     sections = [fmt_alert(r) for r in rows]
@@ -117,6 +126,8 @@ def run_digest(conn, tier: int, interval: str, label: str, api_key: str) -> None
     ok = send_email(subject, body, api_key)
     if ok:
         mark_sent(conn, [r["id"] for r in rows])
+        return 0
+    return 1
 
 
 def main() -> int:
@@ -133,16 +144,20 @@ def main() -> int:
     conn = psycopg2.connect(db_url)
     try:
         if mode == "tier1":
-            run_tier1(conn, api_key)
+            failures = run_tier1(conn, api_key)
         elif mode == "tier2":
-            run_digest(conn, 2, "24 hours", "DAILY", api_key)
+            failures = run_digest(conn, 2, "24 hours", "DAILY", api_key)
         elif mode == "tier3":
-            run_digest(conn, 3, "7 days", "WEEKLY", api_key)
+            failures = run_digest(conn, 3, "7 days", "WEEKLY", api_key)
         else:
             print(f"Unknown mode: {mode}", file=sys.stderr)
             return 1
     finally:
         conn.close()
+    if failures:
+        print(f"{failures} email send failure(s) — exiting non-zero so ci-doctor catches it",
+              file=sys.stderr)
+        return 1
     return 0
 
 
