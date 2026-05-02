@@ -1,0 +1,40 @@
+name: Ops — Query hive_alerts (one-off)
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'How many recent rows to return'
+        required: false
+        default: '5'
+
+permissions:
+  contents: read
+
+jobs:
+  query:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read recent hive_alerts rows
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          LIMIT:        ${{ inputs.limit }}
+        run: |
+          set -uo pipefail
+          [ -n "${DATABASE_URL:-}" ] || { echo "::error::DATABASE_URL not set"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+          echo "===== Row count ====="
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -c "SELECT count(*) AS total FROM hive_alerts;"
+
+          echo "===== Recent rows (${LIMIT:-5}) ====="
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P "expanded=on" \
+            -v lim="${LIMIT:-5}" \
+            -c "SELECT id, tier, agent, subject, action_required, action_url, sent, created_at FROM hive_alerts ORDER BY created_at DESC LIMIT :lim;"
+
+          echo "===== Body of newest row ====="
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P "expanded=on" \
+            -c "SELECT body FROM hive_alerts ORDER BY created_at DESC LIMIT 1;"
