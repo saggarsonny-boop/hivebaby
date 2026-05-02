@@ -168,8 +168,17 @@ def main() -> None:
     if not GH_PAT:
         msg = (
             "**Auto-fix skipped** — `GH_PAT` secret not set in hivebaby Actions secrets.\n\n"
-            "Add a Personal Access Token with `repo` scope as `GH_PAT` to enable "
-            "cross-repo auto-fixes. Fix this violation manually and close this issue."
+            "**Why this is needed:** the schema violations live in `saggarsonny-boop/universal-document`. "
+            "The default `GITHUB_TOKEN` issued to this Action is scoped to `hivebaby` only and cannot "
+            "push to a different repo, so the auto-fix needs a Personal Access Token.\n\n"
+            "**To enable auto-fix:**\n"
+            "1. Create a PAT — either:\n"
+            "   - **Classic** with `repo` scope, or\n"
+            "   - **Fine-grained** with Contents:Write on `saggarsonny-boop/universal-document` "
+            "(more secure, recommended).\n"
+            "2. Add it as repo secret `GH_PAT` at "
+            "Settings → Secrets and variables → Actions → New repository secret.\n\n"
+            "**For now:** apply the fix manually, then close this issue."
         )
         comment_issue(msg)
         print("GH_PAT not set — commented on issue and exiting")
