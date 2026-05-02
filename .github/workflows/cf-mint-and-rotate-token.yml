@@ -127,14 +127,13 @@ jobs:
           echo "===== 4. Sealing token with libsodium ====="
           pip install --quiet pynacl >/dev/null 2>&1 || die "pip install pynacl failed"
 
-          ENCRYPTED=$(NEW_TOKEN="$NEW_TOKEN" PUB_KEY="$PUB_KEY" python3 - <<'PY'
-import base64, os
-from nacl import encoding, public
-pk = public.PublicKey(os.environ["PUB_KEY"].encode("utf-8"), encoding.Base64Encoder())
-sealed = public.SealedBox(pk).encrypt(os.environ["NEW_TOKEN"].encode("utf-8"))
-print(base64.b64encode(sealed).decode("utf-8"))
-PY
-          )
+          ENCRYPTED=$(NEW_TOKEN="$NEW_TOKEN" PUB_KEY="$PUB_KEY" python3 -c '
+          import base64, os
+          from nacl import encoding, public
+          pk = public.PublicKey(os.environ["PUB_KEY"].encode("utf-8"), encoding.Base64Encoder())
+          sealed = public.SealedBox(pk).encrypt(os.environ["NEW_TOKEN"].encode("utf-8"))
+          print(base64.b64encode(sealed).decode("utf-8"))
+          ')
           [ -n "$ENCRYPTED" ] || die "Encryption produced empty result"
           echo "Token sealed (ciphertext length=${#ENCRYPTED})"
 
