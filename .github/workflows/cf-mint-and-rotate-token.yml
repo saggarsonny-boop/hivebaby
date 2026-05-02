@@ -135,7 +135,11 @@ jobs:
           [ -n "$ENCRYPTED" ] || die "Encryption produced empty result"
           echo "Token sealed (ciphertext length=${#ENCRYPTED})"
 
-          # ---- 4. Emit job outputs. encrypted_value is opaque ciphertext.
+          # ---- 4. Emit job outputs AND print the blob plainly to logs.
+          # Step outputs aren't exposed via the REST API for external pickup,
+          # so we also echo the opaque ciphertext between sentinel lines for
+          # the local caller to grep. The blob is encrypted with GitHub's
+          # repo public key — only GitHub can decrypt it; safe to log.
           {
             echo "encrypted_value=$ENCRYPTED"
             echo "key_id=$KEY_ID"
@@ -145,5 +149,10 @@ jobs:
           echo
           echo "===== Done ====="
           echo "New token ID: $NEW_TOKEN_ID  (Zone:DNS:Edit + Zone:Read on hive.baby)"
-          echo "Encrypted blob is in step output 'encrypted_value'; key_id is in 'key_id'."
-          echo "Next: caller PUTs the blob to /repos/.../actions/secrets/CF_TOKEN."
+          echo
+          echo "----BEGIN-ENCRYPTED-BLOB----"
+          echo "$ENCRYPTED"
+          echo "----END-ENCRYPTED-BLOB----"
+          echo "----KEY-ID----"
+          echo "$KEY_ID"
+          echo "----END-KEY-ID----"
