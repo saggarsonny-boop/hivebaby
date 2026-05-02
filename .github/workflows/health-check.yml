@@ -24,9 +24,13 @@ jobs:
           > /tmp/failures.txt
           FAILED=0
 
+          # Live tier: must be reachable and non-500.
+          # The `|| echo "000"` guards against curl exit codes (e.g. exit 6
+          # for unresolved DNS) propagating up and killing the whole step
+          # before later URLs are even attempted.
           check_url() {
             local NAME="$1" URL="$2"
-            STATUS=$(curl -s -o /tmp/rb.txt -w "%{http_code}" --max-time 20 -L "$URL" 2>/dev/null)
+            STATUS=$(curl -s -o /tmp/rb.txt -w "%{http_code}" --max-time 20 -L "$URL" 2>/dev/null || echo "000")
             if [ "$STATUS" = "500" ] || [ "$STATUS" = "000" ]; then
               echo "FAIL: $NAME -> $STATUS"
               BODY=$(head -c 120 /tmp/rb.txt | tr -d '\000')
@@ -37,7 +41,19 @@ jobs:
             fi
           }
 
-          # Core
+          # Building tier: per CLAUDE.md not yet live. Warn-only; does not
+          # set FAILED. Move back to live tier once the engine is live.
+          check_url_building() {
+            local NAME="$1" URL="$2"
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 -L "$URL" 2>/dev/null || echo "000")
+            if [ "$STATUS" = "500" ] || [ "$STATUS" = "000" ]; then
+              echo "WARN (building): $NAME -> $STATUS — not yet live, skipping"
+            else
+              echo "OK   (building): $NAME -> $STATUS"
+            fi
+          }
+
+          # Core (live)
           check_url "hive.baby"           "https://hive.baby"
           check_url "HivePhoto"           "https://hivephoto.hive.baby"
           check_url "HiveTestingStation"  "https://test.hive.baby"
@@ -51,13 +67,15 @@ jobs:
           check_url "HiveSecretBox"       "https://secretbox.hive.baby"
           check_url "WhoTextedMe"         "https://whotextedme.hive.baby"
           check_url "HiveAdminSupport"    "https://support.hive.baby"
-          check_url "HiveMeme"            "https://hivememe.hive.baby"
           check_url "HiveAestheticBestie" "https://hiveaestheticbestie.hive.baby"
           check_url "HiveMicroRitual"     "https://hivemicroritual.hive.baby"
           check_url "SovereignArbitrage"  "https://sovereignarbitrage.hive.baby"
           check_url "HiveIMR"             "https://hiveimr.hive.baby/api/health"
-          check_url "HivePlainScan"       "https://plainscan.hive.baby/api/health"
           check_url "QueenBee"            "https://queenbee.hive.baby"
+
+          # Building (CLAUDE.md status: BUILDING) — warn only
+          check_url_building "HiveMeme"      "https://hivememe.hive.baby"
+          check_url_building "HivePlainScan" "https://plainscan.hive.baby/api/health"
           # UD
           check_url "ud.hive.baby"        "https://ud.hive.baby"
           check_url "UDUtilities"         "https://utilities.hive.baby"
@@ -80,7 +98,7 @@ jobs:
           S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" -X POST "https://test.hive.baby/api/apply" \
             -H "Content-Type: application/json" \
             -d '{"name":"hc","email":"hc@hive.baby","engineSlug":"hivephoto","country":"GB","device":"desktop","browser":"chrome","agreedFeedback":true,"honeypot":"bot"}' \
-            --max-time 20 2>/dev/null)
+            --max-time 20 2>/dev/null || echo "000")
           if [ "$S" = "500" ] || [ "$S" = "000" ]; then
             echo "FAIL: apply honeypot -> $S (crash)"
             printf '**test.hive.baby/api/apply (honeypot)**\n- HTTP %s (crash, expected 400)\n- Body: `%s`\n\n' \
@@ -93,7 +111,7 @@ jobs:
           # API smoke: fake verify token -> must NOT be 500
           S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" \
             "https://test.hive.baby/api/verify?token=hc-fake-$(date +%s)" \
-            --max-time 20 2>/dev/null)
+            --max-time 20 2>/dev/null || echo "000")
           if [ "$S" = "500" ]; then
             echo "FAIL: verify fake token -> $S"
             printf '**test.hive.baby/api/verify (fake token)**\n- HTTP %s (crash)\n\n' "$S" >> /tmp/failures.txt
