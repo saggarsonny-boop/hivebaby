@@ -30,10 +30,15 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
             -c "SELECT count(*) AS total FROM hive_alerts;"
 
-          echo "===== Recent rows (${LIMIT:-5}) ====="
+          # Validate LIMIT is an integer to avoid SQL injection via inline substitution.
+          LIM="${LIMIT:-5}"
+          case "$LIM" in
+            ''|*[!0-9]*) echo "::error::LIMIT must be a non-negative integer"; exit 1;;
+          esac
+
+          echo "===== Recent rows ($LIM) ====="
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P "expanded=on" \
-            -v lim="${LIMIT:-5}" \
-            -c "SELECT id, tier, agent, subject, action_required, action_url, sent, created_at FROM hive_alerts ORDER BY created_at DESC LIMIT :lim;"
+            -c "SELECT id, tier, agent, subject, action_required, action_url, sent, created_at FROM hive_alerts ORDER BY created_at DESC LIMIT $LIM;"
 
           echo "===== Body of newest row ====="
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P "expanded=on" \
