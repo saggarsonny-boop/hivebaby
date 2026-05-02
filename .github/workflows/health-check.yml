@@ -25,12 +25,19 @@ jobs:
           FAILED=0
 
           # Live tier: must be reachable and non-500.
-          # The `|| echo "000"` guards against curl exit codes (e.g. exit 6
-          # for unresolved DNS) propagating up and killing the whole step
-          # before later URLs are even attempted.
+          # `if STATUS=$(...)` consumes curl's exit code so a non-zero
+          # curl (e.g. exit 6 for unresolved DNS) can't propagate up and
+          # kill the step. On failure we explicitly set STATUS=000;
+          # *not* `|| echo "000"`, which would append to whatever curl
+          # already wrote via -w and yield STATUS="000000".
           check_url() {
             local NAME="$1" URL="$2"
-            STATUS=$(curl -s -o /tmp/rb.txt -w "%{http_code}" --max-time 20 -L "$URL" 2>/dev/null || echo "000")
+            local STATUS
+            if STATUS=$(curl -s -o /tmp/rb.txt -w "%{http_code}" --max-time 20 -L "$URL" 2>/dev/null); then
+              :
+            else
+              STATUS="000"
+            fi
             if [ "$STATUS" = "500" ] || [ "$STATUS" = "000" ]; then
               echo "FAIL: $NAME -> $STATUS"
               BODY=$(head -c 120 /tmp/rb.txt | tr -d '\000')
@@ -45,7 +52,12 @@ jobs:
           # set FAILED. Move back to live tier once the engine is live.
           check_url_building() {
             local NAME="$1" URL="$2"
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 -L "$URL" 2>/dev/null || echo "000")
+            local STATUS
+            if STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 -L "$URL" 2>/dev/null); then
+              :
+            else
+              STATUS="000"
+            fi
             if [ "$STATUS" = "500" ] || [ "$STATUS" = "000" ]; then
               echo "WARN (building): $NAME -> $STATUS — not yet live, skipping"
             else
@@ -95,10 +107,10 @@ jobs:
           check_url "HiveMoon API"        "https://hivemoon.hive.baby/api/moon"
 
           # API smoke: honeypot -> must NOT be 500
-          S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" -X POST "https://test.hive.baby/api/apply" \
+          if S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" -X POST "https://test.hive.baby/api/apply" \
             -H "Content-Type: application/json" \
             -d '{"name":"hc","email":"hc@hive.baby","engineSlug":"hivephoto","country":"GB","device":"desktop","browser":"chrome","agreedFeedback":true,"honeypot":"bot"}' \
-            --max-time 20 2>/dev/null || echo "000")
+            --max-time 20 2>/dev/null); then :; else S="000"; fi
           if [ "$S" = "500" ] || [ "$S" = "000" ]; then
             echo "FAIL: apply honeypot -> $S (crash)"
             printf '**test.hive.baby/api/apply (honeypot)**\n- HTTP %s (crash, expected 400)\n- Body: `%s`\n\n' \
@@ -109,9 +121,9 @@ jobs:
           fi
 
           # API smoke: fake verify token -> must NOT be 500
-          S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" \
+          if S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" \
             "https://test.hive.baby/api/verify?token=hc-fake-$(date +%s)" \
-            --max-time 20 2>/dev/null || echo "000")
+            --max-time 20 2>/dev/null); then :; else S="000"; fi
           if [ "$S" = "500" ]; then
             echo "FAIL: verify fake token -> $S"
             printf '**test.hive.baby/api/verify (fake token)**\n- HTTP %s (crash)\n\n' "$S" >> /tmp/failures.txt
