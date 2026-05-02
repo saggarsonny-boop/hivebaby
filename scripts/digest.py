@@ -70,7 +70,7 @@ def mark_sent(conn, ids: list) -> None:
     if not ids:
         return
     with conn.cursor() as cur:
-        cur.execute("UPDATE hive_alerts SET sent = true WHERE id = ANY(%s)", (ids,))
+        cur.execute("UPDATE hive_alerts SET sent = true WHERE id = ANY(%s::uuid[])", (ids,))
     conn.commit()
 
 
