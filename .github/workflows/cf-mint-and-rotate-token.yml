@@ -1,7 +1,14 @@
-name: Cloudflare — Mint scoped token & rotate CF_TOKEN
+name: Cloudflare — Mint scoped token & emit encrypted CF_TOKEN blob
 
 on:
   workflow_dispatch:
+    inputs:
+      gh_pub_key:
+        description: 'GitHub repo libsodium public key (base64). Pass via dispatch.'
+        required: true
+      gh_key_id:
+        description: 'GitHub repo libsodium public-key id. Pass via dispatch.'
+        required: true
 
 permissions:
   contents: read
@@ -10,14 +17,19 @@ jobs:
   mint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      encrypted_value: ${{ steps.mint.outputs.encrypted_value }}
+      key_id:          ${{ steps.mint.outputs.key_id }}
+      new_token_id:    ${{ steps.mint.outputs.new_token_id }}
     steps:
-      - name: Mint CF API token and rotate GitHub secret
+      - id: mint
+        name: Mint CF API token and emit encrypted blob
         env:
           CF_GLOBAL_KEY: ${{ secrets.CF_GLOBAL_KEY }}
           CF_EMAIL:      ${{ secrets.CF_EMAIL }}
           CF_ZONE:       ${{ secrets.CF_ZONE }}
-          GH_PAT:        ${{ secrets.GH_PAT }}
-          REPO:          ${{ github.repository }}
+          PUB_KEY:       ${{ inputs.gh_pub_key }}
+          KEY_ID:        ${{ inputs.gh_key_id }}
         run: |
           set -uo pipefail
 
@@ -26,7 +38,8 @@ jobs:
           [ -n "${CF_GLOBAL_KEY:-}" ] || die "CF_GLOBAL_KEY secret missing"
           [ -n "${CF_EMAIL:-}" ]      || die "CF_EMAIL secret missing"
           [ -n "${CF_ZONE:-}" ]       || die "CF_ZONE secret missing"
-          [ -n "${GH_PAT:-}" ]        || die "GH_PAT secret missing"
+          [ -n "${PUB_KEY:-}" ]       || die "gh_pub_key input missing"
+          [ -n "${KEY_ID:-}" ]        || die "gh_key_id input missing"
 
           # ---- 1. Look up DNS:Write + Zone:Read permission group IDs.
           echo "===== 1. Fetching permission groups ====="
@@ -88,7 +101,7 @@ jobs:
           fi
 
           NEW_TOKEN=$(echo "$MINT_RESP" | jq -r '.result.value')
-          # CRITICAL — mask the token value before any subsequent line could leak it.
+          # CRITICAL: mask the token value before any subsequent line could leak it.
           echo "::add-mask::$NEW_TOKEN"
           NEW_TOKEN_ID=$(echo "$MINT_RESP" | jq -r '.result.id')
           NEW_TOKEN_STATUS=$(echo "$MINT_RESP" | jq -r '.result.status')
@@ -106,25 +119,10 @@ jobs:
           [ "$VERIFY_ID" = "$NEW_TOKEN_ID" ] || die "Verify call did not return matching ID"
           echo "Verify result:    id=$VERIFY_ID status=$VERIFY_STATUS"
 
-          # ---- 3. Encrypt the new token with the GitHub repo's libsodium public key.
+          # ---- 3. Seal the token with the supplied libsodium public key.
+          # The encrypted blob is opaque to anyone but GitHub — safe to expose as a job output.
           echo
-          echo "===== 3. Fetching GitHub repo public key ====="
-          PUB_RESP=$(curl -s \
-            -H "Authorization: Bearer $GH_PAT" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/$REPO/actions/secrets/public-key")
-
-          PUB_KEY=$(echo "$PUB_RESP" | jq -r '.key // empty')
-          KEY_ID=$(echo  "$PUB_RESP" | jq -r '.key_id // empty')
-          [ -n "$PUB_KEY" ] && [ -n "$KEY_ID" ] || {
-            echo "$PUB_RESP" | jq '.'
-            die "Could not fetch GitHub repo public key (GH_PAT scope?)."
-          }
-          echo "Public key fetched (key_id=$KEY_ID)"
-
-          echo
-          echo "===== 4. Sealing token with libsodium ====="
+          echo "===== 3. Sealing token with libsodium ====="
           pip install --quiet pynacl >/dev/null 2>&1 || die "pip install pynacl failed"
 
           ENCRYPTED=$(NEW_TOKEN="$NEW_TOKEN" PUB_KEY="$PUB_KEY" python3 -c '
@@ -137,34 +135,15 @@ jobs:
           [ -n "$ENCRYPTED" ] || die "Encryption produced empty result"
           echo "Token sealed (ciphertext length=${#ENCRYPTED})"
 
-          # ---- 5. PUT the new value into the CF_TOKEN repo secret.
-          echo
-          echo "===== 5. Writing CF_TOKEN secret via GitHub API ====="
-          PUT_PAYLOAD=$(jq -n \
-            --arg ev  "$ENCRYPTED" \
-            --arg kid "$KEY_ID" \
-            '{encrypted_value: $ev, key_id: $kid}')
-
-          PUT_STATUS=$(curl -s -o /tmp/put_resp.txt -w "%{http_code}" -X PUT \
-            -H "Authorization: Bearer $GH_PAT" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "Content-Type: application/json" \
-            -d "$PUT_PAYLOAD" \
-            "https://api.github.com/repos/$REPO/actions/secrets/CF_TOKEN")
-
-          case "$PUT_STATUS" in
-            201) echo "✓ CF_TOKEN created (HTTP 201)";;
-            204) echo "✓ CF_TOKEN updated (HTTP 204)";;
-            *)
-              echo "PUT response body:"
-              cat /tmp/put_resp.txt 2>/dev/null || true
-              die "Failed to write CF_TOKEN (HTTP $PUT_STATUS)"
-              ;;
-          esac
+          # ---- 4. Emit job outputs. encrypted_value is opaque ciphertext.
+          {
+            echo "encrypted_value=$ENCRYPTED"
+            echo "key_id=$KEY_ID"
+            echo "new_token_id=$NEW_TOKEN_ID"
+          } >> "$GITHUB_OUTPUT"
 
           echo
           echo "===== Done ====="
-          echo "Old CF_TOKEN id was: 3250c89762749f680a3d148894fd8aa1 (read-only, see prior verify run)"
-          echo "New CF_TOKEN id is:  $NEW_TOKEN_ID  (Zone:DNS:Edit + Zone:Read on hive.baby)"
-          echo "Next step: redispatch .github/workflows/add-cname-aliases.yml"
+          echo "New token ID: $NEW_TOKEN_ID  (Zone:DNS:Edit + Zone:Read on hive.baby)"
+          echo "Encrypted blob is in step output 'encrypted_value'; key_id is in 'key_id'."
+          echo "Next: caller PUTs the blob to /repos/.../actions/secrets/CF_TOKEN."
