@@ -1,0 +1,47 @@
+name: ci-doctor
+on:
+  workflow_run:
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  diagnose:
+    # Only run on failure; never recurse on ci-doctor's own failures.
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'failure'
+          && github.event.workflow_run.name != 'ci-doctor' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ci-doctor deps
+        working-directory: tools/ci-doctor
+        run: npm install --no-audit --no-fund
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Run unit tests
+        working-directory: tools/ci-doctor
+        run: npm test
+
+      - name: Run ci-doctor
+        working-directory: tools/ci-doctor
+        env:
+          GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DATABASE_URL:      ${{ secrets.DATABASE_URL }}
+          RUN_ID:            ${{ github.event.workflow_run.id }}
+        run: npx tsx index.ts
