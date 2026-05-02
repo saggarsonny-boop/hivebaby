@@ -1,5 +1,19 @@
 name: Issue Fixer — Schema Violation Auto-Repair
 
+# Auth model:
+#   GITHUB_TOKEN — issued by Actions, scoped to this repo only. Used to comment
+#                  on and close the schema-violation issue here in hivebaby.
+#   GH_PAT       — REQUIRED for the auto-repair step. Schema violations live in
+#                  the saggarsonny-boop/universal-document repo, and the default
+#                  GITHUB_TOKEN cannot push to a different repo. To enable full
+#                  auto-repair, add a Personal Access Token as `GH_PAT` with:
+#                    • Classic: `repo` scope (write access to universal-document)
+#                    • Fine-grained: Contents:Write on saggarsonny-boop/universal-document
+#                  When GH_PAT is missing, scripts/issue_fixer.py degrades
+#                  gracefully — it posts a comment on the issue explaining the
+#                  gap and exits cleanly. The workflow run will show as success.
+#   ANTHROPIC_API_KEY — for the Claude call that generates the fix.
+
 on:
   issues:
     types: [opened]
