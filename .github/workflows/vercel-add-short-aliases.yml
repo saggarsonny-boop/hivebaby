@@ -1,0 +1,71 @@
+name: Vercel — Add short alias domains to engine projects
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  add-domains:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Add short aliases to their Vercel projects
+        env:
+          VERCEL_TOKEN:      ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+        run: |
+          set -uo pipefail
+          TOKEN="${VERCEL_TOKEN_MAIN:-${VERCEL_TOKEN:-}}"
+          [ -n "$TOKEN" ] || { echo "::error::No Vercel token in VERCEL_TOKEN_MAIN/VERCEL_TOKEN"; exit 1; }
+
+          # alias -> Vercel project name (per CLAUDE.md repo naming)
+          declare -A MAP
+          MAP["moon.hive.baby"]="hive-moon"
+          MAP["clock.hive.baby"]="hive-clock"
+          MAP["bodylog.hive.baby"]="hive-body-log"
+          MAP["secret.hive.baby"]="secret-box"
+          MAP["aesthetic.hive.baby"]="hive-aestheticbestie"
+
+          FAILED=0
+          for ALIAS in "${!MAP[@]}"; do
+            PROJ="${MAP[$ALIAS]}"
+            echo "→ $ALIAS  -> project '$PROJ'"
+
+            STATUS=$(curl -s -o /tmp/vercel_resp.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v10/projects/$PROJ/domains" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"$ALIAS\"}")
+
+            BODY=$(cat /tmp/vercel_resp.json 2>/dev/null || echo "{}")
+            case "$STATUS" in
+              200|201)
+                NAME=$(echo "$BODY" | jq -r '.name // empty')
+                echo "  ✓ HTTP $STATUS — added: $NAME"
+                ;;
+              409)
+                MSG=$(echo "$BODY" | jq -r '.error.message // .error.code // "conflict"')
+                echo "  • HTTP 409 — already attached: $MSG"
+                ;;
+              404)
+                MSG=$(echo "$BODY" | jq -r '.error.message // empty')
+                echo "  ✗ HTTP 404 — project '$PROJ' not found: $MSG"
+                FAILED=1
+                ;;
+              *)
+                echo "  ✗ HTTP $STATUS"
+                echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"
+                FAILED=1
+                ;;
+            esac
+            sleep 1
+          done
+
+          if [ $FAILED -ne 0 ]; then
+            echo "::error::One or more aliases could not be attached to their Vercel project"
+            exit 1
+          fi
+          echo
+          echo "All 5 aliases attached to their Vercel projects (or already attached)."
