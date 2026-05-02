@@ -1,6 +1,14 @@
 name: ci-doctor
 on:
   workflow_run:
+    workflows:
+      - "Health Check - All Hive Properties"
+      - "Schema Sheriff — Universal Document Routes"
+      - "hive-digest"
+      - "Reddit Monitor - Hive Lead Finder"
+      - "run-migration"
+      - "SSRN Watcher — Universal Document Paper"
+      - "Issue Fixer — Schema Violation Auto-Repair"
     types: [completed]
 
 permissions:
