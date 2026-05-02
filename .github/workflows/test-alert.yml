@@ -1,0 +1,46 @@
+name: test-alert
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Alert tier (1, 2, or 3)'
+        required: true
+        default: '2'
+      subject:
+        description: 'Alert subject'
+        required: true
+        default: 'TEST — alert spine live'
+      body:
+        description: 'Alert body'
+        required: true
+        default: 'If you are reading this, the spine works.'
+
+permissions:
+  contents: read
+
+jobs:
+  insert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Insert alert into hive_alerts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TIER:    ${{ inputs.tier }}
+          SUBJECT: ${{ inputs.subject }}
+          BODY:    ${{ inputs.body }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "DATABASE_URL secret not set" >&2
+            exit 1
+          fi
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -v tier="$TIER" \
+            -v subject="$SUBJECT" \
+            -v body="$BODY" \
+            -c "INSERT INTO hive_alerts (tier, agent, subject, body, action_required) VALUES (:'tier'::int, 'test-alert', :'subject', :'body', false) RETURNING id, tier, agent, subject, created_at;"
