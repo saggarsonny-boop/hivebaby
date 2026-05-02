@@ -1,0 +1,140 @@
+name: Ops — Probe Vercel projects for RESEND_API_KEY
+
+on:
+  workflow_dispatch:
+    inputs:
+      gh_pub_key:
+        description: 'GitHub repo libsodium public key (base64). Pass via dispatch.'
+        required: true
+      gh_key_id:
+        description: 'GitHub repo libsodium public-key id'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe Vercel projects
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          PUB_KEY:      ${{ inputs.gh_pub_key }}
+          KEY_ID:       ${{ inputs.gh_key_id }}
+        run: |
+          set -uo pipefail
+          die() { echo "::error::$1"; exit 1; }
+          [ -n "${VERCEL_TOKEN:-}" ] || die "VERCEL_TOKEN_MAIN secret missing"
+          [ -n "${PUB_KEY:-}" ]      || die "gh_pub_key input missing"
+          [ -n "${KEY_ID:-}" ]       || die "gh_key_id input missing"
+
+          AUTH=(-H "Authorization: Bearer $VERCEL_TOKEN")
+
+          echo "===== 1. Listing Vercel projects (limit=100) ====="
+          PROJECTS=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects?limit=100")
+          COUNT=$(echo "$PROJECTS" | jq -r '.projects | length // 0')
+          [ "$COUNT" -gt 0 ] || die "No projects returned (check VERCEL_TOKEN_MAIN scope)"
+          echo "Total projects: $COUNT"
+
+          PROJECT_LINES=$(echo "$PROJECTS" | jq -r '.projects[] | "\(.id)|\(.name)"')
+
+          # Per-finding: <hash>|<projectName>|<envId>
+          : > /tmp/found.txt
+          # All retrieved values, one per line, for de-dup
+          : > /tmp/values.txt
+
+          echo
+          echo "===== 2. Scanning each project for RESEND_API_KEY ====="
+          while IFS='|' read -r PID PNAME; do
+            [ -z "$PID" ] && continue
+            ENV_LIST=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/$PID/env")
+            ENV_ID=$(echo "$ENV_LIST" | jq -r '.envs[]? | select(.key=="RESEND_API_KEY") | .id' | head -1)
+
+            if [ -z "$ENV_ID" ] || [ "$ENV_ID" = "null" ]; then
+              continue
+            fi
+
+            # Found one — try to decrypt.
+            DETAIL=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v1/projects/$PID/env/$ENV_ID?decrypt=true")
+            VAL=$(echo "$DETAIL" | jq -r '.value // empty')
+
+            if [ -z "$VAL" ]; then
+              # Some Vercel responses put value back at list level when accessible
+              VAL=$(echo "$ENV_LIST" | jq -r '.envs[]? | select(.key=="RESEND_API_KEY") | .value // empty' | head -1)
+            fi
+
+            if [ -z "$VAL" ]; then
+              echo "  $PNAME — RESEND_API_KEY env var present but value not retrievable (perm?)"
+              continue
+            fi
+
+            # CRITICAL — mask the value before any later step touches it.
+            echo "::add-mask::$VAL"
+
+            HASH=$(printf '%s' "$VAL" | sha256sum | cut -c1-16)
+            echo "  $PNAME — RESEND_API_KEY set, hash sha256:$HASH"
+            echo "$HASH|$PNAME|$ENV_ID" >> /tmp/found.txt
+            echo "$VAL" >> /tmp/values.txt
+          done <<< "$PROJECT_LINES"
+
+          TOTAL_FOUND=$(wc -l < /tmp/found.txt 2>/dev/null || echo 0)
+          UNIQUE=$(sort -u /tmp/values.txt 2>/dev/null | grep -c . || true)
+
+          echo
+          echo "===== 3. Summary ====="
+          echo "Projects with RESEND_API_KEY set: $TOTAL_FOUND"
+          echo "Distinct key values:              $UNIQUE"
+          echo
+          echo "Per-project (sha256 prefix is the only thing exposed):"
+          if [ "$TOTAL_FOUND" = "0" ]; then
+            echo "  (none)"
+          else
+            awk -F'|' '{print "  " $2 " -> sha256:" $1}' /tmp/found.txt | sort -u
+          fi
+
+          if [ "$TOTAL_FOUND" = "0" ]; then
+            echo
+            echo "===== Result: ZERO ====="
+            echo "No Vercel project under this account has a RESEND_API_KEY set."
+            echo "Caller should sign up at resend.com / generate a key / paste manually."
+            exit 0
+          fi
+
+          if [ "$UNIQUE" -gt 1 ]; then
+            echo
+            echo "===== Result: AMBIGUOUS ====="
+            echo "Multiple distinct RESEND_API_KEY values across projects."
+            echo "Caller needs to pick canonical. NOT writing to GitHub secret."
+            echo "Distinct hashes:"
+            sort -u /tmp/values.txt | while read -r v; do
+              h=$(printf '%s' "$v" | sha256sum | cut -c1-16)
+              count=$(grep -c "^$h|" /tmp/found.txt || echo 0)
+              echo "  sha256:$h ($count project(s)):"
+              grep "^$h|" /tmp/found.txt | awk -F'|' '{print "    - " $2}'
+            done
+            exit 0
+          fi
+
+          # Unique == 1 && total >= 1 — encrypt for GitHub secret rotation.
+          echo
+          echo "===== Result: SINGLE UNIQUE KEY — sealing for GH secret rotation ====="
+          pip install --quiet pynacl >/dev/null 2>&1 || die "pip install pynacl failed"
+          VAL=$(sort -u /tmp/values.txt | head -1)
+          ENCRYPTED=$(VAL="$VAL" PUB_KEY="$PUB_KEY" python3 -c '
+          import base64, os
+          from nacl import encoding, public
+          pk = public.PublicKey(os.environ["PUB_KEY"].encode("utf-8"), encoding.Base64Encoder())
+          sealed = public.SealedBox(pk).encrypt(os.environ["VAL"].encode("utf-8"))
+          print(base64.b64encode(sealed).decode("utf-8"))
+          ')
+          [ -n "$ENCRYPTED" ] || die "Encryption produced empty result"
+          echo "Token sealed (ciphertext length=${#ENCRYPTED})"
+          echo
+          echo "----BEGIN-ENCRYPTED-BLOB----"
+          echo "$ENCRYPTED"
+          echo "----END-ENCRYPTED-BLOB----"
+          echo "----KEY-ID----"
+          echo "$KEY_ID"
+          echo "----END-KEY-ID----"
