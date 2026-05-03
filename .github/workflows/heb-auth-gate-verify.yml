@@ -16,13 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Checkout hive-engine-builder branch
-        uses: actions/checkout@v4
-        with:
-          repository: saggarsonny-boop/hive-engine-builder
-          ref: ${{ inputs.branch }}
-          path: heb
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clone hive-engine-builder branch (public, no auth needed)
+        env:
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          git clone --depth 1 --branch "$BRANCH" \
+            https://github.com/saggarsonny-boop/hive-engine-builder.git heb
+          echo "Cloned branch:"
+          git -C heb log -1 --format='%h %s'
 
       - name: Setup Node + Vercel CLI
         uses: actions/setup-node@v4
