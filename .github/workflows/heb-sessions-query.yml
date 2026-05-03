@@ -1,0 +1,56 @@
+name: Ops — Query heb_workshop_sessions (diagnostic, read-only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  query:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Pull DATABASE_URL from HEB Vercel project, then psql
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+        run: |
+          set -uo pipefail
+          die() { echo "::error::$1"; exit 1; }
+          [ -n "${VERCEL_TOKEN:-}" ] || die "VERCEL_TOKEN_MAIN missing"
+
+          AUTH=(-H "Authorization: Bearer $VERCEL_TOKEN")
+
+          PROJ=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/hive-engine-builder")
+          PROJ_ID=$(echo "$PROJ" | jq -r '.id // empty')
+          [ -n "$PROJ_ID" ] || { echo "$PROJ" | jq '.'; die "project lookup failed"; }
+
+          ENV_LIST=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/$PROJ_ID/env")
+          ENV_ID=$(echo "$ENV_LIST" | jq -r '.envs[]? | select(.key=="DATABASE_URL") | .id' | head -1)
+          [ -n "$ENV_ID" ] && [ "$ENV_ID" != "null" ] || die "DATABASE_URL not on project"
+
+          DETAIL=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v1/projects/$PROJ_ID/env/$ENV_ID?decrypt=true")
+          DBURL=$(echo "$DETAIL" | jq -r '.value // empty')
+          [ -n "$DBURL" ] || die "could not decrypt DATABASE_URL"
+          echo "::add-mask::$DBURL"
+
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+          echo "===== Row count ====="
+          psql "$DBURL" -v ON_ERROR_STOP=1 \
+            -c "SELECT count(*) AS total, max(created_at) AS most_recent FROM heb_workshop_sessions;"
+
+          echo
+          echo "===== Recent rows (10 most recent, any phase) ====="
+          psql "$DBURL" -v ON_ERROR_STOP=1 -P "expanded=auto" \
+            -c "SELECT id, engine_slug, display_name, phase, created_at, updated_at FROM heb_workshop_sessions ORDER BY created_at DESC LIMIT 10;"
+
+          echo
+          echo "===== Rows from today (UTC) ====="
+          psql "$DBURL" -v ON_ERROR_STOP=1 \
+            -c "SELECT count(*) AS today_count FROM heb_workshop_sessions WHERE created_at::date = CURRENT_DATE;"
+
+          echo
+          echo "===== display_name column check ====="
+          psql "$DBURL" -v ON_ERROR_STOP=1 \
+            -c "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'heb_workshop_sessions' ORDER BY ordinal_position;"
