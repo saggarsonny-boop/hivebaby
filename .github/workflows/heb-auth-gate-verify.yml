@@ -16,27 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Clone hive-engine-builder branch (public, no auth needed)
-        env:
-          BRANCH: ${{ inputs.branch }}
-        run: |
-          git clone --depth 1 --branch "$BRANCH" \
-            https://github.com/saggarsonny-boop/hive-engine-builder.git heb
-          echo "Cloned branch:"
-          git -C heb log -1 --format='%h %s'
-
-      - name: Setup Node + Vercel CLI
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Pull, build, deploy as preview, then run authed tests
+      - name: Trigger Vercel preview deploy + run authed tests
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
-        working-directory: heb
+          BRANCH:       ${{ inputs.branch }}
         run: |
           set -uo pipefail
           die() { echo "::error::$1"; exit 1; }
@@ -44,44 +27,78 @@ jobs:
 
           AUTH=(-H "Authorization: Bearer $VERCEL_TOKEN")
 
-          # ---- 1. Pull project + build with Vercel CLI (preview env) ----
-          echo "===== 1. vercel pull (preview env) ====="
-          vercel pull --yes --environment=preview --token "$VERCEL_TOKEN" \
-            --project hive-engine-builder
-
-          echo
-          echo "===== 2. vercel build ====="
-          vercel build --token "$VERCEL_TOKEN"
-
-          echo
-          echo "===== 3. vercel deploy --prebuilt (preview) ====="
-          # `vercel deploy --prebuilt` outputs the resulting deployment URL on stdout.
-          PREVIEW_URL=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN" 2>/tmp/vercel.err | tail -1 | tr -d '[:space:]')
-          if [ -z "$PREVIEW_URL" ] || [[ "$PREVIEW_URL" != https://* ]]; then
-            echo "vercel deploy stderr:"; cat /tmp/vercel.err
-            die "could not parse deployment URL: '$PREVIEW_URL'"
-          fi
-          echo "Preview URL: $PREVIEW_URL"
-
-          # ---- 4. Wait until ready ----
-          echo
-          echo "===== 4. Wait for READY ====="
-          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-            ROOT_STATUS=$(curl -s -o /tmp/root.html -w "%{http_code}" --max-time 8 "$PREVIEW_URL/" || echo "000")
-            if [ "$ROOT_STATUS" = "200" ]; then
-              echo "✓ root 200 after ${i} attempt(s)"
-              break
-            fi
-            sleep 8
-          done
-          [ "$ROOT_STATUS" = "200" ] || die "preview did not reach 200 within timeout"
-
-          # ---- 5. Resolve HEB_CREATOR_SECRET from the project's env ----
-          echo
-          echo "===== 5. Get HEB_CREATOR_SECRET (decrypt) ====="
+          # ---- 1. Resolve project id and GitHub repoId ----
+          echo "===== 1. Resolve Vercel project + GitHub repoId ====="
           PROJ=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/hive-engine-builder")
           PROJ_ID=$(echo "$PROJ" | jq -r '.id // empty')
           [ -n "$PROJ_ID" ] || { echo "$PROJ" | jq '.'; die "project lookup failed"; }
+          # The numeric GitHub repo ID is on the project's link object.
+          REPO_ID=$(echo "$PROJ" | jq -r '.link.repoId // empty')
+          [ -n "$REPO_ID" ] || die "could not resolve link.repoId on project"
+          echo "project: $PROJ_ID  repoId: $REPO_ID"
+
+          # ---- 2. Resolve HEAD sha for the branch ----
+          echo
+          echo "===== 2. Resolve $BRANCH HEAD sha (public GitHub API) ====="
+          # No auth needed for the unauthenticated rate-limited GitHub API on a
+          # private repo: it'll fail. Use the Vercel project's repo to read the
+          # ref via Vercel API instead. Vercel exposes /v9/projects/{id}/branches
+          # but a more robust path is to deploy without sha — Vercel resolves
+          # the branch HEAD itself when only `ref` is given.
+
+          # ---- 3. Trigger Vercel preview deploy via gitSource ----
+          echo
+          echo "===== 3. POST /v13/deployments (preview, branch=$BRANCH) ====="
+          PAYLOAD=$(jq -n \
+            --arg name "hive-engine-builder" \
+            --arg ref  "$BRANCH" \
+            --arg repoId "$REPO_ID" \
+            '{
+              name: $name,
+              target: "preview",
+              gitSource: { type: "github", ref: $ref, repoId: ($repoId | tonumber) }
+            }')
+          RESP=$(curl -s -X POST "${AUTH[@]}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "https://api.vercel.com/v13/deployments")
+          DEP_ID=$(echo "$RESP" | jq -r '.id // empty')
+          DEP_URL=$(echo "$RESP" | jq -r '.url // empty')
+          if [ -z "$DEP_ID" ] || [ -z "$DEP_URL" ]; then
+            echo "deploy create response:"
+            echo "$RESP" | jq '.'
+            die "deploy create failed"
+          fi
+          PREVIEW_URL="https://$DEP_URL"
+          echo "deployment id:   $DEP_ID"
+          echo "preview URL:     $PREVIEW_URL"
+
+          # ---- 4. Poll until READY ----
+          echo
+          echo "===== 4. Poll deployment until READY ====="
+          for i in $(seq 1 60); do
+            S=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v13/deployments/$DEP_ID")
+            STATE=$(echo "$S" | jq -r '.readyState // .status // empty')
+            echo "  attempt $i: state=$STATE"
+            case "$STATE" in
+              READY) break ;;
+              ERROR|CANCELED|DELETED)
+                echo "$S" | jq '.errorMessage, .errorLink' 2>/dev/null
+                die "deploy ended in $STATE"
+                ;;
+            esac
+            sleep 6
+          done
+          [ "$STATE" = "READY" ] || die "deploy did not reach READY in 6 minutes"
+
+          # Probe root once it's READY
+          ROOT_STATUS=$(curl -s -o /tmp/root.html -w "%{http_code}" --max-time 10 "$PREVIEW_URL/")
+          [ "$ROOT_STATUS" = "200" ] || die "preview root returned $ROOT_STATUS"
+          echo "✓ preview root 200"
+
+          # ---- 5. Resolve HEB_CREATOR_SECRET (decrypt) ----
+          echo
+          echo "===== 5. Get HEB_CREATOR_SECRET ====="
           ENV_LIST=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/$PROJ_ID/env")
           ENV_ID=$(echo "$ENV_LIST" | jq -r '.envs[]? | select(.key=="HEB_CREATOR_SECRET") | .id' | head -1)
           [ -n "$ENV_ID" ] && [ "$ENV_ID" != "null" ] || die "HEB_CREATOR_SECRET not on project"
@@ -94,11 +111,11 @@ jobs:
 
           # ---- 6. Auth-gate HTML present ----
           echo
-          echo "===== 6. Auth gate present in served HTML ====="
-          if grep -q "Unlock" /tmp/root.html; then
-            echo "✓ \"Unlock\" button text found in initial HTML"
+          echo "===== 6. Auth gate text in initial HTML ====="
+          if grep -qi "Unlock\|Creator secret" /tmp/root.html; then
+            echo "✓ Auth gate text present in HTML"
           else
-            echo "::warning::No \"Unlock\" in HTML (likely client-rendered; the app/page.tsx is 'use client')"
+            echo "::warning::No 'Unlock' or 'Creator secret' in initial HTML (client-rendered; OK)"
           fi
 
           # ---- 7. Validation probe (mirrors home-page useEffect) ----
@@ -107,8 +124,8 @@ jobs:
           VAL_STATUS=$(curl -s -o /tmp/val.json -w "%{http_code}" \
             "$PREVIEW_URL/api/engine-memory?slug=__validation__&types=chat_message&limit=1" \
             -H "x-creator-secret: $SECRET")
-          [ "$VAL_STATUS" = "200" ] || { cat /tmp/val.json | head -c 400; die "validation GET returned $VAL_STATUS"; }
-          echo "✓ Validation GET 200 (slug=__validation__, count=$(jq -r '.count // 0' /tmp/val.json))"
+          [ "$VAL_STATUS" = "200" ] || { cat /tmp/val.json | head -c 400; die "validation GET=$VAL_STATUS"; }
+          echo "✓ Validation GET 200 (count=$(jq -r '.count // 0' /tmp/val.json))"
 
           # ---- 8. POST verification test 1 ----
           echo
@@ -130,13 +147,13 @@ jobs:
           [ "$P2" = "200" ] || { cat /tmp/p2.json; die "POST 2 status=$P2"; }
           echo "✓ POST 2 status=200, id=$(jq -r '.id // "?"' /tmp/p2.json)"
 
-          # ---- 10. GET back (simulates refresh-then-mount) ----
+          # ---- 10. GET back ----
           echo
           echo "===== 10. GET back (refresh-then-mount simulation) ====="
-          G_STATUS=$(curl -s -o /tmp/g.json -w "%{http_code}" \
+          G=$(curl -s -o /tmp/g.json -w "%{http_code}" \
             "$PREVIEW_URL/api/engine-memory?slug=__verify-auth-gate__&types=chat_message&limit=10" \
             -H "x-creator-secret: $SECRET")
-          [ "$G_STATUS" = "200" ] || { cat /tmp/g.json; die "GET status=$G_STATUS"; }
+          [ "$G" = "200" ] || { cat /tmp/g.json; die "GET status=$G"; }
           echo "Returned entries:"
           jq -c '.entries | map({role, content})' /tmp/g.json
           C1=$(jq -r '[.entries[]? | select(.content=="verification test 1")] | length' /tmp/g.json)
@@ -147,18 +164,18 @@ jobs:
           # ---- 11. Bad-secret negative test ----
           echo
           echo "===== 11. Bad-secret negative test ====="
-          BAD_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          BAD=$(curl -s -o /dev/null -w "%{http_code}" \
             "$PREVIEW_URL/api/engine-memory?slug=__validation__&types=chat_message&limit=1" \
             -H "x-creator-secret: definitely-wrong-secret-xyz")
-          if [ "$BAD_STATUS" = "404" ]; then
-            echo "✓ Wrong secret returns 404 (the auth-fail signal validateSecret() relies on)"
+          if [ "$BAD" = "404" ]; then
+            echo "✓ Wrong secret returns 404"
           else
-            echo "::warning::Wrong secret returned $BAD_STATUS (expected 404)"
+            echo "::warning::Wrong secret returned $BAD (expected 404)"
           fi
 
-          # ---- 12. Cleanup synthetic rows ----
+          # ---- 12. Cleanup ----
           echo
-          echo "===== 12. Cleanup ====="
+          echo "===== 12. Cleanup synthetic rows ====="
           PURGE=$(curl -s -X DELETE \
             "$PREVIEW_URL/api/engine-memory?slug=__verify-auth-gate__&purge=true" \
             -H "x-creator-secret: $SECRET")
@@ -166,8 +183,8 @@ jobs:
 
           echo
           echo "===== ALL TESTS PASSED ====="
-          echo "Preview URL:    $PREVIEW_URL"
-          echo "Validation GET: 200"
-          echo "POST 1+2:       200, 200"
-          echo "GET round-trip: both entries present"
-          echo "Wrong secret:   $BAD_STATUS"
+          echo "Preview URL:     $PREVIEW_URL"
+          echo "Validation GET:  200"
+          echo "POST 1 + POST 2: 200, 200"
+          echo "Round-trip:      both entries returned"
+          echo "Wrong secret:    $BAD"
