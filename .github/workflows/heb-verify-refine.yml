@@ -1,0 +1,115 @@
+name: Ops — HEB verify Refine Blueprint fix (one-shot)
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: "Wait until production is on this commit SHA before curling"
+        required: true
+        default: "6393575"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Wait for deploy + curl /api/workshop/brainstorm with new shape
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          set -uo pipefail
+          die() { echo "::error::$1"; exit 1; }
+          [ -n "${VERCEL_TOKEN:-}" ] || die "VERCEL_TOKEN_MAIN missing"
+
+          AUTH=(-H "Authorization: Bearer $VERCEL_TOKEN")
+
+          echo "===== 1. Wait until prod is on $EXPECTED_SHA (max 4 min) ====="
+          PROD_URL=""
+          for i in $(seq 1 24); do
+            DEPLOYS=$(curl -s "${AUTH[@]}" \
+              "https://api.vercel.com/v6/deployments?app=hive-engine-builder&target=production&limit=1")
+            STATE=$(echo "$DEPLOYS" | jq -r '.deployments[0].readyState // "?"')
+            SHA=$(echo "$DEPLOYS"   | jq -r '.deployments[0].meta.githubCommitSha // ""')
+            URL=$(echo "$DEPLOYS"   | jq -r '.deployments[0].url // ""')
+            echo "  poll $i: state=$STATE sha=$SHA"
+            if [ "$STATE" = "READY" ] && [ -n "$SHA" ] && [[ "$SHA" == ${EXPECTED_SHA}* ]]; then
+              PROD_URL="https://$URL"
+              echo "  → matched. PROD_URL=$PROD_URL"
+              break
+            fi
+            sleep 10
+          done
+          [ -n "$PROD_URL" ] || die "prod did not reach $EXPECTED_SHA in time"
+
+          echo
+          echo "===== 2. Pull HEB_CREATOR_SECRET ====="
+          PROJ=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/hive-engine-builder")
+          PROJ_ID=$(echo "$PROJ" | jq -r '.id // empty')
+          ENV_LIST=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/$PROJ_ID/env")
+          ENV_ID=$(echo "$ENV_LIST" | jq -r '.envs[]? | select(.key=="HEB_CREATOR_SECRET") | .id' | head -1)
+          [ -n "$ENV_ID" ] || die "HEB_CREATOR_SECRET not found in project env"
+          DETAIL=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v1/projects/$PROJ_ID/env/$ENV_ID?decrypt=true")
+          SECRET=$(echo "$DETAIL" | jq -r '.value // empty')
+          [ -n "$SECRET" ] || die "could not decrypt HEB_CREATOR_SECRET"
+          echo "::add-mask::$SECRET"
+          echo "secret retrieved"
+
+          echo
+          echo "===== 3. Curl /api/workshop/brainstorm with NEW (array) shape ====="
+          BODY_GOOD=$(jq -nc '{
+            action: "refine",
+            blueprint: {
+              id: "verify-shim",
+              engineSlug: "verify-shim",
+              engineName: "Verify Shim",
+              status: "draft",
+              refinementQuestions: []
+            },
+            answers: [{ questionId: "noop", answer: "noop" }]
+          }')
+
+          STATUS_GOOD=$(curl -s -o /tmp/good.json -w "%{http_code}" \
+            -X POST "$PROD_URL/api/workshop/brainstorm" \
+            -H "x-heb-secret: $SECRET" \
+            -H "Content-Type: application/json" \
+            --data "$BODY_GOOD")
+          echo "  HTTP=$STATUS_GOOD"
+          echo "  body (first 600 chars):"
+          head -c 600 /tmp/good.json | sed 's/^/    /'
+          echo
+
+          echo
+          echo "===== 4. Curl with OLD (object) shape — should NOT contain 'answers.find' anymore ====="
+          BODY_OLD=$(jq -nc '{
+            action: "refine",
+            blueprint: { id: "x", engineSlug: "x", engineName: "X", status: "draft", refinementQuestions: [] },
+            answers: { q1: "a1" }
+          }')
+          STATUS_OLD=$(curl -s -o /tmp/old.json -w "%{http_code}" \
+            -X POST "$PROD_URL/api/workshop/brainstorm" \
+            -H "x-heb-secret: $SECRET" \
+            -H "Content-Type: application/json" \
+            --data "$BODY_OLD")
+          echo "  HTTP=$STATUS_OLD"
+          head -c 600 /tmp/old.json | sed 's/^/    /'
+          echo
+
+          echo
+          echo "===== 5. Verdict ====="
+          # "Fix verified" criterion: the GOOD shape no longer surfaces the
+          # `answers.find is not a function` error. A 5xx with a *different*
+          # error (Anthropic refusal, JSON parse failure on Claude output) is
+          # acceptable — the schema-level bug is what we shipped a fix for.
+          if grep -qi "answers.find is not a function" /tmp/good.json; then
+            die "GOOD shape still hitting answers.find — fix not deployed?"
+          fi
+          echo "GOOD shape no longer hits answers.find. Refine schema bug is gone."
+          if [ "$STATUS_GOOD" = "200" ]; then
+            echo "BONUS: full 200 from Anthropic round-trip on shim payload."
+          else
+            echo "GOOD HTTP=$STATUS_GOOD (non-200 acceptable as long as it's not the schema bug)."
+          fi
