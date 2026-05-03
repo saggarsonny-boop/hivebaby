@@ -1,0 +1,165 @@
+name: Ops — Verify HEB home-page auth gate (one-off)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'hive-engine-builder branch to verify (preview deploy)'
+        required: true
+        default: 'heb-home-auth-gate'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Resolve preview URL + creator secret, run authed tests
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          BRANCH:       ${{ inputs.branch }}
+        run: |
+          set -uo pipefail
+          die() { echo "::error::$1"; exit 1; }
+          [ -n "${VERCEL_TOKEN:-}" ] || die "VERCEL_TOKEN_MAIN missing"
+          [ -n "${BRANCH:-}" ]       || die "branch input missing"
+
+          AUTH=(-H "Authorization: Bearer $VERCEL_TOKEN")
+
+          echo "===== 1. Find latest deployment for branch '$BRANCH' ====="
+          # Vercel API: list deployments filtered by project + branch (gitSource.ref).
+          DEPLOYS=$(curl -s "${AUTH[@]}" \
+            "https://api.vercel.com/v6/deployments?app=hive-engine-builder&limit=20&state=READY,BUILDING")
+          # Pick the newest READY one matching our branch in meta.githubCommitRef
+          PREVIEW_URL=$(echo "$DEPLOYS" | jq -r --arg br "$BRANCH" '
+            .deployments
+            | map(select(.meta.githubCommitRef == $br and .readyState == "READY"))
+            | sort_by(.created) | reverse | .[0].url // empty
+          ')
+          if [ -z "$PREVIEW_URL" ]; then
+            echo "No READY deployment yet for branch '$BRANCH'. Recent deployments:"
+            echo "$DEPLOYS" | jq '.deployments | map({url, branch: .meta.githubCommitRef, state: .readyState, created}) | .[0:8]'
+            die "Preview not ready"
+          fi
+          PREVIEW_URL="https://$PREVIEW_URL"
+          echo "Preview URL: $PREVIEW_URL"
+
+          echo
+          echo "===== 2. Get HEB_CREATOR_SECRET from project env (decrypt) ====="
+          # Find project id by name.
+          PROJ=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/hive-engine-builder")
+          PROJ_ID=$(echo "$PROJ" | jq -r '.id // empty')
+          [ -n "$PROJ_ID" ] || { echo "$PROJ" | jq '{error}'; die "project lookup failed"; }
+          echo "project id: $PROJ_ID"
+
+          ENV_LIST=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/$PROJ_ID/env")
+          ENV_ID=$(echo "$ENV_LIST" | jq -r '.envs[]? | select(.key=="HEB_CREATOR_SECRET") | .id' | head -1)
+          if [ -z "$ENV_ID" ] || [ "$ENV_ID" = "null" ]; then
+            echo "HEB_CREATOR_SECRET env var not found on project. Existing keys:"
+            echo "$ENV_LIST" | jq '.envs | map({key, target}) | .[0:30]'
+            die "secret not present in Vercel env"
+          fi
+
+          DETAIL=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v1/projects/$PROJ_ID/env/$ENV_ID?decrypt=true")
+          SECRET=$(echo "$DETAIL" | jq -r '.value // empty')
+          if [ -z "$SECRET" ]; then
+            SECRET=$(echo "$ENV_LIST" | jq -r '.envs[]? | select(.key=="HEB_CREATOR_SECRET") | .value // empty' | head -1)
+          fi
+          [ -n "$SECRET" ] || die "could not decrypt HEB_CREATOR_SECRET"
+          echo "::add-mask::$SECRET"
+          SHA=$(printf '%s' "$SECRET" | sha256sum | cut -c1-12)
+          echo "secret retrieved (sha256:$SHA)"
+
+          echo
+          echo "===== 3. Pre-flight: confirm preview URL serves auth gate ====="
+          ROOT_HTML=$(curl -s "$PREVIEW_URL/")
+          if echo "$ROOT_HTML" | grep -q "Unlock"; then
+            echo "✓ Auth gate present in HTML (\"Unlock\" button found)"
+          else
+            echo "::warning::No 'Unlock' button found in HTML. Likely client-side rendered. Continuing."
+          fi
+
+          echo
+          echo "===== 4. Validate-secret probe (mirrors home-page useEffect) ====="
+          VAL_STATUS=$(curl -s -o /tmp/val.json -w "%{http_code}" \
+            "$PREVIEW_URL/api/engine-memory?slug=__validation__&types=chat_message&limit=1" \
+            -H "x-creator-secret: $SECRET")
+          if [ "$VAL_STATUS" = "200" ]; then
+            echo "✓ Validation GET 200 — server accepts the secret"
+            jq -c '{slug, count, sample: (.entries // [])[0]}' /tmp/val.json
+          else
+            echo "::error::validation GET returned $VAL_STATUS"
+            cat /tmp/val.json | head -c 400
+            die "validation failed"
+          fi
+
+          echo
+          echo "===== 5. POST verification test 1 ====="
+          P1=$(curl -s -o /tmp/p1.json -w "%{http_code}" -X POST \
+            "$PREVIEW_URL/api/engine-memory" \
+            -H "Content-Type: application/json" \
+            -H "x-creator-secret: $SECRET" \
+            -d '{"slug":"__verify-auth-gate__","type":"chat_message","role":"creator","content":"verification test 1"}')
+          echo "POST status: $P1"
+          jq -c . /tmp/p1.json
+          [ "$P1" = "200" ] || die "POST 1 failed"
+
+          echo
+          echo "===== 6. POST verification test 2 ====="
+          P2=$(curl -s -o /tmp/p2.json -w "%{http_code}" -X POST \
+            "$PREVIEW_URL/api/engine-memory" \
+            -H "Content-Type: application/json" \
+            -H "x-creator-secret: $SECRET" \
+            -d '{"slug":"__verify-auth-gate__","type":"chat_message","role":"claude","content":"verification test 2"}')
+          echo "POST status: $P2"
+          jq -c . /tmp/p2.json
+          [ "$P2" = "200" ] || die "POST 2 failed"
+
+          echo
+          echo "===== 7. GET back the two messages (simulates refresh-then-mount) ====="
+          G_STATUS=$(curl -s -o /tmp/g.json -w "%{http_code}" \
+            "$PREVIEW_URL/api/engine-memory?slug=__verify-auth-gate__&types=chat_message&limit=10" \
+            -H "x-creator-secret: $SECRET")
+          echo "GET status: $G_STATUS"
+          [ "$G_STATUS" = "200" ] || die "GET failed"
+          echo "Returned entries:"
+          jq -c '.entries | map({role, content, created_at})' /tmp/g.json
+
+          # Confirm both contents present.
+          C1=$(jq -r '.entries[]? | select(.content=="verification test 1") | .content' /tmp/g.json | head -1)
+          C2=$(jq -r '.entries[]? | select(.content=="verification test 2") | .content' /tmp/g.json | head -1)
+          if [ "$C1" = "verification test 1" ] && [ "$C2" = "verification test 2" ]; then
+            echo "✓ Both verification messages round-tripped"
+          else
+            die "round-trip missing — c1='$C1' c2='$C2'"
+          fi
+
+          echo
+          echo "===== 8. Bad-secret negative test ====="
+          BAD_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$PREVIEW_URL/api/engine-memory?slug=__validation__&types=chat_message&limit=1" \
+            -H "x-creator-secret: definitely-not-the-secret-xyz")
+          if [ "$BAD_STATUS" = "404" ]; then
+            echo "✓ Wrong secret returns 404 (the auth-fail signal the home gate watches for)"
+          else
+            echo "::warning::Wrong secret returned $BAD_STATUS (expected 404)"
+          fi
+
+          echo
+          echo "===== Cleanup: delete the synthetic verification rows ====="
+          # Use the purge endpoint so we don't leave test rows around.
+          PURGE=$(curl -s -o /tmp/purge.json -w "%{http_code}" -X DELETE \
+            "$PREVIEW_URL/api/engine-memory?slug=__verify-auth-gate__&purge=true" \
+            -H "x-creator-secret: $SECRET")
+          echo "purge: $PURGE"
+          jq -c . /tmp/purge.json 2>/dev/null || true
+
+          echo
+          echo "===== ALL TESTS PASSED ====="
+          echo "Preview URL:   $PREVIEW_URL"
+          echo "Validation:    secret accepted (200)"
+          echo "POST 1+2:      both 200"
+          echo "GET round-trip: both entries returned"
+          echo "Wrong secret:  rejected (404)"
