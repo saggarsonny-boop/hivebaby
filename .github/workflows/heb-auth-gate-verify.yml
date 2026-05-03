@@ -49,13 +49,14 @@ jobs:
           # ---- 3. Trigger Vercel preview deploy via gitSource ----
           echo
           echo "===== 3. POST /v13/deployments (preview, branch=$BRANCH) ====="
+          # Omit `target` — Vercel rejects "preview" but defaults to a preview
+          # deployment when target is absent and the ref isn't the production branch.
           PAYLOAD=$(jq -n \
             --arg name "hive-engine-builder" \
             --arg ref  "$BRANCH" \
             --arg repoId "$REPO_ID" \
             '{
               name: $name,
-              target: "preview",
               gitSource: { type: "github", ref: $ref, repoId: ($repoId | tonumber) }
             }')
           RESP=$(curl -s -X POST "${AUTH[@]}" \
