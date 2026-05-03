@@ -37,8 +37,11 @@ jobs:
             URL=$(echo "$DEPLOYS"   | jq -r '.deployments[0].url // ""')
             echo "  poll $i: state=$STATE sha=$SHA"
             if [ "$STATE" = "READY" ] && [ -n "$SHA" ] && [[ "$SHA" == ${EXPECTED_SHA}* ]]; then
-              PROD_URL="https://$URL"
-              echo "  → matched. PROD_URL=$PROD_URL"
+              # Per-deploy URLs are gated by Vercel deployment protection (401).
+              # The public custom domain is configured to alias the latest prod
+              # deploy so use that instead.
+              PROD_URL="https://hiveenginebuilder.hive.baby"
+              echo "  → matched (deploy=$URL). Using public alias PROD_URL=$PROD_URL"
               break
             fi
             sleep 10
