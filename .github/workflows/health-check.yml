@@ -83,6 +83,7 @@ jobs:
           check_url "HiveMicroRitual"     "https://hivemicroritual.hive.baby"
           check_url "SovereignArbitrage"  "https://sovereignarbitrage.hive.baby"
           check_url "HiveIMR"             "https://hiveimr.hive.baby/api/health"
+          check_url "IMGTrainer"          "https://imgtrainer.hive.baby/api/health"
           check_url "QueenBee"            "https://queenbee.hive.baby"
 
           # Building (CLAUDE.md status: BUILDING) — warn only
