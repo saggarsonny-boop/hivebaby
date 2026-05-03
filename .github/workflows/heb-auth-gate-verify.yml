@@ -92,9 +92,24 @@ jobs:
           done
           [ "$STATE" = "READY" ] || die "deploy did not reach READY in 6 minutes"
 
+          # Vercel Deployment Protection gates preview URLs with 401 unless we
+          # pass a bypass token. Pull one from the project's protectionBypass map.
+          BYPASS=$(echo "$PROJ" | jq -r '
+            (.protectionBypass // {}) | to_entries | .[0].key // empty
+          ')
+          if [ -n "$BYPASS" ]; then
+            echo "::add-mask::$BYPASS"
+            echo "protection bypass token present (will pass via x-vercel-protection-bypass header)"
+            BYPASS_HEADERS=(-H "x-vercel-protection-bypass: $BYPASS" -H "x-vercel-set-bypass-cookie: true")
+          else
+            echo "::warning::No protectionBypass token on project — preview likely 401-gated."
+            BYPASS_HEADERS=()
+          fi
+
           # Probe root once it's READY
-          ROOT_STATUS=$(curl -s -o /tmp/root.html -w "%{http_code}" --max-time 10 "$PREVIEW_URL/")
-          [ "$ROOT_STATUS" = "200" ] || die "preview root returned $ROOT_STATUS"
+          ROOT_STATUS=$(curl -s -o /tmp/root.html -w "%{http_code}" --max-time 10 \
+            "${BYPASS_HEADERS[@]}" "$PREVIEW_URL/")
+          [ "$ROOT_STATUS" = "200" ] || die "preview root returned $ROOT_STATUS (deployment protection?)"
           echo "✓ preview root 200"
 
           # ---- 5. Resolve HEB_CREATOR_SECRET (decrypt) ----
@@ -123,6 +138,7 @@ jobs:
           echo
           echo "===== 7. Validate-secret probe ====="
           VAL_STATUS=$(curl -s -o /tmp/val.json -w "%{http_code}" \
+            "${BYPASS_HEADERS[@]}" \
             "$PREVIEW_URL/api/engine-memory?slug=__validation__&types=chat_message&limit=1" \
             -H "x-creator-secret: $SECRET")
           [ "$VAL_STATUS" = "200" ] || { cat /tmp/val.json | head -c 400; die "validation GET=$VAL_STATUS"; }
@@ -132,6 +148,7 @@ jobs:
           echo
           echo "===== 8. POST verification test 1 ====="
           P1=$(curl -s -o /tmp/p1.json -w "%{http_code}" -X POST \
+            "${BYPASS_HEADERS[@]}" \
             "$PREVIEW_URL/api/engine-memory" \
             -H "Content-Type: application/json" -H "x-creator-secret: $SECRET" \
             -d '{"slug":"__verify-auth-gate__","type":"chat_message","role":"creator","content":"verification test 1"}')
@@ -142,6 +159,7 @@ jobs:
           echo
           echo "===== 9. POST verification test 2 ====="
           P2=$(curl -s -o /tmp/p2.json -w "%{http_code}" -X POST \
+            "${BYPASS_HEADERS[@]}" \
             "$PREVIEW_URL/api/engine-memory" \
             -H "Content-Type: application/json" -H "x-creator-secret: $SECRET" \
             -d '{"slug":"__verify-auth-gate__","type":"chat_message","role":"claude","content":"verification test 2"}')
@@ -152,6 +170,7 @@ jobs:
           echo
           echo "===== 10. GET back (refresh-then-mount simulation) ====="
           G=$(curl -s -o /tmp/g.json -w "%{http_code}" \
+            "${BYPASS_HEADERS[@]}" \
             "$PREVIEW_URL/api/engine-memory?slug=__verify-auth-gate__&types=chat_message&limit=10" \
             -H "x-creator-secret: $SECRET")
           [ "$G" = "200" ] || { cat /tmp/g.json; die "GET status=$G"; }
@@ -166,6 +185,7 @@ jobs:
           echo
           echo "===== 11. Bad-secret negative test ====="
           BAD=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${BYPASS_HEADERS[@]}" \
             "$PREVIEW_URL/api/engine-memory?slug=__validation__&types=chat_message&limit=1" \
             -H "x-creator-secret: definitely-wrong-secret-xyz")
           if [ "$BAD" = "404" ]; then
@@ -178,6 +198,7 @@ jobs:
           echo
           echo "===== 12. Cleanup synthetic rows ====="
           PURGE=$(curl -s -X DELETE \
+            "${BYPASS_HEADERS[@]}" \
             "$PREVIEW_URL/api/engine-memory?slug=__verify-auth-gate__&purge=true" \
             -H "x-creator-secret: $SECRET")
           echo "purge: $(echo "$PURGE" | jq -c .)"
