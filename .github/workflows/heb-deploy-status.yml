@@ -1,0 +1,62 @@
+name: Ops — HEB deploy + sessions deep query (diagnostic)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Latest production deploy + per-row blueprint
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+        run: |
+          set -uo pipefail
+          die() { echo "::error::$1"; exit 1; }
+          [ -n "${VERCEL_TOKEN:-}" ] || die "VERCEL_TOKEN_MAIN missing"
+
+          AUTH=(-H "Authorization: Bearer $VERCEL_TOKEN")
+
+          echo "===== 1. Production deployment for hive-engine-builder ====="
+          # target=production filters to prod only
+          DEPLOYS=$(curl -s "${AUTH[@]}" \
+            "https://api.vercel.com/v6/deployments?app=hive-engine-builder&target=production&limit=5")
+          echo "$DEPLOYS" | jq '.deployments | map({
+            url, ready: .readyState, created,
+            ref: .meta.githubCommitRef,
+            sha: .meta.githubCommitSha,
+            msg: (.meta.githubCommitMessage // "")[:80]
+          }) | .[0:5]'
+
+          echo
+          echo "===== 2. Pull DATABASE_URL ====="
+          PROJ=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/hive-engine-builder")
+          PROJ_ID=$(echo "$PROJ" | jq -r '.id // empty')
+          ENV_LIST=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v9/projects/$PROJ_ID/env")
+          ENV_ID=$(echo "$ENV_LIST" | jq -r '.envs[]? | select(.key=="DATABASE_URL") | .id' | head -1)
+          DETAIL=$(curl -s "${AUTH[@]}" "https://api.vercel.com/v1/projects/$PROJ_ID/env/$ENV_ID?decrypt=true")
+          DBURL=$(echo "$DETAIL" | jq -r '.value // empty')
+          [ -n "$DBURL" ] || die "no DATABASE_URL"
+          echo "::add-mask::$DBURL"
+          echo "secret retrieved"
+
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+          echo
+          echo "===== 3. heb_workshop_sessions: count + blueprint snippets ====="
+          psql "$DBURL" -v ON_ERROR_STOP=1 -P "expanded=on" \
+            -c "SELECT id, engine_slug, display_name, phase, jsonb_typeof(blueprint) AS bp_type, COALESCE(jsonb_array_length(jsonb_path_query_array(blueprint, '\$.keys()')), 0) AS bp_obj_keys, length(blueprint::text) AS bp_size_chars, created_at, updated_at FROM heb_workshop_sessions ORDER BY updated_at DESC LIMIT 10;"
+
+          echo
+          echo "===== 4. Show the blueprint of each row truncated to 200 chars ====="
+          psql "$DBURL" -v ON_ERROR_STOP=1 -P "expanded=on" \
+            -c "SELECT id, left(blueprint::text, 200) AS blueprint_head FROM heb_workshop_sessions ORDER BY updated_at DESC LIMIT 10;"
+
+          echo
+          echo "===== 5. heb_design_decisions count (proxy: did brainstorm ever ACTUALLY run?) ====="
+          psql "$DBURL" -v ON_ERROR_STOP=1 \
+            -c "SELECT count(*) AS decisions, max(created_at) AS most_recent FROM heb_design_decisions;"
