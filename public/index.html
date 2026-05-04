@@ -836,6 +836,7 @@ const ENGINES = [
   { name:'HiveIMR',            emoji:'🩺', status:'live',     tier:1, tagline:'Intelligent Medical Records. The post-EMR substrate.',  url:'https://hiveimr.hive.baby',              keywords:['imr','emr','ehr','medical','records','clinical','health','hospital','doctor','nurse','handoff','discharge','intelligent'] },
   { name:'HivePlainScan',      emoji:'📋', status:'live',     tier:1, tagline:'Your radiology report, in plain English.',              url:'https://plainscan.hive.baby',            keywords:['radiology','mri','ct','xray','scan','report','plain','english','patient','imaging','translate'] },
   { name:'IMGTrainer',         emoji:'🧠', status:'live',     tier:1, tagline:'Clinical reasoning for USMLE Step 2 CK.',                url:'https://imgtrainer.hive.baby',           keywords:['usmle','step2','clinical','reasoning','medical','case','medicine','img','exam','training'] },
+  { name:'ParkBack',           emoji:'🅿️', status:'live',     tier:1, tagline:'Never lose your car again.',                            url:'https://parkback.hive.baby',             keywords:['parking','car','park','find','pin','remember','garage','spot','vehicle','navigate'] },
   // TIER 3 — PLANNED
   { name:'HiveTV',             emoji:'📺', status:'planned',  tier:3, tagline:'AI broadcast platform. Gary Gansson.',                 url:null, keywords:['tv','broadcast','gary','show','media'] },
   { name:'Trust Mesh',         emoji:'🕸️', status:'planned', tier:3, tagline:'Universal matching and micro-contract.',               url:null, keywords:['trust','mesh','match','contract','social'] },
@@ -1073,6 +1074,40 @@ function updateTestingSatellite() {
   const cr = ca.r + (cb.r - ca.r) * s, cg = ca.g + (cb.g - ca.g) * s, cb2 = ca.b + (cb.b - ca.b) * s;
   tsMesh.material.color.setRGB(cr, cg, cb2);
   tsLight.color.setRGB(cr, cg, cb2);
+}
+
+// ─── ParkBack Satellite ───────────────────────────────────────────────────────
+// Orbit: R=1.72 (beyond HiveTestingStation at 1.58), 25° inc, 70s period
+const PB_R = 1.72, PB_INC = 25 * Math.PI / 180, PB_PERIOD = 70;
+const pbOffset = Math.random() * Math.PI * 2;
+const pbMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.05, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0xD4AF37 })
+);
+const pbLight = new THREE.PointLight(0xD4AF37, 2.0, 0.5);
+pbMesh.add(pbLight);
+scene.add(pbMesh);
+// Color-cycle palette: Hive golds — primary gold → warm amber → deep gold → bronze
+const PB_PALETTE = [0xD4AF37, 0xE89020, 0xC8960A, 0xBA7517].map(c => new THREE.Color(c));
+const PB_CYCLE_S = 2.4;
+function updateParkBackSatellite() {
+  const now = Date.now() / 1000;
+  const theta = (2 * Math.PI * now / PB_PERIOD + pbOffset) % (2 * Math.PI);
+  pbMesh.position.set(
+    PB_R * Math.cos(theta),
+    PB_R * Math.sin(theta) * Math.sin(PB_INC),
+    PB_R * Math.sin(theta) * Math.cos(PB_INC)
+  );
+  // Smooth color cycling with cubic ease — matches TestingStation pattern
+  const phase = (now / PB_CYCLE_S) % PB_PALETTE.length;
+  const idx  = Math.floor(phase) % PB_PALETTE.length;
+  const next = (idx + 1) % PB_PALETTE.length;
+  const f    = phase - Math.floor(phase);
+  const s    = f * f * (3 - 2 * f); // smoothstep
+  const ca = PB_PALETTE[idx], cb = PB_PALETTE[next];
+  const cr = ca.r + (cb.r - ca.r) * s, cg = ca.g + (cb.g - ca.g) * s, cb2 = ca.b + (cb.b - ca.b) * s;
+  pbMesh.material.color.setRGB(cr, cg, cb2);
+  pbLight.color.setRGB(cr, cg, cb2);
 }
 
 // ─── Space Station ────────────────────────────────────────────────────────────
@@ -1718,6 +1753,13 @@ function handleClick(cx,cy){
     window.open('https://test.hive.baby','_blank'); return;
   }
 
+  // Check ParkBack satellite
+  const pbp=pbMesh.position.clone().project(camera);
+  const pbx=(pbp.x*0.5+0.5)*window.innerWidth, pby=(-pbp.y*0.5+0.5)*window.innerHeight;
+  if(pbp.z>-1&&pbp.z<1&&Math.hypot(cx-pbx,cy-pby)<30){
+    window.open('https://parkback.hive.baby','_blank'); return;
+  }
+
   // Check planet cells
   const h=raycaster.intersectObjects(meshes); if(!h.length) return;
   const ci=cellMeshMap.get(h[0].object); if(ci===undefined) return;
@@ -1774,6 +1816,21 @@ function updateHover(cx,cy){
     tooltip.className='';
     tooltip.querySelector('.tt-name').textContent='🛰️  HiveTestingStation';
     tooltip.querySelector('.tt-tagline').textContent='Help build the Hive.\nFirst 100 testers per engine\nget free lifetime access.';
+    tooltip.querySelector('.tt-code').textContent='';
+    tooltip.querySelector('.tt-action').textContent='Click to open →';
+    tooltip.querySelector('.tt-action').className='tt-action';
+    tooltip.style.display='block'; posTip(cx,cy);
+    canvas.style.cursor='pointer';
+    return;
+  }
+
+  // ParkBack satellite hover
+  const pbp=pbMesh.position.clone().project(camera);
+  const pbx=(pbp.x*0.5+0.5)*window.innerWidth, pby=(-pbp.y*0.5+0.5)*window.innerHeight;
+  if(pbp.z>-1&&pbp.z<1&&Math.hypot(cx-pbx,cy-pby)<30){
+    tooltip.className='';
+    tooltip.querySelector('.tt-name').textContent='🛰️  ParkBack';
+    tooltip.querySelector('.tt-tagline').textContent='Never lose your car again.\nDrop a pin where you parked,\nfind it with one tap.';
     tooltip.querySelector('.tt-code').textContent='';
     tooltip.querySelector('.tt-action').textContent='Click to open →';
     tooltip.querySelector('.tt-action').className='tt-action';
@@ -1975,6 +2032,9 @@ function animate(){
 
   // HiveTestingStation satellite
   updateTestingSatellite();
+
+  // ParkBack satellite
+  updateParkBackSatellite();
 
   // Space Station orbit
   updateSpaceStation(t);
