@@ -14,9 +14,29 @@ import { track } from "./_lib/analytics";
 import { buildShareUrl } from "./_lib/share";
 import { HiveFooter } from "./_lib/HiveFooter";
 import { HexButton } from "./_lib/HexButton";
-import { InstallHintBanner, FirstVisitExplainer, dismissFirstVisitExplainer, PostActionInstallPrompt, shouldShowPostActionInstall } from "./_lib/InstallHintBanner";
+import { InstallHintBanner, FirstVisitExplainer, dismissFirstVisitExplainer } from "./_lib/InstallHintBanner";
 
 const STORAGE_KEY = "parkback_pin_v1";
+const A2HS_DISMISSED_KEY = "parkback_a2hs_dismissed_v1";
+
+function isIOSSafari(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    ((navigator as Navigator & { platform: string }).platform === "MacIntel" &&
+      (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints !== undefined &&
+      ((navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints || 0) > 1);
+  if (!isIOS) return false;
+  // Safari on iOS — exclude Chrome/Firefox/Edge variants which don't support A2HS the same way.
+  return !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua);
+}
+
+function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia?.("(display-mode: standalone)").matches) return true;
+  return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+}
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
 const INK = "#0a0a0a";
@@ -219,7 +239,11 @@ export default function ParkBackPage() {
         showToast("Got it. Walk wherever. Come back when you need your car.");
 
         // Show "Add to Home Screen" hint once on iOS Safari, only if not standalone yet.
-        if (shouldShowPostActionInstall()) {
+        if (
+          isIOSSafari() &&
+          !isStandalone() &&
+          window.localStorage.getItem(A2HS_DISMISSED_KEY) !== "1"
+        ) {
           setShowA2HS(true);
         }
 
@@ -259,7 +283,11 @@ export default function ParkBackPage() {
 
   const dismissA2HS = useCallback(() => {
     setShowA2HS(false);
-    // Persistence handled inside PostActionInstallPrompt.
+    try {
+      window.localStorage.setItem(A2HS_DISMISSED_KEY, "1");
+    } catch {
+      // localStorage might be disabled — silently ignore.
+    }
   }, []);
 
   const handleNavigate = useCallback(() => {
@@ -576,7 +604,16 @@ export default function ParkBackPage() {
         <HexButton variant="ghost" size="md" onClick={handleClear} ariaLabel="Forget this spot">Forget</HexButton>
       </div>
 
-      <PostActionInstallPrompt visible={showA2HS} onDismiss={dismissA2HS} />
+      {showA2HS ? (
+        <div role="dialog" style={a2hsStyle}>
+          <div style={a2hsTitleStyle}>Add ParkBack to your home screen</div>
+          <div style={a2hsBodyStyle}>
+            The whole thing — your pin, photo, voice memo, and the compass back to your car —
+            works without cell signal or wifi. Even in the deepest parking deck.
+          </div>
+          <button type="button" onClick={dismissA2HS} style={a2hsDismissStyle}>Got it</button>
+        </div>
+      ) : null}
 
       <HiveFooter />
 
@@ -820,6 +857,18 @@ const a2hsStyle: React.CSSProperties = {
   gap: 8,
   maxWidth: 360,
   textAlign: "left",
+};
+
+const a2hsTitleStyle: React.CSSProperties = {
+  color: GOLD,
+  fontWeight: 600,
+  fontSize: 14,
+};
+
+const a2hsBodyStyle: React.CSSProperties = {
+  color: PAPER,
+  fontSize: 13,
+  lineHeight: 1.4,
 };
 
 const a2hsDismissStyle: React.CSSProperties = {
