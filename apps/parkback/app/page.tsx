@@ -460,6 +460,15 @@ export default function ParkBackPage() {
           {perm === "requesting" ? "Locating…" : "Drop pin"}
         </HexButton>
 
+        <div style={positioningBlockStyle}>
+          <div style={positioningLine1Style}>
+            No app store. No login. No subscription. No ads. No tracking. No signal needed.
+          </div>
+          <div style={positioningLine2Style}>
+            The parking app that should have existed years ago.
+          </div>
+        </div>
+
         <FirstVisitExplainer />
 
         <div style={hintStyle}>
@@ -805,6 +814,34 @@ const actionsRowStyle: React.CSSProperties = {
   maxWidth: 360,
   justifyContent: "space-between",
   flexWrap: "wrap",
+};
+
+const positioningBlockStyle: React.CSSProperties = {
+  marginTop: 18,
+  marginBottom: 6,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 4,
+  maxWidth: 380,
+  padding: "0 12px",
+  textAlign: "center",
+  lineHeight: 1.5,
+};
+
+const positioningLine1Style: React.CSSProperties = {
+  color: "#B89730",
+  fontSize: 12,
+  fontWeight: 500,
+  letterSpacing: "0.01em",
+};
+
+const positioningLine2Style: React.CSSProperties = {
+  color: "#B89730",
+  fontSize: 12,
+  fontStyle: "italic",
+  fontWeight: 400,
+  letterSpacing: "0.01em",
 };
 
 const a2hsStyle: React.CSSProperties = {
