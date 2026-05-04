@@ -8,8 +8,32 @@ import {
   haversineMeters,
   navigateUrl,
 } from "./_lib/geo";
+import { useCompass } from "./_lib/useCompass";
+import { Figure8 } from "./_lib/Figure8";
+import { track } from "./_lib/analytics";
+import { buildShareUrl } from "./_lib/share";
 
 const STORAGE_KEY = "parkback_pin_v1";
+const A2HS_DISMISSED_KEY = "parkback_a2hs_dismissed_v1";
+
+function isIOSSafari(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    ((navigator as Navigator & { platform: string }).platform === "MacIntel" &&
+      (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints !== undefined &&
+      ((navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints || 0) > 1);
+  if (!isIOS) return false;
+  // Safari on iOS — exclude Chrome/Firefox/Edge variants which don't support A2HS the same way.
+  return !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua);
+}
+
+function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia?.("(display-mode: standalone)").matches) return true;
+  return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+}
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
 const INK = "#0a0a0a";
@@ -110,11 +134,13 @@ export default function ParkBackPage() {
   const [recElapsed, setRecElapsed] = useState(0);
   const [photoSkipped, setPhotoSkipped] = useState(false);
   const [voiceSkipped, setVoiceSkipped] = useState(false);
-  const [compassHeading, setCompassHeading] = useState<number | null>(null);
-  const [compassState, setCompassState] = useState<"idle" | "active" | "needs-permission" | "unavailable">("idle");
   const [photoOpen, setPhotoOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [showA2HS, setShowA2HS] = useState(false);
   const toastTimerRef = useRef<number | null>(null);
+
+  const { state: compassState, heading: compassHeading, requestPermission: requestCompassPermission } =
+    useCompass(!!pin);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -176,80 +202,6 @@ export default function ParkBackPage() {
     };
   }, [pin]);
 
-  // Wire up device orientation (compass) when a pin is set.
-  useEffect(() => {
-    if (!pin) return;
-    if (typeof window === "undefined") return;
-    const W = window as any;
-
-    const handler = (e: DeviceOrientationEvent) => {
-      // iOS Safari exposes magnetic-north heading directly; others give alpha (z-axis rotation).
-      const webkitHeading = (e as any).webkitCompassHeading;
-      let heading: number | null = null;
-      if (typeof webkitHeading === "number" && !Number.isNaN(webkitHeading)) {
-        heading = webkitHeading;
-      } else if (typeof e.alpha === "number" && !Number.isNaN(e.alpha)) {
-        // alpha is rotation around z-axis; convert to compass heading (0 = north).
-        heading = (360 - e.alpha) % 360;
-      }
-      if (heading !== null) {
-        setCompassHeading(heading);
-        setCompassState("active");
-      }
-    };
-
-    const supportsAbsolute = "ondeviceorientationabsolute" in window;
-    const eventName = supportsAbsolute ? "deviceorientationabsolute" : "deviceorientation";
-
-    const needsPermission =
-      typeof W.DeviceOrientationEvent !== "undefined" &&
-      typeof W.DeviceOrientationEvent.requestPermission === "function";
-
-    if (needsPermission) {
-      // iOS 13+: don't auto-request. Show button instead.
-      setCompassState((s) => (s === "active" ? s : "needs-permission"));
-    } else if (typeof W.DeviceOrientationEvent !== "undefined") {
-      window.addEventListener(eventName, handler as EventListener, true);
-    } else {
-      setCompassState("unavailable");
-    }
-
-    return () => {
-      window.removeEventListener(eventName, handler as EventListener, true);
-    };
-  }, [pin]);
-
-  const requestCompassPermission = useCallback(async () => {
-    const W = window as any;
-    if (typeof W.DeviceOrientationEvent?.requestPermission !== "function") {
-      setCompassState("unavailable");
-      return;
-    }
-    try {
-      const result = await W.DeviceOrientationEvent.requestPermission();
-      if (result === "granted") {
-        const handler = (e: DeviceOrientationEvent) => {
-          const webkitHeading = (e as any).webkitCompassHeading;
-          let heading: number | null = null;
-          if (typeof webkitHeading === "number" && !Number.isNaN(webkitHeading)) {
-            heading = webkitHeading;
-          } else if (typeof e.alpha === "number") {
-            heading = (360 - e.alpha) % 360;
-          }
-          if (heading !== null) {
-            setCompassHeading(heading);
-            setCompassState("active");
-          }
-        };
-        window.addEventListener("deviceorientation", handler as EventListener, true);
-      } else {
-        setCompassState("unavailable");
-      }
-    } catch {
-      setCompassState("unavailable");
-    }
-  }, []);
-
   const dropPin = useCallback(async () => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
       setPerm("unavailable");
@@ -279,6 +231,16 @@ export default function ParkBackPage() {
         setPerm("idle");
         setPhotoSkipped(false);
         setVoiceSkipped(false);
+        track("pin_dropped", { has_altitude: draft.altitude !== null });
+
+        // Show "Add to Home Screen" hint once on iOS Safari, only if not standalone yet.
+        if (
+          isIOSSafari() &&
+          !isStandalone() &&
+          window.localStorage.getItem(A2HS_DISMISSED_KEY) !== "1"
+        ) {
+          setShowA2HS(true);
+        }
 
         const landmark = await reverseGeocode(latitude, longitude);
         if (landmark) {
@@ -311,8 +273,16 @@ export default function ParkBackPage() {
     setVoiceSkipped(false);
     setRecState("idle");
     setPhotoOpen(false);
-    setCompassHeading(null);
-    setCompassState("idle");
+    setShowA2HS(false);
+  }, []);
+
+  const dismissA2HS = useCallback(() => {
+    setShowA2HS(false);
+    try {
+      window.localStorage.setItem(A2HS_DISMISSED_KEY, "1");
+    } catch {
+      // localStorage might be disabled — silently ignore.
+    }
   }, []);
 
   const handleNavigate = useCallback(() => {
@@ -322,20 +292,24 @@ export default function ParkBackPage() {
 
   const handleShare = useCallback(async () => {
     if (!pin) return;
-    const params = new URLSearchParams({
-      lat: String(pin.lat),
-      lng: String(pin.lng),
-      t: String(pin.timestamp),
+    const shareUrl = buildShareUrl({
+      lat: pin.lat,
+      lng: pin.lng,
+      timestamp: pin.timestamp,
+      landmark: pin.landmark,
     });
-    if (pin.landmark) params.set("landmark", pin.landmark);
-    const shareUrl = `https://parkback.hive.baby/find?${params.toString()}`;
     const text = pin.landmark
       ? `My car is parked near ${pin.landmark}.`
       : "Here's where my car is parked.";
+    track("share_link_generated", { has_landmark: pin.landmark !== null });
 
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
+    if (typeof navigator !== "undefined" && (navigator as Navigator & { share?: (data: ShareData) => Promise<void> }).share) {
       try {
-        await (navigator as any).share({ title: "ParkBack — my parking spot", text, url: shareUrl });
+        await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({
+          title: "ParkBack — my parking spot",
+          text,
+          url: shareUrl,
+        });
         return;
       } catch {
         // user cancelled or share failed — fall through to clipboard
@@ -362,6 +336,7 @@ export default function ParkBackPage() {
       const updated: Pin = { ...pin, photo: dataUrl };
       savePin(updated);
       setPin(updated);
+      track("photo_taken");
     } catch {
       alert("Couldn't process that photo. Try again.");
     }
@@ -412,6 +387,7 @@ export default function ParkBackPage() {
           const updated: Pin = { ...current, voiceMemo: dataUrl };
           savePin(updated);
           setPin(updated);
+          track("voice_memo_recorded", { duration_ms: Date.now() - recStartRef.current });
         } catch {
           alert("Couldn't save the voice note.");
         } finally {
@@ -485,7 +461,10 @@ export default function ParkBackPage() {
         </div>
 
         <footer style={footerStyle}>
-          No ads. No investors. No agenda.
+          <div>No ads. No investors. No agenda.</div>
+          <a href="https://hive.baby" target="_blank" rel="noopener noreferrer" style={hiveLinkStyle}>
+            part of the Hive
+          </a>
         </footer>
       </main>
     );
@@ -511,7 +490,11 @@ export default function ParkBackPage() {
 
       <div style={compassWrapStyle}>
         <div style={compassRingStyle}>
-          <ArrowSvg rotation={arrowRotation} dim={bearing === null} />
+          {compassState === "calibrating" ? (
+            <Figure8 />
+          ) : (
+            <ArrowSvg rotation={arrowRotation} dim={bearing === null} />
+          )}
         </div>
         <div style={distanceStyle}>{distance === null ? "Locating you…" : formatDistance(distance)}</div>
         {pin.landmark ? <div style={landmarkStyle}>near {pin.landmark}</div> : null}
@@ -523,7 +506,9 @@ export default function ParkBackPage() {
             Enable compass
           </button>
         ) : null}
-        {compassState !== "active" ? (
+        {compassState === "calibrating" ? (
+          <div style={compassNoteStyle}>Calibrating compass — wave phone in a figure-8</div>
+        ) : compassState !== "active" ? (
           <div style={compassNoteStyle}>Hold phone flat, arrow points to car.</div>
         ) : null}
       </div>
@@ -606,7 +591,23 @@ export default function ParkBackPage() {
         <button type="button" onClick={handleClear} style={ghostActionStyle}>Clear pin</button>
       </div>
 
-      <footer style={footerStyle}>No ads. No investors. No agenda.</footer>
+      {showA2HS ? (
+        <div role="dialog" style={a2hsStyle}>
+          <div style={a2hsTitleStyle}>Add to Home Screen for better experience</div>
+          <div style={a2hsBodyStyle}>
+            Tap the share icon in Safari, then “Add to Home Screen.” ParkBack will open instantly,
+            full-screen, even with no signal.
+          </div>
+          <button type="button" onClick={dismissA2HS} style={a2hsDismissStyle}>Got it</button>
+        </div>
+      ) : null}
+
+      <footer style={footerStyle}>
+        <div>No ads. No investors. No agenda.</div>
+        <a href="https://hive.baby" target="_blank" rel="noopener noreferrer" style={hiveLinkStyle}>
+          part of the Hive
+        </a>
+      </footer>
 
       {toast ? <div role="status" style={toastStyle}>{toast}</div> : null}
     </main>
@@ -852,6 +853,57 @@ const footerStyle: React.CSSProperties = {
   color: MUTED,
   fontSize: 11,
   letterSpacing: "0.05em",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 6,
+};
+
+const hiveLinkStyle: React.CSSProperties = {
+  color: MUTED,
+  textDecoration: "none",
+  fontSize: 11,
+  letterSpacing: "0.05em",
+  borderBottom: `1px dotted ${MUTED}`,
+  paddingBottom: 1,
+};
+
+const a2hsStyle: React.CSSProperties = {
+  marginTop: 14,
+  padding: "12px 14px",
+  borderRadius: 12,
+  border: `1px solid ${GOLD_DIM}`,
+  background: "rgba(212, 175, 55, 0.06)",
+  color: PAPER,
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+  maxWidth: 360,
+  textAlign: "left",
+};
+
+const a2hsTitleStyle: React.CSSProperties = {
+  color: GOLD,
+  fontWeight: 600,
+  fontSize: 14,
+};
+
+const a2hsBodyStyle: React.CSSProperties = {
+  color: PAPER,
+  fontSize: 13,
+  lineHeight: 1.4,
+};
+
+const a2hsDismissStyle: React.CSSProperties = {
+  alignSelf: "flex-end",
+  background: "transparent",
+  color: GOLD,
+  border: `1px solid ${GOLD}`,
+  borderRadius: 8,
+  padding: "6px 12px",
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer",
 };
 
 const compassNoteStyle: React.CSSProperties = {

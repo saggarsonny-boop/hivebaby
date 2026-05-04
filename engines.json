@@ -1,0 +1,15 @@
+{
+  "$schema": "https://hive.baby/schemas/engines.schema.json",
+  "version": 1,
+  "generated": "manually maintained",
+  "engines": [
+    {
+      "id": "parkback",
+      "name": "ParkBack",
+      "url": "https://parkback.hive.baby",
+      "description": "Never lose your car again",
+      "status": "live",
+      "category": "utility"
+    }
+  ]
+}
