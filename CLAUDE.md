@@ -184,16 +184,9 @@ Three.js 3D planet. Each hexagon cell = one Hive engine.
 
 ## ENGINE LAUNCH CHECKLIST
 
-Every new engine that reaches 100% complete and is live must:
+See **[docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md](docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md)**. Every engine ships only when every MANDATORY item is checked or explicitly waived with documented reason in the engine's `ENGINE_GRAMMAR.md`.
 
-1. Be added to test.hive.baby engine_slots with a 10-item testing checklist
-2. Have SEO layout.tsx with correct title and description
-3. Have TooltipTour implemented
-4. Be added to UDNav or planet surface as appropriate
-5. Have ANTHROPIC_API_KEY and all required env vars confirmed in Vercel
-6. Pass /api/health check
-7. Be added to the health check workflow URL list
-8. Have the engine count updated everywhere it appears
+When asked to build or finalize an engine, **read `docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md` first**. Do not assume infrastructure doesn't exist — search for each item before declaring it deferred.
 
 This rule applies to ALL engines across ALL Hive properties.
 No engine launches without completing this checklist.
