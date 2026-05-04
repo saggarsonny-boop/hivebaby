@@ -5,5 +5,29 @@
       "inThe": "in the",
       "brand": "Hive"
     }
+  },
+  "install": {
+    "cta": "Add ParkBack to your home screen",
+    "ctaAriaIos": "Show me how to add ParkBack to my home screen",
+    "ctaAriaChromium": "Add ParkBack to your home screen",
+    "fallback": {
+      "desktopSafariFirefox": "Add ParkBack to your home screen for one-tap access. Use your browser's bookmarking option to keep it accessible. No app store needed — it's free, no signup, works offline.",
+      "unknown": "ParkBack works on any device. Use your browser's \"Add to home screen\" option to keep it accessible."
+    },
+    "ahtsCard": {
+      "title": "Add ParkBack to your home screen",
+      "body": "The whole thing — your pin, photo, voice memo, and the compass back to your car — works without cell signal or wifi. Even in the deepest parking deck.",
+      "dismiss": "Got it"
+    },
+    "overlay": {
+      "title": "Add ParkBack to your home screen",
+      "body": "Three taps in Safari. After this, ParkBack opens like any app — works in any dead zone, no cell or wifi signal needed.",
+      "step1": "Tap the share button at the bottom of Safari.",
+      "step2": "Scroll down and tap Add to Home Screen.",
+      "step3": "Tap Add in the top right corner.",
+      "dismiss": "Got it",
+      "ariaLabel": "How to add ParkBack to your home screen"
+    },
+    "installedToast": "ParkBack is on your home screen. Open it like any other app."
   }
 }

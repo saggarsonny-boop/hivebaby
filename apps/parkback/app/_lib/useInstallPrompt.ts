@@ -29,6 +29,27 @@ function detectIsIOS(): boolean {
   return platform === "MacIntel" && (maxTouch || 0) > 1;
 }
 
+/** Coarse client-platform classification used to decide install-flow copy. */
+export type InstallPlatform =
+  | "ios"                    // iOS Safari / Chrome / Firefox / etc — guided overlay path
+  | "chromium"               // Chromium-derived browser with beforeinstallprompt captured — native prompt path
+  | "desktop-safari-firefox" // Desktop Safari or Firefox — no programmatic install, instructional copy
+  | "unknown";               // Anything else — generic copy
+
+// Caller must already have ruled out iOS + chromium-installable before calling this.
+function detectFallbackPlatform(): "desktop-safari-firefox" | "unknown" {
+  if (typeof navigator === "undefined") return "unknown";
+  const ua = navigator.userAgent;
+  // Desktop Safari: contains "Safari" but not Chrome/Edge/CriOS/Firefox markers.
+  // (iOS already short-circuited by the caller.)
+  if (/Safari/.test(ua) && !/Chrome|CriOS|EdgiOS|FxiOS|Edg\//.test(ua)) {
+    return "desktop-safari-firefox";
+  }
+  // Firefox (desktop or any non-iOS).
+  if (/Firefox/.test(ua)) return "desktop-safari-firefox";
+  return "unknown";
+}
+
 /**
  * Captures the browser's native install prompt where supported, and exposes
  * a single `trigger()` that returns one of four explicit outcomes — including
@@ -106,13 +127,30 @@ export function useInstallPrompt() {
     }
   }, [deferred]);
 
+  // Coarse platform classification, derived from isIOS + canPromptNatively
+  // + a UA-based fallback. Re-derived each render so it updates the moment
+  // a deferred event arrives (chromium-installable becomes available).
+  const canPromptNatively = deferred !== null;
+  let platform: InstallPlatform;
+  if (isIOS) {
+    platform = "ios";
+  } else if (canPromptNatively) {
+    platform = "chromium";
+  } else {
+    // Falls through to UA-based detection. May reclassify to "chromium"
+    // later in the session if beforeinstallprompt fires after page load.
+    platform = detectFallbackPlatform();
+  }
+
   return {
     /** True iff a beforeinstallprompt event has been captured and is ready to prompt. */
-    canPromptNatively: deferred !== null,
+    canPromptNatively,
     /** True iff this client is iOS (any browser). */
     isIOS,
     /** True iff appinstalled has fired this session. */
     installed,
+    /** Coarse platform — drives copy + which install path to show. */
+    platform,
     /** Try to show an install path. Returns one of the InstallTriggerResult values. */
     trigger,
   };

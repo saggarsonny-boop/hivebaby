@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { strings } from "./strings";
 
-// iOS guided install overlay. Two-step instructions for adding ParkBack to
-// the home screen via Safari's share sheet — the only path on iOS, since
-// iOS Safari does not fire `beforeinstallprompt`.
+// iOS guided install overlay. Three-step instructions for adding ParkBack
+// to the home screen via Safari's share sheet — the only path on iOS,
+// since iOS Safari does not fire `beforeinstallprompt`.
 //
 // Deliberately minimal:
 //   - Pure functional component, no createPortal (renders inline as a
@@ -74,11 +75,13 @@ export function IOSInstallOverlay({
 
   if (!open) return null;
 
+  const o = strings.install.overlay;
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="How to add ParkBack to your home screen"
+      aria-label={o.ariaLabel}
       onClick={onClose}
       style={backdropStyle}
     >
@@ -87,22 +90,27 @@ export function IOSInstallOverlay({
         onClick={(e) => e.stopPropagation()}
         style={cardStyle}
       >
-        <div style={titleStyle}>Add ParkBack to your home screen</div>
-        <div style={bodyStyle}>
-          Two taps in Safari. After this, ParkBack opens like any app — works in any dead zone, no cell or wifi signal needed.
-        </div>
+        <div style={titleStyle}>{o.title}</div>
+        <div style={bodyStyle}>{o.body}</div>
 
         <div style={stepStyle}>
           <span style={stepNumStyle}>1</span>
           <span style={stepTextStyle}>
-            Tap the share button <ShareIcon size={18} /> at the bottom of Safari.
+            {o.step1} <ShareIcon size={18} />
           </span>
         </div>
 
         <div style={stepStyle}>
           <span style={stepNumStyle}>2</span>
           <span style={stepTextStyle}>
-            Scroll down and tap <strong style={{ color: GOLD }}>Add to Home Screen</strong> <PlusIcon size={18} />.
+            {o.step2} <PlusIcon size={18} />
+          </span>
+        </div>
+
+        <div style={stepStyle}>
+          <span style={stepNumStyle}>3</span>
+          <span style={stepTextStyle}>
+            {o.step3}
           </span>
         </div>
 
@@ -112,7 +120,7 @@ export function IOSInstallOverlay({
           aria-label="Dismiss install instructions"
           style={dismissButtonStyle}
         >
-          Got it
+          {o.dismiss}
         </button>
       </div>
     </div>

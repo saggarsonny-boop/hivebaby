@@ -1,33 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useInstallPrompt } from "./useInstallPrompt";
-import { IOSInstallOverlay } from "./IOSInstallOverlay";
+import { InstallCTA } from "./InstallCTA";
+import { strings } from "./strings";
 
 const STORAGE_KEY_HOME = "parkback_install_hint_dismissed";
 const STORAGE_KEY_FIND = "parkback_install_hint_find_dismissed";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
-const INK = "#0a0a0a";
 const PAPER = "#f5f1e6";
 const MUTED = "#9a9588";
-
-type Platform = "ios" | "android" | "desktop" | "unknown";
-
-function detectPlatform(): Platform {
-  if (typeof navigator === "undefined") return "unknown";
-  const ua = navigator.userAgent;
-  const isIOS =
-    /iPad|iPhone|iPod/.test(ua) ||
-    ((navigator as Navigator & { platform: string }).platform === "MacIntel" &&
-      ((navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints || 0) > 1);
-  if (isIOS) return "ios";
-  if (/Android/i.test(ua)) return "android";
-  // Treat anything with a normal mouse-based browser as desktop.
-  if (typeof window !== "undefined" && window.matchMedia?.("(pointer: fine)").matches) return "desktop";
-  return "unknown";
-}
 
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
@@ -35,25 +19,20 @@ function isStandalone(): boolean {
   return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
 }
 
-// Single canonical home banner string. Dead-zone capability is the headline,
-// not "works offline" boilerplate that users glaze past. Same string ships
-// for every platform — iOS Safari and Android Chrome both surface their own
-// install affordances when the manifest is present.
+// Dead-zone framing — the headline that gets users to install. Used on
+// chromium and iOS where there's an actual install path to drive. The
+// fallback platforms (desktop Safari/Firefox/unknown) get different copy
+// from `strings.install.fallback.*` because they cannot programmatically
+// install.
 const HOME_BANNER =
   "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no cell or wifi signal required to find your car.";
 
-// Recipient-flavoured banner. Same dead-zone framing as the home banner, but
-// addressed to someone who arrived via a shared spot link — they've already
-// seen the value, this is the conversion ask.
 const FIND_BANNER =
   "Like what you see? Add ParkBack to your home screen and never lose your own car. Works in any dead zone — no cell signal, wifi, or app store needed. Free, no signup.";
 
 export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   const [show, setShow] = useState(false);
-  const [overlayOpen, setOverlayOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
-  const { canPromptNatively, isIOS, installed, trigger } = useInstallPrompt();
+  const { platform, installed } = useInstallPrompt();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -67,25 +46,19 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
     setShow(true);
   }, [where]);
 
-  // appinstalled fires (Chromium browsers only, when the user accepts the
-  // native install prompt) → permanently dismiss the banner on both surfaces
-  // and pop a "you're installed" toast.
+  // appinstalled fires on Chromium when the user accepts the native prompt.
+  // Permanently dismiss the banner on both surfaces so it doesn't re-appear
+  // on subsequent visits. The success toast is rendered by the layout-level
+  // <AppInstalledToast/> so it survives the banner being unmounted here.
   useEffect(() => {
     if (!installed) return;
     setShow(false);
-    setOverlayOpen(false);
-    setToast("ParkBack is on your home screen. Open it like any app.");
     try {
       window.localStorage.setItem(STORAGE_KEY_HOME, "1");
       window.localStorage.setItem(STORAGE_KEY_FIND, "1");
     } catch {
-      // ignore — localStorage disabled
+      // localStorage disabled — silently ignore.
     }
-    if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToast(null), 4500);
-    return () => {
-      if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
-    };
   }, [installed]);
 
   const dismiss = useCallback(() => {
@@ -98,64 +71,41 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
     }
   }, [where]);
 
-  const handleInstall = useCallback(async () => {
-    const result = await trigger();
-    if (result === "ios-needs-overlay") {
-      setOverlayOpen(true);
-      return;
-    }
-    // "accepted" → the appinstalled effect above handles the toast + dismiss.
-    // "dismissed" → leave the banner up so the user can retry.
-    // "unavailable" → no install path right now (unlikely if the CTA was shown,
-    //   but possible if the deferred event was consumed); silent no-op.
-  }, [trigger]);
+  if (!show) return null;
 
-  // Show the install CTA only when there's an install path to drive: either
-  // a captured native prompt (Chromium with PWA criteria met) or iOS (where
-  // the overlay is the path). Other platforms (desktop Safari/Firefox,
-  // legacy Android) get the banner copy without a button — they can use
-  // their browser's own install affordance if any.
-  const showCTA = canPromptNatively || isIOS;
-  const ctaLabel = canPromptNatively ? "Install" : "Show me how";
-  const ctaAria = canPromptNatively
-    ? "Install ParkBack to your home screen"
-    : "Show me how to add ParkBack to my home screen";
+  // Per-platform body copy.
+  // - chromium / ios: dead-zone headline + InstallCTA button
+  // - desktop-safari-firefox: instructional fallback copy, no CTA
+  // - unknown: generic copy, no CTA
+  const hasInstallPath = platform === "chromium" || platform === "ios";
+  let bodyCopy: string;
+  if (hasInstallPath) {
+    bodyCopy = where === "find" ? FIND_BANNER : HOME_BANNER;
+  } else if (platform === "desktop-safari-firefox") {
+    bodyCopy = strings.install.fallback.desktopSafariFirefox;
+  } else {
+    bodyCopy = strings.install.fallback.unknown;
+  }
 
-  const copy = where === "find" ? FIND_BANNER : HOME_BANNER;
-
-  // Render order matters: banner → toast → overlay. Each gates on its own
-  // visible-state. We never early-return here so the toast and overlay can
-  // outlive the banner's dismissal.
   return (
-    <>
-      {show ? (
-        <div role="region" aria-label="Install ParkBack" style={bannerStyle}>
-          <div style={textStyle}>{copy}</div>
-          {showCTA ? (
-            <button
-              type="button"
-              onClick={handleInstall}
-              aria-label={ctaAria}
-              style={ctaButtonStyle}
-            >
-              {ctaLabel}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={dismiss}
-            aria-label="Dismiss install hint"
-            style={dismissBtnStyle}
-          >
-            ×
-          </button>
-        </div>
-      ) : null}
-      {toast ? (
-        <div role="status" style={toastStyle}>{toast}</div>
-      ) : null}
-      <IOSInstallOverlay open={overlayOpen} onClose={() => setOverlayOpen(false)} />
-    </>
+    <div role="region" aria-label="Install ParkBack" style={bannerStyle}>
+      <div style={contentColumnStyle}>
+        <div style={textStyle}>{bodyCopy}</div>
+        {hasInstallPath ? (
+          <div style={ctaRowStyle}>
+            <InstallCTA size="sm" />
+          </div>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label="Dismiss install hint"
+        style={dismissBtnStyle}
+      >
+        ×
+      </button>
+    </div>
   );
 }
 
@@ -164,7 +114,7 @@ const bannerStyle: React.CSSProperties = {
   maxWidth: 520,
   marginTop: 8,
   marginBottom: 4,
-  padding: "10px 14px 10px 16px",
+  padding: "10px 14px 12px 16px",
   display: "flex",
   alignItems: "flex-start",
   gap: 10,
@@ -179,9 +129,21 @@ const bannerStyle: React.CSSProperties = {
   boxShadow: "0 4px 14px rgba(0,0,0,0.35)",
 };
 
-const textStyle: React.CSSProperties = {
+const contentColumnStyle: React.CSSProperties = {
   flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+};
+
+const textStyle: React.CSSProperties = {
   color: PAPER,
+};
+
+const ctaRowStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "flex-start",
+  marginTop: 2,
 };
 
 const dismissBtnStyle: React.CSSProperties = {
@@ -197,39 +159,6 @@ const dismissBtnStyle: React.CSSProperties = {
   cursor: "pointer",
   padding: 0,
   marginTop: -2,
-};
-
-const ctaButtonStyle: React.CSSProperties = {
-  flex: "0 0 auto",
-  background: GOLD,
-  color: INK,
-  border: "none",
-  borderRadius: 8,
-  padding: "6px 14px",
-  fontSize: 13,
-  fontWeight: 700,
-  letterSpacing: "0.02em",
-  cursor: "pointer",
-  WebkitTapHighlightColor: "transparent",
-  marginTop: -2,
-  alignSelf: "center",
-};
-
-const toastStyle: React.CSSProperties = {
-  position: "fixed",
-  bottom: "max(env(safe-area-inset-bottom), 24px)",
-  left: "50%",
-  transform: "translateX(-50%)",
-  background: GOLD,
-  color: INK,
-  padding: "10px 18px",
-  borderRadius: 999,
-  fontSize: 14,
-  fontWeight: 600,
-  boxShadow: "0 6px 24px rgba(0, 0, 0, 0.5)",
-  zIndex: 60,
-  maxWidth: "92vw",
-  textAlign: "center",
 };
 
 // First-visit one-line explainer shown under the Drop pin button. Auto-hides
