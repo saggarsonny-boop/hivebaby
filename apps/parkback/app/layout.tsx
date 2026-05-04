@@ -95,6 +95,36 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           minHeight: "100dvh",
         }}
       >
+        {/* Hive ecosystem mark — small, top-left on desktop, top-center on mobile.
+            Click opens the Hive front door. Asset is a synced copy of
+            packages/hive-onboarding/assets/hive-logo-full.png. */}
+        <a
+          href="https://hive.baby"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Hive ecosystem"
+          style={{
+            position: "fixed",
+            top: "max(env(safe-area-inset-top), 12px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 100,
+            display: "inline-block",
+            lineHeight: 0,
+            padding: 4,
+            borderRadius: 6,
+            transition: "opacity 200ms ease",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hive/hive-logo-full.png"
+            alt="Hive ecosystem"
+            width={36}
+            height={36}
+            style={{ display: "block", width: 36, height: 36, opacity: 0.9 }}
+          />
+        </a>
         {children}
         <script
           type="application/ld+json"
