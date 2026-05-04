@@ -13,6 +13,7 @@ import { Figure8 } from "./_lib/Figure8";
 import { track } from "./_lib/analytics";
 import { buildShareUrl } from "./_lib/share";
 import { HiveFooter } from "./_lib/HiveFooter";
+import { HexButton } from "./_lib/HexButton";
 
 const STORAGE_KEY = "parkback_pin_v1";
 const A2HS_DISMISSED_KEY = "parkback_a2hs_dismissed_v1";
@@ -445,15 +446,15 @@ export default function ParkBackPage() {
           <div role="alert" style={alertStyle}>{permMessage}</div>
         ) : null}
 
-        <button
-          type="button"
+        <HexButton
+          variant="primary"
+          size="lg"
           onClick={dropPin}
-          disabled={perm === "requesting"}
-          aria-label="Drop pin where I'm parked"
-          style={dropButtonStyle(perm === "requesting")}
+          busy={perm === "requesting"}
+          ariaLabel="Drop pin where I'm parked"
         >
           {perm === "requesting" ? "Locating…" : "Drop pin"}
-        </button>
+        </HexButton>
 
         <div style={hintStyle}>
           {perm === "requesting"
@@ -544,7 +545,7 @@ export default function ParkBackPage() {
       {showPhotoPrompt ? (
         <div style={promptRowStyle}>
           <span style={promptTextStyle}>Snap the bay number?</span>
-          <button type="button" onClick={handleTakePhoto} style={smallButtonStyle}>Take photo</button>
+          <HexButton variant="ghost" size="md" onClick={handleTakePhoto} ariaLabel="Take photo of bay number">Take photo</HexButton>
           <button type="button" onClick={() => setPhotoSkipped(true)} style={skipLinkStyle}>Skip</button>
         </div>
       ) : null}
@@ -552,7 +553,7 @@ export default function ParkBackPage() {
       {showVoicePrompt ? (
         <div style={promptRowStyle}>
           <span style={promptTextStyle}>Add voice note (optional)</span>
-          <button type="button" onClick={startRecording} style={smallButtonStyle}>● Record</button>
+          <HexButton variant="ghost" size="md" onClick={startRecording} ariaLabel="Record voice memo">● Record</HexButton>
           <button type="button" onClick={() => setVoiceSkipped(true)} style={skipLinkStyle}>Skip</button>
         </div>
       ) : null}
@@ -582,9 +583,9 @@ export default function ParkBackPage() {
       />
 
       <div style={actionsRowStyle}>
-        <button type="button" onClick={handleNavigate} style={primaryActionStyle}>Navigate</button>
-        <button type="button" onClick={handleShare} style={ghostActionStyle}>Share spot</button>
-        <button type="button" onClick={handleClear} style={ghostActionStyle}>Clear pin</button>
+        <HexButton variant="primary" size="md" onClick={handleNavigate} ariaLabel="Navigate to my car">Navigate</HexButton>
+        <HexButton variant="ghost" size="md" onClick={handleShare} ariaLabel="Share parking spot">Share</HexButton>
+        <HexButton variant="ghost" size="md" onClick={handleClear} ariaLabel="Clear saved pin">Clear</HexButton>
       </div>
 
       {showA2HS ? (
@@ -657,22 +658,6 @@ const taglineStyle: React.CSSProperties = {
   color: MUTED,
   fontSize: 14,
 };
-
-const dropButtonStyle = (busy: boolean): React.CSSProperties => ({
-  marginTop: 32,
-  width: 220,
-  height: 220,
-  borderRadius: "50%",
-  border: `2px solid ${GOLD}`,
-  background: busy ? "transparent" : `radial-gradient(circle at 30% 30%, ${GOLD} 0%, #a07f15 100%)`,
-  color: busy ? GOLD : INK,
-  fontSize: 26,
-  fontWeight: 700,
-  letterSpacing: "0.03em",
-  cursor: busy ? "wait" : "pointer",
-  boxShadow: busy ? "none" : "0 0 60px rgba(212, 175, 55, 0.35)",
-  transition: "transform 120ms ease, box-shadow 200ms ease",
-});
 
 const hintStyle: React.CSSProperties = {
   marginTop: 24,
@@ -814,29 +799,6 @@ const actionsRowStyle: React.CSSProperties = {
   maxWidth: 360,
   justifyContent: "space-between",
   flexWrap: "wrap",
-};
-
-const primaryActionStyle: React.CSSProperties = {
-  background: GOLD,
-  color: INK,
-  border: "none",
-  borderRadius: 10,
-  padding: "12px 18px",
-  fontSize: 15,
-  fontWeight: 700,
-  cursor: "pointer",
-  flex: "1 1 120px",
-};
-
-const ghostActionStyle: React.CSSProperties = {
-  background: "transparent",
-  color: PAPER,
-  border: `1px solid ${GOLD_DIM}`,
-  borderRadius: 10,
-  padding: "12px 14px",
-  fontSize: 14,
-  cursor: "pointer",
-  flex: "1 1 100px",
 };
 
 const a2hsStyle: React.CSSProperties = {
