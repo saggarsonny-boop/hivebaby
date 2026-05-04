@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useInstallPrompt } from "./useInstallPrompt";
+import { IOSInstallOverlay } from "./IOSInstallOverlay";
 
 const STORAGE_KEY_HOME = "parkback_install_hint_dismissed";
 const STORAGE_KEY_FIND = "parkback_install_hint_find_dismissed";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
+const INK = "#0a0a0a";
 const PAPER = "#f5f1e6";
 const MUTED = "#9a9588";
 
@@ -47,6 +50,10 @@ const FIND_BANNER =
 
 export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   const [show, setShow] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+  const { canPromptNatively, isIOS, installed, trigger } = useInstallPrompt();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -60,11 +67,28 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
     setShow(true);
   }, [where]);
 
-  if (!show) return null;
+  // appinstalled fires (Chromium browsers only, when the user accepts the
+  // native install prompt) → permanently dismiss the banner on both surfaces
+  // and pop a "you're installed" toast.
+  useEffect(() => {
+    if (!installed) return;
+    setShow(false);
+    setOverlayOpen(false);
+    setToast("ParkBack is on your home screen. Open it like any app.");
+    try {
+      window.localStorage.setItem(STORAGE_KEY_HOME, "1");
+      window.localStorage.setItem(STORAGE_KEY_FIND, "1");
+    } catch {
+      // ignore — localStorage disabled
+    }
+    if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 4500);
+    return () => {
+      if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
+    };
+  }, [installed]);
 
-  const copy = where === "find" ? FIND_BANNER : HOME_BANNER;
-
-  const dismiss = () => {
+  const dismiss = useCallback(() => {
     setShow(false);
     try {
       const key = where === "find" ? STORAGE_KEY_FIND : STORAGE_KEY_HOME;
@@ -72,20 +96,66 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
     } catch {
       // localStorage might be disabled — silently ignore.
     }
-  };
+  }, [where]);
 
+  const handleInstall = useCallback(async () => {
+    const result = await trigger();
+    if (result === "ios-needs-overlay") {
+      setOverlayOpen(true);
+      return;
+    }
+    // "accepted" → the appinstalled effect above handles the toast + dismiss.
+    // "dismissed" → leave the banner up so the user can retry.
+    // "unavailable" → no install path right now (unlikely if the CTA was shown,
+    //   but possible if the deferred event was consumed); silent no-op.
+  }, [trigger]);
+
+  // Show the install CTA only when there's an install path to drive: either
+  // a captured native prompt (Chromium with PWA criteria met) or iOS (where
+  // the overlay is the path). Other platforms (desktop Safari/Firefox,
+  // legacy Android) get the banner copy without a button — they can use
+  // their browser's own install affordance if any.
+  const showCTA = canPromptNatively || isIOS;
+  const ctaLabel = canPromptNatively ? "Install" : "Show me how";
+  const ctaAria = canPromptNatively
+    ? "Install ParkBack to your home screen"
+    : "Show me how to add ParkBack to my home screen";
+
+  const copy = where === "find" ? FIND_BANNER : HOME_BANNER;
+
+  // Render order matters: banner → toast → overlay. Each gates on its own
+  // visible-state. We never early-return here so the toast and overlay can
+  // outlive the banner's dismissal.
   return (
-    <div role="region" aria-label="Install ParkBack" style={bannerStyle}>
-      <div style={textStyle}>{copy}</div>
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label="Dismiss install hint"
-        style={dismissBtnStyle}
-      >
-        ×
-      </button>
-    </div>
+    <>
+      {show ? (
+        <div role="region" aria-label="Install ParkBack" style={bannerStyle}>
+          <div style={textStyle}>{copy}</div>
+          {showCTA ? (
+            <button
+              type="button"
+              onClick={handleInstall}
+              aria-label={ctaAria}
+              style={ctaButtonStyle}
+            >
+              {ctaLabel}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label="Dismiss install hint"
+            style={dismissBtnStyle}
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
+      {toast ? (
+        <div role="status" style={toastStyle}>{toast}</div>
+      ) : null}
+      <IOSInstallOverlay open={overlayOpen} onClose={() => setOverlayOpen(false)} />
+    </>
   );
 }
 
@@ -127,6 +197,39 @@ const dismissBtnStyle: React.CSSProperties = {
   cursor: "pointer",
   padding: 0,
   marginTop: -2,
+};
+
+const ctaButtonStyle: React.CSSProperties = {
+  flex: "0 0 auto",
+  background: GOLD,
+  color: INK,
+  border: "none",
+  borderRadius: 8,
+  padding: "6px 14px",
+  fontSize: 13,
+  fontWeight: 700,
+  letterSpacing: "0.02em",
+  cursor: "pointer",
+  WebkitTapHighlightColor: "transparent",
+  marginTop: -2,
+  alignSelf: "center",
+};
+
+const toastStyle: React.CSSProperties = {
+  position: "fixed",
+  bottom: "max(env(safe-area-inset-bottom), 24px)",
+  left: "50%",
+  transform: "translateX(-50%)",
+  background: GOLD,
+  color: INK,
+  padding: "10px 18px",
+  borderRadius: 999,
+  fontSize: 14,
+  fontWeight: 600,
+  boxShadow: "0 6px 24px rgba(0, 0, 0, 0.5)",
+  zIndex: 60,
+  maxWidth: "92vw",
+  textAlign: "center",
 };
 
 // First-visit one-line explainer shown under the Drop pin button. Auto-hides
