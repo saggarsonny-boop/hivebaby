@@ -1,7 +1,12 @@
 // ParkBack service worker
 // Caches the app shell so the page loads in underground garages with no signal.
 
-const CACHE_NAME = "parkback-shell-v2";
+// Cache name bumped from v2 → v3 to force re-install on every existing client
+// and clear stale precached "/" HTML from the PR #66–#70 era. Bump again
+// (v3 → v4 etc) any time a future change might leave users stuck on a stale
+// app-shell snapshot.
+const CACHE_NAME = "parkback-shell-v3";
+const STALE_CACHE_NAMES = ["parkback-shell-v2"];
 const SHELL_URLS = [
   "/",
   "/manifest.json",
@@ -22,13 +27,28 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
+    (async () => {
+      // Explicit cleanup of known-stale caches first (defensive — the generic
+      // sweep below would also catch these, but naming them makes the intent
+      // obvious and survives a future rename of CACHE_NAME).
+      await Promise.all(
+        STALE_CACHE_NAMES.map((n) => caches.delete(n).catch(() => {}))
+      );
+      // Generic sweep of anything else not matching current.
+      const keys = await caches.keys();
+      await Promise.all(
         keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-      )
-    )
+      );
+      await self.clients.claim();
+      // Tell every open client (Safari tabs + home-screen PWA windows) that a
+      // new SW is now active, so anyone holding a stale precached "/" from a
+      // prior build can reload to the fresh HTML/JS without a manual refresh.
+      const clients = await self.clients.matchAll({ type: "window" });
+      for (const c of clients) {
+        c.postMessage({ type: "SW_ACTIVATED", cache: CACHE_NAME });
+      }
+    })()
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {

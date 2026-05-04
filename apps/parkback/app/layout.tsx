@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
+import { ServiceWorkerRegistrar } from "./_lib/ServiceWorkerRegistrar";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://parkback.hive.baby";
 const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN || "parkback.hive.baby";
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         }}
       >
         {children}
+        <ServiceWorkerRegistrar />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationLd) }}
