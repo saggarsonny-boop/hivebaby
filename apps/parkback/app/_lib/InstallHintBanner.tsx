@@ -32,31 +32,21 @@ function isStandalone(): boolean {
   return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
 }
 
-const HOME_COPY: Record<Platform, string> = {
-  ios:
-    "Add ParkBack to your home screen for one-tap access. Tap the Share button below, then “Add to Home Screen.” No app store needed — it’s free, no signup, works offline.",
-  android:
-    "Add ParkBack to your home screen for one-tap access. Tap the three-dot menu (top right), then “Install app” or “Add to Home Screen.” No app store needed — it’s free, no signup, works offline.",
-  desktop:
-    "ParkBack works on any device. Tap the install icon in your address bar to add it as an app. Free, no signup, works offline.",
-  unknown:
-    "Add ParkBack to your home screen for one-tap access. No app store needed — it’s free, no signup, works offline.",
-};
+// Single canonical home banner string. Dead-zone capability is the headline,
+// not "works offline" boilerplate that users glaze past. Same string ships
+// for every platform — iOS Safari and Android Chrome both surface their own
+// install affordances when the manifest is present.
+const HOME_BANNER =
+  "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no signal required to find your car.";
 
-const FIND_COPY: Record<Platform, string> = {
-  ios:
-    "Like what you see? Add ParkBack to your home screen and never lose your own car. Tap the Share button below, then “Add to Home Screen.”",
-  android:
-    "Like what you see? Add ParkBack to your home screen and never lose your own car. Tap the three-dot menu (top right), then “Install app” or “Add to Home Screen.”",
-  desktop:
-    "Like what you see? ParkBack works on any device — tap the install icon in your address bar to add it as an app.",
-  unknown:
-    "Like what you see? Add ParkBack to your home screen and never lose your own car. No app store needed.",
-};
+// Recipient-flavoured banner. Same dead-zone framing as the home banner, but
+// addressed to someone who arrived via a shared spot link — they've already
+// seen the value, this is the conversion ask.
+const FIND_BANNER =
+  "Like what you see? Add ParkBack to your home screen and never lose your own car. Works in any dead zone — no cell signal, wifi, or app store needed. Free, no signup.";
 
 export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   const [show, setShow] = useState(false);
-  const [platform, setPlatform] = useState<Platform>("unknown");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -67,13 +57,12 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
     } catch {
       return;
     }
-    setPlatform(detectPlatform());
     setShow(true);
   }, [where]);
 
   if (!show) return null;
 
-  const copy = where === "find" ? FIND_COPY[platform] : HOME_COPY[platform];
+  const copy = where === "find" ? FIND_BANNER : HOME_BANNER;
 
   const dismiss = () => {
     setShow(false);
@@ -163,7 +152,7 @@ export function FirstVisitExplainer() {
   if (!show) return null;
   return (
     <div style={explainerStyle}>
-      Tap when you park. Come back, tap again, find your car. That’s it.
+      Tap when you park. Come back, tap again, walk straight to your car. Works in underground garages with zero signal. Your phone’s GPS does the work.
     </div>
   );
 }

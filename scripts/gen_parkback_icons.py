@@ -105,7 +105,7 @@ def draw_og() -> Image.Image:
     draw.text((bx, H // 2 - 200), brand, font=find_bold_font(40), fill=GOLD)
     draw.text((bx, H // 2 - 90), title, font=tagline_font, fill=PAPER)
     draw.text((bx, H // 2 - 20), title2, font=tagline_font, fill=PAPER)
-    draw.text((bx, H // 2 + 80), "Tap once to park. Tap again to find.", font=sub_font, fill=MUTED)
+    draw.text((bx, H // 2 + 80), "Works in any dead zone — no signal needed.", font=sub_font, fill=GOLD)
     draw.text((bx, H // 2 + 120), "No app. No signup. Free forever.", font=sub_font, fill=MUTED)
 
     # Hairline at bottom
