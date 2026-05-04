@@ -14,6 +14,7 @@ import { track } from "./_lib/analytics";
 import { buildShareUrl } from "./_lib/share";
 import { HiveFooter } from "./_lib/HiveFooter";
 import { HexButton } from "./_lib/HexButton";
+import { InstallHintBanner, FirstVisitExplainer, dismissFirstVisitExplainer } from "./_lib/InstallHintBanner";
 
 const STORAGE_KEY = "parkback_pin_v1";
 const A2HS_DISMISSED_KEY = "parkback_a2hs_dismissed_v1";
@@ -234,6 +235,7 @@ export default function ParkBackPage() {
         setPhotoSkipped(false);
         setVoiceSkipped(false);
         track("pin_dropped", { has_altitude: draft.altitude !== null });
+        dismissFirstVisitExplainer();
 
         // Show "Add to Home Screen" hint once on iOS Safari, only if not standalone yet.
         if (
@@ -437,6 +439,8 @@ export default function ParkBackPage() {
   if (!pin) {
     return (
       <main style={pageStyle}>
+        <InstallHintBanner where="home" />
+
         <header style={headerStyle}>
           <div style={brandStyle}>ParkBack</div>
           <div style={taglineStyle}>Find your car. No accounts. No cloud.</div>
@@ -455,6 +459,8 @@ export default function ParkBackPage() {
         >
           {perm === "requesting" ? "Locating…" : "Drop pin"}
         </HexButton>
+
+        <FirstVisitExplainer />
 
         <div style={hintStyle}>
           {perm === "requesting"

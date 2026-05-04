@@ -41,6 +41,14 @@
 | `robots.txt` and `sitemap.xml` in `public/`. | MANDATORY | Crawlers either ignore the engine entirely or index dev/preview surfaces. |
 | JSON-LD `SoftwareApplication` schema in the root layout. | MANDATORY | Google's rich-result blocks won't fire; the engine doesn't show up in the right SERP cards. |
 
+## FIRST-USE ONBOARDING
+
+| Item | Status | Failure mode if skipped |
+|---|---|---|
+| PWA install hint banner with platform-specific instructions on first visit. Detect iOS Safari, Android Chrome, desktop, unknown — and show the right install steps for each. Dismissable via × button, persisted in `localStorage`. | MANDATORY | Users never realise they can install the engine to their home screen — engagement and return-visit rate halve. |
+| One-line explainer for the primary action on first visit, dismissed permanently after the first successful primary action. | MANDATORY | First-time users hit the screen, don't know what the giant button does, bounce. |
+| Add-to-Home-Screen prompt after first successful primary action. | MANDATORY *for engines with a clear primary action* | The teachable moment for "install this" is right after the user has felt the value once — miss it and they may never return. |
+
 ## VIRAL LOOP
 
 | Item | Status | Failure mode if skipped |
