@@ -10,6 +10,10 @@ import {
   navigateUrl,
   type LatLng,
 } from "../_lib/geo";
+import { useCompass } from "../_lib/useCompass";
+import { Figure8 } from "../_lib/Figure8";
+import { track } from "../_lib/analytics";
+import { recipientHomeUrl } from "../_lib/share";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -46,15 +50,23 @@ function FindInner() {
   const [parseError, setParseError] = useState(false);
   const [here, setHere] = useState<LatLng | null>(null);
   const [now, setNow] = useState<number>(() => Date.now());
-  const [compassHeading, setCompassHeading] = useState<number | null>(null);
-  const [compassState, setCompassState] = useState<"idle" | "active" | "needs-permission" | "unavailable">("idle");
   const watchIdRef = useRef<number | null>(null);
 
-  // Parse params
+  const { state: compassState, heading: compassHeading, requestPermission: requestCompassPermission } =
+    useCompass(!!pin);
+
+  // Parse params + emit page-load event once
   useEffect(() => {
     const parsed = parseSharedPin(searchParams);
-    if (!parsed) setParseError(true);
-    else setPin(parsed);
+    if (!parsed) {
+      setParseError(true);
+      return;
+    }
+    setPin(parsed);
+    track("find_view_loaded", {
+      utm_source: searchParams.get("utm_source") || "direct",
+      has_landmark: parsed.landmark !== null,
+    });
   }, [searchParams]);
 
   // Tick elapsed every 15s
@@ -80,67 +92,6 @@ function FindInner() {
       }
     };
   }, [pin]);
-
-  // Compass
-  useEffect(() => {
-    if (!pin) return;
-    if (typeof window === "undefined") return;
-    const W = window as any;
-
-    const handler = (e: DeviceOrientationEvent) => {
-      const wh = (e as any).webkitCompassHeading;
-      let heading: number | null = null;
-      if (typeof wh === "number" && !Number.isNaN(wh)) heading = wh;
-      else if (typeof e.alpha === "number") heading = (360 - e.alpha) % 360;
-      if (heading !== null) {
-        setCompassHeading(heading);
-        setCompassState("active");
-      }
-    };
-
-    const supportsAbsolute = "ondeviceorientationabsolute" in window;
-    const eventName = supportsAbsolute ? "deviceorientationabsolute" : "deviceorientation";
-    const needsPermission =
-      typeof W.DeviceOrientationEvent !== "undefined" &&
-      typeof W.DeviceOrientationEvent.requestPermission === "function";
-
-    if (needsPermission) {
-      setCompassState((s) => (s === "active" ? s : "needs-permission"));
-    } else if (typeof W.DeviceOrientationEvent !== "undefined") {
-      window.addEventListener(eventName, handler as EventListener, true);
-    } else {
-      setCompassState("unavailable");
-    }
-
-    return () => {
-      window.removeEventListener(eventName, handler as EventListener, true);
-    };
-  }, [pin]);
-
-  const requestCompassPermission = useCallback(async () => {
-    const W = window as any;
-    if (typeof W.DeviceOrientationEvent?.requestPermission !== "function") return;
-    try {
-      const result = await W.DeviceOrientationEvent.requestPermission();
-      if (result === "granted") {
-        const handler = (e: DeviceOrientationEvent) => {
-          const wh = (e as any).webkitCompassHeading;
-          let heading: number | null = null;
-          if (typeof wh === "number" && !Number.isNaN(wh)) heading = wh;
-          else if (typeof e.alpha === "number") heading = (360 - e.alpha) % 360;
-          if (heading !== null) {
-            setCompassHeading(heading);
-            setCompassState("active");
-          }
-        };
-        window.addEventListener("deviceorientation", handler as EventListener, true);
-      } else {
-        setCompassState("unavailable");
-      }
-    } catch {
-      setCompassState("unavailable");
-    }
-  }, []);
 
   const handleNavigate = useCallback(() => {
     if (!pin) return;
@@ -191,14 +142,20 @@ function FindInner() {
 
       <div style={compassWrapStyle}>
         <div style={compassRingStyle}>
-          <ArrowSvg rotation={arrowRotation} dim={bearing === null} />
+          {compassState === "calibrating" ? (
+            <Figure8 />
+          ) : (
+            <ArrowSvg rotation={arrowRotation} dim={bearing === null} />
+          )}
         </div>
         <div style={distanceStyle}>{distance === null ? "Locating you…" : formatDistance(distance)}</div>
         {pin.landmark ? <div style={landmarkStyle}>near {pin.landmark}</div> : null}
         {compassState === "needs-permission" ? (
           <button type="button" onClick={requestCompassPermission} style={smallButtonStyle}>Enable compass</button>
         ) : null}
-        {compassState !== "active" ? (
+        {compassState === "calibrating" ? (
+          <div style={compassNoteStyle}>Calibrating compass — wave phone in a figure-8</div>
+        ) : compassState !== "active" ? (
           <div style={compassNoteStyle}>Hold phone flat, arrow points to car.</div>
         ) : null}
       </div>
@@ -207,7 +164,16 @@ function FindInner() {
         <button type="button" onClick={handleNavigate} style={primaryActionStyle}>Navigate</button>
       </div>
 
-      <footer style={footerStyle}>No ads. No investors. No agenda.</footer>
+      <a href={recipientHomeUrl()} style={recipientCtaStyle}>
+        Get ParkBack for your own car →
+      </a>
+
+      <footer style={footerStyle}>
+        <div>No ads. No investors. No agenda.</div>
+        <a href="https://hive.baby" target="_blank" rel="noopener noreferrer" style={hiveLinkStyle}>
+          part of the Hive
+        </a>
+      </footer>
     </main>
   );
 }
@@ -279,4 +245,16 @@ const smallButtonStyle: React.CSSProperties = {
   background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 8,
   padding: "6px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer",
 };
-const footerStyle: React.CSSProperties = { marginTop: 18, color: MUTED, fontSize: 11, letterSpacing: "0.05em" };
+const footerStyle: React.CSSProperties = {
+  marginTop: 18, color: MUTED, fontSize: 11, letterSpacing: "0.05em",
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+};
+const hiveLinkStyle: React.CSSProperties = {
+  color: MUTED, textDecoration: "none", fontSize: 11, letterSpacing: "0.05em",
+  borderBottom: `1px dotted ${MUTED}`, paddingBottom: 1,
+};
+const recipientCtaStyle: React.CSSProperties = {
+  marginTop: 4, color: GOLD, textDecoration: "none", fontSize: 13, fontWeight: 600,
+  letterSpacing: "0.02em", padding: "8px 14px", border: `1px solid ${GOLD_DIM}`,
+  borderRadius: 999,
+};
