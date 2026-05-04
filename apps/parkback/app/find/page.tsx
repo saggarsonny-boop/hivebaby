@@ -211,7 +211,8 @@ const pageStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  padding: "max(env(safe-area-inset-top), 24px) 20px max(env(safe-area-inset-bottom), 24px)",
+  // Top inset owned by <HiveHeader/> in the root layout — see app/page.tsx.
+  padding: "8px 20px max(env(safe-area-inset-bottom), 24px)",
   gap: 16,
   fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   textAlign: "center",

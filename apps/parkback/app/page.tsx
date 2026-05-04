@@ -650,7 +650,11 @@ const pageStyle: React.CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "flex-start",
-  padding: "max(env(safe-area-inset-top), 24px) 20px max(env(safe-area-inset-bottom), 24px)",
+  // Top inset is owned by <HiveHeader/> (rendered above this main in the
+  // root layout). A small 8px gap here gives breathing room between the
+  // Hive logo and the engine's own brand block without stacking a second
+  // safe-area inset.
+  padding: "8px 20px max(env(safe-area-inset-bottom), 24px)",
   gap: 18,
   fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   textAlign: "center",
