@@ -68,69 +68,9 @@ def draw_p_with_pin(draw: ImageDraw.ImageDraw, cx: int, cy: int, size: int) -> N
 
 
 def draw_icon(size: int) -> Image.Image:
-    """Lead with a clean gold hexagon (#D4AF37) on a dark background, with a
-    small dark "P" centred inside. Replaces the older P-with-pin glyph so
-    the home-screen icon reads as a Hive cell at small sizes."""
     img = Image.new("RGBA", (size, size), BLACK)
     draw = ImageDraw.Draw(img)
-
-    # Flat-top regular hexagon inscribed in a square ~80% of the canvas.
-    pad = int(size * 0.10)
-    w = size - 2 * pad
-    h = int(w * 0.866)
-    cx, cy = size // 2, size // 2
-    # Vertices of a flat-top regular hex centred on (cx, cy):
-    #   left (-w/2, 0), top-left (-w/4, -h/2), top-right (w/4, -h/2),
-    #   right (w/2, 0), bottom-right (w/4, h/2), bottom-left (-w/4, h/2).
-    verts = [
-        (cx - w // 2, cy),
-        (cx - w // 4, cy - h // 2),
-        (cx + w // 4, cy - h // 2),
-        (cx + w // 2, cy),
-        (cx + w // 4, cy + h // 2),
-        (cx - w // 4, cy + h // 2),
-    ]
-    # Soft outer glow — 3 concentric hex outlines, fading.
-    for spread, alpha in [(int(size * 0.04), 25), (int(size * 0.025), 50), (int(size * 0.012), 90)]:
-        glow = [
-            (cx - (w // 2 + spread), cy),
-            (cx - (w // 4 + spread // 2), cy - (h // 2 + spread)),
-            (cx + (w // 4 + spread // 2), cy - (h // 2 + spread)),
-            (cx + (w // 2 + spread), cy),
-            (cx + (w // 4 + spread // 2), cy + (h // 2 + spread)),
-            (cx - (w // 4 + spread // 2), cy + (h // 2 + spread)),
-        ]
-        # Pillow doesn't support alpha on polygon outline directly without RGBA;
-        # composite a transparent layer.
-        layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-        ImageDraw.Draw(layer).polygon(glow, outline=(212, 175, 55, alpha))
-        img = Image.alpha_composite(img, layer)
-    draw = ImageDraw.Draw(img)
-
-    # Solid gold hex fill.
-    draw.polygon(verts, fill=GOLD)
-    # Darker rim (the bottom edges, simulating a chamfered cell).
-    rim_dim = (138, 111, 31, 255)
-    draw.line([verts[3], verts[4]], fill=rim_dim, width=max(2, size // 96))
-    draw.line([verts[4], verts[5]], fill=rim_dim, width=max(2, size // 96))
-    draw.line([verts[5], verts[0]], fill=rim_dim, width=max(2, size // 96))
-    # Top-edge highlight (lighter gold).
-    rim_hi = (255, 230, 161, 255)
-    draw.line([verts[0], verts[1]], fill=rim_hi, width=max(1, size // 128))
-    draw.line([verts[1], verts[2]], fill=rim_hi, width=max(1, size // 128))
-    draw.line([verts[2], verts[3]], fill=rim_hi, width=max(1, size // 128))
-
-    # Small dark "P" centred inside.
-    font = find_bold_font(int(size * 0.42))
-    text = "P"
-    bbox = draw.textbbox((0, 0), text, font=font)
-    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    tx = cx - tw // 2 - bbox[0]
-    ty = cy - th // 2 - bbox[1] - int(size * 0.01)
-    # Slight inner shadow for the letter — black with a touch of warm.
-    draw.text((tx + max(1, size // 192), ty + max(1, size // 192)), text, font=font, fill=(48, 36, 8, 200))
-    draw.text((tx, ty), text, font=font, fill=BLACK)
-
+    draw_p_with_pin(draw, size // 2, size // 2, size)
     return img
 
 
