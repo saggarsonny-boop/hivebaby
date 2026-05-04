@@ -12,6 +12,7 @@ import { useCompass } from "./_lib/useCompass";
 import { Figure8 } from "./_lib/Figure8";
 import { track } from "./_lib/analytics";
 import { buildShareUrl } from "./_lib/share";
+import { HiveFooter } from "./_lib/HiveFooter";
 
 const STORAGE_KEY = "parkback_pin_v1";
 const A2HS_DISMISSED_KEY = "parkback_a2hs_dismissed_v1";
@@ -460,12 +461,7 @@ export default function ParkBackPage() {
             : "Tap when you've parked. Works offline once installed."}
         </div>
 
-        <footer style={footerStyle}>
-          <div>No ads. No investors. No agenda.</div>
-          <a href="https://hive.baby" target="_blank" rel="noopener noreferrer" style={hiveLinkStyle}>
-            part of the Hive
-          </a>
-        </footer>
+        <HiveFooter />
       </main>
     );
   }
@@ -602,12 +598,7 @@ export default function ParkBackPage() {
         </div>
       ) : null}
 
-      <footer style={footerStyle}>
-        <div>No ads. No investors. No agenda.</div>
-        <a href="https://hive.baby" target="_blank" rel="noopener noreferrer" style={hiveLinkStyle}>
-          part of the Hive
-        </a>
-      </footer>
+      <HiveFooter />
 
       {toast ? <div role="status" style={toastStyle}>{toast}</div> : null}
     </main>
@@ -846,26 +837,6 @@ const ghostActionStyle: React.CSSProperties = {
   fontSize: 14,
   cursor: "pointer",
   flex: "1 1 100px",
-};
-
-const footerStyle: React.CSSProperties = {
-  marginTop: 18,
-  color: MUTED,
-  fontSize: 11,
-  letterSpacing: "0.05em",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: 6,
-};
-
-const hiveLinkStyle: React.CSSProperties = {
-  color: MUTED,
-  textDecoration: "none",
-  fontSize: 11,
-  letterSpacing: "0.05em",
-  borderBottom: `1px dotted ${MUTED}`,
-  paddingBottom: 1,
 };
 
 const a2hsStyle: React.CSSProperties = {
