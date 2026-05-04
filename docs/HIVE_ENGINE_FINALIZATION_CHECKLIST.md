@@ -77,6 +77,9 @@
 | Engine entry in `registry/dns-inventory.md` with live status and registered date. | MANDATORY | DNS audits drift; future engineers can't reconstruct what's pointing where. |
 | Engine entry in `registry/billing-reconciliation.md` with monthly COGS estimate. | MANDATORY | Financial reconciliation breaks; we lose track of which engines cost what. |
 | Spec archived to `docs/engine-archives/<engine-slug>/` (`ENGINE_GRAMMAR.md`, `README.md`, `test-station-slot.md`). | MANDATORY | Future migrations and audits have no canonical artefact to compare against. |
+| **HIVE_HEADER_LOGO** — Engine displays the full Hive logo (`packages/hive-onboarding/assets/hive-logo-full.png`) at the top of the layout, clickable, links to `https://hive.baby`. Size 32–40 px on mobile, 40–48 px on desktop. Alt text `Hive ecosystem`. | MANDATORY | Visitors don't see at a glance that the engine is part of a wider ecosystem; cross-engine discovery never starts. |
+| **HIVE_FOOTER_SIGNATURE** — Engine footer ends with the simplified Hive mark (`packages/hive-onboarding/assets/hive-mark.svg`) + the literal string `Made with ♥ in the Hive`. The heart is rendered in `#D4AF37`. The word `Hive` links to `https://hive.baby` (target=_blank, rel=noopener noreferrer). | MANDATORY | The brand is invisible at the bottom of every page; engines feel orphaned even after a long session. |
+| **HIVE_BRAND_CONSISTENCY** — Logo assets are pulled from `packages/hive-onboarding/assets/`, never from per-engine local copies. Engines may hold a synced copy under their own `public/hive/` for build-time access, but the canonical source must be the package. HiveOps enforces this by grepping for the package path and the literal `Made with ♥ in the Hive` signature in source. | MANDATORY | Brand updates require touching every engine repo by hand; visual drift becomes the default state of the ecosystem. |
 
 ## VISIBILITY SURFACES
 
