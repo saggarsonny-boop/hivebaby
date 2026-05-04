@@ -1,10 +1,10 @@
 {
-  "id": "dpl_91DmwgHGFi9fut6n13S865ZJHpN1",
-  "url": "hive-jczpu0uyl-saggarsonny-3909s-projects.vercel.app",
+  "id": "dpl_38zgAyYMY277gnJc5BGjrBWZ4Gwy",
+  "url": "hive-j9b1l0ets-saggarsonny-3909s-projects.vercel.app",
   "target": "production",
   "readyState": "READY",
   "errorMessage": null,
   "errorCode": null,
   "errorStep": null,
-  "git_commit": "5e5248cb072fb74e0d4555723b54c8fd84c3c0fc"
+  "git_commit": "49c5132399146210e67352432b8e2ce192c7a7d4"
 }
