@@ -15,6 +15,7 @@ import { Figure8 } from "../_lib/Figure8";
 import { track } from "../_lib/analytics";
 import { recipientHomeUrl } from "../_lib/share";
 import { HiveFooter } from "../_lib/HiveFooter";
+import { HexButton } from "../_lib/HexButton";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -162,7 +163,7 @@ function FindInner() {
       </div>
 
       <div style={actionsRowStyle}>
-        <button type="button" onClick={handleNavigate} style={primaryActionStyle}>Navigate</button>
+        <HexButton variant="primary" size="md" onClick={handleNavigate} ariaLabel="Navigate to the shared parking spot">Navigate</HexButton>
       </div>
 
       <a href={recipientHomeUrl()} style={recipientCtaStyle}>
