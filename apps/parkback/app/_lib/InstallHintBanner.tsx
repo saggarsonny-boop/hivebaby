@@ -37,7 +37,7 @@ function isStandalone(): boolean {
 // for every platform — iOS Safari and Android Chrome both surface their own
 // install affordances when the manifest is present.
 const HOME_BANNER =
-  "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no signal required to find your car.";
+  "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no cell or wifi signal required to find your car.";
 
 // Recipient-flavoured banner. Same dead-zone framing as the home banner, but
 // addressed to someone who arrived via a shared spot link — they've already
@@ -152,7 +152,7 @@ export function FirstVisitExplainer() {
   if (!show) return null;
   return (
     <div style={explainerStyle}>
-      Tap when you park. Come back, tap again, walk straight to your car. Works in underground garages with zero signal. Your phone’s GPS does the work.
+      Tap when you park. Come back, tap again, walk straight to your car. Works in underground garages with zero cell or wifi signal. Your phone’s GPS does the work.
     </div>
   );
 }
