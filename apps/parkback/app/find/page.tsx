@@ -16,6 +16,7 @@ import { track } from "../_lib/analytics";
 import { recipientHomeUrl } from "../_lib/share";
 import { HiveFooter } from "../_lib/HiveFooter";
 import { HexButton } from "../_lib/HexButton";
+import { InstallHintBanner } from "../_lib/InstallHintBanner";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -135,6 +136,8 @@ function FindInner() {
 
   return (
     <main style={pageStyle}>
+      <InstallHintBanner where="find" />
+
       <header style={sharedHeaderStyle}>
         <div style={brandStyle}>ParkBack</div>
         <div style={sharedTitleStyle}>Someone shared their parking spot with you.</div>
