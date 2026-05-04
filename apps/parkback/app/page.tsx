@@ -596,10 +596,10 @@ export default function ParkBackPage() {
 
       {showA2HS ? (
         <div role="dialog" style={a2hsStyle}>
-          <div style={a2hsTitleStyle}>Add to Home Screen for better experience</div>
+          <div style={a2hsTitleStyle}>Add ParkBack to your home screen</div>
           <div style={a2hsBodyStyle}>
-            Tap the share icon in Safari, then “Add to Home Screen.” ParkBack will open instantly,
-            full-screen, even with no signal.
+            The whole thing — your pin, photo, voice memo, and the compass back to your car —
+            works without cell signal or wifi. Even in the deepest parking deck.
           </div>
           <button type="button" onClick={dismissA2HS} style={a2hsDismissStyle}>Got it</button>
         </div>
