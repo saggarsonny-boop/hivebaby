@@ -145,7 +145,16 @@ const footerStyle: React.CSSProperties = {
   alignItems: "center",
   gap: 4,
   lineHeight: 1.6,
-  padding: "0 16px",
+  // Bottom padding clears iOS Safari's bottom URL bar overlay (~70–90px),
+  // so the signature row is fully visible when the user scrolls to the
+  // bottom of the page. Without this, the signature renders at the bottom
+  // of the document but is physically covered by the floating URL bar on
+  // iPhone Safari (default since iOS 15) — caught when Sonny verified PR
+  // #74 on his iPhone. The main element's existing
+  // max(env(safe-area-inset-bottom), 24px) bottom padding handles the
+  // home indicator separately; this is the additional clearance the URL
+  // bar overlay needs.
+  padding: "0 16px 80px",
   textAlign: "center",
 };
 
