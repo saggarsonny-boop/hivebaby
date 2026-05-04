@@ -148,7 +148,7 @@ export default function ParkBackPage() {
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToast(null), 2200);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 4500);
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -236,6 +236,7 @@ export default function ParkBackPage() {
         setVoiceSkipped(false);
         track("pin_dropped", { has_altitude: draft.altitude !== null });
         dismissFirstVisitExplainer();
+        showToast("Got it. Walk wherever. Come back when you need your car.");
 
         // Show "Add to Home Screen" hint once on iOS Safari, only if not standalone yet.
         if (
@@ -455,9 +456,9 @@ export default function ParkBackPage() {
           size="lg"
           onClick={dropPin}
           busy={perm === "requesting"}
-          ariaLabel="Drop pin where I'm parked"
+          ariaLabel="I'm parked, save this spot"
         >
-          {perm === "requesting" ? "Locating…" : "Drop pin"}
+          {perm === "requesting" ? "Locating…" : "I’m parked"}
         </HexButton>
 
         <div style={positioningBlockStyle}>
@@ -474,7 +475,7 @@ export default function ParkBackPage() {
         <div style={hintStyle}>
           {perm === "requesting"
             ? "Hold still. High-accuracy GPS takes a moment."
-            : "Tap when you've parked. Works offline once installed."}
+            : "Tap when you've parked. Works offline."}
         </div>
 
         <HiveFooter />
@@ -599,8 +600,8 @@ export default function ParkBackPage() {
 
       <div style={actionsRowStyle}>
         <HexButton variant="primary" size="md" onClick={handleNavigate} ariaLabel="Navigate to my car">Navigate</HexButton>
-        <HexButton variant="ghost" size="md" onClick={handleShare} ariaLabel="Share parking spot">Share</HexButton>
-        <HexButton variant="ghost" size="md" onClick={handleClear} ariaLabel="Clear saved pin">Clear</HexButton>
+        <HexButton variant="ghost" size="md" onClick={handleShare} ariaLabel="Send my parking spot to someone">Send</HexButton>
+        <HexButton variant="ghost" size="md" onClick={handleClear} ariaLabel="Forget this spot">Forget</HexButton>
       </div>
 
       {showA2HS ? (

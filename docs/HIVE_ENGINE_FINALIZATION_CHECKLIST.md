@@ -29,6 +29,7 @@
 | All UI strings externalized to per-locale JSON files under `apps/<engine>/locales/`. | MANDATORY | English-only ship — alienates >70% of the world. Any future translation requires touching every component. |
 | Languages match UD Converter's free-tier default set. | MANDATORY | Engine uses a different language list than the rest of the Hive — translation gaps users notice. |
 | `navigator.language` detection at page load with English fallback. | MANDATORY | Engine ignores the browser locale even when a translation exists; the user never sees their language. |
+| All user-facing button labels and headings must use plain-language user-voice phrasing, not app-voice technical shorthand. Avoid metaphors that don't translate (e.g. "drop pin"). Reviewers ask: would a non-tech-fluent user in any language understand this label without explanation? | MANDATORY | Translation produces literal-but-meaningless strings; even native English speakers stumble on idiomatic UI verbs. |
 
 ## SEO
 
@@ -48,6 +49,7 @@
 | PWA install hint banner with platform-specific instructions on first visit. Detect iOS Safari, Android Chrome, desktop, unknown — and show the right install steps for each. Dismissable via × button, persisted in `localStorage`. | MANDATORY | Users never realise they can install the engine to their home screen — engagement and return-visit rate halve. |
 | One-line explainer for the primary action on first visit, dismissed permanently after the first successful primary action. | MANDATORY | First-time users hit the screen, don't know what the giant button does, bounce. |
 | Add-to-Home-Screen prompt after first successful primary action. | MANDATORY *for engines with a clear primary action* | The teachable moment for "install this" is right after the user has felt the value once — miss it and they may never return. |
+| When an engine claims offline capability, the copy must specifically name "cell" and "wifi" rather than the ambiguous "signal" or "internet." Users misinterpret "no signal" as "still needs wifi"; spelling both out closes the gap. | MANDATORY *for engines that claim offline capability* | Users skip installing because they assume offline still requires wifi at home. The promise is undermined by its own ambiguity. |
 
 ## VIRAL LOOP
 
