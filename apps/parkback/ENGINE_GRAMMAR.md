@@ -76,3 +76,11 @@ link only carries coordinates and a landmark string — never media.
 - Parking timer / meter alerts
 - Routing inside the app (we deep-link to maps)
 - Anything that requires a backend
+
+## Launch checklist
+
+See **[/docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md](../../docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md)** for the canonical Hive engine finalization checklist. ParkBack has been audited against it; current waivers are tracked below.
+
+## Waivers
+
+- *(None at v0.1 — audit on file in the canonical checklist PR.)*
