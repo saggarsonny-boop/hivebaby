@@ -14,6 +14,7 @@ import { useCompass } from "../_lib/useCompass";
 import { Figure8 } from "../_lib/Figure8";
 import { track } from "../_lib/analytics";
 import { recipientHomeUrl } from "../_lib/share";
+import { HiveFooter } from "../_lib/HiveFooter";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -168,12 +169,7 @@ function FindInner() {
         Get ParkBack for your own car →
       </a>
 
-      <footer style={footerStyle}>
-        <div>No ads. No investors. No agenda.</div>
-        <a href="https://hive.baby" target="_blank" rel="noopener noreferrer" style={hiveLinkStyle}>
-          part of the Hive
-        </a>
-      </footer>
+      <HiveFooter />
     </main>
   );
 }
@@ -244,14 +240,6 @@ const primaryActionStyle: React.CSSProperties = {
 const smallButtonStyle: React.CSSProperties = {
   background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 8,
   padding: "6px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer",
-};
-const footerStyle: React.CSSProperties = {
-  marginTop: 18, color: MUTED, fontSize: 11, letterSpacing: "0.05em",
-  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-};
-const hiveLinkStyle: React.CSSProperties = {
-  color: MUTED, textDecoration: "none", fontSize: 11, letterSpacing: "0.05em",
-  borderBottom: `1px dotted ${MUTED}`, paddingBottom: 1,
 };
 const recipientCtaStyle: React.CSSProperties = {
   marginTop: 4, color: GOLD, textDecoration: "none", fontSize: 13, fontWeight: 600,
