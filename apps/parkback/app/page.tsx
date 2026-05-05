@@ -15,22 +15,10 @@ import { buildShareUrl } from "./_lib/share";
 import { HiveFooter } from "./_lib/HiveFooter";
 import { HexButton } from "./_lib/HexButton";
 import { InstallHintBanner, FirstVisitExplainer, dismissFirstVisitExplainer } from "./_lib/InstallHintBanner";
+import { HiveAHTSPrompt } from "./_lib/HiveAHTSPrompt";
 
 const STORAGE_KEY = "parkback_pin_v1";
 const A2HS_DISMISSED_KEY = "parkback_a2hs_dismissed_v1";
-
-function isIOSSafari(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  const isIOS =
-    /iPad|iPhone|iPod/.test(ua) ||
-    ((navigator as Navigator & { platform: string }).platform === "MacIntel" &&
-      (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints !== undefined &&
-      ((navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints || 0) > 1);
-  if (!isIOS) return false;
-  // Safari on iOS — exclude Chrome/Firefox/Edge variants which don't support A2HS the same way.
-  return !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua);
-}
 
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
@@ -238,9 +226,12 @@ export default function ParkBackPage() {
         dismissFirstVisitExplainer();
         showToast("Got it. Walk wherever. Come back when you need your car.");
 
-        // Show "Add to Home Screen" hint once on iOS Safari, only if not standalone yet.
+        // Show the post-pin-drop "Add to Home Screen" prompt on every
+        // platform (HiveAHTSPrompt internally renders the right install
+        // path: native CTA on Chromium, guided overlay on iOS, or
+        // instructional fallback on desktop Safari/Firefox/unknown).
+        // Skip if already standalone or the user permanently dismissed it.
         if (
-          isIOSSafari() &&
           !isStandalone() &&
           window.localStorage.getItem(A2HS_DISMISSED_KEY) !== "1"
         ) {
@@ -604,16 +595,7 @@ export default function ParkBackPage() {
         <HexButton variant="ghost" size="md" onClick={handleClear} ariaLabel="Forget this spot">Forget</HexButton>
       </div>
 
-      {showA2HS ? (
-        <div role="dialog" style={a2hsStyle}>
-          <div style={a2hsTitleStyle}>Add ParkBack to your home screen</div>
-          <div style={a2hsBodyStyle}>
-            The whole thing — your pin, photo, voice memo, and the compass back to your car —
-            works without cell signal or wifi. Even in the deepest parking deck.
-          </div>
-          <button type="button" onClick={dismissA2HS} style={a2hsDismissStyle}>Got it</button>
-        </div>
-      ) : null}
+      <HiveAHTSPrompt open={showA2HS} onDismiss={dismissA2HS} />
 
       <HiveFooter />
 
@@ -847,44 +829,6 @@ const positioningLine2Style: React.CSSProperties = {
   fontStyle: "italic",
   fontWeight: 400,
   letterSpacing: "0.01em",
-};
-
-const a2hsStyle: React.CSSProperties = {
-  marginTop: 14,
-  padding: "12px 14px",
-  borderRadius: 12,
-  border: `1px solid ${GOLD_DIM}`,
-  background: "rgba(212, 175, 55, 0.06)",
-  color: PAPER,
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  maxWidth: 360,
-  textAlign: "left",
-};
-
-const a2hsTitleStyle: React.CSSProperties = {
-  color: GOLD,
-  fontWeight: 600,
-  fontSize: 14,
-};
-
-const a2hsBodyStyle: React.CSSProperties = {
-  color: PAPER,
-  fontSize: 13,
-  lineHeight: 1.4,
-};
-
-const a2hsDismissStyle: React.CSSProperties = {
-  alignSelf: "flex-end",
-  background: "transparent",
-  color: GOLD,
-  border: `1px solid ${GOLD}`,
-  borderRadius: 8,
-  padding: "6px 12px",
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: "pointer",
 };
 
 const compassNoteStyle: React.CSSProperties = {

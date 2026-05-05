@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useInstallPrompt } from "./useInstallPrompt";
+import { InstallCTA } from "./InstallCTA";
+import { strings } from "./strings";
 
 const STORAGE_KEY_HOME = "parkback_install_hint_dismissed";
 const STORAGE_KEY_FIND = "parkback_install_hint_find_dismissed";
@@ -10,43 +13,26 @@ const GOLD_DIM = "#8a6f1f";
 const PAPER = "#f5f1e6";
 const MUTED = "#9a9588";
 
-type Platform = "ios" | "android" | "desktop" | "unknown";
-
-function detectPlatform(): Platform {
-  if (typeof navigator === "undefined") return "unknown";
-  const ua = navigator.userAgent;
-  const isIOS =
-    /iPad|iPhone|iPod/.test(ua) ||
-    ((navigator as Navigator & { platform: string }).platform === "MacIntel" &&
-      ((navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints || 0) > 1);
-  if (isIOS) return "ios";
-  if (/Android/i.test(ua)) return "android";
-  // Treat anything with a normal mouse-based browser as desktop.
-  if (typeof window !== "undefined" && window.matchMedia?.("(pointer: fine)").matches) return "desktop";
-  return "unknown";
-}
-
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   if (window.matchMedia?.("(display-mode: standalone)").matches) return true;
   return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
 }
 
-// Single canonical home banner string. Dead-zone capability is the headline,
-// not "works offline" boilerplate that users glaze past. Same string ships
-// for every platform — iOS Safari and Android Chrome both surface their own
-// install affordances when the manifest is present.
+// Dead-zone framing — the headline that gets users to install. Used on
+// chromium and iOS where there's an actual install path to drive. The
+// fallback platforms (desktop Safari/Firefox/unknown) get different copy
+// from `strings.install.fallback.*` because they cannot programmatically
+// install.
 const HOME_BANNER =
   "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no cell or wifi signal required to find your car.";
 
-// Recipient-flavoured banner. Same dead-zone framing as the home banner, but
-// addressed to someone who arrived via a shared spot link — they've already
-// seen the value, this is the conversion ask.
 const FIND_BANNER =
   "Like what you see? Add ParkBack to your home screen and never lose your own car. Works in any dead zone — no cell signal, wifi, or app store needed. Free, no signup.";
 
 export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   const [show, setShow] = useState(false);
+  const { platform, installed } = useInstallPrompt();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -60,11 +46,22 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
     setShow(true);
   }, [where]);
 
-  if (!show) return null;
+  // appinstalled fires on Chromium when the user accepts the native prompt.
+  // Permanently dismiss the banner on both surfaces so it doesn't re-appear
+  // on subsequent visits. The success toast is rendered by the layout-level
+  // <AppInstalledToast/> so it survives the banner being unmounted here.
+  useEffect(() => {
+    if (!installed) return;
+    setShow(false);
+    try {
+      window.localStorage.setItem(STORAGE_KEY_HOME, "1");
+      window.localStorage.setItem(STORAGE_KEY_FIND, "1");
+    } catch {
+      // localStorage disabled — silently ignore.
+    }
+  }, [installed]);
 
-  const copy = where === "find" ? FIND_BANNER : HOME_BANNER;
-
-  const dismiss = () => {
+  const dismiss = useCallback(() => {
     setShow(false);
     try {
       const key = where === "find" ? STORAGE_KEY_FIND : STORAGE_KEY_HOME;
@@ -72,11 +69,34 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
     } catch {
       // localStorage might be disabled — silently ignore.
     }
-  };
+  }, [where]);
+
+  if (!show) return null;
+
+  // Per-platform body copy.
+  // - chromium / ios: dead-zone headline + InstallCTA button
+  // - desktop-safari-firefox: instructional fallback copy, no CTA
+  // - unknown: generic copy, no CTA
+  const hasInstallPath = platform === "chromium" || platform === "ios";
+  let bodyCopy: string;
+  if (hasInstallPath) {
+    bodyCopy = where === "find" ? FIND_BANNER : HOME_BANNER;
+  } else if (platform === "desktop-safari-firefox") {
+    bodyCopy = strings.install.fallback.desktopSafariFirefox;
+  } else {
+    bodyCopy = strings.install.fallback.unknown;
+  }
 
   return (
     <div role="region" aria-label="Install ParkBack" style={bannerStyle}>
-      <div style={textStyle}>{copy}</div>
+      <div style={contentColumnStyle}>
+        <div style={textStyle}>{bodyCopy}</div>
+        {hasInstallPath ? (
+          <div style={ctaRowStyle}>
+            <InstallCTA size="sm" />
+          </div>
+        ) : null}
+      </div>
       <button
         type="button"
         onClick={dismiss}
@@ -94,7 +114,7 @@ const bannerStyle: React.CSSProperties = {
   maxWidth: 520,
   marginTop: 8,
   marginBottom: 4,
-  padding: "10px 14px 10px 16px",
+  padding: "10px 14px 12px 16px",
   display: "flex",
   alignItems: "flex-start",
   gap: 10,
@@ -109,9 +129,21 @@ const bannerStyle: React.CSSProperties = {
   boxShadow: "0 4px 14px rgba(0,0,0,0.35)",
 };
 
-const textStyle: React.CSSProperties = {
+const contentColumnStyle: React.CSSProperties = {
   flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+};
+
+const textStyle: React.CSSProperties = {
   color: PAPER,
+};
+
+const ctaRowStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "flex-start",
+  marginTop: 2,
 };
 
 const dismissBtnStyle: React.CSSProperties = {
