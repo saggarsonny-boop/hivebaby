@@ -1,0 +1,40 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "Gemacht mit",
+      "inThe": "im",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "ParkBack zum Startbildschirm hinzufügen",
+    "ctaAriaIos": "Zeig mir, wie ich ParkBack zum Startbildschirm hinzufüge",
+    "ctaAriaChromium": "ParkBack zum Startbildschirm hinzufügen",
+    "fallback": {
+      "desktopSafariFirefox": "Füge ParkBack zu deinem Startbildschirm hinzu für Zugriff mit einem Tippen. Nutze die Lesezeichen-Funktion deines Browsers, um es zugänglich zu halten. Kein App Store nötig — kostenlos, ohne Anmeldung, funktioniert offline.",
+      "unknown": "ParkBack funktioniert auf jedem Gerät. Nutze die Option „Zum Home-Bildschirm hinzufügen\" deines Browsers, um es zugänglich zu halten."
+    },
+    "ahtsCard": {
+      "title": "ParkBack zum Startbildschirm hinzufügen",
+      "body": "Alles — dein Pin, Foto, Sprachnotiz und der Kompass zurück zu deinem Auto — funktioniert ohne Mobilfunk oder WLAN. Auch im tiefsten Tiefgarageparkhaus.",
+      "dismiss": "Verstanden"
+    },
+    "overlay": {
+      "title": "ParkBack zum Startbildschirm hinzufügen",
+      "body": "Drei Tipps in Safari. Danach öffnet sich ParkBack wie jede andere App — funktioniert in jedem Funkloch, kein Mobilfunk oder WLAN nötig.",
+      "step1": "Tippe auf die Teilen-Schaltfläche unten in Safari.",
+      "step2": "Scrolle und tippe auf Zum Home-Bildschirm.",
+      "step3": "Tippe oben rechts auf Hinzufügen.",
+      "dismiss": "Verstanden",
+      "ariaLabel": "So fügst du ParkBack zu deinem Startbildschirm hinzu"
+    },
+    "installedToast": "ParkBack ist auf deinem Startbildschirm. Öffne es wie jede andere App.",
+    "banner": {
+      "home": "Füge ParkBack zu deinem Startbildschirm hinzu. Funktioniert in jedem Funkloch. Kein Mobilfunk, WLAN oder App Store nötig. Kostenlos, ohne Anmeldung. Dein Pin, Foto und Sprachnotiz werden auf deinem Handy gespeichert — kein Mobilfunk oder WLAN nötig, um dein Auto zu finden.",
+      "find": "Gefällt dir, was du siehst? Füge ParkBack zu deinem Startbildschirm hinzu und verliere nie wieder dein eigenes Auto. Funktioniert in jedem Funkloch — kein Mobilfunk, WLAN oder App Store nötig. Kostenlos, ohne Anmeldung."
+    }
+  },
+  "firstVisit": {
+    "explainer": "Tippe, wenn du parkst. Komm zurück, tippe nochmal, geh direkt zu deinem Auto. Funktioniert in Tiefgaragen ohne jeglichen Mobilfunk oder WLAN. Das GPS deines Handys erledigt die Arbeit."
+  }
+}

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useInstallPrompt } from "./useInstallPrompt";
 import { InstallCTA } from "./InstallCTA";
-import { strings } from "./strings";
+import { useStrings } from "./useStrings";
 
 const STORAGE_KEY_HOME = "parkback_install_hint_dismissed";
 const STORAGE_KEY_FIND = "parkback_install_hint_find_dismissed";
@@ -19,20 +19,15 @@ function isStandalone(): boolean {
   return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
 }
 
-// Dead-zone framing — the headline that gets users to install. Used on
-// chromium and iOS where there's an actual install path to drive. The
-// fallback platforms (desktop Safari/Firefox/unknown) get different copy
-// from `strings.install.fallback.*` because they cannot programmatically
-// install.
-const HOME_BANNER =
-  "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no cell or wifi signal required to find your car.";
-
-const FIND_BANNER =
-  "Like what you see? Add ParkBack to your home screen and never lose your own car. Works in any dead zone — no cell signal, wifi, or app store needed. Free, no signup.";
+// Banner copy is now sourced from per-locale catalogs via useStrings —
+// strings.install.banner.{home,find} for the dead-zone headline,
+// strings.install.fallback.{desktopSafariFirefox,unknown} for browsers
+// without an install path.
 
 export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   const [show, setShow] = useState(false);
   const { platform, installed } = useInstallPrompt();
+  const strings = useStrings();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -80,7 +75,7 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   const hasInstallPath = platform === "chromium" || platform === "ios";
   let bodyCopy: string;
   if (hasInstallPath) {
-    bodyCopy = where === "find" ? FIND_BANNER : HOME_BANNER;
+    bodyCopy = where === "find" ? strings.install.banner.find : strings.install.banner.home;
   } else if (platform === "desktop-safari-firefox") {
     bodyCopy = strings.install.fallback.desktopSafariFirefox;
   } else {
@@ -170,6 +165,7 @@ const STORAGE_KEY_EXPLAINER = "parkback_first_visit_explainer_dismissed";
 
 export function FirstVisitExplainer() {
   const [show, setShow] = useState(false);
+  const strings = useStrings();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -184,7 +180,7 @@ export function FirstVisitExplainer() {
   if (!show) return null;
   return (
     <div style={explainerStyle}>
-      Tap when you park. Come back, tap again, walk straight to your car. Works in underground garages with zero cell or wifi signal. Your phone’s GPS does the work.
+      {strings.firstVisit.explainer}
     </div>
   );
 }

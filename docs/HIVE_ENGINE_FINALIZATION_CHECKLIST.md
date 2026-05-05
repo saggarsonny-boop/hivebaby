@@ -26,10 +26,12 @@
 
 | Item | Status | Failure mode if skipped |
 |---|---|---|
-| All UI strings externalized to per-locale JSON files under `apps/<engine>/locales/`. | MANDATORY | English-only ship — alienates >70% of the world. Any future translation requires touching every component. |
-| Languages match UD Converter's free-tier default set. | MANDATORY | Engine uses a different language list than the rest of the Hive — translation gaps users notice. |
-| `navigator.language` detection at page load with English fallback. | MANDATORY | Engine ignores the browser locale even when a translation exists; the user never sees their language. |
+| All UI strings externalized to per-locale JSON files under `apps/<engine>/locales/<code>.json`. | MANDATORY | English-only ship — alienates >70% of the world. Any future translation requires touching every component. |
+| **LANGUAGES_MANIFEST_CANONICAL** — engine ships `apps/<engine>/locales/manifest.json` listing the supported locales, and that list matches the canonical Hive 12-locale set: `en, es, fr, de, pt, it, ja, zh-CN, ko, ar, hi, ru` (the set first established by ParkBack — see `apps/parkback/locales/manifest.json`). Each entry carries `code`, `english` name, `native` name, and `direction` (`ltr` or `rtl`). Adding a locale to one engine adds it to the canonical set; the engine that adds it owns updating the others. | MANDATORY | Engines drift to per-engine language lists; users get partial coverage that varies by engine; translation work fragments. |
+| `navigator.language` detection at page load with English fallback (exact match → language-prefix match → `en`). | MANDATORY | Engine ignores the browser locale even when a translation exists; the user never sees their language. |
+| **HTML_LANG_DIR_REACTIVE** — the `<html lang>` and `<html dir>` attributes update at runtime to match the resolved locale. RTL locales (e.g. Arabic) get `dir="rtl"`; LTR locales get `dir="ltr"`. The locale resolver also re-runs on the window `languagechange` event. | MANDATORY | Screen readers and browser features (date pickers, text wrap) get the wrong locale hint; RTL languages render with broken text flow. |
 | All user-facing button labels and headings must use plain-language user-voice phrasing, not app-voice technical shorthand. Avoid metaphors that don't translate (e.g. "drop pin"). Reviewers ask: would a non-tech-fluent user in any language understand this label without explanation? | MANDATORY | Translation produces literal-but-meaningless strings; even native English speakers stumble on idiomatic UI verbs. |
+| Brand names (engine name, "Hive", "Universal Document™", any trademarked terms) stay in English across every locale catalog. Only descriptive surrounding text translates. | MANDATORY | Brand recognition fragments across locales; trademark protection is undermined by inconsistent naming. |
 
 ## SEO
 

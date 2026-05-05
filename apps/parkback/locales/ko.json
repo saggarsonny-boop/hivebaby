@@ -1,0 +1,40 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "정성으로 만든",
+      "inThe": "—",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "ParkBack을 홈 화면에 추가",
+    "ctaAriaIos": "ParkBack을 홈 화면에 추가하는 방법 보기",
+    "ctaAriaChromium": "ParkBack을 홈 화면에 추가",
+    "fallback": {
+      "desktopSafariFirefox": "원터치 액세스를 위해 ParkBack을 홈 화면에 추가하세요. 브라우저의 북마크 옵션을 사용하여 접근 가능하게 유지하세요. 앱 스토어가 필요 없음 — 무료, 가입 불필요, 오프라인에서 작동합니다.",
+      "unknown": "ParkBack은 모든 기기에서 작동합니다. 브라우저의 \"홈 화면에 추가\" 옵션을 사용하여 접근 가능하게 유지하세요."
+    },
+    "ahtsCard": {
+      "title": "ParkBack을 홈 화면에 추가",
+      "body": "모든 것 — 핀, 사진, 음성 메모, 차로 돌아가는 나침반 — 휴대폰 신호나 WiFi 없이 작동합니다. 가장 깊은 지하 주차장에서도.",
+      "dismiss": "알겠어요"
+    },
+    "overlay": {
+      "title": "ParkBack을 홈 화면에 추가",
+      "body": "Safari에서 세 번 탭. 그 후, ParkBack이 다른 앱처럼 열립니다 — 어떤 신호 음영 지역에서도 작동하며, 휴대폰이나 WiFi 신호가 필요 없습니다.",
+      "step1": "Safari 하단의 공유 버튼을 탭하세요.",
+      "step2": "스크롤하여 홈 화면에 추가를 탭하세요.",
+      "step3": "오른쪽 상단의 추가를 탭하세요.",
+      "dismiss": "알겠어요",
+      "ariaLabel": "ParkBack을 홈 화면에 추가하는 방법"
+    },
+    "installedToast": "ParkBack이 홈 화면에 있습니다. 다른 앱처럼 열어보세요.",
+    "banner": {
+      "home": "ParkBack을 홈 화면에 추가하세요. 어떤 신호 음영 지역에서도 작동. 휴대폰 신호, WiFi 또는 앱 스토어 필요 없음. 무료, 가입 불필요. 핀, 사진, 음성 메모는 휴대폰에 저장됩니다 — 차를 찾는 데 휴대폰 신호나 WiFi가 필요하지 않습니다.",
+      "find": "마음에 드시나요? ParkBack을 홈 화면에 추가하고 자신의 차를 절대 잃지 마세요. 어떤 신호 음영 지역에서도 작동 — 휴대폰 신호, WiFi 또는 앱 스토어 필요 없음. 무료, 가입 불필요."
+    }
+  },
+  "firstVisit": {
+    "explainer": "주차할 때 탭하세요. 돌아와서 다시 탭하고, 차로 곧장 걸어가세요. 휴대폰 신호나 WiFi가 전혀 없는 지하 주차장에서도 작동합니다. 휴대폰의 GPS가 작업을 수행합니다."
+  }
+}

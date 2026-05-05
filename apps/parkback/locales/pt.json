@@ -1,0 +1,40 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "Feito com",
+      "inThe": "na",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "Adicionar ParkBack à tela inicial",
+    "ctaAriaIos": "Mostre-me como adicionar ParkBack à minha tela inicial",
+    "ctaAriaChromium": "Adicionar ParkBack à tela inicial",
+    "fallback": {
+      "desktopSafariFirefox": "Adicione ParkBack à sua tela inicial para acesso com um toque. Use a opção de favoritos do seu navegador para mantê-lo acessível. Sem loja de apps — grátis, sem cadastro, funciona offline.",
+      "unknown": "ParkBack funciona em qualquer dispositivo. Use a opção \"Adicionar à tela inicial\" do seu navegador para mantê-lo acessível."
+    },
+    "ahtsCard": {
+      "title": "Adicionar ParkBack à tela inicial",
+      "body": "Tudo — seu pino, foto, memorando de voz e a bússola de volta ao seu carro — funciona sem sinal de celular ou wifi. Mesmo no estacionamento subterrâneo mais profundo.",
+      "dismiss": "Entendi"
+    },
+    "overlay": {
+      "title": "Adicionar ParkBack à tela inicial",
+      "body": "Três toques no Safari. Depois disso, o ParkBack abre como qualquer app — funciona em qualquer zona morta, sem sinal de celular ou wifi necessário.",
+      "step1": "Toque no botão de compartilhar na parte inferior do Safari.",
+      "step2": "Role para baixo e toque em Tela de Início.",
+      "step3": "Toque em Adicionar no canto superior direito.",
+      "dismiss": "Entendi",
+      "ariaLabel": "Como adicionar ParkBack à sua tela inicial"
+    },
+    "installedToast": "ParkBack está na sua tela inicial. Abra-o como qualquer outro app.",
+    "banner": {
+      "home": "Adicione ParkBack à sua tela inicial. Funciona em qualquer zona morta. Sem sinal de celular, wifi ou loja de apps necessária. Grátis, sem cadastro. Seu pino, foto e memorando de voz ficam salvos no seu celular — sem sinal de celular ou wifi necessário para encontrar seu carro.",
+      "find": "Gostou do que viu? Adicione ParkBack à sua tela inicial e nunca mais perca seu próprio carro. Funciona em qualquer zona morta — sem sinal de celular, wifi ou loja de apps necessária. Grátis, sem cadastro."
+    }
+  },
+  "firstVisit": {
+    "explainer": "Toque quando estacionar. Volte, toque novamente, caminhe direto até seu carro. Funciona em estacionamentos subterrâneos sem qualquer sinal de celular ou wifi. O GPS do seu celular faz o trabalho."
+  }
+}

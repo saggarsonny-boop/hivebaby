@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useInstallPrompt } from "./useInstallPrompt";
 import { IOSInstallOverlay } from "./IOSInstallOverlay";
-import { strings } from "./strings";
+import { useStrings } from "./useStrings";
 
 // Shared install call-to-action button. Used by both InstallHintBanner
 // (no-pin home screen banner) and HiveAHTSPrompt (post-first-action card).
@@ -66,6 +66,7 @@ function HiveMarkInline({ size }: { size: number }) {
 export function InstallCTA({ size = "md" }: { size?: Size }) {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const { platform, trigger } = useInstallPrompt();
+  const strings = useStrings();
 
   const handleClick = useCallback(async () => {
     try {

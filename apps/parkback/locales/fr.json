@@ -1,0 +1,40 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "Fait avec",
+      "inThe": "dans la",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "Ajouter ParkBack à votre écran d'accueil",
+    "ctaAriaIos": "Montrez-moi comment ajouter ParkBack à mon écran d'accueil",
+    "ctaAriaChromium": "Ajouter ParkBack à votre écran d'accueil",
+    "fallback": {
+      "desktopSafariFirefox": "Ajoutez ParkBack à votre écran d'accueil pour un accès en un clic. Utilisez l'option de favoris de votre navigateur pour le garder accessible. Pas besoin d'app store — c'est gratuit, sans inscription, fonctionne hors ligne.",
+      "unknown": "ParkBack fonctionne sur n'importe quel appareil. Utilisez l'option « Ajouter à l'écran d'accueil » de votre navigateur pour le garder accessible."
+    },
+    "ahtsCard": {
+      "title": "Ajouter ParkBack à votre écran d'accueil",
+      "body": "Tout — votre épingle, photo, mémo vocal et la boussole de retour vers votre voiture — fonctionne sans signal cellulaire ni wifi. Même dans le parking souterrain le plus profond.",
+      "dismiss": "Compris"
+    },
+    "overlay": {
+      "title": "Ajouter ParkBack à votre écran d'accueil",
+      "body": "Trois touches dans Safari. Après cela, ParkBack s'ouvre comme n'importe quelle app — fonctionne dans n'importe quelle zone morte, aucun signal cellulaire ou wifi nécessaire.",
+      "step1": "Touchez le bouton partager en bas de Safari.",
+      "step2": "Faites défiler et touchez Sur l'écran d'accueil.",
+      "step3": "Touchez Ajouter en haut à droite.",
+      "dismiss": "Compris",
+      "ariaLabel": "Comment ajouter ParkBack à votre écran d'accueil"
+    },
+    "installedToast": "ParkBack est sur votre écran d'accueil. Ouvrez-le comme n'importe quelle autre app.",
+    "banner": {
+      "home": "Ajoutez ParkBack à votre écran d'accueil. Fonctionne dans n'importe quelle zone morte. Aucun signal cellulaire, wifi ou app store nécessaire. Gratuit, sans inscription. Votre épingle, photo et mémo vocal sont enregistrés sur votre téléphone — aucun signal cellulaire ni wifi nécessaire pour retrouver votre voiture.",
+      "find": "Vous aimez ce que vous voyez ? Ajoutez ParkBack à votre écran d'accueil et ne perdez plus jamais votre propre voiture. Fonctionne dans n'importe quelle zone morte — aucun signal cellulaire, wifi ou app store nécessaire. Gratuit, sans inscription."
+    }
+  },
+  "firstVisit": {
+    "explainer": "Touchez quand vous vous garez. Revenez, touchez à nouveau, marchez directement vers votre voiture. Fonctionne dans les parkings souterrains sans aucun signal cellulaire ou wifi. Le GPS de votre téléphone fait le travail."
+  }
+}

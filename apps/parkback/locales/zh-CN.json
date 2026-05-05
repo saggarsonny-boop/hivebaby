@@ -1,0 +1,40 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "用",
+      "inThe": "在",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "将ParkBack添加到主屏幕",
+    "ctaAriaIos": "教我如何将ParkBack添加到我的主屏幕",
+    "ctaAriaChromium": "将ParkBack添加到主屏幕",
+    "fallback": {
+      "desktopSafariFirefox": "将ParkBack添加到您的主屏幕,一键访问。使用浏览器的书签功能保持访问。无需应用商店 — 免费、无需注册、可离线工作。",
+      "unknown": "ParkBack在任何设备上都能运行。使用浏览器的\"添加到主屏幕\"选项保持访问。"
+    },
+    "ahtsCard": {
+      "title": "将ParkBack添加到主屏幕",
+      "body": "所有内容 — 您的标记、照片、语音备忘录以及回到您车辆的指南针 — 都无需手机信号或WiFi即可运行。即使在最深的地下停车场也能使用。",
+      "dismiss": "知道了"
+    },
+    "overlay": {
+      "title": "将ParkBack添加到主屏幕",
+      "body": "在Safari中三次点击。之后,ParkBack将像任何应用一样打开 — 在任何信号盲区都能运行,无需手机信号或WiFi。",
+      "step1": "点击Safari底部的分享按钮。",
+      "step2": "向下滚动并点击\"添加到主屏幕\"。",
+      "step3": "点击右上角的\"添加\"。",
+      "dismiss": "知道了",
+      "ariaLabel": "如何将ParkBack添加到您的主屏幕"
+    },
+    "installedToast": "ParkBack已在您的主屏幕上。像打开任何其他应用一样打开它。",
+    "banner": {
+      "home": "将ParkBack添加到您的主屏幕。在任何信号盲区都能运行。无需手机信号、WiFi或应用商店。免费、无需注册。您的标记、照片和语音备忘录都保存在您的手机上 — 找到您的车辆无需手机信号或WiFi。",
+      "find": "喜欢您所看到的吗?将ParkBack添加到您的主屏幕,永远不要再丢失您自己的车。在任何信号盲区都能运行 — 无需手机信号、WiFi或应用商店。免费、无需注册。"
+    }
+  },
+  "firstVisit": {
+    "explainer": "停车时点击。回来时再次点击,直接走向您的车。在没有任何手机信号或WiFi的地下停车场也能运行。您手机的GPS会完成工作。"
+  }
+}
