@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { strings } from "./strings";
+import { useStrings } from "./useStrings";
 
 // iOS guided install overlay. Three-step instructions for adding ParkBack
 // to the home screen via Safari's share sheet — the only path on iOS,
@@ -73,6 +73,11 @@ export function IOSInstallOverlay({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Hooks must be called unconditionally — useStrings is invoked above the
+  // open-gate so that React's hook order stays stable across renders.
+  // Calling it here is fine because the function components above this
+  // line were also unconditional.
+  const strings = useStrings();
   if (!open) return null;
 
   const o = strings.install.overlay;

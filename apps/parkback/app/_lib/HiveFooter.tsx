@@ -1,3 +1,5 @@
+"use client";
+
 // Standard Hive footer used on every screen of every engine.
 // Pattern matches hive-aestheticbestie's tagline + the canonical hive.baby
 // link set (about / contribute / patrons / privacy / homepage).
@@ -8,7 +10,7 @@
 // (HIVE INTEGRATION). Strings are sourced from app/_lib/strings.ts so the
 // i18n catch-up step can extend per-locale without touching this file.
 
-import { strings } from "./strings";
+import { useStrings } from "./useStrings";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -88,6 +90,7 @@ const HiveMark = ({ size = 20 }: { size?: number }) => (
 );
 
 export function HiveFooter() {
+  const strings = useStrings();
   const sig = strings.footer.signature;
   return (
     <footer style={footerStyle}>

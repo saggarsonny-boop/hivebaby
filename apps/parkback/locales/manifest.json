@@ -1,0 +1,18 @@
+{
+  "_comment": "Canonical Hive locale manifest. Engines load only locales listed here. Add a locale by adding an entry below AND a sibling <code>.json catalog. Direction defaults to 'ltr' if omitted; mark RTL languages explicitly. Native names are rendered in language-pickers and lang-attribute fallbacks; English names are for engineering / docs only.",
+  "default": "en",
+  "locales": [
+    { "code": "en",    "english": "English",    "native": "English",     "direction": "ltr" },
+    { "code": "es",    "english": "Spanish",    "native": "Español",     "direction": "ltr" },
+    { "code": "fr",    "english": "French",     "native": "Français",    "direction": "ltr" },
+    { "code": "de",    "english": "German",     "native": "Deutsch",     "direction": "ltr" },
+    { "code": "pt",    "english": "Portuguese", "native": "Português",   "direction": "ltr" },
+    { "code": "it",    "english": "Italian",    "native": "Italiano",    "direction": "ltr" },
+    { "code": "ja",    "english": "Japanese",   "native": "日本語",        "direction": "ltr" },
+    { "code": "zh-CN", "english": "Chinese (Simplified)", "native": "简体中文", "direction": "ltr" },
+    { "code": "ko",    "english": "Korean",     "native": "한국어",        "direction": "ltr" },
+    { "code": "ar",    "english": "Arabic",     "native": "العربية",      "direction": "rtl" },
+    { "code": "hi",    "english": "Hindi",      "native": "हिन्दी",         "direction": "ltr" },
+    { "code": "ru",    "english": "Russian",    "native": "Русский",     "direction": "ltr" }
+  ]
+}

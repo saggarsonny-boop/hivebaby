@@ -1,0 +1,40 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "Hecho con",
+      "inThe": "en la",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "Añadir ParkBack a tu pantalla de inicio",
+    "ctaAriaIos": "Muéstrame cómo añadir ParkBack a mi pantalla de inicio",
+    "ctaAriaChromium": "Añadir ParkBack a tu pantalla de inicio",
+    "fallback": {
+      "desktopSafariFirefox": "Añade ParkBack a tu pantalla de inicio para acceso de un solo toque. Usa la opción de marcadores de tu navegador para mantenerlo accesible. Sin tienda de apps — gratis, sin registro, funciona sin conexión.",
+      "unknown": "ParkBack funciona en cualquier dispositivo. Usa la opción \"Añadir a pantalla de inicio\" de tu navegador para mantenerlo accesible."
+    },
+    "ahtsCard": {
+      "title": "Añadir ParkBack a tu pantalla de inicio",
+      "body": "Todo — tu marcador, foto, nota de voz y la brújula de regreso a tu coche — funciona sin señal móvil ni wifi. Incluso en el aparcamiento subterráneo más profundo.",
+      "dismiss": "Entendido"
+    },
+    "overlay": {
+      "title": "Añadir ParkBack a tu pantalla de inicio",
+      "body": "Tres toques en Safari. Después de esto, ParkBack se abre como cualquier app — funciona en cualquier zona muerta, sin necesidad de señal móvil ni wifi.",
+      "step1": "Toca el botón de compartir en la parte inferior de Safari.",
+      "step2": "Desplázate y toca Añadir a pantalla de inicio.",
+      "step3": "Toca Añadir en la esquina superior derecha.",
+      "dismiss": "Entendido",
+      "ariaLabel": "Cómo añadir ParkBack a tu pantalla de inicio"
+    },
+    "installedToast": "ParkBack está en tu pantalla de inicio. Ábrelo como cualquier otra app.",
+    "banner": {
+      "home": "Añade ParkBack a tu pantalla de inicio. Funciona en cualquier zona muerta. Sin señal móvil, wifi ni tienda de apps. Gratis, sin registro. Tu marcador, foto y nota de voz se guardan en tu teléfono — sin necesidad de señal móvil o wifi para encontrar tu coche.",
+      "find": "¿Te gusta lo que ves? Añade ParkBack a tu pantalla de inicio y nunca pierdas tu propio coche. Funciona en cualquier zona muerta — sin señal móvil, wifi ni tienda de apps. Gratis, sin registro."
+    }
+  },
+  "firstVisit": {
+    "explainer": "Toca cuando aparques. Vuelve, toca de nuevo, camina directamente a tu coche. Funciona en aparcamientos subterráneos sin señal móvil ni wifi. Tu GPS hace el trabajo."
+  }
+}

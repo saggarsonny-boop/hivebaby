@@ -28,6 +28,13 @@
       "dismiss": "Got it",
       "ariaLabel": "How to add ParkBack to your home screen"
     },
-    "installedToast": "ParkBack is on your home screen. Open it like any other app."
+    "installedToast": "ParkBack is on your home screen. Open it like any other app.",
+    "banner": {
+      "home": "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no cell or wifi signal required to find your car.",
+      "find": "Like what you see? Add ParkBack to your home screen and never lose your own car. Works in any dead zone — no cell signal, wifi, or app store needed. Free, no signup."
+    }
+  },
+  "firstVisit": {
+    "explainer": "Tap when you park. Come back, tap again, walk straight to your car. Works in underground garages with zero cell or wifi signal. Your phone's GPS does the work."
   }
 }

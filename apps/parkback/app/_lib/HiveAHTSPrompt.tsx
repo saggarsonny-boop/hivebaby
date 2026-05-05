@@ -2,7 +2,7 @@
 
 import { InstallCTA } from "./InstallCTA";
 import { useInstallPrompt } from "./useInstallPrompt";
-import { strings } from "./strings";
+import { useStrings } from "./useStrings";
 
 // Post-first-action "Add to Home Screen" prompt card. Mounted by the parent
 // (app/page.tsx) when the user successfully drops their first pin, gated on
@@ -28,6 +28,7 @@ export function HiveAHTSPrompt({
   onDismiss: () => void;
 }) {
   const { platform } = useInstallPrompt();
+  const strings = useStrings();
   if (!open) return null;
 
   const card = strings.install.ahtsCard;

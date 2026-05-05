@@ -1,0 +1,40 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "Fatto con",
+      "inThe": "nel",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "Aggiungi ParkBack alla schermata Home",
+    "ctaAriaIos": "Mostrami come aggiungere ParkBack alla mia schermata Home",
+    "ctaAriaChromium": "Aggiungi ParkBack alla schermata Home",
+    "fallback": {
+      "desktopSafariFirefox": "Aggiungi ParkBack alla tua schermata Home per un accesso con un tocco. Usa l'opzione segnalibri del tuo browser per tenerlo accessibile. Nessun app store necessario — è gratis, senza registrazione, funziona offline.",
+      "unknown": "ParkBack funziona su qualsiasi dispositivo. Usa l'opzione \"Aggiungi alla schermata Home\" del tuo browser per tenerlo accessibile."
+    },
+    "ahtsCard": {
+      "title": "Aggiungi ParkBack alla schermata Home",
+      "body": "Tutto — il tuo pin, foto, memo vocale e la bussola per tornare alla tua auto — funziona senza segnale cellulare o wifi. Anche nel parcheggio sotterraneo più profondo.",
+      "dismiss": "Capito"
+    },
+    "overlay": {
+      "title": "Aggiungi ParkBack alla schermata Home",
+      "body": "Tre tocchi in Safari. Dopo questo, ParkBack si apre come qualsiasi app — funziona in qualsiasi zona morta, nessun segnale cellulare o wifi necessario.",
+      "step1": "Tocca il pulsante condividi in fondo a Safari.",
+      "step2": "Scorri e tocca Aggiungi a Home.",
+      "step3": "Tocca Aggiungi in alto a destra.",
+      "dismiss": "Capito",
+      "ariaLabel": "Come aggiungere ParkBack alla tua schermata Home"
+    },
+    "installedToast": "ParkBack è sulla tua schermata Home. Aprilo come qualsiasi altra app.",
+    "banner": {
+      "home": "Aggiungi ParkBack alla tua schermata Home. Funziona in qualsiasi zona morta. Nessun segnale cellulare, wifi o app store necessario. Gratis, senza registrazione. Il tuo pin, foto e memo vocale sono salvati sul tuo telefono — nessun segnale cellulare o wifi necessario per trovare la tua auto.",
+      "find": "Ti piace ciò che vedi? Aggiungi ParkBack alla tua schermata Home e non perdere mai più la tua auto. Funziona in qualsiasi zona morta — nessun segnale cellulare, wifi o app store necessario. Gratis, senza registrazione."
+    }
+  },
+  "firstVisit": {
+    "explainer": "Tocca quando parcheggi. Torna, tocca di nuovo, cammina direttamente verso la tua auto. Funziona nei parcheggi sotterranei senza alcun segnale cellulare o wifi. Il GPS del tuo telefono fa il lavoro."
+  }
+}
