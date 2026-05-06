@@ -1,24 +1,58 @@
-# ENGINE GRAMMAR — ParkBack
-
-<GrapplerHook>
+---
 engine: ParkBack
 id: parkback
+domain: parkback.hive.baby
+repo: saggarsonny-boop/hivebaby:apps/parkback
+owner: saggarsonny-boop
+
 version: 0.1.0
-governance: QueenBee.MasterGrappler
-safety: enabled
-multilingual: pending
-premium: false
-status: building
+status: live
 tier: 1
 schema: parking-spot-pin
 stack: [nextjs, typescript]
-</GrapplerHook>
+premium: false
+
+governance: QueenBee.MasterGrappler@pending
+safety: enabled
+multilingual: enabled
+tone: direct, no-nonsense, plain-language
+
+# No LLM in the runtime path — ParkBack is a client-only PWA.
+env_vars_required: [NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_PLAUSIBLE_DOMAIN]
+onboarding_stack:
+  auto_demo: n/a
+  first_visit_card: implemented
+  tooltip_tour: implemented
+  rotating_placeholders: n/a
+
+vercel_project: hivebaby-7c1o
+vercel_root_directory: apps/parkback
+deployment_protection: off
+auto_deploy_branch: main
+
+visibility: public
+commercial_surface: none
+viral_loop_targets: [share_card]
+launch_checklist_state:
+  test_slot: false
+  seo_layout: true
+  tooltip_tour: true
+  planet_or_udnav: true
+  env_vars_confirmed: true
+  health_check: false
+  health_workflow_listed: false
+  engine_count_updated: true
+production_state: listed
+last_audit_at: 2026-05-06
+---
+
+# ENGINE GRAMMAR — ParkBack
 
 ## Engine Identity
 - **Name:** ParkBack
 - **Domain:** parkback.hive.baby
 - **Repo:** saggarsonny-boop/hivebaby (subdir `apps/parkback/`)
-- **Status:** Building (Tier 1)
+- **Status:** Live (Tier 1)
 - **Stack:** Next.js + TypeScript (no AI, no backend, no database)
 
 ## Purpose
@@ -58,7 +92,7 @@ link only carries coordinates and a landmark string — never media.
 
 ## Network calls
 - `nominatim.openstreetmap.org/reverse` — one read on pin drop, no key, no UA header (browser default)
-- No other outbound calls. No analytics. No telemetry.
+- No other outbound calls. No analytics beyond Plausible. No telemetry.
 
 ## Safety
 - Permission denial messaging is direct, no corporate language
@@ -67,9 +101,16 @@ link only carries coordinates and a landmark string — never media.
 - Service worker caches the shell so the app loads in underground garages with no signal
 
 ## Onboarding
-- Drop-pin button is the entire onboarding for the parking flow
-- First-visit copy: "Find your car. No accounts. No cloud."
-- Footer on every screen: "No ads. No investors. No agenda."
+ParkBack uses the canonical Hive onboarding stack via `@hive/onboarding`:
+- `<HiveInstallHint />` — install banner on home and find views
+- `<HiveFirstVisitExplainer />` — under-CTA explainer ("Tap when you park…"); auto-dismissed on first pin drop
+- `<HiveAHTSPrompt />` — post-first-action card mounted after the user successfully drops a pin
+- `<AppInstalledToast />` — engine-local layout toast (uses ParkBack-specific copy from the strings catalog)
+
+ParkBack-specific body copy is passed via the `customMessage` prop on each
+component so the engine retains its dead-zone-focused phrasing while button
+labels, ARIA, and dismiss copy localize through the package's bundled
+7-locale catalog (en, es, fr, ar, hi, zh, pt).
 
 ## Out of scope (v0.1.0)
 - Multi-pin history
@@ -77,10 +118,19 @@ link only carries coordinates and a landmark string — never media.
 - Routing inside the app (we deep-link to maps)
 - Anything that requires a backend
 
+## Deployment Notes
+- Auto-deploy on push to main
+- Cloudflare CNAME → cname.vercel-dns.com
+- Vercel Deployment Protection: off
+- Required env vars (declared in `env_vars_required` frontmatter):
+  - `NEXT_PUBLIC_APP_URL` — canonical URL used in metadata, OG tags, JSON-LD; defaults to `https://parkback.hive.baby` if unset
+  - `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` — Plausible site domain for analytics; defaults to `parkback.hive.baby` if unset
+
 ## Launch checklist
 
-See **[/docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md](../../docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md)** for the canonical Hive engine finalization checklist. ParkBack has been audited against it; current waivers are tracked below.
+See **[/docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md](../../docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md)**.
+HiveOps audit (`tsx tools/hive-ops/cli.ts parkback`) is the programmatic
+gate; current run is the source of truth for `launch_checklist_state` above.
 
 ## Waivers
-
-- *(None at v0.1 — audit on file in the canonical checklist PR.)*
+- *(None at v0.1.0.)*
