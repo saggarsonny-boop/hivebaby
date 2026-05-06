@@ -5,8 +5,7 @@ import { useInstallPrompt } from "./useInstallPrompt";
 import { InstallCTA } from "./InstallCTA";
 import { strings } from "./strings";
 
-const STORAGE_KEY_HOME = "parkback_install_hint_dismissed";
-const STORAGE_KEY_FIND = "parkback_install_hint_find_dismissed";
+const STORAGE_KEY = "hive_install_hint_dismissed_parkback";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -37,9 +36,8 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (isStandalone()) return;
-    const key = where === "find" ? STORAGE_KEY_FIND : STORAGE_KEY_HOME;
     try {
-      if (window.localStorage.getItem(key) === "1") return;
+      if (window.localStorage.getItem(STORAGE_KEY) === "1") return;
     } catch {
       return;
     }
@@ -54,8 +52,7 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
     if (!installed) return;
     setShow(false);
     try {
-      window.localStorage.setItem(STORAGE_KEY_HOME, "1");
-      window.localStorage.setItem(STORAGE_KEY_FIND, "1");
+      window.localStorage.setItem(STORAGE_KEY, "1");
     } catch {
       // localStorage disabled — silently ignore.
     }
@@ -64,12 +61,11 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   const dismiss = useCallback(() => {
     setShow(false);
     try {
-      const key = where === "find" ? STORAGE_KEY_FIND : STORAGE_KEY_HOME;
-      window.localStorage.setItem(key, "1");
+      window.localStorage.setItem(STORAGE_KEY, "1");
     } catch {
       // localStorage might be disabled — silently ignore.
     }
-  }, [where]);
+  }, []);
 
   if (!show) return null;
 
@@ -166,7 +162,7 @@ const dismissBtnStyle: React.CSSProperties = {
 // for not rendering this when a pin exists; this helper just persists
 // "I've dismissed it forever" once explicitly dismissed or once a pin has
 // been dropped).
-const STORAGE_KEY_EXPLAINER = "parkback_first_visit_explainer_dismissed";
+const STORAGE_KEY_EXPLAINER = "hive_first_visit_seen_parkback";
 
 export function FirstVisitExplainer() {
   const [show, setShow] = useState(false);
