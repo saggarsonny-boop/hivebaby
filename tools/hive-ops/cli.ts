@@ -59,6 +59,7 @@ const STATUS_GLYPH: Record<RuleResult["status"], string> = {
   fail: "✗",
   skip: "·",
   override: "○",
+  "n/a": "—",
 };
 
 function formatHuman(report: EngineReport): string {
@@ -68,6 +69,7 @@ function formatHuman(report: EngineReport): string {
 
   lines.push(`HiveOps audit — ${report.engineSlug}`);
   lines.push(`  root: ${report.engineRoot}`);
+  lines.push(`  engine_class: ${report.engineClass}`);
   lines.push(
     `  H-rules: ${RULES.length} (${MANDATORY_COUNT} MANDATORY · ${RECOMMENDED_COUNT} RECOMMENDED)`,
   );
@@ -110,7 +112,7 @@ function formatHuman(report: EngineReport): string {
     return acc;
   }, {});
   lines.push(
-    `tally (combined H+V): pass=${tally.pass ?? 0} warn=${tally.warn ?? 0} fail=${tally.fail ?? 0} skip=${tally.skip ?? 0} override=${tally.override ?? 0}`,
+    `tally (combined H+V): pass=${tally.pass ?? 0} warn=${tally.warn ?? 0} fail=${tally.fail ?? 0} skip=${tally.skip ?? 0} override=${tally.override ?? 0} n/a=${tally["n/a"] ?? 0}`,
   );
   lines.push("");
   lines.push(`VERDICT: ${report.verdict.toUpperCase()}`);
