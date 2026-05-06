@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useInstallPrompt } from "./useInstallPrompt";
-import { strings } from "./strings";
+import { useStrings } from "./strings";
 
 // Layout-level listener for the `appinstalled` event. Mounted in the root
 // layout so the success toast survives the InstallHintBanner being
@@ -19,6 +19,7 @@ const INK = "#0a0a0a";
 const TOAST_DURATION_MS = 4000;
 
 export function AppInstalledToast() {
+  const s = useStrings();
   const { installed } = useInstallPrompt();
   const [visible, setVisible] = useState(false);
   const timerRef = useRef<number | null>(null);
@@ -37,7 +38,7 @@ export function AppInstalledToast() {
 
   return (
     <div role="status" aria-live="polite" style={toastStyle}>
-      {strings.install.installedToast}
+      {s.install.installedToast}
     </div>
   );
 }

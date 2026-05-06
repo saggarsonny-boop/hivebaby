@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { strings } from "./strings";
+import { useStrings } from "./strings";
 
 // iOS guided install overlay. Three-step instructions for adding ParkBack
 // to the home screen via Safari's share sheet — the only path on iOS,
@@ -52,6 +52,7 @@ export function IOSInstallOverlay({
   open: boolean;
   onClose: () => void;
 }) {
+  const s = useStrings();
   // Lock background scroll while open so the user can't accidentally
   // scroll the page beneath the modal. Restored on unmount / close.
   useEffect(() => {
@@ -75,7 +76,7 @@ export function IOSInstallOverlay({
 
   if (!open) return null;
 
-  const o = strings.install.overlay;
+  const o = s.install.overlay;
 
   return (
     <div

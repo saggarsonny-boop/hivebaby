@@ -27,7 +27,7 @@
 | Item | Status | Failure mode if skipped |
 |---|---|---|
 | All UI strings externalized to per-locale JSON files under `apps/<engine>/locales/`. | MANDATORY | English-only ship — alienates >70% of the world. Any future translation requires touching every component. |
-| Languages match UD Converter's free-tier default set. | MANDATORY | Engine uses a different language list than the rest of the Hive — translation gaps users notice. |
+| Languages match the canonical Hive free-tier locale set: **`en, es, fr, ar, hi, zh, pt`** (English, Spanish, French, Arabic, Hindi, Simplified Chinese, Portuguese). Anchored in `apps/parkback/locales/` and `apps/converter/locales/` (universal-document repo). | MANDATORY | Engine uses a different language list than the rest of the Hive — translation gaps users notice. |
 | `navigator.language` detection at page load with English fallback. | MANDATORY | Engine ignores the browser locale even when a translation exists; the user never sees their language. |
 | All user-facing button labels and headings must use plain-language user-voice phrasing, not app-voice technical shorthand. Avoid metaphors that don't translate (e.g. "drop pin"). Reviewers ask: would a non-tech-fluent user in any language understand this label without explanation? | MANDATORY | Translation produces literal-but-meaningless strings; even native English speakers stumble on idiomatic UI verbs. |
 

@@ -16,6 +16,7 @@ import { HiveFooter } from "./_lib/HiveFooter";
 import { HexButton } from "./_lib/HexButton";
 import { InstallHintBanner, FirstVisitExplainer, dismissFirstVisitExplainer } from "./_lib/InstallHintBanner";
 import { HiveAHTSPrompt } from "./_lib/HiveAHTSPrompt";
+import { useStrings } from "./_lib/strings";
 
 const STORAGE_KEY = "parkback_pin_v1";
 const A2HS_DISMISSED_KEY = "hive_ahts_dismissed_parkback";
@@ -115,6 +116,7 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 export default function ParkBackPage() {
+  const s = useStrings();
   const [pin, setPin] = useState<Pin | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [perm, setPerm] = useState<PermState>("idle");
@@ -196,7 +198,7 @@ export default function ParkBackPage() {
   const dropPin = useCallback(async () => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
       setPerm("unavailable");
-      setPermMessage("Your browser doesn't support location. ParkBack needs location to remember where you parked.");
+      setPermMessage(s.perm.noBrowserSupport);
       return;
     }
     setPerm("requesting");
@@ -224,7 +226,7 @@ export default function ParkBackPage() {
         setVoiceSkipped(false);
         track("pin_dropped", { has_altitude: draft.altitude !== null });
         dismissFirstVisitExplainer();
-        showToast("Got it. Walk wherever. Come back when you need your car.");
+        showToast(s.toasts.savedAck);
 
         // Show the post-pin-drop "Add to Home Screen" prompt on every
         // platform (HiveAHTSPrompt internally renders the right install
@@ -248,21 +250,21 @@ export default function ParkBackPage() {
       (err) => {
         if (err.code === err.PERMISSION_DENIED) {
           setPerm("denied");
-          setPermMessage("ParkBack needs your location to remember where you parked. Tap to retry.");
+          setPermMessage(s.perm.denied);
         } else if (err.code === err.POSITION_UNAVAILABLE) {
           setPerm("unavailable");
-          setPermMessage("Couldn't find your location. Step outside or move away from tall buildings, then tap to retry.");
+          setPermMessage(s.perm.unavailable);
         } else {
           setPerm("unavailable");
-          setPermMessage("Location took too long. Tap to retry.");
+          setPermMessage(s.perm.timeout);
         }
       },
       { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 }
     );
-  }, []);
+  }, [s, showToast]);
 
   const handleClear = useCallback(() => {
-    if (!window.confirm("Forget this spot?")) return;
+    if (!window.confirm(s.toasts.forgetConfirm)) return;
     clearPin();
     setPin(null);
     setPhotoSkipped(false);
@@ -270,7 +272,7 @@ export default function ParkBackPage() {
     setRecState("idle");
     setPhotoOpen(false);
     setShowA2HS(false);
-  }, []);
+  }, [s]);
 
   const dismissA2HS = useCallback(() => {
     setShowA2HS(false);
@@ -295,14 +297,14 @@ export default function ParkBackPage() {
       landmark: pin.landmark,
     });
     const text = pin.landmark
-      ? `My car is parked near ${pin.landmark}.`
-      : "Here's where my car is parked.";
+      ? `${s.share.messageNearPrefix} ${pin.landmark}.`
+      : s.share.messageNoLandmark;
     track("share_link_generated", { has_landmark: pin.landmark !== null });
 
     if (typeof navigator !== "undefined" && (navigator as Navigator & { share?: (data: ShareData) => Promise<void> }).share) {
       try {
         await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({
-          title: "ParkBack — my parking spot",
+          title: s.share.title,
           text,
           url: shareUrl,
         });
@@ -313,11 +315,11 @@ export default function ParkBackPage() {
     }
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showToast("Link copied");
+      showToast(s.toasts.linkCopied);
     } catch {
-      window.prompt("Copy your parking spot link:", shareUrl);
+      window.prompt(s.share.promptDialog, shareUrl);
     }
-  }, [pin, showToast]);
+  }, [pin, showToast, s]);
 
   const handleTakePhoto = useCallback(() => {
     fileInputRef.current?.click();
@@ -334,9 +336,9 @@ export default function ParkBackPage() {
       setPin(updated);
       track("photo_taken");
     } catch {
-      alert("Couldn't process that photo. Try again.");
+      alert(s.errors.photoFailed);
     }
-  }, [pin]);
+  }, [pin, s]);
 
   const stopRecording = useCallback(() => {
     if (recTimerRef.current !== null) {
@@ -354,7 +356,7 @@ export default function ParkBackPage() {
   const startRecording = useCallback(async () => {
     if (!pin) return;
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-      alert("Voice notes need microphone access. Your browser doesn't support it here.");
+      alert(s.errors.voiceUnsupported);
       return;
     }
     try {
@@ -385,7 +387,7 @@ export default function ParkBackPage() {
           setPin(updated);
           track("voice_memo_recorded", { duration_ms: Date.now() - recStartRef.current });
         } catch {
-          alert("Couldn't save the voice note.");
+          alert(s.errors.voiceSaveFailed);
         } finally {
           setRecState("idle");
           setRecElapsed(0);
@@ -404,9 +406,9 @@ export default function ParkBackPage() {
       }, MAX_VOICE_MS);
     } catch {
       setRecState("idle");
-      alert("Microphone access denied. Voice notes are optional — you can still navigate back to your car.");
+      alert(s.errors.micDenied);
     }
-  }, [pin, stopRecording]);
+  }, [pin, stopRecording, s]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -422,7 +424,7 @@ export default function ParkBackPage() {
   if (!hydrated) {
     return (
       <main style={pageStyle}>
-        <div style={{ color: MUTED, fontSize: 14 }}>Loading…</div>
+        <div style={{ color: MUTED, fontSize: 14 }}>{s.home.loading}</div>
       </main>
     );
   }
@@ -435,7 +437,7 @@ export default function ParkBackPage() {
 
         <header style={headerStyle}>
           <div style={brandStyle}>ParkBack</div>
-          <div style={taglineStyle}>Find your car. No accounts. No cloud.</div>
+          <div style={taglineStyle}>{s.home.tagline}</div>
         </header>
 
         {perm === "denied" || perm === "unavailable" ? (
@@ -447,26 +449,20 @@ export default function ParkBackPage() {
           size="lg"
           onClick={dropPin}
           busy={perm === "requesting"}
-          ariaLabel="I'm parked, save this spot"
+          ariaLabel={s.home.ctaParkedAria}
         >
-          {perm === "requesting" ? "Locating…" : "I’m parked"}
+          {perm === "requesting" ? s.home.ctaLocating : s.home.ctaParked}
         </HexButton>
 
         <div style={positioningBlockStyle}>
-          <div style={positioningLine1Style}>
-            No app store. No login. No subscription. No ads. No tracking. No signal needed.
-          </div>
-          <div style={positioningLine2Style}>
-            The parking app that should have existed years ago.
-          </div>
+          <div style={positioningLine1Style}>{s.home.positioningLine1}</div>
+          <div style={positioningLine2Style}>{s.home.positioningLine2}</div>
         </div>
 
         <FirstVisitExplainer />
 
         <div style={hintStyle}>
-          {perm === "requesting"
-            ? "Hold still. High-accuracy GPS takes a moment."
-            : "Tap when you've parked. Works offline."}
+          {perm === "requesting" ? s.home.hintRequesting : s.home.hintIdle}
         </div>
 
         <HiveFooter />
@@ -500,20 +496,20 @@ export default function ParkBackPage() {
             <ArrowSvg rotation={arrowRotation} dim={bearing === null} />
           )}
         </div>
-        <div style={distanceStyle}>{distance === null ? "Locating you…" : formatDistance(distance)}</div>
-        {pin.landmark ? <div style={landmarkStyle}>near {pin.landmark}</div> : null}
+        <div style={distanceStyle}>{distance === null ? s.compass.locating : formatDistance(distance)}</div>
+        {pin.landmark ? <div style={landmarkStyle}>{s.compass.near} {pin.landmark}</div> : null}
         {pin.accuracy ? (
-          <div style={accuracyStyle}>±{Math.round(pin.accuracy)} m at parking</div>
+          <div style={accuracyStyle}>±{Math.round(pin.accuracy)} {s.compass.accuracySuffix}</div>
         ) : null}
         {compassState === "needs-permission" ? (
           <button type="button" onClick={requestCompassPermission} style={smallButtonStyle}>
-            Enable compass
+            {s.compass.enable}
           </button>
         ) : null}
         {compassState === "calibrating" ? (
-          <div style={compassNoteStyle}>Calibrating compass — wave phone in a figure-8</div>
+          <div style={compassNoteStyle}>{s.compass.calibrating}</div>
         ) : compassState !== "active" ? (
-          <div style={compassNoteStyle}>Hold phone flat, arrow points to car.</div>
+          <div style={compassNoteStyle}>{s.compass.instruction}</div>
         ) : null}
       </div>
 
@@ -523,11 +519,11 @@ export default function ParkBackPage() {
             <button
               type="button"
               onClick={() => setPhotoOpen(true)}
-              aria-label="Open photo full screen"
+              aria-label={s.prompts.photoOpenAria}
               style={{ ...thumbLinkStyle, padding: 0, background: "transparent", cursor: "pointer" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={pin.photo} alt="Parking spot" style={thumbStyle} />
+              <img src={pin.photo} alt={s.prompts.photoAlt} style={thumbStyle} />
             </button>
           ) : null}
           {pin.voiceMemo ? (
@@ -544,39 +540,39 @@ export default function ParkBackPage() {
           style={photoModalStyle}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pin.photo} alt="Parking spot full size" style={photoFullStyle} />
-          <div style={photoCloseHintStyle}>Tap to close</div>
+          <img src={pin.photo} alt={s.prompts.photoFullAlt} style={photoFullStyle} />
+          <div style={photoCloseHintStyle}>{s.prompts.tapToClose}</div>
         </div>
       ) : null}
 
       {showPhotoPrompt ? (
         <div style={promptRowStyle}>
-          <span style={promptTextStyle}>Snap the bay number?</span>
-          <HexButton variant="ghost" size="md" onClick={handleTakePhoto} ariaLabel="Take photo of bay number">Take photo</HexButton>
-          <button type="button" onClick={() => setPhotoSkipped(true)} style={skipLinkStyle}>Skip</button>
+          <span style={promptTextStyle}>{s.prompts.photoQuestion}</span>
+          <HexButton variant="ghost" size="md" onClick={handleTakePhoto} ariaLabel={s.prompts.photoTakeAria}>{s.prompts.photoTake}</HexButton>
+          <button type="button" onClick={() => setPhotoSkipped(true)} style={skipLinkStyle}>{s.prompts.skip}</button>
         </div>
       ) : null}
 
       {showVoicePrompt ? (
         <div style={promptRowStyle}>
-          <span style={promptTextStyle}>Add voice note (optional)</span>
-          <HexButton variant="ghost" size="md" onClick={startRecording} ariaLabel="Record voice memo">● Record</HexButton>
-          <button type="button" onClick={() => setVoiceSkipped(true)} style={skipLinkStyle}>Skip</button>
+          <span style={promptTextStyle}>{s.prompts.voiceQuestion}</span>
+          <HexButton variant="ghost" size="md" onClick={startRecording} ariaLabel={s.prompts.voiceRecordAria}>{s.prompts.voiceRecord}</HexButton>
+          <button type="button" onClick={() => setVoiceSkipped(true)} style={skipLinkStyle}>{s.prompts.skip}</button>
         </div>
       ) : null}
 
       {recState === "recording" ? (
         <div style={promptRowStyle}>
           <span style={{ ...promptTextStyle, color: GOLD }}>
-            Recording… {Math.min(MAX_VOICE_MS, recElapsed) / 1000 | 0}s / {MAX_VOICE_MS / 1000}s
+            {s.prompts.recordingPrefix} {Math.min(MAX_VOICE_MS, recElapsed) / 1000 | 0}s / {MAX_VOICE_MS / 1000}s
           </span>
-          <button type="button" onClick={stopRecording} style={smallButtonStyle}>Stop</button>
+          <button type="button" onClick={stopRecording} style={smallButtonStyle}>{s.prompts.stopRecording}</button>
         </div>
       ) : null}
 
       {recState === "saving" ? (
         <div style={promptRowStyle}>
-          <span style={promptTextStyle}>Saving…</span>
+          <span style={promptTextStyle}>{s.prompts.saving}</span>
         </div>
       ) : null}
 
@@ -590,9 +586,9 @@ export default function ParkBackPage() {
       />
 
       <div style={actionsRowStyle}>
-        <HexButton variant="primary" size="md" onClick={handleNavigate} ariaLabel="Navigate to my car">Navigate</HexButton>
-        <HexButton variant="ghost" size="md" onClick={handleShare} ariaLabel="Send my parking spot to someone">Send</HexButton>
-        <HexButton variant="ghost" size="md" onClick={handleClear} ariaLabel="Forget this spot">Forget</HexButton>
+        <HexButton variant="primary" size="md" onClick={handleNavigate} ariaLabel={s.actions.navigateAria}>{s.actions.navigate}</HexButton>
+        <HexButton variant="ghost" size="md" onClick={handleShare} ariaLabel={s.actions.sendAria}>{s.actions.send}</HexButton>
+        <HexButton variant="ghost" size="md" onClick={handleClear} ariaLabel={s.actions.forgetAria}>{s.actions.forget}</HexButton>
       </div>
 
       <HiveAHTSPrompt open={showA2HS} onDismiss={dismissA2HS} />

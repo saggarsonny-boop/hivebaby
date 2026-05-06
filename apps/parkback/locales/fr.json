@@ -1,0 +1,114 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "Fait avec",
+      "inThe": "dans la",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "Ajouter ParkBack à l'écran d'accueil",
+    "ctaAriaIos": "Comment ajouter ParkBack à mon écran d'accueil",
+    "ctaAriaChromium": "Ajouter ParkBack à l'écran d'accueil",
+    "fallback": {
+      "desktopSafariFirefox": "Ajoutez ParkBack à votre écran d'accueil pour y accéder en un tap. Utilisez l'option de favoris de votre navigateur pour le garder accessible. Pas besoin de store — c'est gratuit, sans inscription, fonctionne hors ligne.",
+      "unknown": "ParkBack fonctionne sur tous les appareils. Utilisez l'option « Ajouter à l'écran d'accueil » de votre navigateur pour le garder accessible."
+    },
+    "banner": {
+      "regionAria": "Ajouter ParkBack à l'écran d'accueil",
+      "dismissAria": "Fermer l'indication d'ajout",
+      "home": "Ajoutez ParkBack à votre écran d'accueil. Fonctionne dans toute zone blanche. Pas besoin de réseau mobile, wifi ou store. Gratuit, sans inscription. Votre repère, photo et mémo vocal sont sauvegardés sur votre téléphone — pas besoin de réseau pour retrouver votre voiture.",
+      "find": "Ça vous plaît ? Ajoutez ParkBack à votre écran d'accueil et ne perdez plus jamais votre voiture. Fonctionne dans toute zone blanche — pas besoin de réseau mobile, wifi ou store. Gratuit, sans inscription."
+    },
+    "ahtsCard": {
+      "title": "Ajouter ParkBack à l'écran d'accueil",
+      "body": "Tout fonctionne sans réseau mobile ni wifi — votre repère, photo, mémo vocal et la boussole vers votre voiture. Même dans les parkings souterrains les plus profonds.",
+      "dismiss": "Compris"
+    },
+    "overlay": {
+      "title": "Ajouter ParkBack à l'écran d'accueil",
+      "body": "Trois taps dans Safari. Ensuite, ParkBack s'ouvre comme une app — fonctionne dans toute zone blanche, sans réseau mobile ni wifi.",
+      "step1": "Appuyez sur le bouton de partage en bas de Safari.",
+      "step2": "Faites défiler et appuyez sur Sur l'écran d'accueil.",
+      "step3": "Appuyez sur Ajouter en haut à droite.",
+      "dismiss": "Compris",
+      "ariaLabel": "Comment ajouter ParkBack à l'écran d'accueil"
+    },
+    "installedToast": "ParkBack est sur votre écran d'accueil. Ouvrez-le comme n'importe quelle app."
+  },
+  "home": {
+    "tagline": "Retrouvez votre voiture. Sans compte. Sans cloud.",
+    "loading": "Chargement…",
+    "ctaLocating": "Localisation…",
+    "ctaParked": "Je suis garé",
+    "ctaParkedAria": "Je suis garé, enregistrer cet emplacement",
+    "positioningLine1": "Pas de store. Pas de connexion. Pas d'abonnement. Pas de pubs. Pas de tracking. Pas de réseau requis.",
+    "positioningLine2": "L'app de stationnement qui aurait dû exister depuis longtemps.",
+    "firstVisitExplainer": "Appuyez quand vous vous garez. Revenez, appuyez à nouveau, marchez droit vers votre voiture. Fonctionne dans les parkings souterrains sans réseau mobile ni wifi. Le GPS de votre téléphone fait le travail.",
+    "hintRequesting": "Ne bougez pas. Le GPS haute précision prend un moment.",
+    "hintIdle": "Appuyez quand vous êtes garé. Fonctionne hors ligne."
+  },
+  "perm": {
+    "noBrowserSupport": "Votre navigateur ne prend pas en charge la localisation. ParkBack a besoin de votre position pour mémoriser où vous êtes garé.",
+    "denied": "ParkBack a besoin de votre position pour mémoriser où vous êtes garé. Appuyez pour réessayer.",
+    "unavailable": "Impossible de trouver votre position. Sortez ou éloignez-vous des grands bâtiments, puis appuyez pour réessayer.",
+    "timeout": "La localisation a pris trop de temps. Appuyez pour réessayer."
+  },
+  "compass": {
+    "locating": "Localisation en cours…",
+    "near": "près de",
+    "accuracySuffix": "m au parking",
+    "enable": "Activer la boussole",
+    "calibrating": "Calibration de la boussole — faites un 8 avec le téléphone",
+    "instruction": "Tenez le téléphone à plat, la flèche pointe vers la voiture."
+  },
+  "prompts": {
+    "photoQuestion": "Photographier le numéro de place ?",
+    "photoTake": "Prendre une photo",
+    "photoTakeAria": "Prendre une photo du numéro de place",
+    "photoOpenAria": "Ouvrir la photo en plein écran",
+    "photoAlt": "Place de parking",
+    "photoFullAlt": "Place de parking taille réelle",
+    "tapToClose": "Appuyez pour fermer",
+    "voiceQuestion": "Ajouter un mémo vocal (optionnel)",
+    "voiceRecord": "● Enregistrer",
+    "voiceRecordAria": "Enregistrer un mémo vocal",
+    "skip": "Passer",
+    "stopRecording": "Stop",
+    "recordingPrefix": "Enregistrement…",
+    "saving": "Sauvegarde…"
+  },
+  "actions": {
+    "navigate": "Naviguer",
+    "navigateAria": "Naviguer vers ma voiture",
+    "send": "Envoyer",
+    "sendAria": "Envoyer ma place de parking à quelqu'un",
+    "forget": "Oublier",
+    "forgetAria": "Oublier cet emplacement"
+  },
+  "toasts": {
+    "savedAck": "C'est noté. Allez où vous voulez. Revenez quand vous avez besoin de votre voiture.",
+    "linkCopied": "Lien copié",
+    "forgetConfirm": "Oublier cet emplacement ?"
+  },
+  "errors": {
+    "photoFailed": "Impossible de traiter cette photo. Réessayez.",
+    "voiceUnsupported": "Les mémos vocaux nécessitent l'accès au micro. Votre navigateur ne le prend pas en charge ici.",
+    "voiceSaveFailed": "Impossible de sauvegarder le mémo vocal.",
+    "micDenied": "Accès au micro refusé. Les mémos vocaux sont optionnels — vous pouvez toujours naviguer vers votre voiture."
+  },
+  "share": {
+    "title": "ParkBack — ma place de parking",
+    "messageNoLandmark": "Voici où ma voiture est garée.",
+    "messageNearPrefix": "Je suis garé près de",
+    "promptDialog": "Copiez le lien de votre place de parking :"
+  },
+  "find": {
+    "headerTitle": "Quelqu'un a partagé sa place de parking avec vous.",
+    "linkInvalidTitle": "Ce lien semble incorrect.",
+    "linkInvalidBody": "Le lien partagé contient des coordonnées manquantes ou invalides. Demandez à la personne de le partager à nouveau.",
+    "linkInvalidCta": "Ouvrir ParkBack",
+    "navigateAria": "Naviguer vers la place de parking partagée",
+    "recipientCta": "Obtenez ParkBack pour votre propre voiture →"
+  }
+}

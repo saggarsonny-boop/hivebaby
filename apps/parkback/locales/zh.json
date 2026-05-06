@@ -1,0 +1,114 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "制作于",
+      "inThe": "",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "将 ParkBack 添加到主屏幕",
+    "ctaAriaIos": "教我如何将 ParkBack 添加到主屏幕",
+    "ctaAriaChromium": "将 ParkBack 添加到主屏幕",
+    "fallback": {
+      "desktopSafariFirefox": "将 ParkBack 添加到主屏幕，一键即可访问。使用浏览器的书签功能保持便捷访问。无需应用商店——免费、无需注册、离线可用。",
+      "unknown": "ParkBack 适用于任何设备。使用浏览器的\"添加到主屏幕\"选项保持便捷访问。"
+    },
+    "banner": {
+      "regionAria": "添加 ParkBack 到主屏幕",
+      "dismissAria": "关闭添加提示",
+      "home": "将 ParkBack 添加到主屏幕。在任何无信号区域都能使用。无需蜂窝信号、Wi-Fi 或应用商店。免费、无需注册。您的位置标记、照片和语音备忘录都保存在手机上——找车时无需蜂窝或 Wi-Fi 信号。",
+      "find": "喜欢吗？将 ParkBack 添加到主屏幕，再也不会找不到自己的车。在任何无信号区域都能使用——无需蜂窝信号、Wi-Fi 或应用商店。免费、无需注册。"
+    },
+    "ahtsCard": {
+      "title": "将 ParkBack 添加到主屏幕",
+      "body": "所有功能——位置标记、照片、语音备忘录以及指向车辆的指南针——都无需蜂窝信号或 Wi-Fi。即使在最深的地下停车场也能使用。",
+      "dismiss": "知道了"
+    },
+    "overlay": {
+      "title": "将 ParkBack 添加到主屏幕",
+      "body": "在 Safari 中只需三次点击。之后，ParkBack 就像普通应用一样打开——在任何无信号区域都能使用，无需蜂窝或 Wi-Fi 信号。",
+      "step1": "点击 Safari 底部的分享按钮。",
+      "step2": "向下滑动并点击\"添加到主屏幕\"。",
+      "step3": "点击右上角的\"添加\"。",
+      "dismiss": "知道了",
+      "ariaLabel": "如何将 ParkBack 添加到主屏幕"
+    },
+    "installedToast": "ParkBack 已添加到主屏幕。像其他应用一样打开即可。"
+  },
+  "home": {
+    "tagline": "找到你的车。无需账户。无需云端。",
+    "loading": "加载中…",
+    "ctaLocating": "定位中…",
+    "ctaParked": "我停好了",
+    "ctaParkedAria": "我停好了，保存这个位置",
+    "positioningLine1": "无需应用商店。无需登录。无需订阅。无广告。无追踪。无需信号。",
+    "positioningLine2": "一款早该存在的停车应用。",
+    "firstVisitExplainer": "停车时点一下。回来时再点一下，直接走向你的车。在没有蜂窝或 Wi-Fi 信号的地下车库也能使用。你手机的 GPS 完成所有工作。",
+    "hintRequesting": "请保持静止。高精度 GPS 需要一点时间。",
+    "hintIdle": "停好车后点击。离线可用。"
+  },
+  "perm": {
+    "noBrowserSupport": "您的浏览器不支持定位功能。ParkBack 需要位置权限来记住您的停车位置。",
+    "denied": "ParkBack 需要您的位置权限来记住停车位置。点击重试。",
+    "unavailable": "无法获取您的位置。请到室外或远离高楼的地方，然后点击重试。",
+    "timeout": "定位超时。点击重试。"
+  },
+  "compass": {
+    "locating": "正在定位…",
+    "near": "在",
+    "accuracySuffix": "m（停车时精度）",
+    "enable": "启用指南针",
+    "calibrating": "正在校准指南针——将手机画8字形挥动",
+    "instruction": "将手机水平放置，箭头指向车辆。"
+  },
+  "prompts": {
+    "photoQuestion": "拍下车位号？",
+    "photoTake": "拍照",
+    "photoTakeAria": "拍摄车位号照片",
+    "photoOpenAria": "全屏查看照片",
+    "photoAlt": "停车位",
+    "photoFullAlt": "停车位大图",
+    "tapToClose": "点击关闭",
+    "voiceQuestion": "添加语音备注（可选）",
+    "voiceRecord": "● 录音",
+    "voiceRecordAria": "录制语音备忘录",
+    "skip": "跳过",
+    "stopRecording": "停止",
+    "recordingPrefix": "录音中…",
+    "saving": "保存中…"
+  },
+  "actions": {
+    "navigate": "导航",
+    "navigateAria": "导航到我的车",
+    "send": "发送",
+    "sendAria": "将停车位置发送给他人",
+    "forget": "忘记",
+    "forgetAria": "忘记这个位置"
+  },
+  "toasts": {
+    "savedAck": "已记录。随便走走。需要找车时再回来。",
+    "linkCopied": "链接已复制",
+    "forgetConfirm": "忘记这个位置？"
+  },
+  "errors": {
+    "photoFailed": "无法处理该照片。请重试。",
+    "voiceUnsupported": "语音备注需要麦克风权限。您的浏览器不支持此功能。",
+    "voiceSaveFailed": "无法保存语音备注。",
+    "micDenied": "麦克风权限被拒绝。语音备注是可选的——您仍然可以导航回到车辆位置。"
+  },
+  "share": {
+    "title": "ParkBack — 我的停车位",
+    "messageNoLandmark": "这是我停车的位置。",
+    "messageNearPrefix": "我停在",
+    "promptDialog": "复制您的停车位链接："
+  },
+  "find": {
+    "headerTitle": "有人与您分享了停车位置。",
+    "linkInvalidTitle": "此链接似乎有问题。",
+    "linkInvalidBody": "分享的链接缺少或包含无效坐标。请让发送者重新分享。",
+    "linkInvalidCta": "打开 ParkBack",
+    "navigateAria": "导航到分享的停车位",
+    "recipientCta": "为您自己的车获取 ParkBack →"
+  }
+}

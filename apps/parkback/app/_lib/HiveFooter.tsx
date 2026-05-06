@@ -8,7 +8,9 @@
 // (HIVE INTEGRATION). Strings are sourced from app/_lib/strings.ts so the
 // i18n catch-up step can extend per-locale without touching this file.
 
-import { strings } from "./strings";
+"use client";
+
+import { useStrings } from "./strings";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -88,7 +90,8 @@ const HiveMark = ({ size = 20 }: { size?: number }) => (
 );
 
 export function HiveFooter() {
-  const sig = strings.footer.signature;
+  const s = useStrings();
+  const sig = s.footer.signature;
   return (
     <footer style={footerStyle}>
       <div>No ads. No investors. No agenda.</div>
