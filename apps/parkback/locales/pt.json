@@ -1,0 +1,114 @@
+{
+  "footer": {
+    "signature": {
+      "madeWith": "Feito com",
+      "inThe": "na",
+      "brand": "Hive"
+    }
+  },
+  "install": {
+    "cta": "Adicionar ParkBack à tela inicial",
+    "ctaAriaIos": "Mostrar como adicionar ParkBack à minha tela inicial",
+    "ctaAriaChromium": "Adicionar ParkBack à tela inicial",
+    "fallback": {
+      "desktopSafariFirefox": "Adicione ParkBack à sua tela inicial para acesso com um toque. Use a opção de favoritos do seu navegador para mantê-lo acessível. Sem loja de aplicativos — é grátis, sem cadastro, funciona offline.",
+      "unknown": "ParkBack funciona em qualquer dispositivo. Use a opção \"Adicionar à tela inicial\" do seu navegador para mantê-lo acessível."
+    },
+    "banner": {
+      "regionAria": "Adicionar ParkBack à tela inicial",
+      "dismissAria": "Dispensar dica de adição",
+      "home": "Adicione ParkBack à sua tela inicial. Funciona em qualquer zona sem sinal. Sem sinal de celular, wifi ou loja de aplicativos. Grátis, sem cadastro. Seu pin, foto e memo de voz são salvos no seu telefone — não precisa de sinal de celular ou wifi para encontrar seu carro.",
+      "find": "Gostou do que viu? Adicione ParkBack à sua tela inicial e nunca mais perca seu carro. Funciona em qualquer zona sem sinal — sem sinal de celular, wifi ou loja de aplicativos. Grátis, sem cadastro."
+    },
+    "ahtsCard": {
+      "title": "Adicionar ParkBack à tela inicial",
+      "body": "Tudo — seu pin, foto, memo de voz e a bússola de volta ao seu carro — funciona sem sinal de celular ou wifi. Mesmo no estacionamento subterrâneo mais profundo.",
+      "dismiss": "Entendi"
+    },
+    "overlay": {
+      "title": "Adicionar ParkBack à tela inicial",
+      "body": "Três toques no Safari. Depois disso, ParkBack abre como qualquer app — funciona em qualquer zona sem sinal, sem precisar de celular ou wifi.",
+      "step1": "Toque no botão de compartilhar na parte inferior do Safari.",
+      "step2": "Role para baixo e toque em Adicionar à Tela de Início.",
+      "step3": "Toque em Adicionar no canto superior direito.",
+      "dismiss": "Entendi",
+      "ariaLabel": "Como adicionar ParkBack à tela inicial"
+    },
+    "installedToast": "ParkBack está na sua tela inicial. Abra como qualquer outro app."
+  },
+  "home": {
+    "tagline": "Encontre seu carro. Sem contas. Sem nuvem.",
+    "loading": "Carregando…",
+    "ctaLocating": "Localizando…",
+    "ctaParked": "Estacionei",
+    "ctaParkedAria": "Estacionei, salvar este local",
+    "positioningLine1": "Sem loja de apps. Sem login. Sem assinatura. Sem anúncios. Sem rastreamento. Sem precisar de sinal.",
+    "positioningLine2": "O app de estacionamento que deveria existir há anos.",
+    "firstVisitExplainer": "Toque quando estacionar. Volte, toque novamente, vá direto ao seu carro. Funciona em garagens subterrâneas sem nenhum sinal de celular ou wifi. O GPS do seu telefone faz o trabalho.",
+    "hintRequesting": "Fique parado. GPS de alta precisão leva um momento.",
+    "hintIdle": "Toque quando estacionar. Funciona offline."
+  },
+  "perm": {
+    "noBrowserSupport": "Seu navegador não suporta localização. ParkBack precisa de localização para lembrar onde você estacionou.",
+    "denied": "ParkBack precisa da sua localização para lembrar onde você estacionou. Toque para tentar novamente.",
+    "unavailable": "Não foi possível encontrar sua localização. Saia para fora ou afaste-se de prédios altos, depois toque para tentar novamente.",
+    "timeout": "Localização demorou muito. Toque para tentar novamente."
+  },
+  "compass": {
+    "locating": "Localizando você…",
+    "near": "perto de",
+    "accuracySuffix": "m no estacionamento",
+    "enable": "Ativar bússola",
+    "calibrating": "Calibrando bússola — mova o telefone em formato de 8",
+    "instruction": "Segure o telefone na horizontal, a seta aponta para o carro."
+  },
+  "prompts": {
+    "photoQuestion": "Tirar foto do número da vaga?",
+    "photoTake": "Tirar foto",
+    "photoTakeAria": "Tirar foto do número da vaga",
+    "photoOpenAria": "Abrir foto em tela cheia",
+    "photoAlt": "Vaga de estacionamento",
+    "photoFullAlt": "Vaga de estacionamento em tamanho real",
+    "tapToClose": "Toque para fechar",
+    "voiceQuestion": "Adicionar nota de voz (opcional)",
+    "voiceRecord": "● Gravar",
+    "voiceRecordAria": "Gravar memo de voz",
+    "skip": "Pular",
+    "stopRecording": "Parar",
+    "recordingPrefix": "Gravando…",
+    "saving": "Salvando…"
+  },
+  "actions": {
+    "navigate": "Navegar",
+    "navigateAria": "Navegar até meu carro",
+    "send": "Enviar",
+    "sendAria": "Enviar minha vaga para alguém",
+    "forget": "Esquecer",
+    "forgetAria": "Esquecer esta vaga"
+  },
+  "toasts": {
+    "savedAck": "Entendido. Vá para onde quiser. Volte quando precisar do seu carro.",
+    "linkCopied": "Link copiado",
+    "forgetConfirm": "Esquecer esta vaga?"
+  },
+  "errors": {
+    "photoFailed": "Não foi possível processar essa foto. Tente novamente.",
+    "voiceUnsupported": "Notas de voz precisam de acesso ao microfone. Seu navegador não suporta isso aqui.",
+    "voiceSaveFailed": "Não foi possível salvar a nota de voz.",
+    "micDenied": "Acesso ao microfone negado. Notas de voz são opcionais — você ainda pode navegar de volta ao seu carro."
+  },
+  "share": {
+    "title": "ParkBack — minha vaga de estacionamento",
+    "messageNoLandmark": "Aqui está onde meu carro está estacionado.",
+    "messageNearPrefix": "Estou estacionado perto de",
+    "promptDialog": "Copie o link da sua vaga:"
+  },
+  "find": {
+    "headerTitle": "Alguém compartilhou a vaga de estacionamento com você.",
+    "linkInvalidTitle": "Este link não parece correto.",
+    "linkInvalidBody": "O link compartilhado está com coordenadas ausentes ou inválidas. Peça à pessoa que enviou para compartilhar novamente.",
+    "linkInvalidCta": "Abrir ParkBack",
+    "navigateAria": "Navegar até a vaga compartilhada",
+    "recipientCta": "Obtenha ParkBack para seu próprio carro →"
+  }
+}
