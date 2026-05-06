@@ -462,35 +462,40 @@ is obvious in diff review.
 
 ## VI. Engine Inventory and Compliance Status
 
-The Hive currently spans 30+ engines across multiple repos. Of these, 8
-ship `ENGINE_GRAMMAR.md` in the hivebaby monorepo today (the rest are
-either pre-canonical-schema or live in their own repos awaiting
-migration). The hivebaby planet front door is at <https://hive.baby>.
+The Hive currently spans 30+ engines across multiple repos. The hivebaby
+planet front door is at <https://hive.baby>. Of the engines reachable
+from the hivebaby monorepo, this section records the latest HiveOps
+audit verdict (last full sweep: **2026-05-06**).
 
-### Hivebaby-resident engines (with HiveOps audit)
+### Hivebaby-resident engines (HiveOps-audited, hivebaby-tracked)
 
-| Engine | Slug | Domain | Cost profile | HiveOps verdict (latest) | Notes |
-|---|---|---|---|---|---|
-| ParkBack | `parkback` | parkback.hive.baby | zero_marginal | **PASS** — 48 pass / 0 fail / 3 override (V01, V18, V19) | Canonical migration done in PR #83 |
-| HiveActivityPartner | `hive-activity-partner` | activitypartner.hive.baby | (TBD — not yet declared) | not yet audited | Building (status `building`) |
-| HivePlainScan | `hive-plainscan` | plainscan.hive.baby | (TBD) | not yet audited | Building |
+All six were swept in the 2026-05-06 audit run. Audit reproduced via
+`tsx tools/hive-ops/cli.ts <slug>` from the hivebaby root.
 
-### Hivebaby-resident engines (pre-canonical schema, no HiveOps audit yet)
+| Engine | Slug | Domain | Status | Verdict | Tally (pass / warn / fail / skip / override) | Tracking |
+|---|---|---|---|---|---|---|
+| ParkBack | `parkback` | parkback.hive.baby | live | ✅ **PASS** | 48 / 0 / 0 / 6 / 3 | V01, V18, V19 waived; canonical migration PR #83 |
+| HiveActivityPartner | `hive-activity-partner` | activitypartner.hive.baby | building | ✅ **PASS** | 50 / 0 / 0 / 5 / 2 | V18, V19 waived (Phase-1 scaffold); PR #4979dfc |
+| HiveAestheticBestie | `hive-aestheticbestie` | hiveaestheticbestie.hive.baby | live | ⚠️ **WARN** | 30 / 22 / 0 / 5 / 0 | 22 warns expire 2026-06-05 — [hivebaby#93](https://github.com/saggarsonny-boop/hivebaby/issues/93), PR [#94](https://github.com/saggarsonny-boop/hivebaby/pull/94) |
+| HivePhoto | `hive-hivephoto` | hivephoto.hive.baby | live | ⚠️ **WARN** | 7 / 21 / 0 / 0 / 0 | Legacy `<GrapplerHook>` grammar — [hivebaby#95](https://github.com/saggarsonny-boop/hivebaby/issues/95), PR [#96](https://github.com/saggarsonny-boop/hivebaby/pull/96) |
+| HiveIMR | `hive-imr` | hiveimr.hive.baby | live | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#97](https://github.com/saggarsonny-boop/hivebaby/issues/97), PR [#98](https://github.com/saggarsonny-boop/hivebaby/pull/98) |
+| HivePlainScan | `hive-plainscan` | plainscan.hive.baby | building | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#101](https://github.com/saggarsonny-boop/hivebaby/issues/101), PR [#102](https://github.com/saggarsonny-boop/hivebaby/pull/102) |
 
-These have an `ENGINE_GRAMMAR.md` but use the legacy `<GrapplerHook>`
-shape, not canonical YAML frontmatter. **TODO:** migrate each per the
-PR #83 template:
+**Warn-mode rule**: every warn entry expires **2026-06-05** (30 days
+from the audit run). Engines that don't ship the canonical migration
+PR before that date will revert to FAIL on the next audit run.
 
-- `hive-aestheticbestie` (canonical migration template, PR #56)
-- `hive-imr`
-- `hive-hivephoto`
-- `imgtrainer`
+### Hivebaby-resident, separate nested git repo (skipped)
+
+| Engine | Slug | Domain | Status | Reason for skip |
+|---|---|---|---|---|
+| HiveIMGTrainer | `imgtrainer` | imgtrainer.hive.baby | live | `imgtrainer/` is a nested separate git repo (its own `.git/` directory) sitting alongside the hivebaby monorepo, not tracked by hivebaby. Remediation belongs in `saggarsonny-boop/imgtrainer`. Tracked in [hivebaby#99 (closed)](https://github.com/saggarsonny-boop/hivebaby/issues/99) — equivalent issue to be filed in the imgtrainer repo when HiveOps can run cross-repo (v0.3 candidate per [hivebaby#89](https://github.com/saggarsonny-boop/hivebaby/issues/89)). |
 
 ### External-repo engines (canonical schema present)
 
 | Engine | Repo | Domain | HiveOps verdict (latest) | Notes |
 |---|---|---|---|---|
-| UD Converter | `universal-document` | converter.hive.baby | **FAIL** — 48 pass / 4 fail (V04, V18, V19, V23) / 1 override (H21) | Pre-existing V-rule findings; `--write-overrides` proposal scaffolded but not yet committed |
+| UD Converter | `universal-document` | converter.hive.baby | ❌ **FAIL** — 48 pass / 4 fail (V04, V18, V19, V23) / 1 override (H21) | Pre-existing V-rule findings; `--write-overrides` proposal scaffolded but not yet committed in the universal-document repo |
 
 ### External-repo engines (no canonical schema yet)
 
@@ -501,6 +506,15 @@ the path: each engine adds the frontmatter per `manifest-schema-final.md`,
 adopts `@hive/onboarding`, runs `tsx tools/hive-ops/cli.ts <slug>`,
 and lands its first audit. See CLAUDE.md "Repos, Domains & Status" for
 the full ecosystem table.
+
+### Sweep summary — 2026-05-06
+
+- **2 PASS** (parkback, hive-activity-partner)
+- **4 WARN** (hive-aestheticbestie, hive-hivephoto, hive-imr, hive-plainscan) — all warn-mode for 30 days, expire 2026-06-05
+- **0 FAIL** (within hivebaby-tracked set)
+- **1 skipped** (imgtrainer — separate nested repo)
+- **5 PRs** merged: PRs #94, #96, #98, #102 (warn-mode remediation) + PR #103 (this constitution update)
+- **5 tracking issues** filed: #93, #95, #97, #99 (closed), #101
 
 > **TODO:** generate this section programmatically from
 > `engines.json` + `tools/hive-ops/cli.ts <slug> --json` per engine.
