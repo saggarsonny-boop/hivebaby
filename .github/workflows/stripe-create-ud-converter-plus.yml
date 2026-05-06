@@ -1,0 +1,82 @@
+name: Ops — create UD Converter Plus product + monthly price (one-shot)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Find existing or create Plus product + $0.97/mo price
+        env:
+          STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
+        run: |
+          set -uo pipefail
+          [ -n "${STRIPE_KEY:-}" ] || { echo "::error::STRIPE_KEY missing"; exit 1; }
+
+          # Idempotency: search for an existing product tagged
+          # metadata[hive_engine]=ud-converter and metadata[tier]=plus.
+          # If found, reuse it and only create a price if needed.
+          echo "===== 1. search existing UD Converter Plus product ====="
+          SEARCH=$(curl -sS -G "https://api.stripe.com/v1/products/search" \
+            -u "${STRIPE_KEY}:" \
+            --data-urlencode 'query=metadata["hive_engine"]:"ud-converter" AND metadata["tier"]:"plus"')
+          PROD_ID=$(echo "$SEARCH" | jq -r '.data[0].id // empty')
+
+          if [ -n "$PROD_ID" ]; then
+            echo "found existing product: $PROD_ID"
+          else
+            echo "===== 2. creating new product ====="
+            CREATE_PROD=$(curl -sS -X POST "https://api.stripe.com/v1/products" \
+              -u "${STRIPE_KEY}:" \
+              -d "name=UD Converter Plus" \
+              -d "description=Unlimited single-file conversions for casual users (up to 25 MB)" \
+              -d "metadata[hive_engine]=ud-converter" \
+              -d "metadata[tier]=plus")
+            PROD_ID=$(echo "$CREATE_PROD" | jq -r '.id // empty')
+            if [ -z "$PROD_ID" ]; then
+              echo "::error::could not create product:"
+              echo "$CREATE_PROD" | jq '.'
+              exit 2
+            fi
+            echo "created product: $PROD_ID"
+          fi
+
+          # Look for an existing $0.97/mo recurring USD price on this product.
+          echo "===== 3. search existing 97-cent monthly price ====="
+          PRICES=$(curl -sS -G "https://api.stripe.com/v1/prices" \
+            -u "${STRIPE_KEY}:" \
+            --data-urlencode "product=${PROD_ID}" \
+            --data-urlencode 'active=true' \
+            --data-urlencode 'limit=100')
+          PRICE_ID=$(echo "$PRICES" | jq -r '.data[] | select(.unit_amount == 97 and .currency == "usd" and .recurring.interval == "month") | .id' | head -1)
+
+          if [ -n "$PRICE_ID" ]; then
+            echo "found existing price: $PRICE_ID"
+          else
+            echo "===== 4. creating new price ====="
+            CREATE_PRICE=$(curl -sS -X POST "https://api.stripe.com/v1/prices" \
+              -u "${STRIPE_KEY}:" \
+              -d "product=${PROD_ID}" \
+              -d "unit_amount=97" \
+              -d "currency=usd" \
+              -d "recurring[interval]=month")
+            PRICE_ID=$(echo "$CREATE_PRICE" | jq -r '.id // empty')
+            if [ -z "$PRICE_ID" ]; then
+              echo "::error::could not create price:"
+              echo "$CREATE_PRICE" | jq '.'
+              exit 3
+            fi
+            echo "created price: $PRICE_ID"
+          fi
+
+          echo
+          echo "===== RESULT ====="
+          echo "STRIPE_PRICE_PLUS_MONTHLY=${PRICE_ID}"
+          echo "STRIPE_PRODUCT_PLUS=${PROD_ID}"
+          echo "::notice title=Plus price ID::${PRICE_ID}"
+          echo "::notice title=Plus product ID::${PROD_ID}"
