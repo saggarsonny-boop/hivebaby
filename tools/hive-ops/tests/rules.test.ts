@@ -3,7 +3,7 @@
 //
 // Run via: tsx tools/hive-ops/tests/rules.test.ts
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runHiveOps } from "../runner.js";
@@ -382,6 +382,93 @@ async function testApiOnlyExemptsUiRules() {
   }
 }
 
+// --write-overrides tests (v0.2 phase 3)
+
+async function testProposalGeneratesYamlForFails() {
+  const { proposalReport, eligibleForProposal } = await import("../write-overrides.js");
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-propose-"));
+  mkdirSync(join(root, "apps"), { recursive: true });
+  mkdirSync(join(root, "apps", "stub"));
+  const report = await runHiveOps(join(root, "apps", "stub"));
+  const eligible = eligibleForProposal(report);
+  check("eligible-for-proposal returns failing rules",
+    eligible.length > 0 && eligible.every((r) => r.status === "fail"));
+  const out = proposalReport(report, { now: new Date("2026-05-06T00:00:00Z") });
+  check("proposal output mentions H01", out.includes("H01"));
+  check("proposal output uses warn mode", out.includes("mode: warn"));
+  check("proposal output has 7-day warn_until from 2026-05-06",
+    out.includes("warn_until: 2026-05-13"));
+  check("proposal output includes TODO placeholders for human review",
+    out.includes("TODO:"));
+}
+
+async function testApplyWritesIntoEngineGrammar() {
+  const { applyProposalsToFile } = await import("../write-overrides.js");
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-apply-"));
+  // Engine root with an ENGINE_GRAMMAR.md but no overrides section yet.
+  writeFileSync(
+    join(root, "ENGINE_GRAMMAR.md"),
+    [
+      "---",
+      "engine: HiveTestApply",
+      "id: hivetestapply",
+      "domain: hivetestapply.hive.baby",
+      "repo: saggarsonny-boop/hivebaby:apps/test",
+      "owner: saggarsonny-boop",
+      "version: 0.1.0",
+      "status: building",
+      "tier: 3",
+      "schema: test-apply",
+      "stack: [nextjs]",
+      "premium: false",
+      "governance: QueenBee.MasterGrappler@pending",
+      "safety: enabled",
+      "multilingual: pending",
+      "deployment_protection: off",
+      "visibility: public",
+      "commercial_surface: none",
+      "viral_loop_targets: []",
+      "production_state: not_listed",
+      "last_audit_at: 2026-05-06",
+      "onboarding_stack:",
+      "  auto_demo: implemented",
+      "  first_visit_card: implemented",
+      "  tooltip_tour: implemented",
+      "  rotating_placeholders: implemented",
+      "---",
+      "",
+      "# Test engine",
+      "## Purpose\nFixture.",
+      "## Inputs\n- none",
+      "## Outputs\n- none",
+      "",
+    ].join("\n"),
+  );
+  const report = await runHiveOps(root, { now: new Date("2026-05-06T00:00:00Z") });
+  const result = applyProposalsToFile(root, report, {
+    now: new Date("2026-05-06T00:00:00Z"),
+  });
+  check("--apply writes the file when failures exist",
+    result.changed === true, `result=${JSON.stringify(result)}`);
+  check("--apply reports rule IDs added",
+    result.added.length > 0);
+
+  const updated = readFileSync(result.filePath, "utf8");
+  check("file now contains ## Hive-Ops Overrides section",
+    /^##\s+Hive-Ops Overrides/m.test(updated));
+  check("first added rule appears in YAML",
+    updated.includes(`rule: ${result.added[0]}`));
+
+  // Re-running should be idempotent — added=[], skipped=all-original
+  const second = applyProposalsToFile(root, report, {
+    now: new Date("2026-05-06T00:00:00Z"),
+  });
+  check("second --apply is idempotent (changed=false)",
+    second.changed === false, `second=${JSON.stringify(second)}`);
+  check("second --apply skips rules that already have entries",
+    second.skipped.length === result.added.length);
+}
+
 async function main() {
   testRuleTableShape();
   testOverrideMalformedYaml();
@@ -396,6 +483,8 @@ async function main() {
   await testDeclaredEngineClassHonored();
   await testNextjsRulesSkipForStaticHtml();
   await testApiOnlyExemptsUiRules();
+  await testProposalGeneratesYamlForFails();
+  await testApplyWritesIntoEngineGrammar();
 
   if (failures > 0) {
     console.error(`\n${failures} test(s) failed`);

@@ -163,10 +163,42 @@ Rules that don't apply to the current engine class are reported with
 status `n/a` (not `fail`), and `n/a` does not count toward the engine's
 verdict.
 
+## Override scaffolding (v0.2 — `--write-overrides`)
+
+When the audit fails, you can ask HiveOps to draft override entries for
+each failing rule:
+
+```sh
+# Review mode — print proposed entries to stdout; nothing written.
+tsx tools/hive-ops/cli.ts <slug> --write-overrides
+
+# Apply mode — splice the proposed entries into ENGINE_GRAMMAR.md.
+tsx tools/hive-ops/cli.ts <slug> --write-overrides --apply
+
+# Customize the warn horizon (default 7 days, max 30) and reviewer name.
+tsx tools/hive-ops/cli.ts <slug> --write-overrides --apply \
+  --warn-days 14 --reviewer Sonny
+```
+
+Each proposal defaults to `mode: warn` with a 7-day `warn_until`. The
+`reason` and `issue` fields ship as **TODO placeholders** that the human
+reviewer must fill in before committing — the placeholder strings are
+intentionally clearly marked so unfilled scaffolding is easy to spot in
+diff review.
+
+`--apply` is **idempotent**: rules that already have an override entry
+in the engine's `ENGINE_GRAMMAR.md` are left untouched and reported as
+`skipped`. Re-running the command after a partial review re-proposes
+only the still-failing-and-unwaived rules.
+
+The CLI exits 0 in `--apply` mode regardless of the original verdict —
+the operator's intent is to scaffold, not to gate the build.
+
 ## Roadmap
 
 - **v0.2 ✓** — combined H+V audit report (`runner.ts` + `v-rules.ts`).
 - **v0.2 ✓** — engine-class profiles (`engine_class` frontmatter field, applicability matrix).
-- **v0.2** — `--write-overrides` flag for automated override scaffolding.
+- **v0.2 ✓** — `--write-overrides` flag for automated override scaffolding.
 - **v0.3** — network rules (Vercel deploy URL 200, Cloudflare CNAME, Stripe price IDs) — gated on the credential plumbing.
 - **v0.3** — Vercel env-var presence check via VERCEL_TOKEN.
+- **v0.3** — behavioral verification (lighthouse perf budget, accessibility audit).
