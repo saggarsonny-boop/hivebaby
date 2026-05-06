@@ -27,7 +27,7 @@ machine-readable enforcement of those standards. When the standards
 conflict with personal preference — including Sonny's — the standards
 win.
 
-### Sonny's role
+### Sonny's role  `[ID_PROTECTION]`
 
 **Sonny Saggar is positioned as peripheral consultant / advisor —
 never founder, creator, or owner — in all public-facing content,
@@ -90,7 +90,7 @@ Engines that legitimately need a different stack item declare it in
 their `ENGINE_GRAMMAR.md` `stack:` field. The canonical defaults are
 the tie-breaker when no override is declared.
 
-### Canonical secret names
+### Canonical secret names  `[CANONICAL_SECRETS]`
 
 These are **the names CC must use** in code, env vars, GitHub Actions
 secrets, and Vercel project env vars. **Never variant names.** If an
@@ -134,7 +134,7 @@ Engine-specific Stripe price IDs follow the pattern
 | Paper | `#f5f1e6` | UD-equivalent for engines using the UD design system |
 | Muted | `#9a9588` | Secondary text |
 
-### Canonical 7-language locale set (free-tier floor)
+### Canonical 7-language locale set (free-tier floor)  `[LOCALE_SET]`
 
 Every engine ships these locales in `apps/<engine>/locales/<code>.json`:
 
@@ -155,7 +155,7 @@ floor** — paid tiers may extend (the `@hive/onboarding` package
 documents the `setLocaleOverrides()` extension hook for ≤200-language
 support).
 
-### Canonical onboarding (`@hive/onboarding`)
+### Canonical onboarding (`@hive/onboarding`)  `[PWA_STANDARDS]`
 
 Three components are shared across every engine via the
 `@hive/onboarding` package (canonical source:
@@ -169,7 +169,7 @@ Three components are shared across every engine via the
 [Engine]"** — that framing reads as Play Store / App Store, which the
 Hive deliberately bypasses.
 
-### Canonical brand integration (every engine)
+### Canonical brand integration (every engine)  `[FOOTER_SIGNATURE]` `[OFFLINE_COPY]`
 
 - **HIVE_HEADER_LOGO** — `public/hive-logo-full.png` shown on every page
 - **HIVE_FOOTER_SIGNATURE** — "Made with ♥ in the Hive" row in canonical
@@ -190,7 +190,7 @@ Hive deliberately bypasses.
 - **Service worker** — `public/sw.js` with offline shell (cache-first
   for static assets, network-first for pages, bypass for `/api/`)
 
-### Production copy hygiene
+### Production copy hygiene  `[HONEST_UX]`
 
 - **No "coming soon" / "not yet" / "TODO" placeholders in production
   user-facing copy.** If a feature isn't ready, hide it entirely
@@ -211,7 +211,7 @@ Hive deliberately bypasses.
 
 ---
 
-## III. Pricing and Cost Profiles
+## III. Pricing and Cost Profiles  `[PRICING_MODEL]`
 
 Engines declare a **cost profile** in `ENGINE_GRAMMAR.md` frontmatter
 under `cost_profile`. The profile drives the free-tier rules.
@@ -257,7 +257,7 @@ people might genuinely need.
 
 ## IV. Workflow Conventions
 
-### Standing merge rule
+### Standing merge rule  `[SCOPE_DISCIPLINE]`
 
 **Every change goes through a PR.** Open PR → CI green → autonomous
 merge. Never direct-to-main, including for ops workflows, docs, and
@@ -282,7 +282,7 @@ The bar for unprompted scope: it must be necessary to complete the
 named task and reversible. Anything else gets surfaced as "I'd suggest
 also doing Y for these reasons — proceed?"
 
-### CC handles infrastructure setup autonomously
+### CC handles infrastructure setup autonomously  `[INFRA_AUTONOMOUS]`
 
 Where the operation has a working API, CC does it directly. Specifically:
 
@@ -299,14 +299,14 @@ Blob first-party storage requires a one-time UI provisioning step).
 When this happens, CC names the exact dashboard URL + the exact field
 + what value to enter.
 
-### Diagnostic rule
+### Diagnostic rule  `[BUILD_DIAGNOSTICS]`
 
 **Pull Vercel build logs first on any deployment error.** Don't guess
 at root cause from the symptom; the build logs reveal the actual error
 in two-thirds of cases. This is enshrined in CLAUDE.md and not to be
 forgotten under time pressure.
 
-### Infrastructure assumption
+### Infrastructure assumption  `[INFRA_PERMANENCE]`
 
 **Never assume Hive infrastructure doesn't exist.** Search before
 declaring missing:
@@ -322,7 +322,7 @@ When something genuinely doesn't exist, CC reports the exact search
 performed (which paths, which name variants) so the human can verify
 or correct.
 
-### Device verification mandatory
+### Device verification mandatory  `[DEVICE_VERIFY]`
 
 **Every PR with UI changes must verify on real iOS Safari and real
 Android Chrome (or accurate device profiles in WebKit / Chromium
@@ -355,7 +355,7 @@ not just hand-edited content.
 
 ---
 
-## V. HiveOps Governance
+## V. HiveOps Governance  `[HIVEOPS_v01]` `[ENGINE_FINALIZATION]`
 
 ### Two enforcers, one report
 
@@ -458,7 +458,7 @@ is obvious in diff review.
 | `warn` (no fails, ≥1 warn) | Merge unblocked; warns surface in PR summary |
 | `fail` (≥1 unwaived fail) | Merge **blocked**; the failing rule must be fixed or have a valid override |
 
-### Operator Role Convention
+### Operator Role Convention  `[OPERATOR_ROLE]`
 
 Every Hive engine with tier gates implements operator role bypass via the shared auth pattern. Three valid markers in priority order:
 
@@ -586,7 +586,7 @@ Actions secrets (gh CLI), DNS (CF API), secret generation (openssl)
 without delegating back to the user. Only deviates when the
 operation genuinely lacks an API surface (rare).
 
-### UD Converter Vercel edge body limit → free-tier 4 MB cap
+### UD Converter Vercel edge body limit → free-tier 4 MB cap  `[BLOB_ARCHITECTURE]`
 
 The Guaranty PDF (13.5 MB) failed on production with a generic "Could
 not process this file" toast. Investigation showed Vercel Hobby's edge
@@ -601,7 +601,7 @@ architecture (4–6 hours of work for a feature most users don't need
 yet). Larger files get a "Files over 4 MB aren't supported on free
 tier yet — direct upload is coming" message in all 7 locales.
 
-### `@hive/onboarding` inlined in universal-document → cross-tree React deduplication
+### `@hive/onboarding` inlined in universal-document → cross-tree React deduplication  `[INLINE_PACKAGE]`
 
 When UD Converter (in the `universal-document` repo) tried to consume
 `@hive/onboarding` (in the `hivebaby` repo), early attempts at a
@@ -676,7 +676,7 @@ classes is a deliberate decision (today: `nextjs`, `static-html`,
 
 ---
 
-## VIII. Update Mechanism
+## VIII. Update Mechanism  `[GOVERNANCE_LOCATION]`
 
 - **Constitution updates require a PR** with the constitution diff.
   No direct-to-main, no exceptions, including for typo fixes.

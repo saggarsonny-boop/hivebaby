@@ -1,6 +1,7 @@
 # HIVE — Claude Code Instructions
 
 > **This file is the operational mirror of [`/docs/HIVE_CONSTITUTION.md`](docs/HIVE_CONSTITUTION.md).**
+> See [`MEMORY.md`](MEMORY.md) for the full memory rule set; this file is the operational subset.
 > Read the constitution for full context, identity rules, lessons-learned history, and update mechanism.
 > **This file is the actionable handbook for CC sessions** — what-to-do-right-now reference, with cross-references to the constitution for the *why* on each rule.
 >
