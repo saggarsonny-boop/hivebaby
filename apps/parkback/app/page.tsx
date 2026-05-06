@@ -18,7 +18,7 @@ import { InstallHintBanner, FirstVisitExplainer, dismissFirstVisitExplainer } fr
 import { HiveAHTSPrompt } from "./_lib/HiveAHTSPrompt";
 
 const STORAGE_KEY = "parkback_pin_v1";
-const A2HS_DISMISSED_KEY = "parkback_a2hs_dismissed_v1";
+const A2HS_DISMISSED_KEY = "hive_ahts_dismissed_parkback";
 
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
