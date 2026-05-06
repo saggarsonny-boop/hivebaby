@@ -7,8 +7,9 @@
   "main": "cli.ts",
   "scripts": {
     "ops": "tsx cli.ts",
+    "sweep": "tsx dailySweep.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/rules.test.ts"
+    "test": "tsx tests/rules.test.ts && tsx tests/dailySweep.test.ts"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
