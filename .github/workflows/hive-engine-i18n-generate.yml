@@ -1,0 +1,138 @@
+name: Ops — generate Hive engine locale files via Anthropic (generic)
+
+on:
+  workflow_dispatch:
+    inputs:
+      en_json_b64:
+        description: "Base64-encoded English catalog (JSON object). Avoids needing to commit en.json to this repo."
+        required: true
+      engine_name:
+        description: "Human-readable engine name for prompt context, e.g. 'UD Converter'"
+        required: true
+      framing_rule:
+        description: "Engine-specific framing constraint (e.g. 'Add to home screen'). Optional."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Translate en.json into 6 canonical Hive locales
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EN_JSON_B64: ${{ inputs.en_json_b64 }}
+          ENGINE_NAME: ${{ inputs.engine_name }}
+          FRAMING_RULE: ${{ inputs.framing_rule }}
+        run: |
+          set -uo pipefail
+          [ -n "${ANTHROPIC_API_KEY:-}" ] || { echo "::error::ANTHROPIC_API_KEY missing"; exit 1; }
+
+          mkdir -p out
+          echo "$EN_JSON_B64" | base64 -d > out/en.json
+          jq empty out/en.json || { echo "::error::input en_json_b64 didn't decode to valid JSON"; exit 1; }
+          echo "decoded en.json bytes=$(wc -c < out/en.json)"
+
+          python3 - <<'PY'
+          import json, os, urllib.request, sys
+
+          KEY = os.environ["ANTHROPIC_API_KEY"]
+          ENGINE = os.environ["ENGINE_NAME"]
+          FRAMING = os.environ.get("FRAMING_RULE", "").strip()
+          EN_PATH = "out/en.json"
+          LOCALES = [
+              ("es", "Spanish"),
+              ("fr", "French"),
+              ("ar", "Arabic"),
+              ("hi", "Hindi"),
+              ("zh", "Simplified Chinese"),
+              ("pt", "Portuguese"),
+          ]
+
+          with open(EN_PATH) as f:
+              en = json.load(f)
+
+          framing_clause = ""
+          if FRAMING:
+              framing_clause = f"\n          ENGINE-SPECIFIC FRAMING RULE: {FRAMING}\n          "
+
+          def translate(code, name):
+              prompt = f"""You are translating {ENGINE} (a Hive engine) into {name} ({code}).
+
+          Translate every string VALUE of the canonical English JSON catalog into {name}, preserving the JSON STRUCTURE and KEYS exactly. Output ONLY the translated JSON object — no prose, no code fences, no commentary.
+          {framing_clause}
+          Hard rules:
+          1. Brand names stay untranslated: "Universal Document", "UD", "UDR", "UDS", "UD Reader", "UD Converter", "UD Creator", "UD Validator", "UD Hub", "Hive", "ParkBack". The ™ symbol stays where it is.
+          2. Inside string values, ANY `"` MUST be escaped as `\\"`. ANY `\\` must be escaped as `\\\\`. The output MUST parse with json.loads — validate before responding.
+          3. Preserve placeholders like {{{{used}}}}, {{{{limit}}}}, {{{{seconds}}}}, {{{{n}}}}, etc. — DO NOT translate, replace, or remove the curly-brace tokens.
+          4. Preserve em-dashes "—", apostrophes, single-character ellipsis "…" (NOT "..."), and arrow glyphs ("→", "←").
+          5. For Arabic: text is RTL; do NOT insert any LTR markers, the consumer renders direction.
+          6. For Chinese: use Simplified Chinese characters.
+          7. For language-specific currency: keep "$" prefix and the price number untranslated. Only translate the surrounding words.
+
+          ENGLISH CATALOG:
+          {json.dumps(en, ensure_ascii=False, indent=2)}
+
+          Output {name} ({code}) JSON now (no fences, no prose):"""
+
+              req_body = json.dumps({
+                  "model": "claude-opus-4-5",
+                  "max_tokens": 8000,
+                  "messages": [{"role": "user", "content": prompt}],
+              }).encode("utf-8")
+
+              req = urllib.request.Request(
+                  "https://api.anthropic.com/v1/messages",
+                  data=req_body,
+                  headers={
+                      "x-api-key": KEY,
+                      "anthropic-version": "2023-06-01",
+                      "content-type": "application/json",
+                  },
+                  method="POST",
+              )
+              with urllib.request.urlopen(req, timeout=120) as resp:
+                  body = json.loads(resp.read())
+
+              text = body["content"][0]["text"].strip()
+              if text.startswith("```"):
+                  text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+                  if text.startswith("json"):
+                      text = text.split("\n", 1)[1] if "\n" in text else text[4:]
+
+              try:
+                  parsed = json.loads(text)
+              except json.JSONDecodeError as e:
+                  print(f"::error::PARSE_FAIL {code}: {e}", file=sys.stderr)
+                  print(repr(text[max(0,e.pos-80):e.pos+80]), file=sys.stderr)
+                  raise
+
+              en_keys = set(en.keys())
+              got_keys = set(parsed.keys())
+              if en_keys != got_keys:
+                  print(f"::error::KEY_MISMATCH {code}: missing={en_keys - got_keys} extra={got_keys - en_keys}", file=sys.stderr)
+                  raise SystemExit(2)
+
+              out_path = f"out/{code}.json"
+              with open(out_path, "w") as f:
+                  json.dump(parsed, f, ensure_ascii=False, indent=2)
+                  f.write("\n")
+              print(f"OK {code} -> {out_path}  bytes={os.path.getsize(out_path)}")
+
+          for code, name in LOCALES:
+              translate(code, name)
+          PY
+
+          echo
+          echo '===== Generated locale files ====='
+          ls -la out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hive-engine-locales
+          path: out/*.json
+          retention-days: 1
