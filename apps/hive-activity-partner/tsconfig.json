@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./*"],
+      "@hive/onboarding": ["../../packages/hive-onboarding/src/index.ts"],
+      "@hive/onboarding/*": ["../../packages/hive-onboarding/src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "../../packages/hive-onboarding/src/**/*.ts",
+    "../../packages/hive-onboarding/src/**/*.tsx",
+    "../../packages/hive-onboarding/src/**/*.json"
+  ],
+  "exclude": ["node_modules"]
+}
