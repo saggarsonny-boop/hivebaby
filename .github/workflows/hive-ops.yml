@@ -43,6 +43,14 @@ jobs:
         working-directory: tools/hive-ops
         run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
+      # As of v0.2 the runner imports hive-finalize's validate.ts directly
+      # (combined H+V audit). hive-finalize has its own deps (gray-matter,
+      # semver) that resolve from its own node_modules tree — so we install
+      # both packages, not just hive-ops.
+      - name: Install hive-finalize deps
+        working-directory: tools/hive-finalize
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
       - name: Determine engines to audit
         id: targets
         run: |
