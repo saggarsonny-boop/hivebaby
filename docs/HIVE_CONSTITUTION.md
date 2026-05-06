@@ -458,68 +458,58 @@ is obvious in diff review.
 | `warn` (no fails, ≥1 warn) | Merge unblocked; warns surface in PR summary |
 | `fail` (≥1 unwaived fail) | Merge **blocked**; the failing rule must be fixed or have a valid override |
 
-### Operator role convention  `[OPERATOR_ROLE]`
+### Operator Role Convention  `[OPERATOR_ROLE]`
 
-Every Hive engine with tier gates implements an **operator role bypass**
-via the shared `@hive/auth` pattern. The operator role exists for
-testing, debugging, and emergency access — it is not a paid tier.
+Every Hive engine with tier gates implements operator role bypass via the shared auth pattern. Three valid markers in priority order:
 
-**Resolution priority** (first match wins):
+1. **Clerk** — `publicMetadata.role === 'operator'` on the authenticated user. Engines that don't wire Clerk middleware can leave this dormant; the cookie + header markers cover the auth path.
+2. **Signed cookie** — `ud_operator` HMAC-SHA256 cookie (or `<engine>_operator` for engines that prefix), issued by the engine's `/api/operator/login` route on first successful POST of `OPERATOR_SETUP_CODE`. Default 30-day TTL.
+3. **Header** — `x-ud-operator-key` (or `x-<engine>-operator-key`) matching the engine's `OPERATOR_KEY` env var, constant-time compared. For CLI / automation use.
 
-1. Clerk session with `publicMetadata.role === 'operator'`
-2. Signed `ud_operator` cookie (HMAC-signed; `PLUS_AUTH_SECRET` keys it)
-3. `x-ud-operator-key` header (server-side compare against
-   `OPERATOR_API_KEY` env var)
+Operators bypass tier gates, captcha, and rate limits — treated as the engine's highest tier downstream (Pro for UD Converter, equivalent for others). Every operator action logs to `<engine>_operator_audit` (Neon) with `(user_identity, action, engine_slug, file_size, file_type, timestamp, request_id)`. The operator role exists for testing, debugging, and emergency access; it is **not** a marketing tier and must never be exposed in UI or pricing.
 
-When any of the three resolves, the request bypasses tier gates,
-captcha, and rate limits. **Every operator action must log to the
-engine's `engine_operator_audit` Neon table** — operator access is
-auditable by design, not invisible.
+Required env vars per engine: `OPERATOR_AUTH_SECRET` (32-byte base64; HMAC signing key), `OPERATOR_KEY` (32-byte hex; CLI header value), `OPERATOR_SETUP_CODE` (6-digit numeric; single-use bootstrap code, rotated by the operator each time a new cookie is issued).
 
-The shared implementation lives at `packages/hive-auth/operator.ts`
-(canonical source) and is re-exported by `@hive/auth`. Engines that
-inline (per `[INLINE_PACKAGE]`, e.g. UD Converter) mirror the file at
-`apps/<engine>/src/lib/hive-auth/operator.ts` with a sync-pointer README
-to the canonical copy.
-
-**HiveOps v0.3** will add a rule (likely H29) verifying any
-tier-gated engine imports the operator auth pattern. Until then, the
-rule is enforced by review and the engine's own `ENGINE_GRAMMAR.md`
-checklist.
+Reference implementation: `apps/converter/src/lib/operator-auth.ts` in `saggarsonny-boop/universal-document` (PR #22). HiveOps v0.3 will add a rule (likely **H29**) verifying any tier-gated engine imports this pattern; until then, the convention is documented here and engines self-attest in their `ENGINE_GRAMMAR.md`.
 
 ---
 
 ## VI. Engine Inventory and Compliance Status
 
-The Hive currently spans 30+ engines across multiple repos. Of these, 8
-ship `ENGINE_GRAMMAR.md` in the hivebaby monorepo today (the rest are
-either pre-canonical-schema or live in their own repos awaiting
-migration). The hivebaby planet front door is at <https://hive.baby>.
+The Hive currently spans 30+ engines across multiple repos. The hivebaby
+planet front door is at <https://hive.baby>. Of the engines reachable
+from the hivebaby monorepo, this section records the latest HiveOps
+audit verdict (last full sweep: **2026-05-06**).
 
-### Hivebaby-resident engines (with HiveOps audit)
+### Hivebaby-resident engines (HiveOps-audited, hivebaby-tracked)
 
-| Engine | Slug | Domain | Cost profile | HiveOps verdict (latest) | Notes |
-|---|---|---|---|---|---|
-| ParkBack | `parkback` | parkback.hive.baby | zero_marginal | **PASS** — 48 pass / 0 fail / 3 override (V01, V18, V19) | Canonical migration done in PR #83 |
-| HiveActivityPartner | `hiveactivitypartner` | activitypartner.hive.baby | medium_marginal | **PASS** — 50 pass / 0 fail / 2 override (V18, V19) | Phase 1 of 6 shipped via PR #91; status `building` |
-| HivePlainScan | `hive-plainscan` | plainscan.hive.baby | (TBD) | not yet audited | Building |
+All six were swept in the 2026-05-06 audit run. Audit reproduced via
+`tsx tools/hive-ops/cli.ts <slug>` from the hivebaby root.
 
-### Hivebaby-resident engines (pre-canonical schema, no HiveOps audit yet)
+| Engine | Slug | Domain | Status | Verdict | Tally (pass / warn / fail / skip / override) | Tracking |
+|---|---|---|---|---|---|---|
+| ParkBack | `parkback` | parkback.hive.baby | live | ✅ **PASS** | 48 / 0 / 0 / 6 / 3 | V01, V18, V19 waived; canonical migration PR #83 |
+| HiveActivityPartner | `hive-activity-partner` | activitypartner.hive.baby | building | ✅ **PASS** | 50 / 0 / 0 / 5 / 2 | V18, V19 waived (Phase-1 scaffold); PR #4979dfc |
+| HiveAestheticBestie | `hive-aestheticbestie` | hiveaestheticbestie.hive.baby | live | ⚠️ **WARN** | 30 / 22 / 0 / 5 / 0 | 22 warns expire 2026-06-05 — [hivebaby#93](https://github.com/saggarsonny-boop/hivebaby/issues/93), PR [#94](https://github.com/saggarsonny-boop/hivebaby/pull/94) |
+| HivePhoto | `hive-hivephoto` | hivephoto.hive.baby | live | ⚠️ **WARN** | 7 / 21 / 0 / 0 / 0 | Legacy `<GrapplerHook>` grammar — [hivebaby#95](https://github.com/saggarsonny-boop/hivebaby/issues/95), PR [#96](https://github.com/saggarsonny-boop/hivebaby/pull/96) |
+| HiveIMR | `hive-imr` | hiveimr.hive.baby | live | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#97](https://github.com/saggarsonny-boop/hivebaby/issues/97), PR [#98](https://github.com/saggarsonny-boop/hivebaby/pull/98) |
+| HivePlainScan | `hive-plainscan` | plainscan.hive.baby | building | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#101](https://github.com/saggarsonny-boop/hivebaby/issues/101), PR [#102](https://github.com/saggarsonny-boop/hivebaby/pull/102) |
 
-These have an `ENGINE_GRAMMAR.md` but use the legacy `<GrapplerHook>`
-shape, not canonical YAML frontmatter. **TODO:** migrate each per the
-PR #83 template:
+**Warn-mode rule**: every warn entry expires **2026-06-05** (30 days
+from the audit run). Engines that don't ship the canonical migration
+PR before that date will revert to FAIL on the next audit run.
 
-- `hive-aestheticbestie` (canonical migration template, PR #56)
-- `hive-imr`
-- `hive-hivephoto`
-- `imgtrainer`
+### Hivebaby-resident, separate nested git repo (skipped)
+
+| Engine | Slug | Domain | Status | Reason for skip |
+|---|---|---|---|---|
+| HiveIMGTrainer | `imgtrainer` | imgtrainer.hive.baby | live | `imgtrainer/` is a nested separate git repo (its own `.git/` directory) sitting alongside the hivebaby monorepo, not tracked by hivebaby. Remediation belongs in `saggarsonny-boop/imgtrainer`. Tracked in [hivebaby#99 (closed)](https://github.com/saggarsonny-boop/hivebaby/issues/99) — equivalent issue to be filed in the imgtrainer repo when HiveOps can run cross-repo (v0.3 candidate per [hivebaby#89](https://github.com/saggarsonny-boop/hivebaby/issues/89)). |
 
 ### External-repo engines (canonical schema present)
 
 | Engine | Repo | Domain | HiveOps verdict (latest) | Notes |
 |---|---|---|---|---|
-| UD Converter | `universal-document` | converter.hive.baby | **FAIL** — 48 pass / 4 fail (V04, V18, V19, V23) / 1 override (H21) | Pre-existing V-rule findings; `--write-overrides` proposal scaffolded but not yet committed |
+| UD Converter | `universal-document` | converter.hive.baby | ❌ **FAIL** — 48 pass / 4 fail (V04, V18, V19, V23) / 1 override (H21) | Pre-existing V-rule findings; `--write-overrides` proposal scaffolded but not yet committed in the universal-document repo |
 
 ### External-repo engines (no canonical schema yet)
 
@@ -530,6 +520,15 @@ the path: each engine adds the frontmatter per `manifest-schema-final.md`,
 adopts `@hive/onboarding`, runs `tsx tools/hive-ops/cli.ts <slug>`,
 and lands its first audit. See CLAUDE.md "Repos, Domains & Status" for
 the full ecosystem table.
+
+### Sweep summary — 2026-05-06
+
+- **2 PASS** (parkback, hive-activity-partner)
+- **4 WARN** (hive-aestheticbestie, hive-hivephoto, hive-imr, hive-plainscan) — all warn-mode for 30 days, expire 2026-06-05
+- **0 FAIL** (within hivebaby-tracked set)
+- **1 skipped** (imgtrainer — separate nested repo)
+- **5 PRs** merged: PRs #94, #96, #98, #102 (warn-mode remediation) + PR #103 (this constitution update)
+- **5 tracking issues** filed: #93, #95, #97, #99 (closed), #101
 
 > **TODO:** generate this section programmatically from
 > `engines.json` + `tools/hive-ops/cli.ts <slug> --json` per engine.
@@ -602,7 +601,7 @@ architecture (4–6 hours of work for a feature most users don't need
 yet). Larger files get a "Files over 4 MB aren't supported on free
 tier yet — direct upload is coming" message in all 7 locales.
 
-### `@hive/onboarding` inlined in universal-document → cross-tree React deduplication
+### `@hive/onboarding` inlined in universal-document → cross-tree React deduplication  `[INLINE_PACKAGE]`
 
 When UD Converter (in the `universal-document` repo) tried to consume
 `@hive/onboarding` (in the `hivebaby` repo), early attempts at a
