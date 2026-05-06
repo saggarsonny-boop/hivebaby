@@ -1,0 +1,66 @@
+{
+  "footer": {
+    "tagline": {
+      "line1": "Pas de pub. Pas d'investisseurs. Pas d'agenda.",
+      "line2": "Gratuit au niveau de base, pour toujours."
+    },
+    "privacy": "Nous ne partageons jamais votre localisation exacte, votre vrai nom ou vos coordonnées avec qui que ce soit tant que vous n'avez pas explicitement accepté une demande de partage de contact. Tous les profils sont privés. Nous n'indexons pas les profils dans les moteurs de recherche et ne générons pas de pages de profil publiques.",
+    "signature": {
+      "madeWith": "Fait avec",
+      "inThe": "dans la",
+      "brand": "Hive"
+    }
+  },
+  "home": {
+    "title": "Trouvez quelqu'un pour faire le truc avec vous.",
+    "tagline": "Sport, balades, sessions d'étude, échanges linguistiques, cours d'art — apportez une activité, rencontrez un partenaire, à vos propres conditions.",
+    "cta": "Commencer",
+    "ctaAria": "Commencer — choisissez votre tranche d'âge",
+    "signInPrompt": "Déjà un compte ? Connectez-vous",
+    "pillars": {
+      "private": {
+        "title": "Privé par défaut",
+        "body": "Votre profil n'est jamais indexé par les moteurs de recherche. Votre localisation exacte n'est jamais partagée. Votre vrai nom reste le vôtre."
+      },
+      "safe": {
+        "title": "Sécurité réelle, pas du théâtre",
+        "body": "Rendez-vous publics uniquement au niveau gratuit. Scores de confiance. Badges vérifiés. Vrais signalements qui aboutissent."
+      },
+      "free": {
+        "title": "Gratuit pour toujours",
+        "body": "Pas de pub. Pas d'investisseurs. Pas d'appâts à engagement. Fonctionnalités payantes optionnelles à partir de la Phase 5."
+      }
+    },
+    "install": {
+      "banner": "Ajoutez HiveActivityPartner à votre écran d'accueil — s'ouvre comme une app, sans App Store."
+    },
+    "firstVisit": {
+      "body": "Choisissez votre tranche d'âge, puis créez un profil. La Phase 2 ajoute le sélecteur d'activités ; la Phase 3 active les correspondances."
+    }
+  },
+  "signup": {
+    "title": "Dites-nous votre tranche d'âge",
+    "lead": "Nous ne montrons jamais votre âge exact — mais nous devons savoir que vous avez 18 ans ou plus avant qu'un profil ne soit activé. C'est la seule question que nous ne vous laissons pas sauter.",
+    "legend": "Votre tranche d'âge",
+    "help": "Requis à l'inscription. Nous l'utilisons pour garder les correspondances dans des tranches compatibles. Choisissez celle qui correspond.",
+    "continue": "Continuer",
+    "alreadyHaveAccount": "Déjà un compte ? Connectez-vous",
+    "errorPick": "Choisissez une tranche d'âge avant de continuer.",
+    "options": {
+      "under18": "J'ai moins de 18 ans",
+      "requiresVerification": "Vérification Stripe Identity requise pour cette tranche — se termine après l'inscription."
+    }
+  },
+  "under18": {
+    "title": "HiveActivityPartner est réservé aux 18 ans et plus.",
+    "lead": "Nous ne pouvons pas vous inscrire. C'est une règle ferme, pas quelque chose que nous flexibiliserons — rencontrer des inconnus est déjà assez risqué pour les adultes, et nous ne sommes pas dans le business de mettre des mineurs dans ces situations.",
+    "resourcesTitle": "Quelques bonnes ressources pour vous (ou l'adulte qui vous a montré ceci)",
+    "resources": {
+      "commonSense": "critiques honnêtes d'apps et de jeux, avec une vision claire de ce qui est vraiment risqué.",
+      "connectSafely": "guides basés sur la recherche sur la sécurité en ligne, écrits pour les ados et les parents.",
+      "thinkuknow": "éducation à la sécurité en ligne par la National Crime Agency du Royaume-Uni, avec des ressources adaptées dès 4 ans."
+    },
+    "parentNote": "Parents : si vous êtes arrivé ici parce que vous avez vu HiveActivityPartner sur l'écran de votre enfant, le lien vient presque certainement d'ailleurs — nous ne faisons pas de marketing aux mineurs et n'indexons jamais les pages publiquement. Ça vaut la peine de discuter de comment ils l'ont trouvé.",
+    "back": "← Retour à l'accueil"
+  }
+}

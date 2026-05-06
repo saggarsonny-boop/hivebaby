@@ -10,6 +10,14 @@
       "description": "Never lose your car again",
       "status": "live",
       "category": "utility"
+    },
+    {
+      "id": "hive-activity-partner",
+      "name": "HiveActivityPartner",
+      "url": "https://activitypartner.hive.baby",
+      "description": "Find someone to do the thing with",
+      "status": "building",
+      "category": "social"
     }
   ]
 }

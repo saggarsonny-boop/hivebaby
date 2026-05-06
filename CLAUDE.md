@@ -52,6 +52,7 @@ Account: saggarsonny-boop
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind |
 | hivebaby/hive-imr | HiveIMR | hiveimr.hive.baby | LIVE | Next.js + Anthropic + Neon |
 | hivebaby/apps/hive-plainscan | HivePlainScan | plainscan.hive.baby | BUILDING | Next.js + Anthropic |
+| hivebaby/apps/hive-activity-partner | HiveActivityPartner | activitypartner.hive.baby | BUILDING | Next.js + Clerk + Neon + Anthropic + Stripe |
 
 ## Naming Standards (canonical — all future engines must follow)
 

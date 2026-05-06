@@ -1,0 +1,66 @@
+{
+  "footer": {
+    "tagline": {
+      "line1": "Sin anuncios. Sin inversores. Sin agenda.",
+      "line2": "Gratis en el nivel base, para siempre."
+    },
+    "privacy": "Nunca compartimos tu ubicación exacta, nombre real o información de contacto con nadie hasta que aceptes explícitamente una solicitud de contacto. Todos los perfiles son privados. No indexamos perfiles en motores de búsqueda ni generamos páginas de perfil públicas.",
+    "signature": {
+      "madeWith": "Hecho con",
+      "inThe": "en la",
+      "brand": "Hive"
+    }
+  },
+  "home": {
+    "title": "Encuentra a alguien con quien hacer la actividad.",
+    "tagline": "Deporte, paseos, estudio, intercambio de idiomas, clases de arte — trae una actividad, encuentra un compañero, en tus propios términos.",
+    "cta": "Empezar",
+    "ctaAria": "Empezar — elige tu rango de edad",
+    "signInPrompt": "¿Ya tienes cuenta? Inicia sesión",
+    "pillars": {
+      "private": {
+        "title": "Privado por defecto",
+        "body": "Tu perfil nunca se indexa en buscadores. Tu ubicación exacta nunca se comparte. Tu nombre real es tuyo."
+      },
+      "safe": {
+        "title": "Seguridad real, no teatro",
+        "body": "Solo encuentros públicos en el nivel gratuito. Puntuación de confianza. Insignias verificadas. Reportes que van a algún lado."
+      },
+      "free": {
+        "title": "Gratis para siempre",
+        "body": "Sin anuncios. Sin inversores. Sin trampas de enganche. Funciones de pago opcionales cuando llegue la Fase 5."
+      }
+    },
+    "install": {
+      "banner": "Añade HiveActivityPartner a tu pantalla de inicio — se abre como una app, sin tienda de apps."
+    },
+    "firstVisit": {
+      "body": "Elige tu rango de edad, luego crea un perfil. La Fase 2 añade el selector de actividades; la Fase 3 activa los emparejamientos."
+    }
+  },
+  "signup": {
+    "title": "Dinos tu rango de edad",
+    "lead": "Nunca mostramos tu edad exacta — pero tenemos que saber que tienes 18+ antes de activar cualquier perfil. Es la única pregunta que no te dejamos saltar.",
+    "legend": "Tu rango de edad",
+    "help": "Requerido al registrarte. Lo usamos para mantener emparejamientos en rangos compatibles. Elige el que te corresponda.",
+    "continue": "Continuar",
+    "alreadyHaveAccount": "¿Ya tienes cuenta? Inicia sesión",
+    "errorPick": "Elige un rango de edad antes de continuar.",
+    "options": {
+      "under18": "Soy menor de 18",
+      "requiresVerification": "Se requiere verificación con Stripe Identity para este rango — se completa después del registro."
+    }
+  },
+  "under18": {
+    "title": "HiveActivityPartner es solo para mayores de 18.",
+    "lead": "No podemos registrarte. Es una regla firme, no algo que vayamos a flexibilizar — conocer a desconocidos ya es bastante arriesgado para adultos, y no estamos en el negocio de poner a menores en esas situaciones.",
+    "resourcesTitle": "Recursos útiles para ti (o para el adulto que te mostró esto)",
+    "resources": {
+      "commonSense": "reseñas honestas de apps y juegos, con una visión clara de lo que es realmente arriesgado.",
+      "connectSafely": "guías basadas en investigación sobre seguridad online, escritas para adolescentes y padres.",
+      "thinkuknow": "educación sobre seguridad online de la Agencia Nacional contra el Crimen del Reino Unido, con recursos por edades desde los 4 años."
+    },
+    "parentNote": "Padres: si llegaste aquí porque viste HiveActivityPartner en la pantalla de tu hijo/a, el enlace casi seguro vino de otro lado — no hacemos marketing a menores y nunca indexamos páginas públicamente. Vale la pena hablar de cómo lo encontraron.",
+    "back": "← Volver al inicio"
+  }
+}

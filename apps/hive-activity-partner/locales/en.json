@@ -1,0 +1,66 @@
+{
+  "footer": {
+    "tagline": {
+      "line1": "No ads. No investors. No agenda.",
+      "line2": "Free at the base tier, forever."
+    },
+    "privacy": "We never share your exact location, real name, or contact info with anyone until you explicitly accept a contact-share request. All profiles are private. We do not index profiles in search engines or generate public profile pages.",
+    "signature": {
+      "madeWith": "Made with",
+      "inThe": "in the",
+      "brand": "Hive"
+    }
+  },
+  "home": {
+    "title": "Find someone to do the thing with.",
+    "tagline": "Sport, walks, study sessions, language exchanges, art classes — bring an activity, meet a partner, on your own terms.",
+    "cta": "Get started",
+    "ctaAria": "Get started — choose your age band",
+    "signInPrompt": "Already have an account? Sign in",
+    "pillars": {
+      "private": {
+        "title": "Private by default",
+        "body": "Your profile is never indexed by search engines. Your exact location is never shared. Real names stay yours."
+      },
+      "safe": {
+        "title": "Safety, not theatre",
+        "body": "Public meets only on the free tier. Trust scores. Verified badges. Real reporting that goes somewhere."
+      },
+      "free": {
+        "title": "Free forever",
+        "body": "No ads. No investors. No engagement-bait. Optional paid features once Phase 5 ships."
+      }
+    },
+    "install": {
+      "banner": "Add HiveActivityPartner to your home screen — opens like an app, no app store needed."
+    },
+    "firstVisit": {
+      "body": "Pick your age band, then create a profile. Phase 2 adds the activity picker; Phase 3 turns on matching."
+    }
+  },
+  "signup": {
+    "title": "Tell us your age band",
+    "lead": "We never show your exact age — but we have to know you're 18+ before any profile goes live. This is the one question we won't let you skip.",
+    "legend": "Your age band",
+    "help": "Required at signup. We use it to keep matches in compatible ranges. Pick the band that fits.",
+    "continue": "Continue",
+    "alreadyHaveAccount": "Already have an account? Sign in",
+    "errorPick": "Pick an age band before continuing.",
+    "options": {
+      "under18": "I'm under 18",
+      "requiresVerification": "Stripe Identity verification required for this band — finishes after signup."
+    }
+  },
+  "under18": {
+    "title": "HiveActivityPartner is 18+ only.",
+    "lead": "We can't sign you up. That's a hard rule, not something we'll waive — meeting strangers is risky enough for adults, and we're not in the business of putting under-18s in those rooms.",
+    "resourcesTitle": "Some good resources for you (or for the adult who showed you this)",
+    "resources": {
+      "commonSense": "honest reviews of apps and games, with a clear-eyed take on what's actually risky vs. what's just loud.",
+      "connectSafely": "research-backed guides on online safety, written for teens and parents.",
+      "thinkuknow": "online safety education from the UK's National Crime Agency, with age-appropriate resources from age 4 up."
+    },
+    "parentNote": "Parents: if you arrived here because you saw HiveActivityPartner on your kid's screen, the link almost certainly came from somewhere else — we don't market to under-18s and we never index pages publicly. Worth a chat about how they found it.",
+    "back": "← Back to home"
+  }
+}
