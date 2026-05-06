@@ -14,8 +14,21 @@
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./*"] }
+    "paths": {
+      "@/*": ["./*"],
+      "@hive/onboarding": ["../../packages/hive-onboarding/src/index.ts"],
+      "@hive/onboarding/*": ["../../packages/hive-onboarding/src/*"]
+    }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "../../packages/hive-onboarding/src/**/*.ts",
+    "../../packages/hive-onboarding/src/**/*.tsx",
+    "../../packages/hive-onboarding/src/**/*.json"
+  ],
   "exclude": ["node_modules"]
 }
