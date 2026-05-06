@@ -1,0 +1,26 @@
+name: Memory ↔ Constitution sync
+
+# Fails the PR when a [TAG_NAME] rule ID exists in MEMORY.md but isn't
+# reflected anywhere in docs/HIVE_CONSTITUTION.md. Forces every memory
+# rule addition to land in both files in the same PR — preventing the
+# claude.ai-user-memory drift that motivated PR #91.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "MEMORY.md"
+      - "docs/HIVE_CONSTITUTION.md"
+      - "scripts/check-memory-constitution-sync.sh"
+      - ".github/workflows/memory-constitution-sync.yml"
+
+jobs:
+  sync-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run memory ↔ constitution sync check
+        run: bash scripts/check-memory-constitution-sync.sh
