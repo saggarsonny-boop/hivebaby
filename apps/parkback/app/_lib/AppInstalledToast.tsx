@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInstallPrompt } from "./useInstallPrompt";
+import { useInstallPrompt } from "@hive/onboarding";
 import { useStrings } from "./strings";
 
 // Layout-level listener for the `appinstalled` event. Mounted in the root

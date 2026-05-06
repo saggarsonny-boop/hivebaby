@@ -14,9 +14,19 @@ import { track } from "./_lib/analytics";
 import { buildShareUrl } from "./_lib/share";
 import { HiveFooter } from "./_lib/HiveFooter";
 import { HexButton } from "./_lib/HexButton";
-import { InstallHintBanner, FirstVisitExplainer, dismissFirstVisitExplainer } from "./_lib/InstallHintBanner";
-import { HiveAHTSPrompt } from "./_lib/HiveAHTSPrompt";
+import {
+  HiveInstallHint,
+  HiveFirstVisitExplainer,
+  dismissHiveFirstVisitExplainer,
+  HiveAHTSPrompt,
+} from "@hive/onboarding";
 import { useStrings } from "./_lib/strings";
+
+// ParkBack's engine identity for the shared @hive/onboarding components.
+// Lives here (rather than imported from a config) so a future engine
+// renaming touches one file.
+const ENGINE_NAME = "ParkBack";
+const ENGINE_SLUG = "parkback";
 
 const STORAGE_KEY = "parkback_pin_v1";
 const A2HS_DISMISSED_KEY = "hive_ahts_dismissed_parkback";
@@ -225,7 +235,7 @@ export default function ParkBackPage() {
         setPhotoSkipped(false);
         setVoiceSkipped(false);
         track("pin_dropped", { has_altitude: draft.altitude !== null });
-        dismissFirstVisitExplainer();
+        dismissHiveFirstVisitExplainer(ENGINE_SLUG);
         showToast(s.toasts.savedAck);
 
         // Show the post-pin-drop "Add to Home Screen" prompt on every
@@ -433,7 +443,11 @@ export default function ParkBackPage() {
   if (!pin) {
     return (
       <main style={pageStyle}>
-        <InstallHintBanner where="home" />
+        <HiveInstallHint
+          engineName={ENGINE_NAME}
+          engineSlug={ENGINE_SLUG}
+          customMessage={s.install.banner.home}
+        />
 
         <header style={headerStyle}>
           <div style={brandStyle}>ParkBack</div>
@@ -459,7 +473,11 @@ export default function ParkBackPage() {
           <div style={positioningLine2Style}>{s.home.positioningLine2}</div>
         </div>
 
-        <FirstVisitExplainer />
+        <HiveFirstVisitExplainer
+          engineName={ENGINE_NAME}
+          engineSlug={ENGINE_SLUG}
+          customMessage={s.home.firstVisitExplainer}
+        />
 
         <div style={hintStyle}>
           {perm === "requesting" ? s.home.hintRequesting : s.home.hintIdle}
@@ -591,7 +609,12 @@ export default function ParkBackPage() {
         <HexButton variant="ghost" size="md" onClick={handleClear} ariaLabel={s.actions.forgetAria}>{s.actions.forget}</HexButton>
       </div>
 
-      <HiveAHTSPrompt open={showA2HS} onDismiss={dismissA2HS} />
+      <HiveAHTSPrompt
+        open={showA2HS}
+        onDismiss={dismissA2HS}
+        engineName={ENGINE_NAME}
+        customMessage={s.install.ahtsCard.body}
+      />
 
       <HiveFooter />
 

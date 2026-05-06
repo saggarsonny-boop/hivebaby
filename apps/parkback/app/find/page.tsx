@@ -16,8 +16,11 @@ import { track } from "../_lib/analytics";
 import { recipientHomeUrl } from "../_lib/share";
 import { HiveFooter } from "../_lib/HiveFooter";
 import { HexButton } from "../_lib/HexButton";
-import { InstallHintBanner } from "../_lib/InstallHintBanner";
+import { HiveInstallHint } from "@hive/onboarding";
 import { useStrings } from "../_lib/strings";
+
+const ENGINE_NAME = "ParkBack";
+const ENGINE_SLUG = "parkback";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -138,7 +141,11 @@ function FindInner() {
 
   return (
     <main style={pageStyle}>
-      <InstallHintBanner where="find" />
+      <HiveInstallHint
+        engineName={ENGINE_NAME}
+        engineSlug={ENGINE_SLUG}
+        customMessage={s.install.banner.find}
+      />
 
       <header style={sharedHeaderStyle}>
         <div style={brandStyle}>ParkBack</div>
