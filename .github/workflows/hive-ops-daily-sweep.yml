@@ -126,12 +126,19 @@ jobs:
           echo "committed=true" >> "$GITHUB_OUTPUT"
 
       - name: Open or update daily report issue
-        if: github.event.inputs.dry_run != 'true' && hashFiles('/tmp/hive-ops-sweep-issue.md') != ''
+        # hashFiles() only resolves paths inside the workspace, so we
+        # gate on dry-run at the YAML layer and check the actual /tmp
+        # body file inside the shell — see PR #107 for context.
+        if: github.event.inputs.dry_run != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TODAY: ${{ steps.sweep.outputs.today }}
         run: |
           set -euo pipefail
+          if [ ! -f /tmp/hive-ops-sweep-issue.md ]; then
+            echo "Sweep wrote no issue body (likely a tooling-error short-circuit). Skipping."
+            exit 0
+          fi
           TITLE="HiveOps Daily Sweep Report ${TODAY}"
           # gh issue list will return a JSON array; reuse today's issue
           # if it already exists (e.g. someone manually re-ran the
