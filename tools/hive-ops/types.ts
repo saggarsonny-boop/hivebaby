@@ -1,10 +1,21 @@
 // HiveOps types — engine launch checklist enforcer.
 //
-// One Rule = one programmatically-enforceable item from the canonical
-// docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md. Rules are MANDATORY by
-// default; the override file at apps/<engine>/ENGINE_GRAMMAR.md can
-// downgrade specific rules to warn-mode (with a hard expiry) or waive
-// them entirely (requires GitHub issue + reviewer + date).
+// Two rule families are surfaced in a single combined report:
+//
+//   H-rules (H01..H28): filesystem + parse checks against the canonical
+//     docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md. Implemented locally
+//     in tools/hive-ops/rules.ts.
+//
+//   V-rules (V01..V29): manifest schema validation against the canonical
+//     docs/specs/manifest-schema-final.md. Implemented in
+//     tools/hive-finalize/validate.ts and re-exposed here under
+//     normalized V01-V29 IDs (hive-finalize ships them as V1-V29; the
+//     runner normalizes when ingesting so override files use V01..V29
+//     consistently).
+//
+// Both rule families share the same override schema (## Hive-Ops
+// Overrides YAML in ENGINE_GRAMMAR.md). Engines may override either H
+// or V rules with the same shape.
 //
 // Result statuses:
 //   pass — rule passed
@@ -33,11 +44,11 @@ export interface RuleContext {
 }
 
 export interface RuleResult {
-  /** Rule ID, e.g. "H01". Stable across time — never renumber. */
+  /** Rule ID, e.g. "H01" or "V07". Stable across time — never renumber. */
   id: string;
-  /** One-line title from the canonical checklist. */
+  /** One-line title from the canonical checklist or schema. */
   title: string;
-  /** Section the rule comes from (e.g. "HIVE_INTEGRATION"). */
+  /** Section the rule comes from (e.g. "HIVE_INTEGRATION", "MANIFEST_SCHEMA"). */
   category: string;
   severity: Severity;
   status: RuleStatus;
@@ -47,6 +58,18 @@ export interface RuleResult {
   overrideApplied: boolean;
   /** When status is `warn`, the date this warn-mode lapses to fail. */
   warnUntil?: string;
+}
+
+/** Rule family. H-rules are filesystem checks; V-rules are manifest schema
+ *  validation supplied by hive-finalize. Used by the reporter to group
+ *  output and by metrics consumers to attribute coverage. */
+export type RuleFamily = "H" | "V";
+
+/** Determine which family a rule ID belongs to. Throws on malformed input. */
+export function ruleFamily(id: string): RuleFamily {
+  if (/^H\d{2}$/.test(id)) return "H";
+  if (/^V\d{2}$/.test(id)) return "V";
+  throw new Error(`Invalid rule ID format: ${id}`);
 }
 
 export interface RuleDefinition {
@@ -101,4 +124,9 @@ export interface EngineReport {
   overrideParseErrors: string[];
   /** Rules currently in warn-mode (status==='warn') with their expiry dates. */
   warnModeRules: Array<{ id: string; warnUntil: string }>;
+  /** True when V-rules ran (engine has ENGINE_GRAMMAR.md with frontmatter).
+   *  False when V-rules were skipped because the manifest is missing or has
+   *  no frontmatter — surfaces explicitly in the reporter so the user knows
+   *  the schema half of the audit was not exercised. */
+  vRulesRan: boolean;
 }

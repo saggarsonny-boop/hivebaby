@@ -126,6 +126,30 @@ labels, ARIA, and dismiss copy localize through the package's bundled
   - `NEXT_PUBLIC_APP_URL` — canonical URL used in metadata, OG tags, JSON-LD; defaults to `https://parkback.hive.baby` if unset
   - `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` — Plausible site domain for analytics; defaults to `parkback.hive.baby` if unset
 
+## Hive-Ops Overrides
+
+```yaml
+overrides:
+  - rule: V01
+    mode: waive
+    reason: "ParkBack is an established brand name predating the canonical Hive*/UD* naming convention. CLAUDE.md Naming Standards carves the same exception for WhoTextedMe, QueenBee, and HiveSecretBox."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/86
+    reviewer: Sonny
+    date: 2026-05-06
+  - rule: V18
+    mode: waive
+    reason: "ParkBack is a single-action parking PWA: no chat interface (auto_demo n/a) and no rotating-placeholder input field (the primary CTA is a single button). The frontmatter declares n/a honestly; V18 treats anything non-implemented as fail, which is overly strict for engine classes that don't need every stack item."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/86
+    reviewer: Sonny
+    date: 2026-05-06
+  - rule: V19
+    mode: waive
+    reason: "Three of the eight launch checklist booleans are honestly false. test_slot tracks an unfiled hive-testing-station entry. health_check + health_workflow_listed don't apply because ParkBack is a client-only PWA with no backend, no /api/health endpoint."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/86
+    reviewer: Sonny
+    date: 2026-05-06
+```
+
 ## Launch checklist
 
 See **[/docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md](../../docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md)**.
@@ -133,4 +157,8 @@ HiveOps audit (`tsx tools/hive-ops/cli.ts parkback`) is the programmatic
 gate; current run is the source of truth for `launch_checklist_state` above.
 
 ## Waivers
-- *(None at v0.1.0.)*
+
+The structured override entries above (`## Hive-Ops Overrides`) are the
+canonical waivers consumed by the HiveOps CI workflow. This section is
+preserved for human-readable summaries that don't fit the structured
+schema; today there are none beyond what's listed in the YAML block.

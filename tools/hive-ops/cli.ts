@@ -17,6 +17,7 @@
 import { resolve } from "node:path";
 import { runHiveOps, resolveEngineRoot } from "./runner.js";
 import { RULES, MANDATORY_COUNT, RECOMMENDED_COUNT } from "./rules.js";
+import { ruleFamily } from "./types.js";
 import type { EngineReport, RuleResult } from "./types.js";
 
 interface CliArgs {
@@ -62,23 +63,32 @@ const STATUS_GLYPH: Record<RuleResult["status"], string> = {
 
 function formatHuman(report: EngineReport): string {
   const lines: string[] = [];
+  const hRules = report.rules.filter((r) => safeFamily(r) === "H");
+  const vRules = report.rules.filter((r) => safeFamily(r) === "V");
+
   lines.push(`HiveOps audit — ${report.engineSlug}`);
   lines.push(`  root: ${report.engineRoot}`);
-  lines.push(`  ${RULES.length} rules · ${MANDATORY_COUNT} MANDATORY · ${RECOMMENDED_COUNT} RECOMMENDED`);
+  lines.push(
+    `  H-rules: ${RULES.length} (${MANDATORY_COUNT} MANDATORY · ${RECOMMENDED_COUNT} RECOMMENDED)`,
+  );
+  if (report.vRulesRan) {
+    lines.push(`  V-rules: ${vRules.length} (manifest schema, via hive-finalize)`);
+  } else {
+    lines.push(`  V-rules: SKIPPED (no ENGINE_GRAMMAR.md frontmatter — see H19)`);
+  }
   lines.push("");
 
-  let cat = "";
-  for (const r of report.rules) {
-    if (r.category !== cat) {
-      lines.push(`-- ${r.category} --`);
-      cat = r.category;
-    }
-    const sev = r.severity === "MANDATORY" ? "M" : "r";
-    lines.push(`  ${STATUS_GLYPH[r.status]} ${r.id} [${sev}] ${r.title}`);
-    if (r.status !== "pass" && r.status !== "skip") {
-      lines.push(`      ${r.message}`);
-    }
+  // ─── H-rules section ────────────────────────────────────────────────
+  lines.push("== H-RULES (engine launch checklist) ==");
+  appendRuleBlock(lines, hRules);
+
+  // ─── V-rules section ────────────────────────────────────────────────
+  if (report.vRulesRan) {
+    lines.push("");
+    lines.push("== V-RULES (manifest schema) ==");
+    appendRuleBlock(lines, vRules);
   }
+
   lines.push("");
 
   if (report.overrideParseErrors.length > 0) {
@@ -99,10 +109,33 @@ function formatHuman(report: EngineReport): string {
     acc[r.status] = (acc[r.status] ?? 0) + 1;
     return acc;
   }, {});
-  lines.push(`tally: pass=${tally.pass ?? 0} warn=${tally.warn ?? 0} fail=${tally.fail ?? 0} skip=${tally.skip ?? 0} override=${tally.override ?? 0}`);
+  lines.push(
+    `tally (combined H+V): pass=${tally.pass ?? 0} warn=${tally.warn ?? 0} fail=${tally.fail ?? 0} skip=${tally.skip ?? 0} override=${tally.override ?? 0}`,
+  );
   lines.push("");
   lines.push(`VERDICT: ${report.verdict.toUpperCase()}`);
   return lines.join("\n");
+}
+
+function appendRuleBlock(lines: string[], rules: RuleResult[]): void {
+  let cat = "";
+  for (const r of rules) {
+    if (r.category !== cat) {
+      lines.push(`-- ${r.category} --`);
+      cat = r.category;
+    }
+    const sev = r.severity === "MANDATORY" ? "M" : "r";
+    lines.push(`  ${STATUS_GLYPH[r.status]} ${r.id} [${sev}] ${r.title}`);
+    if (r.status !== "pass" && r.status !== "skip") {
+      lines.push(`      ${r.message}`);
+    }
+  }
+}
+
+/** ruleFamily() throws on malformed IDs; the reporter shouldn't crash on
+ *  one bad entry, so we coerce to "H" as a defensive fallback. */
+function safeFamily(r: RuleResult): "H" | "V" {
+  try { return ruleFamily(r.id); } catch { return "H"; }
 }
 
 async function main() {
