@@ -194,11 +194,78 @@ only the still-failing-and-unwaived rules.
 The CLI exits 0 in `--apply` mode regardless of the original verdict —
 the operator's intent is to scaffold, not to gate the build.
 
+## Daily sweep — auto-flip expired warn-mode overrides to enforce
+
+`dailySweep.ts` runs once a day to enforce the warn-mode contract:
+warn-mode is a temporary stay (7d default, 30d max), not a permanent
+hiding place. The sweep is the mechanism that closes the loop.
+
+**What it does on each run:**
+
+1. Globs every `apps/<engine>/ENGINE_GRAMMAR.md` in the repo.
+2. Parses the `## Hive-Ops Overrides` block in each manifest.
+3. For each entry where `mode: warn` AND `warn_until` is in the past:
+   - Strips the entry from the manifest. The rule reverts to default
+     enforce — the next HiveOps PR audit will report it as `fail` and
+     block merges (matching the behavior the runner's
+     `applyOverride()` already triggers when warn_until lapses).
+   - Writes a tier-2 row to `hive_alerts` (`action_required: true`,
+     `action_url: <tracking issue>`).
+4. For each entry expiring within 24 hours:
+   - Leaves the manifest unchanged.
+   - Writes a tier-3 warning row to `hive_alerts` so the engineer gets
+     a heads-up before the next sweep flips it.
+5. Writes a tier-3 summary row at the end with counts.
+6. Commits manifest mutations directly to `main` (the sweep IS the
+   authoritative actor; a daily PR would be noise) and opens or
+   updates today's `HiveOps Daily Sweep Report YYYY-MM-DD` issue.
+
+**Schedule.** GitHub Actions cron `0 9 * * *` (09:00 UTC daily), via
+`.github/workflows/hive-ops-daily-sweep.yml`.
+
+**Manual invocation.**
+
+```sh
+# Local dry-run against the current repo (no writes, no inserts).
+npx --prefix tools/hive-ops tsx tools/hive-ops/dailySweep.ts --dry-run
+
+# Local run against a specific repo root.
+npx --prefix tools/hive-ops tsx tools/hive-ops/dailySweep.ts --repo /path/to/hivebaby
+
+# Deterministic test using a frozen "now" timestamp.
+npx --prefix tools/hive-ops tsx tools/hive-ops/dailySweep.ts \
+  --dry-run --now 2026-06-01T12:00:00Z
+
+# Trigger the workflow on demand (smoke test).
+gh workflow run hive-ops-daily-sweep.yml -f dry_run=false
+```
+
+Exit codes: `0` always (sweep is informational; failures show up as
+alerts + issue comments, not exit codes).
+
+**Extending warn-mode for an engine.** Edit the affected entry's
+`warn_until` in `ENGINE_GRAMMAR.md`'s `## Hive-Ops Overrides` block
+and document the justification in the `reason:` field. The 30-day
+ceiling from the original `date:` still applies — past that the
+override loader rejects the entry with a parse error, regardless of
+what the sweep does. If 30 days isn't enough, the rule should either
+be `mode: waive` (with documented rationale) or removed from the
+checklist itself in `tools/hive-ops/rules.ts`.
+
+**Data model note.** The sweep operates on the actual override schema
+(`mode: warn|waive`, per-rule `warn_until`). Some early designs
+referenced an engine-level `hiveops_warn_mode_expires` field with a
+`mode: warn → enforce` flip — the sweep maps cleanly to the per-rule
+schema by treating "flip to enforce" as "remove the override entry,
+so the rule reverts to default fail." See the comment block at the
+top of `dailySweep.ts` for the full mapping.
+
 ## Roadmap
 
 - **v0.2 ✓** — combined H+V audit report (`runner.ts` + `v-rules.ts`).
 - **v0.2 ✓** — engine-class profiles (`engine_class` frontmatter field, applicability matrix).
 - **v0.2 ✓** — `--write-overrides` flag for automated override scaffolding.
+- **v0.2 ✓** — daily sweep (`dailySweep.ts` + `.github/workflows/hive-ops-daily-sweep.yml`).
 - **v0.3** — network rules (Vercel deploy URL 200, Cloudflare CNAME, Stripe price IDs) — gated on the credential plumbing.
 - **v0.3** — Vercel env-var presence check via VERCEL_TOKEN.
 - **v0.3** — behavioral verification (lighthouse perf budget, accessibility audit).
