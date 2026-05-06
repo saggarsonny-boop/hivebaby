@@ -10,6 +10,26 @@
 - When asked to build or finalize an engine, **search for each item before declaring it deferred** — much of the Hive infrastructure already exists; assume it does until you've looked.
 - The structured registry of who has shipped what lives in `engines.json` and `registry/*.md`. Update those at the same time you check items here.
 
+## Programmatic enforcement — HiveOps
+
+A subset of items in this checklist is enforced automatically by **HiveOps**
+(`tools/hive-ops/`). Run it locally before opening a PR:
+
+```sh
+tsx tools/hive-ops/cli.ts <engine-slug>
+```
+
+HiveOps v0.1 enforces 28 rules (26 MANDATORY, 2 RECOMMENDED) covering CORE
+BUILD, INTERNATIONALIZATION, SEO, FIRST-USE ONBOARDING, HIVE INTEGRATION,
+VISIBILITY SURFACES, DESIGN CONSISTENCY, ADOPTION AMPLIFIERS, and OPERATIONAL.
+The `.github/workflows/hive-ops.yml` workflow runs it on every PR — failing
+verdicts block merge.
+
+Items not yet enforced by HiveOps (real-device tests, network reachability
+checks, third-party integrations) remain manual review items. See
+`tools/hive-ops/README.md` for the full rule list, override schema, and the
+warn-mode mechanism for legitimately-deferred items.
+
 ---
 
 ## CORE BUILD

@@ -1,0 +1,106 @@
+name: HiveOps — engine launch checklist
+
+# Programmatic enforcer for docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md.
+#
+# Runs on:
+#   - PR to main: audits every engine under apps/ that has changed in the diff
+#   - workflow_dispatch with engine_slug input: audit one engine on demand
+#
+# Failures (verdict=fail) block the PR. Warns surface in the run summary
+# but do not block. See tools/hive-ops/README.md for the override schema
+# engines can use to register a tracked, time-bounded warn.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'tools/hive-ops/**'
+      - 'packages/hive-onboarding/**'
+      - '.github/workflows/hive-ops.yml'
+  workflow_dispatch:
+    inputs:
+      engine_slug:
+        description: "Engine slug under apps/ (e.g. parkback). Required."
+        required: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install hive-ops deps
+        working-directory: tools/hive-ops
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Determine engines to audit
+        id: targets
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "slugs=${{ github.event.inputs.engine_slug }}" >> "$GITHUB_OUTPUT"
+            echo "Manual run — auditing: ${{ github.event.inputs.engine_slug }}"
+            exit 0
+          fi
+          # PR run: changed files under apps/<slug>/ → unique slug list
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- 'apps/' 'tools/hive-ops/' 'packages/hive-onboarding/' || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No engine changes in PR — skipping audit"
+            echo "slugs=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Extract apps/<slug>/ unique slugs
+          SLUGS=$(echo "$CHANGED" | awk -F/ '$1=="apps" && NF>=2 {print $2}' | sort -u | xargs)
+          # If only tools/hive-ops or packages/hive-onboarding changed (no
+          # apps/), audit ParkBack as the reference canary so package
+          # regressions are caught.
+          if [ -z "$SLUGS" ]; then SLUGS="parkback"; fi
+          echo "slugs=$SLUGS" >> "$GITHUB_OUTPUT"
+          echo "PR changes → auditing: $SLUGS"
+
+      - name: Run HiveOps for each engine
+        if: steps.targets.outputs.slugs != ''
+        env:
+          SLUGS: ${{ steps.targets.outputs.slugs }}
+        run: |
+          set -uo pipefail
+          OVERALL=0
+          for slug in $SLUGS; do
+            echo "::group::HiveOps audit — $slug"
+            if npx --prefix tools/hive-ops tsx tools/hive-ops/cli.ts "$slug"; then
+              echo "::endgroup::"
+            else
+              CODE=$?
+              echo "::endgroup::"
+              if [ "$CODE" -eq 1 ]; then
+                echo "::error title=HiveOps verdict=fail for $slug::see audit output above"
+                OVERALL=1
+              else
+                echo "::error title=HiveOps tooling error for $slug::exit code $CODE"
+                OVERALL=2
+              fi
+            fi
+          done
+          # Append summary table
+          {
+            echo "## HiveOps run summary"
+            echo ""
+            echo "Engines audited: \`$SLUGS\`"
+            echo ""
+            echo "Overall: $([ "$OVERALL" -eq 0 ] && echo PASS || echo FAIL)"
+            echo ""
+            echo "_Override schema and rule reference: \`tools/hive-ops/README.md\`._"
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $OVERALL

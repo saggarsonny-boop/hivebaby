@@ -1,0 +1,22 @@
+{
+  "name": "@hive/ops",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Engine launch checklist enforcer. Programmatic gate for the MANDATORY items in docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md.",
+  "main": "cli.ts",
+  "scripts": {
+    "ops": "tsx cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/rules.test.ts"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}
