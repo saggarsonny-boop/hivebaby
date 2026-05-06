@@ -30,7 +30,38 @@
 //   else              → engine verdict = pass
 
 export type Severity = "MANDATORY" | "RECOMMENDED";
-export type RuleStatus = "pass" | "warn" | "fail" | "skip" | "override";
+export type RuleStatus = "pass" | "warn" | "fail" | "skip" | "override" | "n/a";
+
+/** Engine implementation class. Determines which rules apply.
+ *
+ *   nextjs        — Next.js app router engine (the canonical Hive default).
+ *                   Subject to all H + V rules.
+ *   static-html   — Plain HTML/JS engine (e.g. the hivebaby planet front
+ *                   door). Skips Next.js-specific rules (app router layout,
+ *                   metadata exports, viewport export, manifest registration
+ *                   in layout) but still subject to favicon + manifest.json
+ *                   + service worker rules.
+ *   api-only      — Backend-only engine with no public UI. Skips visual
+ *                   surface rules (favicon, og.png, install hint, viewport,
+ *                   appleWebApp, theme color) and any rule that examines
+ *                   client-side onboarding code.
+ *   hybrid        — Mixed (e.g. Next.js engine that also exposes an API).
+ *                   Subject to all rules (no exemptions).
+ */
+export type EngineClass = "nextjs" | "static-html" | "api-only" | "hybrid";
+
+/** Default class when ENGINE_GRAMMAR.md does not declare an `engine_class`
+ *  frontmatter field. Most Hive engines are Next.js, so this is the safe
+ *  default — older engines that haven't migrated to declaring engine_class
+ *  see no behavior change. */
+export const DEFAULT_ENGINE_CLASS: EngineClass = "nextjs";
+
+export const ALL_ENGINE_CLASSES: ReadonlyArray<EngineClass> = [
+  "nextjs",
+  "static-html",
+  "api-only",
+  "hybrid",
+];
 
 export interface RuleContext {
   /** Path to the engine root, e.g. /repo/apps/parkback. */
@@ -41,6 +72,10 @@ export interface RuleContext {
   overrides: ParsedOverrides;
   /** Date the run is being executed (mockable for tests). */
   now: Date;
+  /** Engine implementation class (from ENGINE_GRAMMAR.md frontmatter, or
+   *  `nextjs` if not declared). The runner uses this with the
+   *  applicability matrix to skip non-applicable rules with status `n/a`. */
+  engineClass: EngineClass;
 }
 
 export interface RuleResult {
@@ -129,4 +164,6 @@ export interface EngineReport {
    *  no frontmatter — surfaces explicitly in the reporter so the user knows
    *  the schema half of the audit was not exercised. */
   vRulesRan: boolean;
+  /** Engine class actually used for this run (from frontmatter or default). */
+  engineClass: EngineClass;
 }

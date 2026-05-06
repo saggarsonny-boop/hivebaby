@@ -282,6 +282,106 @@ async function testVRuleOverrideAccepted() {
     `V01=${JSON.stringify(v01)}`);
 }
 
+// Engine-class profile tests (v0.2 phase 2). Verify that:
+//   - default engine_class is `nextjs`
+//   - declared engine_class is honored
+//   - rules that don't apply to the class are reported as `n/a` (not fail)
+//   - n/a status doesn't count toward the verdict
+
+async function testDefaultEngineClassIsNextjs() {
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-default-class-"));
+  mkdirSync(join(root, "apps"), { recursive: true });
+  mkdirSync(join(root, "apps", "stub"));
+  const report = await runHiveOps(join(root, "apps", "stub"));
+  check("no ENGINE_GRAMMAR.md → engine_class defaults to nextjs",
+    report.engineClass === "nextjs");
+}
+
+async function testDeclaredEngineClassHonored() {
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-static-html-"));
+  writeFileSync(
+    join(root, "ENGINE_GRAMMAR.md"),
+    [
+      "---",
+      "engine: HiveStaticEngine",
+      "id: hivestaticengine",
+      "engine_class: static-html",
+      "domain: hivestaticengine.hive.baby",
+      "repo: saggarsonny-boop/hivebaby:apps/static",
+      "owner: saggarsonny-boop",
+      "version: 0.1.0",
+      "status: building",
+      "tier: 3",
+      "schema: static-test",
+      "stack: [html, css]",
+      "premium: false",
+      "governance: QueenBee.MasterGrappler@pending",
+      "safety: enabled",
+      "multilingual: pending",
+      "deployment_protection: off",
+      "visibility: public",
+      "commercial_surface: none",
+      "viral_loop_targets: []",
+      "production_state: not_listed",
+      "last_audit_at: 2026-05-06",
+      "onboarding_stack:",
+      "  auto_demo: implemented",
+      "  first_visit_card: implemented",
+      "  tooltip_tour: implemented",
+      "  rotating_placeholders: implemented",
+      "---",
+      "",
+      "# Static engine",
+      "## Purpose\nA fixture.",
+      "## Inputs\n- none",
+      "## Outputs\n- none",
+      "",
+    ].join("\n"),
+  );
+  const report = await runHiveOps(root);
+  check("declared engine_class=static-html honored",
+    report.engineClass === "static-html");
+}
+
+async function testNextjsRulesSkipForStaticHtml() {
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-static-skip-"));
+  mkdirSync(join(root, "apps"), { recursive: true });
+  mkdirSync(join(root, "apps", "stub"));
+  const report = await runHiveOps(join(root, "apps", "stub"), {
+    engineClassOverride: "static-html",
+  });
+  // H02 (Next.js app router) should be n/a for static-html.
+  const h02 = report.rules.find((r) => r.id === "H02");
+  check("H02 (Next.js app router) is n/a for static-html",
+    h02?.status === "n/a", `H02=${JSON.stringify(h02)}`);
+  // H07 (Next.js metadata exports) should also be n/a.
+  const h07 = report.rules.find((r) => r.id === "H07");
+  check("H07 (Next.js metadata exports) is n/a for static-html",
+    h07?.status === "n/a", `H07=${JSON.stringify(h07)}`);
+  // H01 (package.json) is universal — should still be checked (and fail
+  // here because the synthetic engine has no package.json).
+  const h01 = report.rules.find((r) => r.id === "H01");
+  check("H01 (package.json) still applies to static-html — should fail (no pkg)",
+    h01?.status === "fail", `H01=${JSON.stringify(h01)}`);
+}
+
+async function testApiOnlyExemptsUiRules() {
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-api-only-"));
+  mkdirSync(join(root, "apps"), { recursive: true });
+  mkdirSync(join(root, "apps", "stub"));
+  const report = await runHiveOps(join(root, "apps", "stub"), {
+    engineClassOverride: "api-only",
+  });
+  // api-only exempts H08 (og.png), H11/H12 (onboarding), H13/H14/H15
+  // (logo/footer/favicon), H22/H23 (design colors), H25 (viewport).
+  const exempted = ["H08", "H11", "H12", "H13", "H14", "H15", "H22", "H23", "H25"];
+  for (const id of exempted) {
+    const r = report.rules.find((x) => x.id === id);
+    check(`${id} is n/a for api-only`,
+      r?.status === "n/a", `${id}=${JSON.stringify(r)}`);
+  }
+}
+
 async function main() {
   testRuleTableShape();
   testOverrideMalformedYaml();
@@ -292,6 +392,10 @@ async function main() {
   await testVRulesSkippedWhenNoGrammar();
   await testVRulesRunWhenGrammarPresent();
   await testVRuleOverrideAccepted();
+  await testDefaultEngineClassIsNextjs();
+  await testDeclaredEngineClassHonored();
+  await testNextjsRulesSkipForStaticHtml();
+  await testApiOnlyExemptsUiRules();
 
   if (failures > 0) {
     console.error(`\n${failures} test(s) failed`);

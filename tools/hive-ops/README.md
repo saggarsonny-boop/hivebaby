@@ -138,10 +138,35 @@ npx tsx tests/rules.test.ts  # run smoke tests
 npx tsx cli.ts parkback --repo ../..   # audit a real engine
 ```
 
+## Engine-class profiles (v0.2)
+
+Engines declare an `engine_class` field in `ENGINE_GRAMMAR.md` frontmatter
+to opt into rule applicability tailoring:
+
+| Class | When to use | Effect |
+|---|---|---|
+| `nextjs` | Next.js app-router engine (the canonical default) | All H-rules apply |
+| `static-html` | Plain HTML/JS engine (e.g. the hivebaby planet front door) | Skips Next.js-specific layout/metadata rules (H02, H07, H16, H17, H24, H25) |
+| `api-only` | Backend-only engine with no public UI | Skips visual-surface rules (H08, H11, H12, H13, H14, H15, H22, H23, H25) |
+| `hybrid` | Mixed Next.js + extra concerns | All H-rules apply (no exemptions — the safe choice) |
+
+If the field is absent, the runner defaults to `nextjs` (the most common
+case in the Hive ecosystem). Older engines that haven't migrated to
+declaring `engine_class` see no behavior change.
+
+V-rules (manifest schema) apply to every engine class — the schema is
+engine-class-agnostic.
+
+The applicability matrix lives in `tools/hive-ops/applicability.ts` and
+is the single source of truth for which rules each class must satisfy.
+Rules that don't apply to the current engine class are reported with
+status `n/a` (not `fail`), and `n/a` does not count toward the engine's
+verdict.
+
 ## Roadmap
 
 - **v0.2 ✓** — combined H+V audit report (`runner.ts` + `v-rules.ts`).
-- **v0.2** — engine-class profiles (`engine_class` frontmatter field, applicability matrix).
+- **v0.2 ✓** — engine-class profiles (`engine_class` frontmatter field, applicability matrix).
 - **v0.2** — `--write-overrides` flag for automated override scaffolding.
 - **v0.3** — network rules (Vercel deploy URL 200, Cloudflare CNAME, Stripe price IDs) — gated on the credential plumbing.
 - **v0.3** — Vercel env-var presence check via VERCEL_TOKEN.
