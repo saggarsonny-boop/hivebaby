@@ -2,15 +2,22 @@
 // HiveOps CLI.
 //
 // Usage:
-//   tsx tools/hive-ops/cli.ts <engine-slug> [--repo <path>] [--json]
+//   tsx tools/hive-ops/cli.ts <engine-slug> [flags]
 //
-// Examples:
-//   tsx tools/hive-ops/cli.ts parkback
-//   tsx tools/hive-ops/cli.ts ud-converter --repo ../universal-document
-//   tsx tools/hive-ops/cli.ts parkback --json | jq .
+// Flags:
+//   --repo <path>           repo root (default: cwd)
+//   --json                  emit the report as JSON instead of human format
+//   --write-overrides       propose override entries for failing rules,
+//                           print to stdout for review
+//   --apply                 (with --write-overrides) actually write the
+//                           proposed entries into ENGINE_GRAMMAR.md
+//   --warn-days <n>         warn_until horizon for proposed entries
+//                           (default 7, max 30)
+//   --reviewer <name>       reviewer name placed into proposed entries
+//                           (default placeholder)
 //
 // Exit codes:
-//   0 — verdict pass or warn
+//   0 — verdict pass or warn (or --write-overrides without --apply)
 //   1 — verdict fail
 //   2 — could not resolve engine root or other tooling error
 
@@ -19,37 +26,67 @@ import { runHiveOps, resolveEngineRoot } from "./runner.js";
 import { RULES, MANDATORY_COUNT, RECOMMENDED_COUNT } from "./rules.js";
 import { ruleFamily } from "./types.js";
 import type { EngineReport, RuleResult } from "./types.js";
+import {
+  applyProposalsToFile,
+  eligibleForProposal,
+  proposalReport,
+} from "./write-overrides.js";
 
 interface CliArgs {
   slug: string;
   repo: string;
   json: boolean;
+  writeOverrides: boolean;
+  apply: boolean;
+  warnDays?: number;
+  reviewer?: string;
 }
 
 function parseArgs(argv: string[]): CliArgs | null {
   const positional: string[] = [];
   let repo = process.cwd();
   let json = false;
+  let writeOverrides = false;
+  let apply = false;
+  let warnDays: number | undefined;
+  let reviewer: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--json") { json = true; continue; }
     if (a === "--repo") { repo = resolve(argv[++i] ?? ""); continue; }
+    if (a === "--write-overrides") { writeOverrides = true; continue; }
+    if (a === "--apply") { apply = true; continue; }
+    if (a === "--warn-days") {
+      const v = Number(argv[++i]);
+      if (!Number.isFinite(v) || v < 1) return null;
+      warnDays = v;
+      continue;
+    }
+    if (a === "--reviewer") { reviewer = argv[++i]; continue; }
     if (a === "-h" || a === "--help") return null;
     positional.push(a);
   }
   if (positional.length !== 1) return null;
-  return { slug: positional[0], repo, json };
+  // --apply only meaningful with --write-overrides; reject silently to
+  // make misuse obvious.
+  if (apply && !writeOverrides) return null;
+  return { slug: positional[0], repo, json, writeOverrides, apply, warnDays, reviewer };
 }
 
 function usage(): string {
   return [
-    "Usage: tsx tools/hive-ops/cli.ts <engine-slug> [--repo <path>] [--json]",
+    "Usage: tsx tools/hive-ops/cli.ts <engine-slug> [flags]",
     "",
-    `HiveOps v0.1 — ${MANDATORY_COUNT} MANDATORY + ${RECOMMENDED_COUNT} RECOMMENDED rules.`,
+    `HiveOps v0.2 — ${MANDATORY_COUNT} H-rules MANDATORY + ${RECOMMENDED_COUNT} RECOMMENDED, plus 29 V-rules (manifest schema via hive-finalize).`,
     "Auditable engine launch checklist enforcer.",
     "",
-    "Defaults:",
-    "  --repo  current working directory",
+    "Flags:",
+    "  --repo <path>            repo root (default: cwd)",
+    "  --json                   emit JSON report",
+    "  --write-overrides        propose override entries for failing rules → stdout",
+    "  --apply                  with --write-overrides, write into ENGINE_GRAMMAR.md",
+    "  --warn-days <n>          warn_until horizon for proposed entries (1-30, default 7)",
+    "  --reviewer <name>        reviewer name in proposed entries (default TODO placeholder)",
   ].join("\n");
 }
 
@@ -154,6 +191,44 @@ async function main() {
   }
 
   const report = await runHiveOps(engineRoot);
+
+  // ─── --write-overrides path (with optional --apply) ─────────────────
+  if (args.writeOverrides) {
+    const opts = { warnDays: args.warnDays, reviewer: args.reviewer };
+    if (args.apply) {
+      let result;
+      try {
+        result = applyProposalsToFile(engineRoot, report, opts);
+      } catch (err) {
+        console.error(`hive-ops --apply failed: ${err instanceof Error ? err.message : String(err)}`);
+        process.exit(2);
+      }
+      if (!result.changed) {
+        if (eligibleForProposal(report).length === 0) {
+          console.log(`No failing rules to propose — ${result.filePath} unchanged.`);
+        } else {
+          console.log(`All proposed entries already exist in ${result.filePath} — nothing to do.`);
+          if (result.skipped.length > 0) {
+            console.log(`  skipped: ${result.skipped.join(", ")}`);
+          }
+        }
+      } else {
+        console.log(`Updated ${result.filePath}:`);
+        console.log(`  added: ${result.added.join(", ")}`);
+        if (result.skipped.length > 0) {
+          console.log(`  skipped (already had override): ${result.skipped.join(", ")}`);
+        }
+        console.log("");
+        console.log("REVIEW each entry — replace TODO placeholders with real reasons + issue URLs before committing.");
+      }
+      // --apply exits 0 even if rules failed; the operator's intent is
+      // to scaffold the overrides, not to gate the build.
+      process.exit(0);
+    }
+    // No --apply — print the proposal block to stdout for review.
+    process.stdout.write(proposalReport(report, opts));
+    process.exit(0);
+  }
 
   if (args.json) {
     console.log(JSON.stringify(report, null, 2));
