@@ -1,0 +1,131 @@
+name: Ops — generate ParkBack locale files via Anthropic (one-shot)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch holding apps/parkback/locales/en.json to translate from"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Translate en.json into 6 canonical Hive locales
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -uo pipefail
+          [ -n "${ANTHROPIC_API_KEY:-}" ] || { echo "::error::ANTHROPIC_API_KEY missing"; exit 1; }
+          [ -f apps/parkback/locales/en.json ] || { echo "::error::en.json not on branch"; exit 1; }
+
+          python3 - <<'PY'
+          import json, os, urllib.request, sys
+
+          KEY = os.environ["ANTHROPIC_API_KEY"]
+          EN_PATH = "apps/parkback/locales/en.json"
+          OUT_DIR = "apps/parkback/locales"
+          LOCALES = [
+              ("es", "Spanish"),
+              ("fr", "French"),
+              ("ar", "Arabic"),
+              ("hi", "Hindi"),
+              ("zh", "Simplified Chinese"),
+              ("pt", "Portuguese"),
+          ]
+
+          with open(EN_PATH) as f:
+              en = json.load(f)
+
+          def translate(code, name):
+              prompt = f"""You are translating ParkBack (a parking-spot recall PWA) into {name} ({code}).
+
+          Translate every string VALUE of the canonical English JSON catalog into {name}, preserving the JSON STRUCTURE and KEYS exactly. Output ONLY the translated JSON object — no prose, no code fences, no commentary.
+
+          Hard rules:
+          1. NEVER use "install" framing in {name}. Use the localized equivalent of "Add to home screen" everywhere "install" / "Install ParkBack" appears in English. Examples:
+             - es: "agregar a la pantalla de inicio" (NOT "instalar")
+             - fr: "ajouter à l'écran d'accueil" (NOT "installer")
+             - pt: "adicionar à tela inicial" (NOT "instalar")
+             - ar: "أضف إلى الشاشة الرئيسية"
+             - hi: "होम स्क्रीन पर जोड़ें"
+             - zh: "添加到主屏幕"
+          2. Keep "ParkBack" untranslated. Keep `footer.signature.brand` value as "Hive" untranslated.
+          3. Inside string values, ANY `"` MUST be escaped as `\\"`. ANY `\\` must be escaped as `\\\\`. The output MUST parse with json.loads — validate before responding.
+          4. Preserve the keyboard glyph "●", em-dashes "—", apostrophes, single-character ellipsis "…" (NOT "...").
+          5. `compass.near` is a connector word that comes BEFORE a place name (English: "near"). Use the natural local connector for "near LOCATION". Keep it short.
+          6. `compass.accuracySuffix` follows a number, e.g. "12 m at parking". Keep "m" as the SI unit symbol in roman script.
+          7. `prompts.recordingPrefix` is followed by a duration counter "Ns / Ns" — keep it short.
+          8. For Arabic: text is RTL; do NOT insert any LTR markers, the consumer renders direction.
+          9. For Chinese: use Simplified Chinese characters.
+
+          ENGLISH CATALOG:
+          {json.dumps(en, ensure_ascii=False, indent=2)}
+
+          Output {name} ({code}) JSON now (no fences, no prose):"""
+
+              req_body = json.dumps({
+                  "model": "claude-opus-4-5",
+                  "max_tokens": 8000,
+                  "messages": [{"role": "user", "content": prompt}],
+              }).encode("utf-8")
+
+              req = urllib.request.Request(
+                  "https://api.anthropic.com/v1/messages",
+                  data=req_body,
+                  headers={
+                      "x-api-key": KEY,
+                      "anthropic-version": "2023-06-01",
+                      "content-type": "application/json",
+                  },
+                  method="POST",
+              )
+              with urllib.request.urlopen(req, timeout=120) as resp:
+                  body = json.loads(resp.read())
+
+              text = body["content"][0]["text"].strip()
+              if text.startswith("```"):
+                  text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+                  if text.startswith("json"):
+                      text = text.split("\n", 1)[1] if "\n" in text else text[4:]
+
+              try:
+                  parsed = json.loads(text)
+              except json.JSONDecodeError as e:
+                  print(f"::error::PARSE_FAIL {code}: {e}", file=sys.stderr)
+                  print(repr(text[max(0,e.pos-80):e.pos+80]), file=sys.stderr)
+                  raise
+
+              en_keys = set(en.keys())
+              got_keys = set(parsed.keys())
+              if en_keys != got_keys:
+                  print(f"::error::KEY_MISMATCH {code}: missing={en_keys - got_keys} extra={got_keys - en_keys}", file=sys.stderr)
+                  raise SystemExit(2)
+
+              out_path = f"{OUT_DIR}/{code}.json"
+              with open(out_path, "w") as f:
+                  json.dump(parsed, f, ensure_ascii=False, indent=2)
+                  f.write("\n")
+              print(f"OK {code} -> {out_path}  bytes={os.path.getsize(out_path)}")
+
+          for code, name in LOCALES:
+              translate(code, name)
+          PY
+
+          echo
+          echo '===== Generated locale files ====='
+          ls -la apps/parkback/locales/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parkback-locales
+          path: apps/parkback/locales/*.json
+          retention-days: 1
