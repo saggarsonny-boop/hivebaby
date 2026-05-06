@@ -1,12 +1,24 @@
 # @hive/ops
 
 Engine launch checklist enforcer. Programmatic gate for the MANDATORY items
-in [`docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md`](../../docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md).
+in [`docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md`](../../docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md)
+**and** the canonical manifest schema in
+[`docs/specs/manifest-schema-final.md`](../../docs/specs/manifest-schema-final.md).
 
-> **HiveOps is the launch-time enforcer. HiveFinalize is the schema validator.**
-> They are complementary: HiveOps reads the engine's filesystem and reports
-> what's missing for ship; HiveFinalize validates the engine's `ENGINE_GRAMMAR.md`
-> manifest against the canonical schema. PRs typically run both.
+> **As of v0.2 the audit is unified.** HiveOps runs both rule families in
+> a single CLI invocation:
+>
+> - **H-rules (H01..H28)** — filesystem checks (favicon, manifest.json,
+>   service worker, install hint, layout metadata, …) implemented locally
+>   in `rules.ts`.
+> - **V-rules (V01..V29)** — manifest schema validation supplied by
+>   `tools/hive-finalize/validate.ts` and re-exposed under normalized
+>   V01..V29 IDs (hive-finalize ships them as V1..V29; the runner
+>   zero-pads when ingesting).
+>
+> Both rule families share the same override schema. Engines may waive or
+> warn-mode either H-rules or V-rules with the same YAML block in
+> `ENGINE_GRAMMAR.md`.
 
 ## Quick start
 
@@ -128,7 +140,8 @@ npx tsx cli.ts parkback --repo ../..   # audit a real engine
 
 ## Roadmap
 
-- **v0.2** — wire HiveFinalize manifest validation as part of the same run; surface as a single combined report.
-- **v0.2** — add network rules (Vercel deploy URL 200, Cloudflare CNAME, Stripe price IDs) — gated on the credential plumbing.
-- **v0.2** — Vercel env-var presence check via VERCEL_TOKEN.
-- **v0.3** — engine-class profiles (e.g. "static-html-only" engines exempt from the Next.js layout rules automatically).
+- **v0.2 ✓** — combined H+V audit report (`runner.ts` + `v-rules.ts`).
+- **v0.2** — engine-class profiles (`engine_class` frontmatter field, applicability matrix).
+- **v0.2** — `--write-overrides` flag for automated override scaffolding.
+- **v0.3** — network rules (Vercel deploy URL 200, Cloudflare CNAME, Stripe price IDs) — gated on the credential plumbing.
+- **v0.3** — Vercel env-var presence check via VERCEL_TOKEN.

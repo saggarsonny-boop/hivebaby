@@ -39,7 +39,9 @@ import type { OverrideEntry, ParsedOverrides } from "./types.js";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const GH_ISSUE = /^https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\d+$/;
-const RULE_ID = /^H\d{2}$/;
+// Both H-rules (filesystem checks) and V-rules (manifest schema, supplied
+// by hive-finalize) use the same override schema and ID format.
+const RULE_ID = /^[HV]\d{2}$/;
 const MAX_WARN_DAYS = 30;
 const DEFAULT_WARN_DAYS = 7;
 

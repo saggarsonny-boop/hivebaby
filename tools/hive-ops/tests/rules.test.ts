@@ -140,6 +140,148 @@ function testRuleTableShape() {
   check("rule IDs unique", new Set(RULES.map((r) => r.id)).size === RULES.length);
 }
 
+// V-rule integration tests (v0.2). Verify the runner ingests
+// hive-finalize results and the override schema accepts V-rule IDs.
+
+async function testVRulesSkippedWhenNoGrammar() {
+  // Re-uses the empty engine setup from testEmptyEngineFails; that
+  // engine has no ENGINE_GRAMMAR.md, so vRulesRan should be false.
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-no-grammar-"));
+  mkdirSync(join(root, "apps"), { recursive: true });
+  mkdirSync(join(root, "apps", "stub"));
+  const report = await runHiveOps(join(root, "apps", "stub"));
+  check("no ENGINE_GRAMMAR.md → vRulesRan=false", report.vRulesRan === false);
+  check("no V-rules added when manifest missing",
+    report.rules.every((r) => !/^V\d{2}$/.test(r.id)));
+}
+
+async function testVRulesRunWhenGrammarPresent() {
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-with-grammar-"));
+  // Minimal canonical-frontmatter manifest exercising several V-rules.
+  writeFileSync(
+    join(root, "ENGINE_GRAMMAR.md"),
+    [
+      "---",
+      "engine: HiveTestEngine",
+      "id: hivetestengine",
+      "domain: hivetestengine.hive.baby",
+      "repo: saggarsonny-boop/hivebaby:apps/test",
+      "owner: saggarsonny-boop",
+      "version: 0.1.0",
+      "status: building",
+      "tier: 3",
+      "schema: test-schema",
+      "stack: [nextjs]",
+      "premium: false",
+      "governance: QueenBee.MasterGrappler@pending",
+      "safety: enabled",
+      "multilingual: pending",
+      "deployment_protection: off",
+      "visibility: public",
+      "commercial_surface: none",
+      "viral_loop_targets: []",
+      "production_state: not_listed",
+      "last_audit_at: 2026-05-06",
+      "onboarding_stack:",
+      "  auto_demo: implemented",
+      "  first_visit_card: implemented",
+      "  tooltip_tour: implemented",
+      "  rotating_placeholders: implemented",
+      "---",
+      "",
+      "# Test engine",
+      "",
+      "## Purpose",
+      "Smoke-test engine for hive-ops V-rule integration.",
+      "",
+      "## Inputs",
+      "- none",
+      "",
+      "## Outputs",
+      "- none",
+      "",
+    ].join("\n"),
+  );
+  const report = await runHiveOps(root);
+  check("ENGINE_GRAMMAR.md present → vRulesRan=true", report.vRulesRan === true);
+  const vResults = report.rules.filter((r) => /^V\d{2}$/.test(r.id));
+  check("29 V-rules ingested", vResults.length === 29, `got ${vResults.length}`);
+  check("V-rule IDs zero-padded (V01..V29)",
+    vResults.every((r) => /^V\d{2}$/.test(r.id)));
+  check("V01 (engine name regex) passes for HiveTestEngine",
+    vResults.find((r) => r.id === "V01")?.status === "pass");
+}
+
+async function testVRuleOverrideAccepted() {
+  const root = mkdtempSync(join(tmpdir(), "hive-ops-vrule-override-"));
+  // Manifest that intentionally fails V01 (engine name doesn't match pattern)
+  // plus an override entry waiving V01.
+  writeFileSync(
+    join(root, "ENGINE_GRAMMAR.md"),
+    [
+      "---",
+      "engine: ParkBack",            // doesn't match /^(Hive|UD).../
+      "id: parkback",
+      "domain: parkback.hive.baby",
+      "repo: saggarsonny-boop/hivebaby:apps/parkback",
+      "owner: saggarsonny-boop",
+      "version: 0.1.0",
+      "status: building",
+      "tier: 1",
+      "schema: parking-spot-pin",
+      "stack: [nextjs, typescript]",
+      "premium: false",
+      "governance: QueenBee.MasterGrappler@pending",
+      "safety: enabled",
+      "multilingual: enabled",
+      "deployment_protection: off",
+      "visibility: public",
+      "commercial_surface: none",
+      "viral_loop_targets: []",
+      "production_state: listed",
+      "last_audit_at: 2026-05-06",
+      "onboarding_stack:",
+      "  auto_demo: n/a",
+      "  first_visit_card: implemented",
+      "  tooltip_tour: implemented",
+      "  rotating_placeholders: n/a",
+      "---",
+      "",
+      "# ParkBack",
+      "",
+      "## Purpose",
+      "Test fixture exercising V-rule overrides.",
+      "",
+      "## Inputs",
+      "- none",
+      "",
+      "## Outputs",
+      "- none",
+      "",
+      "## Hive-Ops Overrides",
+      "",
+      "```yaml",
+      "overrides:",
+      "  - rule: V01",
+      "    mode: waive",
+      "    reason: \"ParkBack is an established brand name pre-naming-standard.\"",
+      "    issue: https://github.com/saggarsonny-boop/hivebaby/issues/100",
+      "    reviewer: Sonny",
+      "    date: 2026-05-06",
+      "```",
+      "",
+    ].join("\n"),
+  );
+  const report = await runHiveOps(root);
+  check("V-rule override loader accepts V01 ID — no parse errors",
+    report.overrideParseErrors.length === 0,
+    `errors=${JSON.stringify(report.overrideParseErrors)}`);
+  const v01 = report.rules.find((r) => r.id === "V01");
+  check("V01 status downgraded from fail to override",
+    v01?.status === "override" && v01.overrideApplied === true,
+    `V01=${JSON.stringify(v01)}`);
+}
+
 async function main() {
   testRuleTableShape();
   testOverrideMalformedYaml();
@@ -147,6 +289,9 @@ async function main() {
   testOverrideWarnTooLong();
   testOverrideUnknownRule();
   await testEmptyEngineFails();
+  await testVRulesSkippedWhenNoGrammar();
+  await testVRulesRunWhenGrammarPresent();
+  await testVRuleOverrideAccepted();
 
   if (failures > 0) {
     console.error(`\n${failures} test(s) failed`);
