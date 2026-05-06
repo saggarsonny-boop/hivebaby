@@ -458,6 +458,20 @@ is obvious in diff review.
 | `warn` (no fails, ≥1 warn) | Merge unblocked; warns surface in PR summary |
 | `fail` (≥1 unwaived fail) | Merge **blocked**; the failing rule must be fixed or have a valid override |
 
+### Operator Role Convention
+
+Every Hive engine with tier gates implements operator role bypass via the shared auth pattern. Three valid markers in priority order:
+
+1. **Clerk** — `publicMetadata.role === 'operator'` on the authenticated user. Engines that don't wire Clerk middleware can leave this dormant; the cookie + header markers cover the auth path.
+2. **Signed cookie** — `ud_operator` HMAC-SHA256 cookie (or `<engine>_operator` for engines that prefix), issued by the engine's `/api/operator/login` route on first successful POST of `OPERATOR_SETUP_CODE`. Default 30-day TTL.
+3. **Header** — `x-ud-operator-key` (or `x-<engine>-operator-key`) matching the engine's `OPERATOR_KEY` env var, constant-time compared. For CLI / automation use.
+
+Operators bypass tier gates, captcha, and rate limits — treated as the engine's highest tier downstream (Pro for UD Converter, equivalent for others). Every operator action logs to `<engine>_operator_audit` (Neon) with `(user_identity, action, engine_slug, file_size, file_type, timestamp, request_id)`. The operator role exists for testing, debugging, and emergency access; it is **not** a marketing tier and must never be exposed in UI or pricing.
+
+Required env vars per engine: `OPERATOR_AUTH_SECRET` (32-byte base64; HMAC signing key), `OPERATOR_KEY` (32-byte hex; CLI header value), `OPERATOR_SETUP_CODE` (6-digit numeric; single-use bootstrap code, rotated by the operator each time a new cookie is issued).
+
+Reference implementation: `apps/converter/src/lib/operator-auth.ts` in `saggarsonny-boop/universal-document` (PR #22). HiveOps v0.3 will add a rule (likely **H29**) verifying any tier-gated engine imports this pattern; until then, the convention is documented here and engines self-attest in their `ENGINE_GRAMMAR.md`.
+
 ---
 
 ## VI. Engine Inventory and Compliance Status
