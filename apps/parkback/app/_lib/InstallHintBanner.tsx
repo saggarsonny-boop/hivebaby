@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useInstallPrompt } from "./useInstallPrompt";
 import { InstallCTA } from "./InstallCTA";
-import { strings } from "./strings";
+import { useStrings } from "./strings";
 
 const STORAGE_KEY = "hive_install_hint_dismissed_parkback";
 
@@ -18,18 +18,8 @@ function isStandalone(): boolean {
   return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
 }
 
-// Dead-zone framing — the headline that gets users to install. Used on
-// chromium and iOS where there's an actual install path to drive. The
-// fallback platforms (desktop Safari/Firefox/unknown) get different copy
-// from `strings.install.fallback.*` because they cannot programmatically
-// install.
-const HOME_BANNER =
-  "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no cell or wifi signal required to find your car.";
-
-const FIND_BANNER =
-  "Like what you see? Add ParkBack to your home screen and never lose your own car. Works in any dead zone — no cell signal, wifi, or app store needed. Free, no signup.";
-
 export function InstallHintBanner({ where }: { where: "home" | "find" }) {
+  const s = useStrings();
   const [show, setShow] = useState(false);
   const { platform, installed } = useInstallPrompt();
 
@@ -76,15 +66,15 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
   const hasInstallPath = platform === "chromium" || platform === "ios";
   let bodyCopy: string;
   if (hasInstallPath) {
-    bodyCopy = where === "find" ? FIND_BANNER : HOME_BANNER;
+    bodyCopy = where === "find" ? s.install.banner.find : s.install.banner.home;
   } else if (platform === "desktop-safari-firefox") {
-    bodyCopy = strings.install.fallback.desktopSafariFirefox;
+    bodyCopy = s.install.fallback.desktopSafariFirefox;
   } else {
-    bodyCopy = strings.install.fallback.unknown;
+    bodyCopy = s.install.fallback.unknown;
   }
 
   return (
-    <div role="region" aria-label="Install ParkBack" style={bannerStyle}>
+    <div role="region" aria-label={s.install.banner.regionAria} style={bannerStyle}>
       <div style={contentColumnStyle}>
         <div style={textStyle}>{bodyCopy}</div>
         {hasInstallPath ? (
@@ -96,7 +86,7 @@ export function InstallHintBanner({ where }: { where: "home" | "find" }) {
       <button
         type="button"
         onClick={dismiss}
-        aria-label="Dismiss install hint"
+        aria-label={s.install.banner.dismissAria}
         style={dismissBtnStyle}
       >
         ×
@@ -165,6 +155,7 @@ const dismissBtnStyle: React.CSSProperties = {
 const STORAGE_KEY_EXPLAINER = "hive_first_visit_seen_parkback";
 
 export function FirstVisitExplainer() {
+  const s = useStrings();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -180,7 +171,7 @@ export function FirstVisitExplainer() {
   if (!show) return null;
   return (
     <div style={explainerStyle}>
-      Tap when you park. Come back, tap again, walk straight to your car. Works in underground garages with zero cell or wifi signal. Your phone’s GPS does the work.
+      {s.home.firstVisitExplainer}
     </div>
   );
 }

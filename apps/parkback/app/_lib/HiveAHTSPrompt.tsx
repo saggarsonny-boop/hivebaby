@@ -2,7 +2,7 @@
 
 import { InstallCTA } from "./InstallCTA";
 import { useInstallPrompt } from "./useInstallPrompt";
-import { strings } from "./strings";
+import { useStrings } from "./strings";
 
 // Post-first-action "Add to Home Screen" prompt card. Mounted by the parent
 // (app/page.tsx) when the user successfully drops their first pin, gated on
@@ -27,11 +27,12 @@ export function HiveAHTSPrompt({
   open: boolean;
   onDismiss: () => void;
 }) {
+  const s = useStrings();
   const { platform } = useInstallPrompt();
   if (!open) return null;
 
-  const card = strings.install.ahtsCard;
-  const fallback = strings.install.fallback;
+  const card = s.install.ahtsCard;
+  const fallback = s.install.fallback;
 
   const hasInstallPath = platform === "ios" || platform === "chromium";
   const fallbackCopy =

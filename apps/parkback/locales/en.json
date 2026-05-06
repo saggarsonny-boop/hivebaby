@@ -14,6 +14,12 @@
       "desktopSafariFirefox": "Add ParkBack to your home screen for one-tap access. Use your browser's bookmarking option to keep it accessible. No app store needed — it's free, no signup, works offline.",
       "unknown": "ParkBack works on any device. Use your browser's \"Add to home screen\" option to keep it accessible."
     },
+    "banner": {
+      "regionAria": "Install ParkBack",
+      "dismissAria": "Dismiss install hint",
+      "home": "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no cell or wifi signal required to find your car.",
+      "find": "Like what you see? Add ParkBack to your home screen and never lose your own car. Works in any dead zone — no cell signal, wifi, or app store needed. Free, no signup."
+    },
     "ahtsCard": {
       "title": "Add ParkBack to your home screen",
       "body": "The whole thing — your pin, photo, voice memo, and the compass back to your car — works without cell signal or wifi. Even in the deepest parking deck.",
@@ -29,5 +35,80 @@
       "ariaLabel": "How to add ParkBack to your home screen"
     },
     "installedToast": "ParkBack is on your home screen. Open it like any other app."
+  },
+  "home": {
+    "tagline": "Find your car. No accounts. No cloud.",
+    "loading": "Loading…",
+    "ctaLocating": "Locating…",
+    "ctaParked": "I'm parked",
+    "ctaParkedAria": "I'm parked, save this spot",
+    "positioningLine1": "No app store. No login. No subscription. No ads. No tracking. No signal needed.",
+    "positioningLine2": "The parking app that should have existed years ago.",
+    "firstVisitExplainer": "Tap when you park. Come back, tap again, walk straight to your car. Works in underground garages with zero cell or wifi signal. Your phone's GPS does the work.",
+    "hintRequesting": "Hold still. High-accuracy GPS takes a moment.",
+    "hintIdle": "Tap when you've parked. Works offline."
+  },
+  "perm": {
+    "noBrowserSupport": "Your browser doesn't support location. ParkBack needs location to remember where you parked.",
+    "denied": "ParkBack needs your location to remember where you parked. Tap to retry.",
+    "unavailable": "Couldn't find your location. Step outside or move away from tall buildings, then tap to retry.",
+    "timeout": "Location took too long. Tap to retry."
+  },
+  "compass": {
+    "locating": "Locating you…",
+    "near": "near",
+    "accuracySuffix": "m at parking",
+    "enable": "Enable compass",
+    "calibrating": "Calibrating compass — wave phone in a figure-8",
+    "instruction": "Hold phone flat, arrow points to car."
+  },
+  "prompts": {
+    "photoQuestion": "Snap the bay number?",
+    "photoTake": "Take photo",
+    "photoTakeAria": "Take photo of bay number",
+    "photoOpenAria": "Open photo full screen",
+    "photoAlt": "Parking spot",
+    "photoFullAlt": "Parking spot full size",
+    "tapToClose": "Tap to close",
+    "voiceQuestion": "Add voice note (optional)",
+    "voiceRecord": "● Record",
+    "voiceRecordAria": "Record voice memo",
+    "skip": "Skip",
+    "stopRecording": "Stop",
+    "recordingPrefix": "Recording…",
+    "saving": "Saving…"
+  },
+  "actions": {
+    "navigate": "Navigate",
+    "navigateAria": "Navigate to my car",
+    "send": "Send",
+    "sendAria": "Send my parking spot to someone",
+    "forget": "Forget",
+    "forgetAria": "Forget this spot"
+  },
+  "toasts": {
+    "savedAck": "Got it. Walk wherever. Come back when you need your car.",
+    "linkCopied": "Link copied",
+    "forgetConfirm": "Forget this spot?"
+  },
+  "errors": {
+    "photoFailed": "Couldn't process that photo. Try again.",
+    "voiceUnsupported": "Voice notes need microphone access. Your browser doesn't support it here.",
+    "voiceSaveFailed": "Couldn't save the voice note.",
+    "micDenied": "Microphone access denied. Voice notes are optional — you can still navigate back to your car."
+  },
+  "share": {
+    "title": "ParkBack — my parking spot",
+    "messageNoLandmark": "Here's where my car is parked.",
+    "messageNearPrefix": "I'm parked near",
+    "promptDialog": "Copy your parking spot link:"
+  },
+  "find": {
+    "headerTitle": "Someone shared their parking spot with you.",
+    "linkInvalidTitle": "This link doesn't look right.",
+    "linkInvalidBody": "The shared link is missing or invalid coordinates. Ask the person who sent it to share again.",
+    "linkInvalidCta": "Open ParkBack",
+    "navigateAria": "Navigate to the shared parking spot",
+    "recipientCta": "Get ParkBack for your own car →"
   }
 }

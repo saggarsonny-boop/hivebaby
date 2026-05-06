@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useInstallPrompt } from "./useInstallPrompt";
 import { IOSInstallOverlay } from "./IOSInstallOverlay";
-import { strings } from "./strings";
+import { useStrings } from "./strings";
 
 // Shared install call-to-action button. Used by both InstallHintBanner
 // (no-pin home screen banner) and HiveAHTSPrompt (post-first-action card).
@@ -64,6 +64,7 @@ function HiveMarkInline({ size }: { size: number }) {
 }
 
 export function InstallCTA({ size = "md" }: { size?: Size }) {
+  const s = useStrings();
   const [overlayOpen, setOverlayOpen] = useState(false);
   const { platform, trigger } = useInstallPrompt();
 
@@ -95,8 +96,8 @@ export function InstallCTA({ size = "md" }: { size?: Size }) {
   const dims = SIZES[size];
   const ariaLabel =
     platform === "ios"
-      ? strings.install.ctaAriaIos
-      : strings.install.ctaAriaChromium;
+      ? s.install.ctaAriaIos
+      : s.install.ctaAriaChromium;
 
   return (
     <>
@@ -125,7 +126,7 @@ export function InstallCTA({ size = "md" }: { size?: Size }) {
         }}
       >
         <HiveMarkInline size={dims.iconSize} />
-        <span style={{ lineHeight: 1.2 }}>{strings.install.cta}</span>
+        <span style={{ lineHeight: 1.2 }}>{s.install.cta}</span>
       </button>
       <IOSInstallOverlay open={overlayOpen} onClose={() => setOverlayOpen(false)} />
     </>

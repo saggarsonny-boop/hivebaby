@@ -17,6 +17,7 @@ import { recipientHomeUrl } from "../_lib/share";
 import { HiveFooter } from "../_lib/HiveFooter";
 import { HexButton } from "../_lib/HexButton";
 import { InstallHintBanner } from "../_lib/InstallHintBanner";
+import { useStrings } from "../_lib/strings";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";
@@ -48,6 +49,7 @@ function parseSharedPin(params: URLSearchParams): SharedPin | null {
 }
 
 function FindInner() {
+  const s = useStrings();
   const searchParams = useSearchParams();
   const [pin, setPin] = useState<SharedPin | null>(null);
   const [parseError, setParseError] = useState(false);
@@ -106,12 +108,12 @@ function FindInner() {
       <main style={pageStyle}>
         <header style={headerStyle}>
           <div style={brandStyle}>ParkBack</div>
-          <div style={taglineStyle}>This link doesn't look right.</div>
+          <div style={taglineStyle}>{s.find.linkInvalidTitle}</div>
         </header>
         <p style={{ color: MUTED, maxWidth: 320, fontSize: 14 }}>
-          The shared link is missing or invalid coordinates. Ask the person who sent it to share again.
+          {s.find.linkInvalidBody}
         </p>
-        <a href="/" style={primaryActionStyle}>Open ParkBack</a>
+        <a href="/" style={primaryActionStyle}>{s.find.linkInvalidCta}</a>
       </main>
     );
   }
@@ -119,7 +121,7 @@ function FindInner() {
   if (!pin) {
     return (
       <main style={pageStyle}>
-        <div style={{ color: MUTED, fontSize: 14 }}>Loading…</div>
+        <div style={{ color: MUTED, fontSize: 14 }}>{s.home.loading}</div>
       </main>
     );
   }
@@ -140,7 +142,7 @@ function FindInner() {
 
       <header style={sharedHeaderStyle}>
         <div style={brandStyle}>ParkBack</div>
-        <div style={sharedTitleStyle}>Someone shared their parking spot with you.</div>
+        <div style={sharedTitleStyle}>{s.find.headerTitle}</div>
       </header>
 
       {elapsedMs !== null ? <div style={elapsedStyle}>{formatElapsed(elapsedMs)}</div> : null}
@@ -153,24 +155,24 @@ function FindInner() {
             <ArrowSvg rotation={arrowRotation} dim={bearing === null} />
           )}
         </div>
-        <div style={distanceStyle}>{distance === null ? "Locating you…" : formatDistance(distance)}</div>
-        {pin.landmark ? <div style={landmarkStyle}>near {pin.landmark}</div> : null}
+        <div style={distanceStyle}>{distance === null ? s.compass.locating : formatDistance(distance)}</div>
+        {pin.landmark ? <div style={landmarkStyle}>{s.compass.near} {pin.landmark}</div> : null}
         {compassState === "needs-permission" ? (
-          <button type="button" onClick={requestCompassPermission} style={smallButtonStyle}>Enable compass</button>
+          <button type="button" onClick={requestCompassPermission} style={smallButtonStyle}>{s.compass.enable}</button>
         ) : null}
         {compassState === "calibrating" ? (
-          <div style={compassNoteStyle}>Calibrating compass — wave phone in a figure-8</div>
+          <div style={compassNoteStyle}>{s.compass.calibrating}</div>
         ) : compassState !== "active" ? (
-          <div style={compassNoteStyle}>Hold phone flat, arrow points to car.</div>
+          <div style={compassNoteStyle}>{s.compass.instruction}</div>
         ) : null}
       </div>
 
       <div style={actionsRowStyle}>
-        <HexButton variant="primary" size="md" onClick={handleNavigate} ariaLabel="Navigate to the shared parking spot">Navigate</HexButton>
+        <HexButton variant="primary" size="md" onClick={handleNavigate} ariaLabel={s.find.navigateAria}>{s.actions.navigate}</HexButton>
       </div>
 
       <a href={recipientHomeUrl()} style={recipientCtaStyle}>
-        Get ParkBack for your own car →
+        {s.find.recipientCta}
       </a>
 
       <HiveFooter />
