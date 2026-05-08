@@ -15,19 +15,14 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./*"],
-      "@hive/onboarding": ["../../packages/hive-onboarding/src/index.ts"],
-      "@hive/onboarding/*": ["../../packages/hive-onboarding/src/*"]
+      "@/*": ["./*"]
     }
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    "../../packages/hive-onboarding/src/**/*.ts",
-    "../../packages/hive-onboarding/src/**/*.tsx",
-    "../../packages/hive-onboarding/src/**/*.json"
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

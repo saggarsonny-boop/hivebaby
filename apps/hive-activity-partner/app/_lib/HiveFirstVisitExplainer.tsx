@@ -4,7 +4,7 @@
 // Same pattern as HiveInstallHint — engine-specific copy + slug live here
 // so the home page imports a single component with no per-engine config.
 
-import { HiveFirstVisitExplainer as PackageHiveFirstVisitExplainer } from "@hive/onboarding";
+import { HiveFirstVisitExplainer as PackageHiveFirstVisitExplainer } from "@/lib/hive-onboarding";
 import { useStrings } from "./strings";
 
 export function HiveFirstVisitExplainer() {
