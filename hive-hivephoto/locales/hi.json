@@ -1,0 +1,26 @@
+{
+  "footer": {
+    "tagline": {
+      "line1": "No ads. No investors. No agenda.",
+      "line2": "Free at the base tier, forever."
+    },
+    "privacy": "Photos are encrypted at rest and never used to train any model. Face recognition runs on your library only. Plus is the only paid tier; the base experience is free forever.",
+    "signature": {
+      "madeWith": "Made with",
+      "inThe": "in the",
+      "brand": "Hive"
+    }
+  },
+  "home": {
+    "install": {
+      "banner": {
+        "regionAria": "Add HivePhoto to your home screen",
+        "dismissAria": "Dismiss install hint",
+        "home": "Add HivePhoto to your home screen for one-tap upload + search. Free, no signup beyond Clerk auth. Photos stay private — no ads, no model training, no resale."
+      }
+    },
+    "firstVisit": {
+      "body": "Upload, search, understand your photos. Faces, places, semantic search, duplicates — all in your private library."
+    }
+  }
+}

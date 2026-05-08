@@ -245,7 +245,7 @@ Status legend: **LIVE** (in production, listed) · **BUILDING** (in active dev) 
 | whotextedme | WhoTextedMe | whotextedme.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
 | hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
 | hive-hivememe | HiveMeme | hivememe.hive.baby | BUILDING | Next.js + Anthropic | medium_marginal | manual |
-| hive-hivephoto | HivePhoto | hivephoto.hive.baby | LIVE | Next.js + Anthropic + Clerk + Neon + R2 + Stripe | high_marginal | manual |
+| hive-hivephoto | HivePhoto | hivephoto.hive.baby | LIVE | Next.js + Anthropic + Clerk + Neon + R2 + Stripe | high_marginal | HiveOps **PASS** (canonical migration #125, 2026-05-08) |
 | hive-aestheticbestie | HiveAestheticBestie | hiveaestheticbestie.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | HiveOps **PASS** (canonical migration #119, 2026-05-08) |
 | hive-microritual | HiveMicroRitual | hivemicroritual.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
 | hive-memory-space | HiveMemorySpace | hivememoryspace.hive.baby | BUILDING | Next.js + Anthropic | medium_marginal | manual |
