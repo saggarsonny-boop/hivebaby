@@ -1,3 +1,18 @@
 @import "tailwindcss";
-:root { --amber: #f59e0b; }
-body { background: #09090b; color: #fafafa; }
+
+/* Canonical Hive palette — primary CTAs, ♥ glyph, brand mark all use
+   Hive gold #D4AF37; engine surface uses canonical ink #0a0a0a per
+   CLAUDE.md §C3/§C4. The amber accent stays for HivePhoto-specific
+   highlights so the existing UI doesn't lose its visual identity. */
+
+:root {
+  --amber: #f59e0b;
+  --hive-gold: #D4AF37;
+  --hive-ink: #0a0a0a;
+  --hive-paper: #f5f1e6;
+}
+
+body {
+  background: #09090b;
+  color: #fafafa;
+}

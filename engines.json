@@ -34,6 +34,14 @@
       "description": "Intelligent Medical Records — the post-EMR substrate",
       "status": "live",
       "category": "medical"
+    },
+    {
+      "id": "hive-hivephoto",
+      "name": "HivePhoto",
+      "url": "https://hivephoto.hive.baby",
+      "description": "AI photo intelligence — upload, search, understand your photos",
+      "status": "live",
+      "category": "media"
     }
   ]
 }
