@@ -492,7 +492,7 @@ All six were swept in the 2026-05-06 audit run. Audit reproduced via
 | HiveActivityPartner | `hive-activity-partner` | activitypartner.hive.baby | building | ✅ **PASS** | 50 / 0 / 0 / 5 / 2 | V18, V19 waived (Phase-1 scaffold); PR #4979dfc |
 | HiveAestheticBestie | `hive-aestheticbestie` | hiveaestheticbestie.hive.baby | live | ✅ **PASS** | 52 / 0 / 0 / 5 / 0 | Canonical migration PR #119 (2026-05-08); [hivebaby#93](https://github.com/saggarsonny-boop/hivebaby/issues/93) closed |
 | HivePhoto | `hive-hivephoto` | hivephoto.hive.baby | live | ⚠️ **WARN** | 7 / 21 / 0 / 0 / 0 | Legacy `<GrapplerHook>` grammar — [hivebaby#95](https://github.com/saggarsonny-boop/hivebaby/issues/95), PR [#96](https://github.com/saggarsonny-boop/hivebaby/pull/96) |
-| HiveIMR | `hive-imr` | hiveimr.hive.baby | live | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#97](https://github.com/saggarsonny-boop/hivebaby/issues/97), PR [#98](https://github.com/saggarsonny-boop/hivebaby/pull/98) |
+| HiveIMR | `hive-imr` | hiveimr.hive.baby | live | ✅ **PASS** | 52 / 0 / 0 / 5 / 0 | Canonical migration PR #122 (2026-05-08); [hivebaby#97](https://github.com/saggarsonny-boop/hivebaby/issues/97) closed |
 | HivePlainScan | `hive-plainscan` | plainscan.hive.baby | building | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#101](https://github.com/saggarsonny-boop/hivebaby/issues/101), PR [#102](https://github.com/saggarsonny-boop/hivebaby/pull/102) |
 
 **Warn-mode rule**: every warn entry expires **2026-06-05** (30 days
@@ -523,8 +523,8 @@ the full ecosystem table.
 
 ### Sweep summary — 2026-05-06
 
-- **3 PASS** (parkback, hive-activity-partner, hive-aestheticbestie ← migrated 2026-05-08 via PR #119)
-- **3 WARN** (hive-hivephoto, hive-imr, hive-plainscan) — all warn-mode for 30 days, expire 2026-06-05
+- **4 PASS** (parkback, hive-activity-partner, hive-aestheticbestie, hive-imr ← migrated 2026-05-08 via PR #122)
+- **2 WARN** (hive-hivephoto, hive-plainscan) — all warn-mode for 30 days, expire 2026-06-05
 - **0 FAIL** (within hivebaby-tracked set)
 - **1 skipped** (imgtrainer — separate nested repo)
 - **6 PRs** merged: PRs #94, #96, #98, #102 (warn-mode remediation) + PR #103 (this constitution update) + PR #119 (aestheticbestie WARN→PASS)

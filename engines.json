@@ -26,6 +26,14 @@
       "description": "Instant aesthetic label, palette, and vibe card",
       "status": "live",
       "category": "identity"
+    },
+    {
+      "id": "hive-imr",
+      "name": "HiveIMR",
+      "url": "https://hiveimr.hive.baby",
+      "description": "Intelligent Medical Records — the post-EMR substrate",
+      "status": "live",
+      "category": "medical"
     }
   ]
 }
