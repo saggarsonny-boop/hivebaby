@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "postinstall": "cd ../../packages/hive-onboarding && npm install --no-audit --no-fund --silent"
   },
   "dependencies": {
     "next": "16.2.3",
