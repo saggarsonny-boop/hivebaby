@@ -232,6 +232,89 @@ tonight in the deploy-blockers PR (universal-document).
 
 ---
 
+## Today's session — locked 2026-05-08
+
+### Rule #32 — `[NEVER_PROCRASTINATE]`
+
+**Title:** Never delay action when work can be done now.
+
+**Body:** Default behavior is forward motion. Don't propose "we could
+do this later" when it can be done now. Don't suggest stopping when
+work remains — only Sonny decides when to stop. When CC notices
+follow-up work unblocked by what was just shipped (missing doc, stale
+config, obvious refactor), the right move is usually to do it in the
+same flow, subject to `[SCOPE_DISCIPLINE]` (ask if it materially
+expands the requested work). Phrases to avoid: "we could revisit this
+later," "left as a follow-up," "this can wait." Small + unlocked →
+ship it; large + out of scope → file an issue with the actual blocker
+named, don't leave a vague intention.
+
+**Source:** Locked 2026-05-08 in the operating-principles session.
+Brand-new rule; complements `[SCOPE_DISCIPLINE]` (which says don't
+silently expand) by saying don't silently defer either.
+
+**Constitution reference:** [§IV "Never procrastinate"](docs/HIVE_CONSTITUTION.md#never-procrastinate).
+
+---
+
+### Rule #33 — `[FREE_OVER_PAID]`
+
+**Title:** Choose the free path when outcomes are similar.
+
+**Body:** Sonny's standing preference is **$0/month operating cost.**
+When a choice exists between a free and a paid path that achieve
+similar outcomes, choose free. Examples: Vercel Blob free tier over
+Vercel Pro upgrade; direct Anthropic API key over additional service
+subscriptions; native CLI / API over paid SaaS for the same
+capability; free-tier Cloudflare / Neon / Resend until usage genuinely
+exceeds the limit. Honest tradeoffs are acceptable; defaulting to paid
+for convenience is not. If a paid path is materially better, CC names
+the tradeoff and asks. Founding constraint, not a temporary budget
+choice — it expresses the "no investors, no agenda" posture in §I.
+Strengthens the existing `[BLOB_ARCHITECTURE]` precedent (Sonny chose
+direct-to-blob over $20/month Vercel Pro) into a general principle.
+
+**Source:** Locked 2026-05-08 in the operating-principles session.
+Generalizes the per-engine cost decisions visible across UD Converter
+(`[BLOB_ARCHITECTURE]`) and the planet's free-tier rules in §III.
+
+**Constitution reference:** [§IV "Free over paid"](docs/HIVE_CONSTITUTION.md#free-over-paid).
+
+---
+
+### Rule #34 — `[MACHINE_OVER_HUMAN]`
+
+**Title:** When a task can be done by machine or by Sonny, the machine does it.
+
+**Body:** CC handles all infra setup, secret management, deploy
+operations, dashboard interactions, file edits, env var provisioning,
+and any operation where the API or CLI permits it. Strengthens
+`[INFRA_AUTONOMOUS]` with an explicit ordering rule:
+
+1. **Default:** CC executes via API / CLI / scripted dashboard call.
+2. **Fallback:** CC retrieves a missing token from GitHub Actions
+   secrets, generates one with `openssl rand`, or scripts the missing
+   capability.
+3. **Last resort:** CC asks Sonny to perform a UI action — and only
+   when CC has explicit evidence the API doesn't support the
+   operation (linked docs, attempted call with the actual error, or
+   a known vendor limitation). "I think the API doesn't have this"
+   is not evidence; "the docs say this is a UI-only step" is.
+
+Creatively work around tooling limitations rather than offloading to
+human hands. When the last resort is genuinely required, CC names
+the exact URL + exact field + exact value, never a multi-step manual
+recipe.
+
+**Source:** Locked 2026-05-08 in the operating-principles session.
+Brand-new rule; tightens `[INFRA_AUTONOMOUS]` by establishing the
+explicit machine-first ordering and the evidence bar required to
+escalate to a human.
+
+**Constitution reference:** [§IV "Machine over human"](docs/HIVE_CONSTITUTION.md#machine-over-human).
+
+---
+
 ## Earlier-session rules — pre-2026-05-06
 
 ### `[ID_PROTECTION]`

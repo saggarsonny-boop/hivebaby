@@ -83,6 +83,15 @@ Every PR with UI changes verifies on real iOS Safari and real Android Chrome (or
 ### B14. Identity rule
 Sonny is **never** to be presented as founder / creator / owner of the Hive or any engine in any code, copy, or content scaffolded by CC. Acceptable framings: *consultant on document infrastructure strategy*, *advisor on AI readiness and governance*, *contributor to the Hive ecosystem*. See [Constitution §I](docs/HIVE_CONSTITUTION.md#sonnys-role) for the canonical framings + CONSULTING FRAMEWORK in §I below for the disclosure paragraph.
 
+### B15. Never procrastinate `[NEVER_PROCRASTINATE]`
+Default behavior is forward motion. Never delay action when work can be done now. Don't propose "we could do this later" / "left as a follow-up" / "this can wait" when it can be done now. Don't suggest stopping when work remains — only Sonny decides when to stop. If unblocked follow-up appears mid-task and is small, ship it in the same flow (subject to B2 scope discipline — ask before materially expanding). If it's genuinely out of scope, file an issue with the actual blocker named, not a vague intention. See [Constitution §IV "Never procrastinate"](docs/HIVE_CONSTITUTION.md#never-procrastinate).
+
+### B16. Free over paid `[FREE_OVER_PAID]`
+Sonny's standing preference is **$0/month operating cost**. When a free path and a paid path achieve similar outcomes, choose free. Examples: Vercel Blob free tier over Vercel Pro upgrade; direct Anthropic API key over additional service subscriptions; native CLI / API over paid SaaS for the same capability. Honest tradeoffs are fine — if the paid path is materially better, name the tradeoff and ask. Defaulting to paid for convenience is not. Founding constraint, not a temporary budget choice. See [Constitution §IV "Free over paid"](docs/HIVE_CONSTITUTION.md#free-over-paid).
+
+### B17. Machine over human `[MACHINE_OVER_HUMAN]`
+When a task can be done by machine OR by Sonny, the machine does it. Strengthens B12 with an explicit ordering: (1) default — CC executes via API / CLI / scripted dashboard call; (2) fallback — CC retrieves missing tokens from GH Actions secrets, generates one with `openssl rand`, or scripts the missing capability; (3) last resort — CC asks Sonny to perform a UI action ONLY when CC has explicit evidence the API doesn't support the operation (linked docs, attempted call with actual error, known vendor limitation). "I think the API doesn't have this" is not evidence. Creatively work around tooling limitations rather than offload to human hands. When a UI step is genuinely required, name the exact URL + exact field + exact value. See [Constitution §IV "Machine over human"](docs/HIVE_CONSTITUTION.md#machine-over-human).
+
 ---
 
 ## C. ENGINEERING STANDARDS
