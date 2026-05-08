@@ -1,12 +1,14 @@
 // GET /api/profile — returns the signed-in user's profile.
 // Always strips exact_location_lat/lng + emergency_contact_encrypted via
-// the canonical sanitizer. This is the second line of defense; the SELECT
-// below already omits those columns.
+// the canonical sanitizer. The SELECT below already omits those columns
+// (first line of defense), stripForbidden re-strips (second line), and
+// assertNoExactLocation throws + alerts if either still surfaces (third).
 
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getHapUser } from "@/lib/auth";
 import { stripForbidden } from "@/lib/profile";
+import { assertNoExactLocation } from "@/lib/safety/location";
 
 export const dynamic = "force-dynamic";
 
@@ -29,5 +31,7 @@ export async function GET() {
   }
 
   const safe = stripForbidden({ ...me, ...rows[0] });
-  return NextResponse.json({ profile: safe });
+  const payload = { profile: safe };
+  assertNoExactLocation(payload, "GET /api/profile");
+  return NextResponse.json(payload);
 }

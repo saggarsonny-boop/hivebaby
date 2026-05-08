@@ -3,12 +3,17 @@
 // Rejected → is_active=false, is_pending_moderation=false (kept for audit;
 // operator can re-list later if appealed). Every decision writes both
 // hap_moderation_log and hap_operator_audit.
+//
+// Phase 2 safety layer (this file): on a manual rejection, apply the same
+// trust penalties as the auto-pipeline — -5 per incident, plus -20 streak
+// when the user has just hit 3+ rejections in the rolling 30-day window.
 
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireOperator, newRequestId } from "@/lib/operator-auth";
 import { auditOperatorAction } from "@/lib/db-operator";
 import { isUuid } from "@/lib/validation/activity";
+import { applyManualRejectionPenalties } from "@/lib/safety/activity-moderation";
 
 export const dynamic = "force-dynamic";
 
@@ -51,8 +56,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   }
 
   const target = (await sql`
-    SELECT id, is_pending_moderation FROM hap_activity_taxonomy WHERE id = ${id} LIMIT 1
-  `) as Array<{ id: string; is_pending_moderation: boolean }>;
+    SELECT id, is_pending_moderation, requested_by_user_id, display_name
+    FROM hap_activity_taxonomy WHERE id = ${id} LIMIT 1
+  `) as Array<{
+    id: string;
+    is_pending_moderation: boolean;
+    requested_by_user_id: string | null;
+    display_name: string;
+  }>;
   if (target.length === 0) return bad("not found", 404);
   if (!target[0].is_pending_moderation) {
     return bad("already moderated", 409);
@@ -74,8 +85,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   }
 
   await sql`
-    INSERT INTO hap_moderation_log (taxonomy_id, decision, reason, moderator_identity, request_id)
-    VALUES (${id}, ${body.decision}, ${reason}, ${op.identity}, ${requestId})
+    INSERT INTO hap_moderation_log (
+      taxonomy_id, decision, reason, moderator_identity, request_id,
+      actor, requested_user_id, requested_display_name
+    )
+    VALUES (
+      ${id}, ${body.decision}, ${reason}, ${op.identity}, ${requestId},
+      'operator', ${target[0].requested_by_user_id}, ${target[0].display_name}
+    )
   `;
 
   await auditOperatorAction({
@@ -87,5 +104,20 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     metadata: reason ? { reason } : null,
   });
 
-  return NextResponse.json({ id, decision: body.decision });
+  // Apply trust penalties on rejection. Reuses the auto-pipeline helper so
+  // both manual and auto rejections share the same -5 + streak-gate logic.
+  let trustOutcome: { newTrustScore: number; streakTriggered: boolean } | null = null;
+  if (body.decision === "rejected" && target[0].requested_by_user_id) {
+    trustOutcome = await applyManualRejectionPenalties(
+      target[0].requested_by_user_id,
+      reason ?? "manual_rejection",
+    );
+  }
+
+  return NextResponse.json({
+    id,
+    decision: body.decision,
+    trustScore: trustOutcome?.newTrustScore ?? null,
+    streakTriggered: trustOutcome?.streakTriggered ?? false,
+  });
 }
