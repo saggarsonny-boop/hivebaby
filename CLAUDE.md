@@ -253,7 +253,7 @@ Status legend: **LIVE** (in production, listed) · **BUILDING** (in active dev) 
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind | low_marginal | manual |
 | hivebaby/hive-imr | HiveIMR | hiveimr.hive.baby | LIVE | Next.js + Anthropic + Neon | medium_marginal | HiveOps **PASS** (canonical migration #122, 2026-05-08) |
 | hivebaby/imgtrainer | IMGTrainer | imgtrainer.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
-| hivebaby/apps/hive-plainscan | HivePlainScan | plainscan.hive.baby | BUILDING | Next.js + Anthropic | medium_marginal | grammar pending canonical migration |
+| hivebaby/apps/hive-plainscan | HivePlainScan | plainscan.hive.baby | DORMANT | Next.js + Anthropic | medium_marginal | Deployed but unreachable — no DNS for `plainscan.hive.baby`, no users, idle 11+ days. Migration deferred; WARN overrides expire 2026-06-05. DNS-or-retire decision tracked in hivebaby#127. |
 | hivebaby/apps/parkback | ParkBack | parkback.hive.baby | LIVE | Next.js (client-only PWA) | zero | HiveOps **pass with waivers** (V01/V18/V19 waived — see ENGINE_GRAMMAR.md) |
 | hivebaby/apps/hive-activity-partner | HiveActivityPartner | activitypartner.hive.baby | BUILDING (Phase 1/6) | Next.js + Clerk + Neon + Anthropic + Stripe + Resend | medium_marginal | HiveOps Phase-1 with waivers (V18/V19) |
 
@@ -295,7 +295,7 @@ Every engine ships exactly one `ENGINE_GRAMMAR.md` at its repo root (or sub-pack
 1. **YAML frontmatter** between `---` fences — all structured, machine-readable fields. HiveFinalize parses this directly.
 2. **Markdown prose** below — `## Purpose`, `## Inputs`, `## Outputs` (required); `## Rules`, `## Safety Templates`, `## Premium Locks` (required when `premium: true`), `## Phase Plan`, `## Out of Scope`, `## Deployment Notes` (conditional).
 
-The legacy `<GrapplerHook>` HTML-ish block is **retired**. Migrate any remaining engines (HivePlainScan still uses the legacy form). Full schema in `docs/specs/manifest-schema-final.md`.
+The legacy `<GrapplerHook>` HTML-ish block is **retired**. HivePlainScan still uses the legacy form but is dormant pending DNS — when it's revived, the migration is part of that work. Full schema in `docs/specs/manifest-schema-final.md`.
 
 Required frontmatter fields include: `engine`, `id`, `domain`, `repo`, `owner`, `version`, `status`, `tier`, `schema`, `stack`, `premium`, `governance`, `safety`, `multilingual`, `onboarding_stack`, `vercel_project`, `deployment_protection`, `visibility`, `commercial_surface`, `viral_loop_targets`, `production_state`, `last_audit_at`. When `status: live`, `launch_checklist_state` (8 booleans) is also required.
 
