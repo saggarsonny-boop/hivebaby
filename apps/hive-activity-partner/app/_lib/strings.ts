@@ -4,7 +4,8 @@
 //
 // This module is server-safe (no React hooks). Server Components import
 // `strings` directly. Client Components that need locale switching import
-// `useStrings` from "./useStrings" — that file owns the "use client" boundary.
+// `useStrings` from "./useStrings" — that file owns the "use client" boundary
+// and reads `navigator.language` to pick the active catalog at runtime.
 
 import en from "../../locales/en.json";
 import es from "../../locales/es.json";
