@@ -1,6 +1,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
+/* Canonical Hive palette — HiveIMR uses the UD-leaning paper/ink for
+   the clinical surface (clinicians read on white, like paper charts),
+   and overlays Hive gold #D4AF37 + Hive ink #0a0a0a in the shared
+   header/footer/install-hint surfaces so the cross-engine identity
+   stays consistent. CLAUDE.md §C3/§C4 codify the values; both palettes
+   exist together intentionally — UD for the medical-document surface,
+   Hive for the system chrome. */
+
 :root {
   --ink: #1e2d3d;
   --paper: #fafaf8;
@@ -8,6 +16,9 @@
   --gold: #c8960a;
   --border: #e0ddd6;
   --muted: #6b7280;
+  --hive-gold: #D4AF37;
+  --hive-ink: #0a0a0a;
+  --hive-paper: #f5f1e6;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

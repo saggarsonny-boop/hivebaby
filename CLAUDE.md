@@ -242,7 +242,7 @@ Status legend: **LIVE** (in production, listed) · **BUILDING** (in active dev) 
 | hive-memory-space | HiveMemorySpace | hivememoryspace.hive.baby | BUILDING | Next.js + Anthropic | medium_marginal | manual |
 | sovereign-arbitrage | SovereignArbitrage | sovereignarbitrage.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind | low_marginal | manual |
-| hivebaby/hive-imr | HiveIMR | hiveimr.hive.baby | LIVE | Next.js + Anthropic + Neon | medium_marginal | manual |
+| hivebaby/hive-imr | HiveIMR | hiveimr.hive.baby | LIVE | Next.js + Anthropic + Neon | medium_marginal | HiveOps **PASS** (canonical migration #122, 2026-05-08) |
 | hivebaby/imgtrainer | IMGTrainer | imgtrainer.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
 | hivebaby/apps/hive-plainscan | HivePlainScan | plainscan.hive.baby | BUILDING | Next.js + Anthropic | medium_marginal | grammar pending canonical migration |
 | hivebaby/apps/parkback | ParkBack | parkback.hive.baby | LIVE | Next.js (client-only PWA) | zero | HiveOps **pass with waivers** (V01/V18/V19 waived — see ENGINE_GRAMMAR.md) |

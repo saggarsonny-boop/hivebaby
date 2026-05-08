@@ -1,0 +1,26 @@
+{
+  "footer": {
+    "tagline": {
+      "line1": "No ads. No investors. No agenda.",
+      "line2": "Free at the base tier, forever."
+    },
+    "disclaimer": "This is not medical advice. Always consult a qualified clinician.",
+    "signature": {
+      "madeWith": "Made with",
+      "inThe": "in the",
+      "brand": "Hive"
+    }
+  },
+  "home": {
+    "install": {
+      "banner": {
+        "regionAria": "Add HiveIMR to your home screen",
+        "dismissAria": "Dismiss install hint",
+        "home": "Add HiveIMR to your home screen for one-tap access on shift. Free, no signup. Patient identifiers stay encrypted at rest; AI generations are auditable per session."
+      }
+    },
+    "firstVisit": {
+      "body": "Role-aware, AI-native medical records. Pick a role; HiveIMR shapes handoffs, summaries, and orders for the way you actually work."
+    }
+  }
+}
