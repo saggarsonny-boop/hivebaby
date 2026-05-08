@@ -62,3 +62,27 @@ export async function requireClerkUser(): Promise<ClerkUserSummary> {
   }
   return u;
 }
+
+// Throws 401 if not signed in, 404 if signed in but hap_users row not yet
+// created (user hasn't finished POST /api/users). Suspended users get a 403
+// so they see a distinct error from "no profile yet".
+export async function requireHapUser(): Promise<HapUserRow> {
+  const me = await getHapUser();
+  if (!me) {
+    const clerk = await getClerkUser();
+    if (!clerk) {
+      const err = new Error("UNAUTHENTICATED");
+      (err as Error & { status?: number }).status = 401;
+      throw err;
+    }
+    const err = new Error("HAP_PROFILE_REQUIRED");
+    (err as Error & { status?: number }).status = 404;
+    throw err;
+  }
+  if (me.is_suspended) {
+    const err = new Error("HAP_USER_SUSPENDED");
+    (err as Error & { status?: number }).status = 403;
+    throw err;
+  }
+  return me;
+}
