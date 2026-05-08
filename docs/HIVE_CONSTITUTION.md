@@ -490,7 +490,7 @@ All six were swept in the 2026-05-06 audit run. Audit reproduced via
 |---|---|---|---|---|---|---|
 | ParkBack | `parkback` | parkback.hive.baby | live | ✅ **PASS** | 48 / 0 / 0 / 6 / 3 | V01, V18, V19 waived; canonical migration PR #83 |
 | HiveActivityPartner | `hive-activity-partner` | activitypartner.hive.baby | building | ✅ **PASS** | 50 / 0 / 0 / 5 / 2 | V18, V19 waived (Phase-1 scaffold); PR #4979dfc |
-| HiveAestheticBestie | `hive-aestheticbestie` | hiveaestheticbestie.hive.baby | live | ⚠️ **WARN** | 30 / 22 / 0 / 5 / 0 | 22 warns expire 2026-06-05 — [hivebaby#93](https://github.com/saggarsonny-boop/hivebaby/issues/93), PR [#94](https://github.com/saggarsonny-boop/hivebaby/pull/94) |
+| HiveAestheticBestie | `hive-aestheticbestie` | hiveaestheticbestie.hive.baby | live | ✅ **PASS** | 52 / 0 / 0 / 5 / 0 | Canonical migration PR #119 (2026-05-08); [hivebaby#93](https://github.com/saggarsonny-boop/hivebaby/issues/93) closed |
 | HivePhoto | `hive-hivephoto` | hivephoto.hive.baby | live | ⚠️ **WARN** | 7 / 21 / 0 / 0 / 0 | Legacy `<GrapplerHook>` grammar — [hivebaby#95](https://github.com/saggarsonny-boop/hivebaby/issues/95), PR [#96](https://github.com/saggarsonny-boop/hivebaby/pull/96) |
 | HiveIMR | `hive-imr` | hiveimr.hive.baby | live | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#97](https://github.com/saggarsonny-boop/hivebaby/issues/97), PR [#98](https://github.com/saggarsonny-boop/hivebaby/pull/98) |
 | HivePlainScan | `hive-plainscan` | plainscan.hive.baby | building | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#101](https://github.com/saggarsonny-boop/hivebaby/issues/101), PR [#102](https://github.com/saggarsonny-boop/hivebaby/pull/102) |
@@ -523,12 +523,12 @@ the full ecosystem table.
 
 ### Sweep summary — 2026-05-06
 
-- **2 PASS** (parkback, hive-activity-partner)
-- **4 WARN** (hive-aestheticbestie, hive-hivephoto, hive-imr, hive-plainscan) — all warn-mode for 30 days, expire 2026-06-05
+- **3 PASS** (parkback, hive-activity-partner, hive-aestheticbestie ← migrated 2026-05-08 via PR #119)
+- **3 WARN** (hive-hivephoto, hive-imr, hive-plainscan) — all warn-mode for 30 days, expire 2026-06-05
 - **0 FAIL** (within hivebaby-tracked set)
 - **1 skipped** (imgtrainer — separate nested repo)
-- **5 PRs** merged: PRs #94, #96, #98, #102 (warn-mode remediation) + PR #103 (this constitution update)
-- **5 tracking issues** filed: #93, #95, #97, #99 (closed), #101
+- **6 PRs** merged: PRs #94, #96, #98, #102 (warn-mode remediation) + PR #103 (this constitution update) + PR #119 (aestheticbestie WARN→PASS)
+- **5 tracking issues** filed: #93 (closed via #119), #95, #97, #99 (closed), #101
 
 > **TODO:** generate this section programmatically from
 > `engines.json` + `tools/hive-ops/cli.ts <slug> --json` per engine.

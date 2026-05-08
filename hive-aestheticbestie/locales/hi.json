@@ -1,0 +1,26 @@
+{
+  "footer": {
+    "tagline": {
+      "line1": "No ads. No investors. No agenda.",
+      "line2": "Free at the base tier, forever."
+    },
+    "privacy": "Your selfie is processed in-memory and never stored. Aesthetic analysis runs locally where possible; AI analysis sends only the image bytes to Anthropic and is never logged.",
+    "signature": {
+      "madeWith": "Made with",
+      "inThe": "in the",
+      "brand": "Hive"
+    }
+  },
+  "home": {
+    "install": {
+      "banner": {
+        "regionAria": "Add HiveAestheticBestie to your home screen",
+        "dismissAria": "Dismiss install hint",
+        "home": "Add HiveAestheticBestie to your home screen for one-tap aesthetic check-ins. Free, no signup, your selfie never leaves your device unless you ask for AI analysis."
+      }
+    },
+    "firstVisit": {
+      "body": "Drop a selfie or a vibe in plain words. Get back a label, a palette, and an outfit cue — like a best friend who's always honest."
+    }
+  }
+}
