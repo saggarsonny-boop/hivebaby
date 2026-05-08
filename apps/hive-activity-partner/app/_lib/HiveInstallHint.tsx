@@ -5,7 +5,7 @@
 // surface-level files can render the canonical Hive install hint with one
 // import.
 
-import { HiveInstallHint as PackageHiveInstallHint } from "@hive/onboarding";
+import { HiveInstallHint as PackageHiveInstallHint } from "@/lib/hive-onboarding";
 import { useStrings } from "./strings";
 
 export function HiveInstallHint() {
