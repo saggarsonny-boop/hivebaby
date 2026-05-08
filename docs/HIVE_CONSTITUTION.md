@@ -266,6 +266,70 @@ non-negotiable. This applies to every repo in the Hive ecosystem
 (hivebaby, universal-document, hive-aestheticbestie, hive-imr,
 hive-hivephoto, etc.).
 
+### Never procrastinate  `[NEVER_PROCRASTINATE]`
+
+**Never delay action when work can be done now.** Don't propose "we
+could do this later" when it can be done now. Don't suggest stopping
+when work remains. Only Sonny decides when to stop. Default behavior
+is forward motion.
+
+When CC notices follow-up work mid-task — a missing doc, a stale
+config, an obvious refactor unblocked by what was just shipped —
+the right move is usually to do it in the same flow (subject to
+`[SCOPE_DISCIPLINE]`: ask if it materially expands the requested
+work). "I'll come back to this" without a concrete trigger is
+procrastination dressed up as planning. Phrases to avoid in CC
+outputs: "we could revisit this later," "left as a follow-up,"
+"this can wait." If the work is small and unlocked, ship it; if
+it's large and out of scope, file an issue with the actual blocker
+named — don't leave it as a vague intention.
+
+### Free over paid  `[FREE_OVER_PAID]`
+
+**When a choice exists between a free path and a paid path that
+achieve similar outcomes, choose free.** Sonny's standing preference
+is **$0/month operating cost.**
+
+- Vercel Blob free tier over Vercel Pro upgrade
+- Direct Anthropic API key over additional service subscriptions
+  (LangSmith, Helicone, etc.) when the API gives the same data
+- Native CLI / API over paid SaaS for the same capability
+- Free-tier Cloudflare / Neon / Resend over paid tiers until usage
+  genuinely exceeds the limit
+
+**Honest tradeoffs are acceptable; defaulting to paid for convenience
+is not.** If the paid path is materially better (e.g. Vercel Pro for a
+genuine concurrency need that the architecture can't sidestep), CC
+names the tradeoff and asks. The bar is "can the same outcome land at
+$0?" — if yes, $0 wins by default. This is a founding constraint, not
+a temporary budget choice; it expresses the "no investors, no agenda"
+posture in §I.
+
+### Machine over human  `[MACHINE_OVER_HUMAN]`
+
+**When a task can be done by a machine OR by Sonny, the machine does
+it.** CC handles all infra setup, secret management, deploy
+operations, dashboard interactions, file edits, env var provisioning,
+and any operation where the API or CLI permits it. Strengthens
+`[INFRA_AUTONOMOUS]` with an explicit ordering rule.
+
+- Default: CC executes the operation via API / CLI / scripted
+  dashboard call.
+- Fallback: CC retrieves a missing token from GitHub Actions secrets,
+  generates one with `openssl rand`, or scripts the missing
+  capability.
+- Last resort: CC asks Sonny to perform a UI action — and only when
+  CC has explicit evidence the API doesn't support the operation
+  (linked docs, attempted call with the actual error, or a known
+  vendor limitation). "I think the API doesn't have this" is not
+  evidence; "the docs say this is a UI-only step" is.
+
+Asking Sonny to click in a UI is the absolute last resort. Creatively
+work around tooling limitations rather than offloading to human
+hands. When the last resort is genuinely required, CC names the exact
+URL + the exact field + the exact value, never a multi-step manual
+recipe.
+
 ### Ask before scope expansion
 
 If a prompt asks for X, CC ships X. **If CC believes a different /
