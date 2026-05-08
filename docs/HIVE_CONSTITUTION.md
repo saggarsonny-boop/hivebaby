@@ -557,7 +557,7 @@ All six were swept in the 2026-05-06 audit run. Audit reproduced via
 | HiveAestheticBestie | `hive-aestheticbestie` | hiveaestheticbestie.hive.baby | live | ✅ **PASS** | 52 / 0 / 0 / 5 / 0 | Canonical migration PR #119 (2026-05-08); [hivebaby#93](https://github.com/saggarsonny-boop/hivebaby/issues/93) closed |
 | HivePhoto | `hive-hivephoto` | hivephoto.hive.baby | live | ✅ **PASS** | 53 / 0 / 0 / 4 / 0 | Canonical migration PR #125 (2026-05-08); [hivebaby#95](https://github.com/saggarsonny-boop/hivebaby/issues/95) closed |
 | HiveIMR | `hive-imr` | hiveimr.hive.baby | live | ✅ **PASS** | 52 / 0 / 0 / 5 / 0 | Canonical migration PR #122 (2026-05-08); [hivebaby#97](https://github.com/saggarsonny-boop/hivebaby/issues/97) closed |
-| HivePlainScan | `hive-plainscan` | plainscan.hive.baby | building | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | Legacy grammar — [hivebaby#101](https://github.com/saggarsonny-boop/hivebaby/issues/101), PR [#102](https://github.com/saggarsonny-boop/hivebaby/pull/102) |
+| HivePlainScan | `hive-plainscan` | plainscan.hive.baby | dormant | ⚠️ **WARN** | 6 / 22 / 0 / 0 / 0 | **Dormant (deployed but unreachable).** Vercel project alive but `plainscan.hive.baby` has no DNS record; no users, no demand signal in 11 days. Migration deferred until DNS is wired and there's a reason to ship. WARN overrides expire 2026-06-05 naturally. Tracking: [hivebaby#101](https://github.com/saggarsonny-boop/hivebaby/issues/101), DNS-or-retire decision: [hivebaby#127](https://github.com/saggarsonny-boop/hivebaby/issues/127). |
 
 **Warn-mode rule**: every warn entry expires **2026-06-05** (30 days
 from the audit run). Engines that don't ship the canonical migration
@@ -588,7 +588,8 @@ the full ecosystem table.
 ### Sweep summary — 2026-05-06
 
 - **5 PASS** (parkback, hive-activity-partner, hive-aestheticbestie, hive-imr, hive-hivephoto ← migrated 2026-05-08 via PR #125)
-- **1 WARN** (hive-plainscan) — warn-mode for 30 days, expires 2026-06-05
+- **0 WARN** (hive-hivephoto cleared via PR #125)
+- **1 DORMANT** (hive-plainscan) — deployed, no DNS, no users, no demand signal; migration deferred. WARN overrides expire 2026-06-05 naturally; either DNS is wired before then or the engine is formally retired (see [hivebaby#127](https://github.com/saggarsonny-boop/hivebaby/issues/127))
 - **0 FAIL** (within hivebaby-tracked set)
 - **1 skipped** (imgtrainer — separate nested repo)
 - **6 PRs** merged: PRs #94, #96, #98, #102 (warn-mode remediation) + PR #103 (this constitution update) + PR #119 (aestheticbestie WARN→PASS)
