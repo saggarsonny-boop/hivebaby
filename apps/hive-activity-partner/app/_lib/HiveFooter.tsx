@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useStrings } from "./strings";
+import { useStrings } from "./useStrings";
 
 const GOLD = "#D4AF37";
 const GOLD_DIM = "#8a6f1f";

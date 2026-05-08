@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AGE_BANDS, type AgeBand } from "@/lib/profile";
-import { useStrings } from "../_lib/strings";
+import { useStrings } from "../_lib/useStrings";
 
 const GOLD = "#D4AF37";
 const PAPER = "#f5f1e6";
