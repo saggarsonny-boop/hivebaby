@@ -5,7 +5,7 @@
 // so the home page imports a single component with no per-engine config.
 
 import { HiveFirstVisitExplainer as PackageHiveFirstVisitExplainer } from "@/lib/hive-onboarding";
-import { useStrings } from "./strings";
+import { useStrings } from "./useStrings";
 
 export function HiveFirstVisitExplainer() {
   const s = useStrings();

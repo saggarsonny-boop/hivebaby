@@ -6,7 +6,7 @@
 // import.
 
 import { HiveInstallHint as PackageHiveInstallHint } from "@/lib/hive-onboarding";
-import { useStrings } from "./strings";
+import { useStrings } from "./useStrings";
 
 export function HiveInstallHint() {
   const s = useStrings();
