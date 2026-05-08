@@ -6,12 +6,25 @@
 // Validates against hap_activity_taxonomy (must be active and not pending).
 // Idempotent on (user_id, activity_id) thanks to the partial unique index;
 // re-adding a previously-deactivated row reactivates it.
+//
+// Phase 2 safety layer (this file):
+//   - Tier-based active-activity cap (free 10 / plus 50 / pro 200; operator
+//     bypass) — checked BEFORE the insert, returns 429.
+//   - On successful add, +1 trust_score (capped at 200) via lib/safety/trust.
+//   - Operator bypass logs to hap_operator_audit per Constitution §V.
+//   - Response sanitized via stripForbidden + assertNoExactLocation defense.
 
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireHapUser } from "@/lib/auth";
 import { stripForbidden } from "@/lib/profile";
 import { validateUserActivity } from "@/lib/validation/activity";
+import { getUserTier } from "@/lib/safety/tier";
+import { checkActiveActivityCap } from "@/lib/rate-limit/activities";
+import { awardActivityAdded } from "@/lib/safety/trust";
+import { assertNoExactLocation } from "@/lib/safety/location";
+import { detectOperator, newRequestId } from "@/lib/operator-auth";
+import { auditOperatorAction } from "@/lib/db-operator";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +70,7 @@ export async function GET() {
     ORDER BY ua.created_at DESC
   `) as ListRow[];
 
-  return NextResponse.json({
+  const payload = {
     activities: rows.map((r) =>
       stripForbidden({
         id: r.id,
@@ -73,7 +86,9 @@ export async function GET() {
         createdAt: r.created_at,
       }),
     ),
-  });
+  };
+  assertNoExactLocation(payload, "GET /api/users/me/activities");
+  return NextResponse.json(payload);
 }
 
 export async function POST(req: Request) {
@@ -85,6 +100,9 @@ export async function POST(req: Request) {
     if (r) return r;
     throw e;
   }
+
+  const operator = await detectOperator(req);
+  const tier = await getUserTier(me.id);
 
   let body: unknown;
   try {
@@ -116,14 +134,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "ACTIVITY_NOT_AVAILABLE" }, { status: 409 });
   }
 
-  // If the user previously deactivated this same activity, reactivate that row
-  // so we don't accumulate dead rows. Otherwise insert a fresh row.
+  // Tier cap — only counts when this would be a NEW active row, not a
+  // reactivation of an existing (user_id, activity_id) pairing.
   const existing = (await sql`
-    SELECT id FROM hap_user_activities
+    SELECT id, is_active FROM hap_user_activities
     WHERE user_id = ${me.id} AND activity_id = ${v.activityId}
     ORDER BY created_at DESC
     LIMIT 1
-  `) as Array<{ id: string }>;
+  `) as Array<{ id: string; is_active: boolean }>;
+  const wouldIncrementCount = existing.length === 0 || !existing[0].is_active;
+
+  if (wouldIncrementCount) {
+    const cap = await checkActiveActivityCap({
+      userId: me.id,
+      tier,
+      isOperator: Boolean(operator),
+    });
+    if (!cap.ok) {
+      return NextResponse.json(
+        {
+          error: "RATE_LIMITED",
+          reason: cap.reason,
+          tier,
+          cap: cap.cap,
+        },
+        { status: 429 },
+      );
+    }
+  }
 
   let rowId: string;
   if (existing.length > 0) {
@@ -152,5 +190,24 @@ export async function POST(req: Request) {
     rowId = inserted[0].id;
   }
 
-  return NextResponse.json({ id: rowId }, { status: 201 });
+  // Trust reward only fires when this was an actual count increment, not a
+  // no-op reactivation/edit of an already-active row.
+  let newTrustScore: number | null = null;
+  if (wouldIncrementCount) {
+    newTrustScore = await awardActivityAdded(me.id);
+  }
+
+  if (operator) {
+    const requestId = newRequestId();
+    await auditOperatorAction({
+      identity: operator,
+      action: "user_activities.add",
+      targetId: rowId,
+      targetType: "hap_user_activities",
+      requestId,
+      metadata: { activityId: v.activityId, tier },
+    });
+  }
+
+  return NextResponse.json({ id: rowId, trustScore: newTrustScore }, { status: 201 });
 }
