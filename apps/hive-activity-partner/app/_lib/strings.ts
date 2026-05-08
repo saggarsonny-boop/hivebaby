@@ -1,3 +1,5 @@
+"use client";
+
 // Localized strings catalog for HiveActivityPartner.
 // English is the source of truth; all other locales must mirror its shape.
 // Canonical Hive free-tier locale set: en, es, fr, ar, hi, zh, pt.
