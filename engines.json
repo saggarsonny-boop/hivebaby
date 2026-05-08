@@ -18,6 +18,14 @@
       "description": "Find someone to do the thing with",
       "status": "building",
       "category": "social"
+    },
+    {
+      "id": "hive-aestheticbestie",
+      "name": "HiveAestheticBestie",
+      "url": "https://hiveaestheticbestie.hive.baby",
+      "description": "Instant aesthetic label, palette, and vibe card",
+      "status": "live",
+      "category": "identity"
     }
   ]
 }

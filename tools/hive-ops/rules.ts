@@ -405,12 +405,17 @@ const H21_planetEntry: RuleDefinition = {
   severity: "MANDATORY",
   async check(ctx) {
     // The hivebaby front door's ENGINES array lives in public/index.html
-    // (or public/lcars-data.js depending on layout). We look two levels up
-    // from the engine root for hivebaby/public.
+    // (or public/lcars-data.js depending on layout). For engines under
+    // apps/<slug>/ we look two levels up to repo root; for top-level
+    // engines (repo/<slug>/, e.g. hive-aestheticbestie, hive-imr) we look
+    // one level up. Both are valid layouts per CLAUDE.md §C10.
     const planetCandidates = [
       join(ctx.engineRoot, "..", "..", "public", "index.html"),
       join(ctx.engineRoot, "..", "..", "public", "engines.json"),
       join(ctx.engineRoot, "..", "..", "engines.json"),
+      join(ctx.engineRoot, "..", "public", "index.html"),
+      join(ctx.engineRoot, "..", "public", "engines.json"),
+      join(ctx.engineRoot, "..", "engines.json"),
     ];
     for (const p of planetCandidates) {
       const text = readIfExists(p);
