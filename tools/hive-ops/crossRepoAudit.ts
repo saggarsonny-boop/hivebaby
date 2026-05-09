@@ -37,6 +37,14 @@ interface ExternalEngine {
   default_branch: string;
   subdir_pattern: "monorepo" | "root";
   domain?: string;
+  /** When true, clone via SSH using the deploy key in `deploy_key_secret`.
+   *  Required for private repos because GITHUB_TOKEN can only read the
+   *  workflow's own repo. See CLAUDE.md §E12 [DEPLOY_KEYS_HIVEOPS]. */
+  private?: boolean;
+  /** Name of the env-var-style secret holding the per-repo deploy key
+   *  private contents (multi-line PEM). Workflow yaml maps each
+   *  ${{ secrets.X }} into a process.env entry of the same name. */
+  deploy_key_secret?: string;
 }
 
 interface ExternalRegistry {
@@ -96,24 +104,64 @@ function loadRegistry(path: string): ExternalRegistry {
 }
 
 /** Fresh clone of repo into `<cloneDir>/<repo-basename>`. Replaces any
- *  existing clone at that path. Token preference order:
- *    1. HIVEOPS_CROSS_REPO_TOKEN — fine-grained PAT scoped to read every
- *       saggarsonny-boop engine repo (public + private). Set as a
- *       hivebaby Actions secret; rotates yearly per CLAUDE.md §E.
- *    2. GITHUB_TOKEN  — workflow's auto-provided token. Reads public
- *       repos only; private engine repos surface as ERROR rows (graceful
- *       degradation, not a tooling failure).
- *    3. GH_TOKEN      — local-dev fallback (operator's gh CLI auth).
- *  Anonymous HTTPS only on public repos with no token at all. */
+ *  existing clone at that path. Two paths:
+ *
+ *  PRIVATE repo (engine.private === true): clone via SSH using the
+ *  per-repo deploy key whose name lives in engine.deploy_key_secret.
+ *  Workflow yaml maps `secrets.<name>` into the env of the same name;
+ *  we read it, write to a 0600-mode keyfile under `<cloneDir>/.ssh/`,
+ *  and pass it via core.sshCommand. Keys are read-only and scoped to
+ *  one repo each — see CLAUDE.md §E12 [DEPLOY_KEYS_HIVEOPS] for the
+ *  full provisioning + rotation protocol.
+ *
+ *  PUBLIC repo: clone via HTTPS. GITHUB_TOKEN (workflow auto-token) or
+ *  GH_TOKEN (local-dev gh CLI auth) embed in the URL when present;
+ *  anonymous HTTPS otherwise. */
 function cloneRepo(engine: ExternalEngine, cloneDir: string): string {
   const repoBasename = engine.repo.split("/").pop()!;
   const dest = join(cloneDir, repoBasename);
   if (existsSync(dest)) rmSync(dest, { recursive: true, force: true });
   mkdirSync(cloneDir, { recursive: true });
-  const token =
-    process.env.HIVEOPS_CROSS_REPO_TOKEN ??
-    process.env.GITHUB_TOKEN ??
-    process.env.GH_TOKEN;
+
+  if (engine.private) {
+    if (!engine.deploy_key_secret) {
+      throw new Error(
+        `engine ${engine.slug} marked private but no deploy_key_secret set in registry`,
+      );
+    }
+    const keyValue = process.env[engine.deploy_key_secret];
+    if (!keyValue) {
+      throw new Error(
+        `private engine ${engine.slug}: env ${engine.deploy_key_secret} is empty (set the hivebaby Actions secret per CLAUDE.md §E12)`,
+      );
+    }
+    const sshDir = join(cloneDir, ".ssh");
+    mkdirSync(sshDir, { recursive: true, mode: 0o700 });
+    const keyPath = join(sshDir, `${engine.slug}.key`);
+    // Ensure trailing newline — OpenSSH rejects keyfiles without it.
+    const keyBytes = keyValue.endsWith("\n") ? keyValue : keyValue + "\n";
+    writeFileSync(keyPath, keyBytes, { mode: 0o600 });
+    const sshCmd = `ssh -i ${keyPath} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null`;
+    execFileSync(
+      "git",
+      [
+        "-c",
+        `core.sshCommand=${sshCmd}`,
+        "clone",
+        "--depth",
+        "1",
+        "--branch",
+        engine.default_branch,
+        `git@github.com:${engine.repo}.git`,
+        dest,
+      ],
+      { stdio: ["ignore", "ignore", "inherit"] },
+    );
+    return dest;
+  }
+
+  // Public repo path
+  const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
   const url = token
     ? `https://x-access-token:${token}@github.com/${engine.repo}.git`
     : `https://github.com/${engine.repo}.git`;

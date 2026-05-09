@@ -410,27 +410,64 @@ Update at the same time you check checklist items:
 - `registry/billing-reconciliation.md` — monthly COGS estimate.
 - `docs/engine-archives/<engine-slug>/` — archived spec (`ENGINE_GRAMMAR.md`, `README.md`, `test-station-slot.md`).
 
-### E12. `HIVEOPS_CROSS_REPO_TOKEN` — annual rotation `[PAT_ROTATION_HIVEOPS]`
+### E12. Per-repo deploy keys for cross-repo audit `[DEPLOY_KEYS_HIVEOPS]`
 
-The cross-repo daily sweep + per-PR audit guardrail (`tools/hive-ops/crossRepoAudit.ts` + `.github/workflows/hive-ops-daily-sweep.yml`) clone external engine repos to run `runHiveOps()` against fresh checkouts. The default Actions `GITHUB_TOKEN` reads only public repos; **private engine repos (currently `saggarsonny-boop/hive-engine-builder`) surface as `🚧 ERROR` rows without a fine-grained PAT.**
+The cross-repo daily sweep + per-PR audit guardrail (`tools/hive-ops/crossRepoAudit.ts` + `.github/workflows/hive-ops-daily-sweep.yml`) clone external engine repos to run `runHiveOps()` against fresh checkouts. The default Actions `GITHUB_TOKEN` reads only public repos. **Private engine repos** are cloned via SSH using a **per-repo, read-only ed25519 deploy key**. One key per private repo, one Actions secret per private repo.
 
-The PAT lives in hivebaby Actions secrets as `HIVEOPS_CROSS_REPO_TOKEN`. Required attributes:
+The earlier PAT design ([PAT_ROTATION_HIVEOPS], briefly active 2026-05-09) was retired the same day in favor of deploy keys: a fine-grained PAT covers every repo with one credential (overscoped — write access to all of them via `repo` scope), and rotation requires a dashboard step (no `POST /user/personal-access-tokens` API). Deploy keys are per-repo, read-only, and provisioning is fully scriptable via `gh api`.
 
-- **Resource owner:** `saggarsonny-boop`
-- **Repository access:** All repositories
-- **Repository permissions:** Contents (Read), Metadata (Read), Pull requests (Read) — everything else **No access**.
-- **Expiration:** 1 year. Rotation date is recorded here on issue.
+**Provisioning a new private engine for cross-repo audit:**
 
-**Rotation: yearly.** GitHub doesn't support programmatic PAT minting (POST endpoints return 404 on user-self-creation as of January 2026), so rotation is the one HiveOps-pipeline operation that genuinely requires a dashboard step. When rotation is due:
+```bash
+SLUG=hive-engine-builder         # the engine slug used in external-engines.json
+REPO=saggarsonny-boop/$SLUG      # owner/name on GitHub
+SECRET=HIVEOPS_DEPLOY_KEY_HIVE_ENGINE_BUILDER   # canonical naming: HIVEOPS_DEPLOY_KEY_<UPPERSNAKE_SLUG>
 
-1. Open https://github.com/settings/personal-access-tokens/new with the attributes above.
-2. Paste the new token: `gh secret set HIVEOPS_CROSS_REPO_TOKEN --repo saggarsonny-boop/hivebaby --body "$NEW_VALUE"`.
-3. Trigger a manual dry-run sweep to confirm: `gh workflow run hive-ops-daily-sweep.yml -f dry_run=true`. The cross-repo step should report all engines (private included) with real verdicts, no `ERROR` rows.
-4. Update the rotation-due date here.
+# 1. Generate the ed25519 keypair locally.
+KEY_DIR=$(mktemp -d -t hiveops-deploy-key-XXXX)
+ssh-keygen -t ed25519 -N "" \
+  -C "$SECRET (saggarsonny-boop/hivebaby HiveOps cross-repo audit; ed25519; provisioned $(date -u +%Y-%m-%d))" \
+  -f "$KEY_DIR/id"
 
-**Current rotation due:** _2027-05-09_ (initial provision 2026-05-09).
+# 2. Register the public half on the engine repo as a READ-ONLY deploy key.
+gh api -X POST "repos/$REPO/keys" \
+  -f title="$SECRET" \
+  -f "key=$(cat $KEY_DIR/id.pub)" \
+  -F read_only=true
 
-The workflow gracefully degrades when the secret is unset or expired — public engines still audit; private engines just report `🚧 ERROR`. So rotation drift produces visible signal in the daily issue, not silent failure.
+# 3. Store the private half as a hivebaby Actions secret so the daily-sweep
+#    workflow can decrypt it at run time.
+gh secret set "$SECRET" --repo saggarsonny-boop/hivebaby --body-file "$KEY_DIR/id"
+
+# 4. Add the registry entry to tools/hive-ops/external-engines.json:
+#      { ..., "private": true, "deploy_key_secret": "HIVEOPS_DEPLOY_KEY_HIVE_ENGINE_BUILDER" }
+#    and append the same name to .github/workflows/hive-ops-daily-sweep.yml's
+#    `env:` block under the cross-repo step. (One line each, no schema gymnastics.)
+
+# 5. Wipe the local keypair — only the GitHub-side public + Actions-side
+#    private should persist.
+rm -rf "$KEY_DIR"
+
+# 6. Verify: trigger a manual dry-run sweep and confirm the engine reports
+#    a real verdict, not 🚧 ERROR.
+gh workflow run hive-ops-daily-sweep.yml --repo saggarsonny-boop/hivebaby -f dry_run=true
+```
+
+**Rotation: yearly.** Deploy keys don't expire on GitHub's side, so rotation is enforced by convention here, not by the platform. When rotation is due:
+
+1. Repeat steps 1–3 above with the same secret name. The new public half overwrites the old deploy key on the repo (or — to be safer — add the new key first, verify, then `gh api -X DELETE repos/$REPO/keys/<old-id>`).
+2. Trigger a manual dry-run sweep; confirm no auth errors.
+3. Update the rotation-due date in the per-key inventory below.
+
+**Per-key inventory.** One row per provisioned deploy key. Update on rotation.
+
+| Engine slug | Repo | Secret name | Deploy key id | Provisioned | Rotation due |
+|---|---|---|---|---|---|
+| `hive-engine-builder` | `saggarsonny-boop/hive-engine-builder` | `HIVEOPS_DEPLOY_KEY_HIVE_ENGINE_BUILDER` | 150940422 | 2026-05-09 | 2027-05-09 |
+
+**Audit graceful degradation:** when a private engine's deploy-key secret is missing or invalid, the engine surfaces as a 🚧 ERROR row in the daily issue with the actual git error — not silent failure. The other engines (public + correctly-keyed private) still audit cleanly in the same run.
+
+**Why one secret per repo and not a bundle?** GitHub Actions doesn't support runtime secret name lookup; every secret an `env:` block needs must be enumerated literally at YAML-author time. Per-repo names give us least-privilege blast radius (a leaked secret reads ONE repo, not the whole audit set), keep CLAUDE.md inventory honest (the table above ≡ the workflow `env:` block ≡ the registry entries), and require only adding one line to each of three places when a new private repo onboards.
 
 ---
 
