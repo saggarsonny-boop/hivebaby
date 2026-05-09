@@ -5,7 +5,7 @@
 > operational mirror — runtime-actionable subset only. **Read this for
 > the *why*; read CLAUDE.md for the *what to do right now*.**
 >
-> Update mechanism is in §VIII. Don't edit CLAUDE.md without
+> Update mechanism is in §IX. Don't edit CLAUDE.md without
 > reflecting the change here first.
 
 ---
@@ -195,7 +195,7 @@ Hive deliberately bypasses.
 - **No "coming soon" / "not yet" / "TODO" placeholders in production
   user-facing copy.** If a feature isn't ready, hide it entirely
   rather than advertise it as inactive (the bait-and-switch UX is
-  worse than absence — see UD Converter PR #11 lessons in §VII).
+  worse than absence — see UD Converter PR #11 lessons in §VIII).
 - **No third-party analytics** (Google Analytics, Hotjar, Segment,
   Mixpanel, etc.). Plausible (privacy-respecting, no cookies) is
   acceptable for engines that already have it; the existing
@@ -392,7 +392,7 @@ or correct.
 Android Chrome (or accurate device profiles in WebKit / Chromium
 headless).** Vercel CI green is **not sufficient.** Past iOS Safari
 regressions (PR #70 in ParkBack — render-only-the-compass bug — see
-§VII) shipped past green CI because the production iOS render was
+§VIII) shipped past green CI because the production iOS render was
 never verified.
 
 The verification proof points are:
@@ -678,7 +678,80 @@ the full ecosystem table.
 
 ---
 
-## VII. Architecture Decisions and Lessons Learned
+## VII. Queen Bee Architecture  `[QUEEN_BEE_LOCATION]`
+
+Queen Bee is the runtime governance engine of the Hive ecosystem — the Master Grappler in production. This section is the canonical pointer for every CC session: before scaffolding safety, schema validation, language detection, or audit dashboards into a new engine, check what Queen Bee already provides and inherit from it instead of re-implementing.
+
+### Where Queen Bee lives
+
+- **Repo:** `saggarsonny-boop/queen-bee` — `https://github.com/saggarsonny-boop/queen-bee`
+- **Vercel deployment:** `queen-bee-v1.vercel.app` (live, HTTP/2 200)
+- **Public domain:** `queenbee.hive.baby` (DNS wired; CNAME to Vercel)
+- **Stack:** Next.js 16.2.4 + React 19.2.4 + TypeScript + Anthropic SDK
+- **Status (per its `ENGINE_GRAMMAR.md`):** Building, governance engine in progress
+- **CLAUDE.md in the queen-bee repo:** points to `AGENTS.md` (which contains generic Next.js notes, not QB-specific guidance) — when working in queen-bee, read this Constitution section first.
+
+### What's actually built
+
+Confirmed by reading the queen-bee repo on 2026-05-08:
+
+| Component | File | Status |
+|---|---|---|
+| Master Grappler | `lib/grappler.ts` | Implemented. Schema field validation, safety check, language detection (zh/ar/ja/ru/en heuristic), QB envelope stamping with version `0.2.0`. |
+| Engine registry | `lib/registry.ts` | 14 engines registered with `id, name, domain, status, tone, safety, schema, multilingual, description`. |
+| Safety enforcement | `lib/safety.ts` | Tiered rules: universal blocks (suicide/self-harm, weapons synthesis, CSAM); standard blocks; medical-flag patterns; elevated-flag patterns; per-tier disclaimer requirements. |
+| Output schemas | `lib/schemas.ts` | Required-field map for 15 schema types (`time-response`, `clarity-response`, `scenario-response`, `coaching-response`, `health-log-response`, `governance-response`, `moon-response`, `lookup-response`, `builder-response`, `conversion-response`, `reader-response`, `creator-response`, `validator-response`, `secret-response`, `generic`). |
+| Public API | `app/api/` | `POST /api/govern` (validate + stamp), `GET /api/registry`, `GET /api/audit` (dashboard data), `GET /api/health` (live engine reachability). |
+| Audit dashboard | `app/page.tsx` | Live UI at `queen-bee-v1.vercel.app` rendering reachability + governed-flag for every registered engine. |
+| Onboarding stack | `components/{AutoDemo,FirstVisitCard,TooltipTour}.tsx` | Implemented. |
+
+### How engines inherit from Queen Bee
+
+The mechanism is **HTTP, not a package**. An engine inherits by:
+
+1. **Registering in `queen-bee/lib/registry.ts`** with `{id, name, domain, status, tone, safety, schema, multilingual, description}`. The engine's slug becomes the `engineId` it sends to the Grappler.
+2. **Calling `POST https://queenbee.hive.baby/api/govern`** with `{engineId, input, content}` before returning each output. QB returns either a stamped envelope (`200`) or a failure report with errors (`422`).
+3. **Returning the envelope** to the client unchanged — it carries `safe`, `governed`, `language`, `flags`, `version`, `timestamp` fields the client surface can render.
+
+There is no shared library yet — engines that adopt this call the HTTP endpoint directly. This keeps QB out of every engine's bundle but means each engine has to wire its own fetch call and handle QB unavailability. A future `@hive/grappler-client` package becomes plausible once two or more engines are calling `/api/govern` in production.
+
+### Adoption status — honest gap report
+
+As of 2026-05-08, **no Hive engine in this monorepo or in any standalone engine repo actually calls `/api/govern` in production**. Verified by `grep -r "queenbee\.|api/govern|queen-bee-v1" --include="*.ts" --include="*.tsx"` across `hivebaby/apps/`, `hivebaby/packages/`, `universal-document/apps/`, and the standalone engine repos. Queen Bee is deployed and ready, but engines still embed their own safety/schema logic.
+
+The 14 engines listed in `queen-bee/lib/registry.ts` are *registered* (so QB knows about them and can audit their reachability), not *governed* (they don't route their outputs through QB). This is visible in the live audit feed at `queen-bee-v1.vercel.app/api/health`: `governed: true` is the dashboard's reachability check, not proof that the engine called QB.
+
+### Things described elsewhere that don't exist yet
+
+When earlier conversations or notes reference these, treat them as aspirational pending evidence to the contrary:
+
+- **"27 adoption amplifiers"** — no canonical list of 27 amplifiers exists in any repo. The closest match is HiveOps' `ADOPTION_AMPLIFIERS` H-rule category, which currently has two rules (H24, H25 — manifest registration in layout + viewport meta). When a future PR introduces a true list of amplifiers, link it from this section.
+- **"Hive Core" / "Foundry" / "Factory"** — no code, no docs, no anchors anywhere in `hivebaby`, `queen-bee`, `universal-document`, or any engine repo on 2026-05-08. If these were ever shipped, they've since been deleted or renamed; the runtime governance work that those names were probably reaching for is the Master Grappler in the queen-bee repo.
+
+### Relationship to §V "Queen Bee Substrate Registry" `[QUEEN_BEE_SUBSTRATES]`
+
+The Substrate Registry (§V) and the Queen Bee Engine (this section) are **distinct artefacts that share a name**.
+
+- The Substrate Registry is a markdown ledger at `docs/QUEEN_BEE_SUBSTRATES.md` listing 13 reusable code patterns (operator auth, audit dashboard, strings/useStrings split, …) with extraction thresholds. Engines copy patterns *out* of the registry into their own codebases.
+- The Queen Bee Engine is a deployed runtime service at `queenbee.hive.baby` that engines *call into* via `/api/govern`. Engines do not copy QB into themselves.
+
+A pattern in the Substrate Registry can move toward "consumed via QB" rather than "extracted to a package" — for example, the safety-disclaimer pattern is already enforced inside QB's `lib/safety.ts`. Patterns that are ergonomically embedded (strings/useStrings split, operator cookie) will probably stay package-bound; patterns that are ergonomically remote (safety classification, schema validation, language detection) belong in QB.
+
+### When CC works on a Hive engine, the inheritance check
+
+Before scaffolding any of the following into a new engine, check whether QB already provides it:
+
+- Output schema validation (QB has 15 schema types in `lib/schemas.ts`)
+- Safety enforcement (QB has tiered rules in `lib/safety.ts`)
+- Language detection (QB has a Unicode-range heuristic in `lib/grappler.ts`)
+- Compliance audit dashboard for the engine fleet (QB has `/api/audit` and the live page at `queen-bee-v1.vercel.app`)
+- Cross-engine reachability monitoring (QB has `/api/health`)
+
+If QB already has it, add the engine to `queen-bee/lib/registry.ts` and call `/api/govern` instead of re-implementing. If QB doesn't have it, document the gap in this section before building locally — the next engine will face the same question.
+
+---
+
+## VIII. Architecture Decisions and Lessons Learned
 
 This section grows over time and is **never pruned**. Each entry is a
 single paragraph: the incident or insight that motivated a rule.
@@ -816,7 +889,7 @@ classes is a deliberate decision (today: `nextjs`, `static-html`,
 
 ---
 
-## VIII. Update Mechanism  `[GOVERNANCE_LOCATION]`
+## IX. Update Mechanism  `[GOVERNANCE_LOCATION]`
 
 - **Constitution updates require a PR** with the constitution diff.
   No direct-to-main, no exceptions, including for typo fixes.
@@ -832,7 +905,7 @@ classes is a deliberate decision (today: `nextjs`, `static-html`,
   corresponding rule definition in `tools/hive-ops/rules.ts` (H-rules)
   or `tools/hive-finalize/validate.ts` (V-rules). The PR description
   lists which rule was added and why.
-- **Lessons Learned (§VII) grows over time; never prune.** A lesson
+- **Lessons Learned (§VIII) grows over time; never prune.** A lesson
   may be marked superseded with a one-line note explaining what
   replaced it, but the historical incident stays. The point is to
   preserve institutional memory of the *why*, not to keep the

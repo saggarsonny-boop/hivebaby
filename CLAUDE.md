@@ -94,6 +94,9 @@ Sonny's standing preference is **$0/month operating cost**. When a free path and
 ### B17. Machine over human `[MACHINE_OVER_HUMAN]`
 When a task can be done by machine OR by Sonny, the machine does it. Strengthens B12 with an explicit ordering: (1) default — CC executes via API / CLI / scripted dashboard call; (2) fallback — CC retrieves missing tokens from GH Actions secrets, generates one with `openssl rand`, or scripts the missing capability; (3) last resort — CC asks Sonny to perform a UI action ONLY when CC has explicit evidence the API doesn't support the operation (linked docs, attempted call with actual error, known vendor limitation). "I think the API doesn't have this" is not evidence. Creatively work around tooling limitations rather than offload to human hands. When a UI step is genuinely required, name the exact URL + exact field + exact value. See [Constitution §IV "Machine over human"](docs/HIVE_CONSTITUTION.md#machine-over-human).
 
+### B18. Before any engine work, check Queen Bee architecture `[QUEEN_BEE_LOCATION]`
+Before scaffolding safety enforcement, output schema validation, language detection, compliance audits, or cross-engine reachability monitoring into any engine, read [Constitution §VII "Queen Bee Architecture"](docs/HIVE_CONSTITUTION.md#vii-queen-bee-architecture--queen_bee_location). The Queen Bee runtime governance engine at `https://github.com/saggarsonny-boop/queen-bee` (deployed at `queenbee.hive.baby`) already provides these via `POST /api/govern`, and engines should inherit by registering in `queen-bee/lib/registry.ts` rather than duplicating QB's functionality. Honest gap: no engine actually calls QB yet — the inheritance pattern is established in code but not in production, so the first engine to wire it is also documenting the wiring pattern for the next.
+
 ---
 
 ## C. ENGINEERING STANDARDS
@@ -219,7 +222,7 @@ Engine-specific Stripe price IDs follow `STRIPE_PRICE_<TIER>_<INTERVAL>` (e.g. `
 Every engine declares `cost_profile` in its frontmatter under one of `zero_marginal | low_marginal | medium_marginal | high_marginal`. The profile drives the free-tier rules in §A. HiveOps will eventually enforce that the declared profile matches the engine's actual rate-limit implementation (v0.3 candidate, see [Constitution §III](docs/HIVE_CONSTITUTION.md#iii-pricing-and-cost-profiles)).
 
 ### C15. Production copy hygiene
-- **No "coming soon" / "not yet" / "TODO"** placeholders in production user-facing copy. Hide absent features rather than advertise them as inactive (the bait-and-switch UX is worse than absence — see [Constitution §VII](docs/HIVE_CONSTITUTION.md#coming-soon-labels-in-production--bait-and-switch-ux) on UD Converter PR #11). v0.3 of HiveOps will grep `app/**/*.tsx` for these tokens and fail.
+- **No "coming soon" / "not yet" / "TODO"** placeholders in production user-facing copy. Hide absent features rather than advertise them as inactive (the bait-and-switch UX is worse than absence — see [Constitution §VIII](docs/HIVE_CONSTITUTION.md#coming-soon-labels-in-production--bait-and-switch-ux) on UD Converter PR #11). v0.3 of HiveOps will grep `app/**/*.tsx` for these tokens and fail.
 - **No third-party analytics** (GA, Hotjar, Segment, Mixpanel). Plausible cloud / Umami self-hosted / homemade Neon counter only.
 - **Cite real sources visibly** when displaying third-party data; never fabricate.
 
