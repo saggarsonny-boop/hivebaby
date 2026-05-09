@@ -1,0 +1,138 @@
+name: HivePlainScan paywall — preflight
+
+# One-shot diagnostic for the Phase 1 paywall provisioning. Runs strictly
+# read-only Stripe + Postgres checks and prints results to the step
+# summary so the operator can confirm:
+#   - STRIPE_KEY is in test mode (sk_test_*) before any product writes
+#   - DATABASE_URL targets the expected database
+#   - No prior HivePlainscan products / hps_* tables exist (else the
+#     provisioning workflow would create duplicates)
+#
+# Emits the secret prefix only — never the full key value. The full key
+# never leaves the runner; only `sk_test_********` (8-char prefix +
+# masked tail) reaches the logs.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inspect STRIPE_KEY mode
+        env:
+          STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STRIPE_KEY:-}" ]; then
+            {
+              echo "## Stripe key"
+              echo ""
+              echo "❌ \`STRIPE_KEY\` secret is **unset**. Operator must add a test-mode key (sk_test_*) before paywall provisioning."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          PREFIX="${STRIPE_KEY:0:8}"
+          if [[ "$PREFIX" == "sk_test_" ]]; then
+            MODE="✅ TEST"
+          elif [[ "$PREFIX" == "sk_live_" ]]; then
+            MODE="❌ LIVE — STOP"
+          else
+            MODE="⚠️ UNKNOWN ($PREFIX...)"
+          fi
+          {
+            echo "## Stripe key"
+            echo ""
+            echo "Prefix: \`${PREFIX}…\`  →  $MODE"
+            echo ""
+            if [[ "$PREFIX" == "sk_live_" ]]; then
+              echo "**The key is a live-mode key.** Provisioning workflow MUST NOT run against this. Operator: add \`STRIPE_KEY_TEST\` (sk_test_*) as a hivebaby Actions secret before re-running."
+            elif [[ "$PREFIX" == "sk_test_" ]]; then
+              echo "Test-mode key confirmed; provisioning workflow may proceed against it."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Inspect existing Stripe products (hivebaby footprint)
+        env:
+          STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STRIPE_KEY:-}" ]; then exit 0; fi
+          # Cheap, read-only call. Filter to anything mentioning HivePlainscan.
+          RES=$(curl -sS -u "${STRIPE_KEY}:" \
+            "https://api.stripe.com/v1/products?limit=100&active=true" \
+            | jq -r '.data[] | select(.name | test("plainscan|PlainScan|plainScan"; "i")) | "  - id=\(.id)  name=\(.name)  active=\(.active)"' || echo "  (jq parse failed — Stripe call may have failed)")
+          {
+            echo ""
+            echo "## Existing Stripe products matching /plainscan/i (active)"
+            echo ""
+            if [ -z "$RES" ]; then
+              echo "_None._ Provisioning will create fresh products."
+            else
+              echo '```'
+              echo "$RES"
+              echo '```'
+              echo ""
+              echo "**Provisioning workflow should reuse these IDs (idempotent) instead of creating duplicates.**"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install psql
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Inspect DATABASE_URL target
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            {
+              echo ""
+              echo "## DATABASE_URL"
+              echo ""
+              echo "❌ \`DATABASE_URL\` secret is **unset**."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # Identity query — run with --tuples-only --no-align to make
+          # parsing trivial. Errors out non-fatally so we still surface
+          # *something* on failure.
+          ID=$(psql "$DATABASE_URL" -tA -v ON_ERROR_STOP=1 \
+            -c "SELECT current_database() || '|' || current_user || '|' || version();" 2>&1 || echo "QUERY_FAILED|$?|$(echo "$DATABASE_URL" | sed -E 's|://[^@]+@|://***@|')")
+          DB=$(echo "$ID" | cut -d'|' -f1)
+          USR=$(echo "$ID" | cut -d'|' -f2)
+          VER=$(echo "$ID" | cut -d'|' -f3)
+          # Existing hps_* / hap_* / hive_* tables — surfaces whether we
+          # share the DB with HAP or other engines, and whether the
+          # paywall migration would clash with anything pre-existing.
+          TABLES=$(psql "$DATABASE_URL" -tA \
+            -c "SELECT table_schema || '.' || table_name FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog','information_schema') AND (table_name LIKE 'hps_%' OR table_name LIKE 'hap_%' OR table_name LIKE 'hive_%') ORDER BY 1;" 2>&1 || echo "(query failed)")
+          {
+            echo ""
+            echo "## DATABASE_URL target"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| current_database() | \`${DB}\` |"
+            echo "| current_user | \`${USR}\` |"
+            echo "| server version | \`${VER:0:80}\` |"
+            echo ""
+            echo "### Existing hps_* / hap_* / hive_* tables"
+            echo ""
+            if [ -z "$TABLES" ] || [ "$TABLES" = "(query failed)" ]; then
+              echo "_None._  Paywall migration \`002_paywall.sql\` will create the \`hps_*\` set fresh."
+            else
+              echo '```'
+              echo "$TABLES"
+              echo '```'
+              echo ""
+              echo "If \`hps_*\` rows already exist, provisioning is idempotent (CREATE TABLE IF NOT EXISTS) — safe to re-run."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
