@@ -1,6 +1,10 @@
-name: HiveOps — daily warn-mode sweep
+name: HiveOps — daily warn-mode sweep + cross-repo audit
 
-# Daily auto-flip of expired warn-mode overrides to enforce.
+# Daily auto-flip of expired warn-mode overrides to enforce, plus a
+# cross-repo audit pass that exercises external Hive engine repos
+# (UD Converter, HiveEngineBuilder, HiveAdminSupport, …) so verdict
+# regressions are detected daily — not weeks after the fact when
+# someone runs an audit by hand.
 #
 # What it does:
 #   1. Scans every apps/<engine>/ENGINE_GRAMMAR.md for ## Hive-Ops
@@ -9,22 +13,32 @@ name: HiveOps — daily warn-mode sweep
 #      default enforce — exactly the behavior the runner's
 #      applyOverride() in runner.ts already triggers when warn_until
 #      lapses; the sweep just makes the file reflect that state).
-#   3. Writes one row per flip + one per imminent expiry + one summary
-#      to the hive_alerts table.
-#   4. Commits any manifest mutations directly to main (the sweep IS
+#   3. Runs cross-repo audit (tools/hive-ops/crossRepoAudit.ts) over
+#      every engine listed in tools/hive-ops/external-engines.json,
+#      cloning each repo fresh, running the SAME runHiveOps() the in-
+#      tree sweep uses, and aggregating verdicts into the daily report.
+#      tier-2 hive_alerts inserted on FAIL.
+#   4. Writes one hive_alerts row per flip + one per imminent expiry +
+#      one summary row + one per cross-repo FAIL.
+#   5. Commits any manifest mutations directly to main (the sweep IS
 #      the authoritative actor; a PR per day would be noise) and opens
 #      or updates today's "HiveOps Daily Sweep Report YYYY-MM-DD"
-#      issue with the full audit trail.
+#      issue with the full audit trail (in-tree + cross-repo sections).
 #
 # Permissions:
 #   contents: write       — to commit ENGINE_GRAMMAR.md mutations
 #   issues:   write       — to open / update the daily status issue
 #   pull-requests: write  — reserved; not used today (commits go direct)
 #
-# Secrets:
+# Secrets / tokens:
 #   DATABASE_URL          — Postgres connection string for hive_alerts
 #                           (already in repo secrets per ci-doctor + the
 #                           query-hive-alerts.yml workflow)
+#   GITHUB_TOKEN          — default token; used by crossRepoAudit.ts to
+#                           clone external Hive engine repos. The default
+#                           token only has read access to the org's public
+#                           repos, which is exactly what we need (no
+#                           write back to external repos from the sweep).
 
 on:
   schedule:
@@ -65,6 +79,10 @@ jobs:
         working-directory: tools/hive-ops
         run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
+      - name: Install hive-finalize deps (cross-repo audit needs V-rules)
+        working-directory: tools/hive-finalize
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
       - name: Install psql (for hive_alerts inserts)
         run: |
           sudo apt-get update -qq
@@ -96,6 +114,55 @@ jobs:
             cat /tmp/sweep-output.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run cross-repo audit (external engines)
+        id: cross
+        env:
+          # GITHUB_TOKEN gives the cloner read access to
+          # saggarsonny-boop's public repos. DATABASE_URL is required
+          # for tier-2 FAIL alerts.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -uo pipefail
+          FLAGS=""
+          if [ "${DRY_RUN:-false}" = "true" ]; then FLAGS="--dry-run"; fi
+          # crossRepoAudit.ts always exits 0 (verdicts in the report,
+          # not the exit code) unless tooling itself errors. Failing
+          # external engines surface via tier-2 hive_alerts + the
+          # external-engines section of the daily issue.
+          npx --prefix tools/hive-ops tsx tools/hive-ops/crossRepoAudit.ts \
+            --out /tmp/hive-ops-cross-repo.md $FLAGS \
+            | tee /tmp/cross-repo-output.txt
+          echo "ran=true" >> "$GITHUB_OUTPUT"
+
+      - name: Append cross-repo summary to step summary + issue body
+        if: always() && steps.cross.outputs.ran == 'true'
+        run: |
+          {
+            echo ""
+            echo "## Cross-repo audit"
+            echo ""
+            echo '```'
+            cat /tmp/cross-repo-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Concatenate the cross-repo Markdown section onto the daily
+          # issue body produced by dailySweep.ts. The downstream "Open
+          # or update daily report issue" step picks up the merged file.
+          if [ -f /tmp/hive-ops-sweep-issue.md ] && [ -f /tmp/hive-ops-cross-repo.md ]; then
+            cat /tmp/hive-ops-cross-repo.md >> /tmp/hive-ops-sweep-issue.md
+          elif [ -f /tmp/hive-ops-cross-repo.md ]; then
+            # No in-tree changes today, so dailySweep didn't write the
+            # issue body. Synthesize a minimal header so the cross-repo
+            # section still publishes.
+            {
+              printf '# HiveOps Daily Sweep — %s\n\n' "$(date -u +%Y-%m-%d)"
+              printf '_No in-tree warn-mode flips today; cross-repo audit ran._\n'
+              cat /tmp/hive-ops-cross-repo.md
+            } > /tmp/hive-ops-sweep-issue.md
+          fi
 
       - name: Commit manifest mutations (if any)
         id: commit

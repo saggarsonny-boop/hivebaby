@@ -26,12 +26,25 @@ import { ruleApplies, inapplicableReason } from "./applicability.js";
 /** Resolve an engine slug to its on-disk root. Search order:
  *  1. <repoRoot>/apps/<slug>
  *  2. <repoRoot>/<slug>            (standalone repos cloned alongside)
- *  Returns null if neither resolves. */
+ *  3. <repoRoot>                   (the repo root IS the engine root —
+ *                                   true for standalone external repos
+ *                                   like hive-engine-builder, ud-inc,
+ *                                   hive-support where the entire repo
+ *                                   is one engine. Required for cross-
+ *                                   repo audit; engineSlug is derived
+ *                                   from basename(repoRoot) which won't
+ *                                   match the requested slug literally
+ *                                   for clones with arbitrary directory
+ *                                   names — but the manifest itself
+ *                                   identifies the engine.)
+ *  Returns null if none resolve. */
 export function resolveEngineRoot(repoRoot: string, slug: string): string | null {
   const inApps = join(repoRoot, "apps", slug);
   if (existsSync(inApps)) return inApps;
   const standalone = join(repoRoot, slug);
   if (existsSync(standalone)) return standalone;
+  // Repo root itself with manifest at root.
+  if (existsSync(join(repoRoot, "ENGINE_GRAMMAR.md"))) return repoRoot;
   return null;
 }
 
