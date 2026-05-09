@@ -241,7 +241,7 @@ Status legend: **LIVE** (in production, listed) · **BUILDING** (in active dev) 
 | hive-engine-builder | HiveEngineBuilder | hiveenginebuilder.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
 | queen-bee | QueenBee | queenbee.hive.baby | IN PROGRESS | Next.js + Anthropic | medium_marginal | manual |
 | creator-console | HiveCreatorConsole | creatorconsole.hive.baby | LIVE | Next.js | low_marginal | manual |
-| secret-box | HiveSecretBox | secretbox.hive.baby | LIVE | Next.js | low_marginal | manual |
+| secret-box | HiveSecretBox | secretbox.hive.baby | LIVE | Next.js + Neon + Cloudinary + Anthropic + Replicate | low_marginal | HiveOps **PASS** (canonical migration #5, 2026-05-09) |
 | whotextedme | WhoTextedMe | whotextedme.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
 | hive-support | HiveAdminSupport | support.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
 | hive-hivememe | HiveMeme | hivememe.hive.baby | BUILDING | Next.js + Anthropic | medium_marginal | manual |
