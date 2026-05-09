@@ -7,7 +7,7 @@ import FindingsTable from "@/components/FindingsTable";
 import DoctorQuestions from "@/components/DoctorQuestions";
 import RedFlagBox from "@/components/RedFlagBox";
 import IllustrationDisplay from "@/components/IllustrationDisplay";
-import PDFExport from "@/components/PDFExport";
+import ReportExport from "@/components/ReportExport";
 import Disclaimer from "@/components/Disclaimer";
 import type {
   ExplainPayload,
@@ -101,7 +101,7 @@ export default function PlainScanPage() {
           <FindingsTable findings={result.findings} />
           <DoctorQuestions questions={result.questionsForDoctor} />
           <RedFlagBox redFlags={result.redFlags} />
-          <PDFExport result={result} />
+          <ReportExport result={result} />
           <Disclaimer text={result.disclaimer} />
         </>
       )}
