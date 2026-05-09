@@ -315,6 +315,28 @@ escalate to a human.
 
 ---
 
+## Today's session — locked 2026-05-09 (AI provider routing)
+
+### Rule #38 — `[AI_PROVIDER_ROUTING]`
+
+**Title:** Hive engines route AI calls by capability, not by single vendor. Text → Anthropic; image generation → OpenAI gpt-image-1 (canonical exception until Anthropic ships images).
+
+**Body:** As of 2026-05-09 the canonical AI-provider mapping for every Hive engine is:
+
+- **Text generation, classification, summarization, reasoning, safety scans** → Anthropic SDK. `claude-opus-4-5` for primary models, `claude-haiku-4-5-20251001` for safety / classification. `ANTHROPIC_API_KEY` in Vercel env vars (Production scope). This is the default — engines that only do text use only Anthropic.
+- **Image generation (raster)** → OpenAI `gpt-image-1` via the OpenAI SDK. **Canonical exception** — Anthropic does not offer raster image generation today, and benchmarked image quality matters more for medical / anatomical illustration (HivePlainscan) than the "single-vendor" hygiene cost. `OPENAI_API_KEY` in Vercel env vars per engine that needs imaging. **Migrate to Anthropic the same day Anthropic ships an image-generation API**, recorded as a date in this rule's body when it happens.
+- **Voice / audio** → no Hive standard yet. Engine-specific decisions until the second engine needs voice; document the choice in the engine's `ENGINE_GRAMMAR.md`.
+
+The "Anthropic-only" framing the original C10 carried was honest when no Hive engine generated images. HivePlainscan's medical-illustration benchmark on 2026-05-09 surfaced the gap (Replicate FLUX 1.1 Pro at $0.04/image still couldn't match DALL-E / gpt-image-1 quality for anatomical accuracy). Honest engineering: route by capability, name the exception, plan the migration.
+
+Operational pattern for engines that need imaging: keep a fallback chain (`OpenAI → Replicate FLUX → SVG → text`) so a missing `OPENAI_API_KEY` degrades gracefully rather than crashes. HivePlainscan is the reference implementation (`apps/hive-plainscan/lib/illustration.ts`).
+
+**Source:** Locked 2026-05-09. Originated from HivePlainscan's medical-illustration benchmark; the user explicitly compared FLUX schnell / FLUX 1.1 Pro / DALL-E across the same anatomical prompts and gpt-image-1 was the only output that matched textbook-grade medical illustration.
+
+**Constitution reference:** [§II "Tech stack (canonical)"](docs/HIVE_CONSTITUTION.md#tech-stack-canonical) (the AI row references this rule).
+
+---
+
 ## Today's session — locked 2026-05-08 (HiveOps GOVERNANCE)
 
 ### Rule #37 — `[HIVEOPS_GOVERNANCE]`
