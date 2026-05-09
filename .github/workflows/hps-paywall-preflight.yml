@@ -36,7 +36,7 @@ jobs:
               echo "## Stripe key"
               echo ""
               echo "❌ \`STRIPE_KEY\` secret is **unset**. Operator must add a test-mode key (sk_test_*) before paywall provisioning."
-            } >> "$GITHUB_STEP_SUMMARY"
+            } | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           PREFIX="${STRIPE_KEY:0:8}"
@@ -57,7 +57,7 @@ jobs:
             elif [[ "$PREFIX" == "sk_test_" ]]; then
               echo "Test-mode key confirmed; provisioning workflow may proceed against it."
             fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Inspect existing Stripe products (hivebaby footprint)
         env:
@@ -82,7 +82,7 @@ jobs:
               echo ""
               echo "**Provisioning workflow should reuse these IDs (idempotent) instead of creating duplicates.**"
             fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Install psql
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
@@ -98,7 +98,7 @@ jobs:
               echo "## DATABASE_URL"
               echo ""
               echo "❌ \`DATABASE_URL\` secret is **unset**."
-            } >> "$GITHUB_STEP_SUMMARY"
+            } | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           # Identity query — run with --tuples-only --no-align to make
@@ -135,4 +135,4 @@ jobs:
               echo ""
               echo "If \`hps_*\` rows already exist, provisioning is idempotent (CREATE TABLE IF NOT EXISTS) — safe to re-run."
             fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
