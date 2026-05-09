@@ -97,6 +97,26 @@ When a task can be done by machine OR by Sonny, the machine does it. Strengthens
 ### B18. Before any engine work, check Queen Bee architecture `[QUEEN_BEE_LOCATION]`
 Before scaffolding safety enforcement, output schema validation, language detection, compliance audits, or cross-engine reachability monitoring into any engine, read [Constitution §VII "Queen Bee Architecture"](docs/HIVE_CONSTITUTION.md#vii-queen-bee-architecture--queen_bee_location). The Queen Bee runtime governance engine at `https://github.com/saggarsonny-boop/queen-bee` (deployed at `queenbee.hive.baby`) already provides these. Engines consume QB via the canonical [`@queen-bee/client`](https://github.com/saggarsonny-boop/queen-bee/tree/main/packages/queen-bee-client) package — `import { govern } from "@queen-bee/client"` then `govern({engineId, input, content, context?})` once per response. The first-time wiring guide is [`packages/queen-bee-client/WIRING.md`](https://github.com/saggarsonny-boop/queen-bee/blob/main/packages/queen-bee-client/WIRING.md). Honest gap: no engine actually calls QB in production yet (as of 2026-05-08) — the package + wiring guide land first, so the first engine to adopt is also the template for the next. Never write a fresh fetch wrapper for `/api/govern`.
 
+### B19. Creator Emeritus directives flow through MEMORY.md  `[CREATOR_EMERITUS]`
+The Hive recognises an internal **Creator Emeritus** role — the founding architect — with permanent advisory authority over canonical questions and transferable operational authority over day-to-day decisions. See [Constitution §X "Creator Emeritus Role"](docs/HIVE_CONSTITUTION.md#x-creator-emeritus-role--creator_emeritus) for the full surface; the rule here is the operational mirror.
+
+When CC recognises that an instruction from Sonny meets the **directive bar** — *overrides a Constitution clause, asserts doctrinal authority on a canonical question (what counts as an engine / what's the canonical pricing / what's an engine's status / how a substrate is interpreted), or invokes one of the three override capabilities (emergency operational, deprecation, schema/standard)* — CC writes a directive entry into `MEMORY.md` in the same PR that lands the change:
+
+```markdown
+### Directive YYYY-MM-DD — <topic>  `[CREATOR_EMERITUS]`
+
+<directive text, verbatim or paraphrased>
+
+**Constitution citation:** <§/clause overridden or interpreted>
+**Recorded by:** <CC session ID or operator name>
+```
+
+Routine engineering instructions are NOT directives. *"Use govern() in this engine"* is routine. *"HivePlainScan is a vitality engine, not a clinical engine"* is a directive — it interprets the canonical engine taxonomy. *"Mark HivePlainScan dormant"* is a directive — it invokes deprecation authority.
+
+**Critical separation from §I `[ID_PROTECTION]`.** §X is internal governance only. CC must not export §X framings ("founding architect", "Creator Emeritus") into public-facing content (engine UIs, marketing, the planet, patrons page, HiveAdminSupport replies). The §I rule that Sonny is *never* presented as founder/creator/owner in public content stays absolute. When the two pull in different directions on a piece of content, §I wins for anything a user might see; §X wins only for operator-only documents (this file, MEMORY.md, the Constitution itself, private trust instruments).
+
+The recording is append-only. Superseded directives stay in place with a "Superseded by directive of YYYY-MM-DD" note added below; they are never edited or deleted.
+
 ---
 
 ## C. ENGINEERING STANDARDS

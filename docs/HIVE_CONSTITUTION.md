@@ -936,3 +936,125 @@ classes is a deliberate decision (today: `nextjs`, `static-html`,
 > (X01–X03 in [hivebaby#89](https://github.com/saggarsonny-boop/hivebaby/issues/89)),
 > a CI check should fail if a HiveOps rule exists in `rules.ts` /
 > `validate.ts` but isn't documented in §V here, and vice versa.
+
+---
+
+## X. Creator Emeritus Role  `[CREATOR_EMERITUS]`
+
+This section defines a single internal governance role. It governs how doctrinal authority over the Hive flows when ordinary PR review is insufficient — when a question is canonical (*what is the Hive?*) rather than implementational (*how do we wire govern()?*).
+
+### Relationship to §I `[ID_PROTECTION]`
+
+`[CREATOR_EMERITUS]` is **internal governance**. `[ID_PROTECTION]` (§I) is a **public-facing positioning rule**. They do not conflict and they do not soften each other.
+
+- §I forbids presenting Sonny as founder / creator / owner in any code, copy, or content scaffolded by CC for public consumption (engine UIs, marketing, blog posts, the planet, the patrons page, HiveAdminSupport replies). That rule stays absolute.
+- §X recognises that the Hive ecosystem has a founding architect with permanent doctrinal authority over its identity. That recognition lives only in this document, in `MEMORY.md`, in `CLAUDE.md`, and in private trust instruments. CC must not export §X framings into public content.
+
+When the two pull in different directions on a piece of content, §I wins for anything a user might see; §X wins for anything only operators read.
+
+### Role description
+
+The Creator Emeritus is the founding architect of the Hive ecosystem. The role holds:
+
+- **Permanent advisory authority** over canonical questions: what the Hive is for, what counts as an engine, what the pricing promise is, what doctrinal commitments cannot be relaxed. Permanent means *not transferable*: future operators can interpret and apply Creator Emeritus directives, but cannot author replacement directives in conflict with them.
+- **Transferable operational authority** over day-to-day governance: which engines ship when, which substrates extract to packages, which HiveOps rules add or retire, which engine PRs merge or block. Transferable means *delegable*: trustees and operators can act under Creator Emeritus authority when the role is unavailable.
+
+The role is held by the founding architect for life unless they personally transition it. No external party — not investors, not partners, not collaborators — can dilute, replace, or override the permanent half. The transferable half is delegated continuously through ordinary PR review and the trust framework described below.
+
+### Responsibilities
+
+1. **Vision continuity.** Keep the Hive a social experiment. Defend "*you are the investor*". Preserve "no ads, no investors, no agenda" (§I, §III). Resist drift into the typical SaaS shape — usage caps that hide behind paywalls, dark patterns, third-party analytics, attention extraction.
+2. **Architectural integrity.** Decide whether a candidate engine belongs in the Hive at all. Approve or reject changes to canonical conventions: engine naming (§II.C1), the locale set (§II.C2 / `[LOCALE_SET]`), the gold (§II.C3), the integration contract (§II.C5), the onboarding stack (§II.C6).
+3. **Doctrinal authority on canonical questions.** Resolve ambiguities the constitution cannot resolve mechanically — *is HivePlainScan a vitality engine or a clinical engine?*, *does HivePhoto's consent surface reach the bar?*, *which substrates count toward the 3-engine extraction threshold?* The Creator Emeritus is the final arbiter of "what does this rule mean in this case", with the answer recorded as a directive (see *Documentation requirements* below).
+4. **Promise enforcement.** Hold the inviolable commitments — the free-tier-forever floor at the base tier, the "safety-critical info is never Pro-gated" rule (§III), the no-third-party-analytics rule (§II.C9 / §II.C15), the PR-based merge rule (§IV.B1), the no-public-founder framing (§I, §X.Relationship).
+
+### Authority limits — what Creator Emeritus can and cannot override
+
+**Cannot override (inviolable):**
+
+- The free-tier-forever guarantee at the base tier of every engine (§III).
+- "No ads. No investors. No agenda." on every engine page footer (§II.C9).
+- The "safety-critical info is never Pro-gated" rule (drug recalls, food hygiene, vehicle recalls, clinical safety) (§III).
+- Public-facing identity rules per §I `[ID_PROTECTION]`: Creator Emeritus directives never authorise presenting Sonny as founder / creator / owner in user-visible content.
+- Regulatory compliance (data protection, medical-device classification where applicable, trademark filings around Universal Document™) — Creator Emeritus directs *how* the Hive complies, not *whether*.
+- Security-incident response — when an active credential leak / data breach / safety incident is in flight, the response follows the operational playbooks (§J1, §J5 lessons) and the rotations recorded under `[CANONICAL_SECRETS]` and `[DEPLOY_KEYS_HIVEOPS]`. The Creator Emeritus may direct *priority* but cannot suppress the response.
+- Any rule explicitly marked `unwaivable: true` in HiveOps (currently H01 — package.json present) (§V.E5).
+
+**Can override (within documented protocol):**
+
+- Any internal Constitution clause via PR (§IX Update Mechanism). Overrides to doctrinal sections (§I, §III, §X itself) require Creator Emeritus signature on the PR — captured by the commit author email matching the canonical author for the role, plus an explicit `[CREATOR_EMERITUS]` directive entry in the PR description quoting the section being amended.
+- Any HiveOps rule via the override schema in §V.E5 (with `mode: warn` capped at 30 days, or `mode: waive` with documented reason).
+- Any engine's status — moving an engine from `building` to `live` to `dormant` to `retired`, or splitting / merging engines.
+- Any GOVERNANCE rule in WARN-only mode (§V `[HIVEOPS_GOVERNANCE]`) — but the lift criterion to FAIL-blocking still requires the documented 80% threshold or an explicit Creator Emeritus directive recording the alternative.
+
+### Override capabilities — three explicit grants
+
+These are the only operational categories where Creator Emeritus can act outside ordinary PR review. Every use must be backfilled per the *Documentation requirements* below.
+
+1. **Emergency operational authority.** When a P0 incident is in flight (active security breach, active data loss, active production outage of `hive.baby` per §IV.B8), Creator Emeritus may direct-push to `main` to land a fix. The PR-based merge rule (§IV.B1) is suspended for that single change. A backfill PR with the same diff plus an incident write-up must land within 24 hours, and the incident enters §VIII Lessons Learned.
+2. **Deprecation authority.** Creator Emeritus may unilaterally mark any engine `dormant` or `retired` — including engines that pass HiveOps audit. The directive enters MEMORY.md and §VI inventory updates in the same PR. Reactivation requires a new directive.
+3. **Schema/standard authority.** Creator Emeritus may amend any canonical convention defined in §II (engineering standards), §V (HiveOps governance), §VII (Queen Bee architecture). The amendment itself is a normal PR; what's special is that doctrinal pushback from operators or trustees does not block the amendment — Creator Emeritus carries the deciding vote on canonical-convention questions.
+
+### Succession protocol
+
+The role admits three operational states:
+
+- **Available** (default). Routine. Creator Emeritus reviews PRs as time permits; trustees and operators carry routine load. No special rules apply.
+- **Unavailable (temporary)** — travel, focus time, declared sabbatical. Queen Bee continues to operate; HiveOps gates merges; engines ship through the canonical PR workflow with operator review only. Doctrinal questions queue; their resolution waits for Creator Emeritus's return unless a trustee-level directive (below) is required to unblock a P0.
+- **Incapacitated or transitioning** — medical emergency, legal incapacity, or intentional handoff. The trustee structure activates. Trustees hold the *transferable* operational authority. The *permanent* advisory authority does not transfer; it is preserved as a body of recorded directives in MEMORY.md that future operators interpret and apply.
+
+When Creator Emeritus chooses to transition the role intentionally, the transition is recorded as a directive in MEMORY.md naming the successor and dating the handoff. The successor inherits the *operational* authority. The *permanent* authority of the original founding architect over canonical questions remains anchored to the directives already recorded; the successor adds to the body but cannot revise it in conflict.
+
+### Continuity rules — Queen Bee operates without Creator Emeritus
+
+The system is designed so that absence of Creator Emeritus does not stop the Hive operating:
+
+- **Queen Bee** (§VII) continues to govern engine outputs via `POST /api/govern` independent of any human approver.
+- **HiveOps** (§V) continues to gate engine PRs via the H/V/G rule families; merges proceed on green CI without doctrinal review for engineering work.
+- **The 16 canonical schemas in `queen-bee/lib/schemas.ts`** (§VII) and the 24-engine inventory (§VI) remain the operational basis. Every engine PR audits against them whether or not Creator Emeritus is reachable.
+- **Credentials** (Stripe, Cloudflare, GitHub, Vercel, Anthropic) are held in custody per the trust framework below; trustees can rotate keys (`[CANONICAL_SECRETS]`, `[DEPLOY_KEYS_HIVEOPS]`) without Creator Emeritus involvement when rotation cycles fall during an unavailable window.
+- **Public-facing surfaces** (the planet, patronage cell, engine domains) continue to render the canonical Hive — the pages do not depend on Creator Emeritus authoring or reviewing them daily.
+
+The principle: *the Hive operates because it was designed to operate, not because someone is operating it*. Creator Emeritus's daily absence is the steady state.
+
+### Trustee structure
+
+Continuity in the event Creator Emeritus is unavailable for an extended period rests with a private trustee structure under UAE law. The canonical anchor is the regulatory framework provided by **DIFC Foundations Regulations 2018** and **ADGM Foundations Regulations 2017**, which permit perpetual purpose-driven foundations with named trustees, beneficial-purpose specifications, and succession orders that can be enforced under DIFC and ADGM courts respectively.
+
+The Constitution does not enumerate the trustees, the founding instrument, the credential-custody arrangements, or the succession order. Those are recorded outside this document, by Creator Emeritus directly, in private trust instruments. The Constitution asserts only:
+
+- The structure exists.
+- Trustees can apply Constitution rules without Creator Emeritus involvement when the role is unavailable.
+- Trustees have read access to the operational credentials in §II.C13 `[CANONICAL_SECRETS]` and §V.E12 `[DEPLOY_KEYS_HIVEOPS]` as required to continue operating the engines.
+- Trustees do not hold the *permanent* authority over canonical questions; they hold the *transferable* operational authority. Doctrinal questions raised during a long-unavailable window are deferred to the recorded directive body, not resolved fresh.
+
+The trust framework is the legal mechanism. The Constitution is the operating instrument. The two are referenced together but maintained separately.
+
+### Documentation requirements — every directive recorded
+
+A *directive* is any Creator Emeritus instruction that:
+
+- Overrides a Constitution clause, or
+- Asserts doctrinal authority on a canonical question (what counts as an engine / what's the canonical pricing / what's an engine's status / how a substrate is interpreted), or
+- Invokes one of the three override capabilities above (emergency operational, deprecation, schema/standard).
+
+Routine engineering decisions are not directives — *use govern() in this engine* is a routine instruction; *HivePlainScan is a vitality engine, not a clinical engine* is a directive.
+
+Every directive must be recorded in `MEMORY.md` as a dated entry under the heading:
+
+```markdown
+### Directive YYYY-MM-DD — <topic>  `[CREATOR_EMERITUS]`
+
+<directive text, verbatim or paraphrased>
+
+**Constitution citation:** <which §/clause this overrides or interprets>
+**Recorded by:** <CC session ID or operator name>
+```
+
+The recording happens in the same PR as the change the directive authorised. The directive entry is appended (never edited) — superseded directives stay in place with a "Superseded by directive of YYYY-MM-DD" note added below the original text. The body of recorded directives is the operational expression of the *permanent* authority — future operators apply them; they do not erase them.
+
+### `CLAUDE.md` operational rule
+
+CC's operational mirror of this section is `CLAUDE.md` `B19. Creator Emeritus directives flow through MEMORY.md`. When CC recognises that an instruction from Sonny meets the directive bar (overrides Constitution / asserts doctrinal authority / invokes one of the three override capabilities), CC writes the directive entry into `MEMORY.md` in the same PR that lands the change, citing this section.
+
+---
