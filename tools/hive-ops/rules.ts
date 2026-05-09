@@ -11,7 +11,7 @@
 // Pure: same engine root + same date = same result. The runner applies
 // override-file semantics on top of these results.
 
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { RuleDefinition, RuleContext } from "./types.js";
 
@@ -564,6 +564,211 @@ const H28_tsconfig: RuleDefinition = {
 };
 
 // ---------------------------------------------------------------------------
+// ACCESSIBILITY (6) — A01..A06. WARN-only at introduction (2026-05-09).
+// Rules return "pass" or "warn" (never "fail") until the migration campaign
+// completes; the planned cutover to fail-on-violation is when ≥ 80% of
+// engines pass natively. See [HIVE_ACCESSIBILITY_STANDARD] in MEMORY.md.
+//
+// Heuristics, not AST. We walk a small set of likely client-component
+// locations (components/, app/) and union the textual evidence. False
+// positives (rule returns warn even though engine is fine) are preferable
+// to silent gaps, so the rules favour conservatism: anything we can't
+// positively verify is reported as warn with the specific diagnostic.
+// ---------------------------------------------------------------------------
+
+function readClientComponents(ctx: RuleContext): { path: string; text: string }[] {
+  const out: { path: string; text: string }[] = [];
+  const dirs = ["components", "app", "src/components", "src/app"];
+  const seen = new Set<string>();
+  for (const d of dirs) {
+    walkTsx(findRoot(ctx, d), out, seen, 0);
+  }
+  return out;
+}
+
+function walkTsx(
+  dir: string,
+  out: { path: string; text: string }[],
+  seen: Set<string>,
+  depth: number,
+): void {
+  if (depth > 6) return;
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return;
+  }
+  for (const name of entries) {
+    if (name === "node_modules" || name === ".next" || name === "dist") continue;
+    const full = join(dir, name);
+    if (seen.has(full)) continue;
+    seen.add(full);
+    let isFile = false;
+    let isDir = false;
+    try {
+      const st = statSync(full);
+      isFile = st.isFile();
+      isDir = st.isDirectory();
+    } catch {
+      continue;
+    }
+    if (isDir) {
+      walkTsx(full, out, seen, depth + 1);
+    } else if (isFile && (name.endsWith(".tsx") || name.endsWith(".ts"))) {
+      const text = readIfExists(full);
+      if (text !== null) out.push({ path: full, text });
+    }
+  }
+}
+
+const A01_semanticButton: RuleDefinition = {
+  id: "A01",
+  title: "Primary CTA uses semantic <button> element",
+  category: "ACCESSIBILITY",
+  severity: "RECOMMENDED",
+  async check(ctx) {
+    const files = readClientComponents(ctx);
+    if (files.length === 0) {
+      return { status: "warn", message: "no client component files found to scan" };
+    }
+    const offenders = files.filter((f) =>
+      /<(div|span|a)[^>]*\bonClick\s*=/i.test(f.text),
+    );
+    if (offenders.length === 0) {
+      return { status: "pass", message: `${files.length} client files scanned; no <div|span|a onClick> offenders` };
+    }
+    const sample = offenders[0].path.split("/").slice(-3).join("/");
+    return {
+      status: "warn",
+      message: `${offenders.length} file(s) use non-semantic onClick handlers (e.g. ${sample}); use <button> instead`,
+    };
+  },
+};
+
+const A02_enterActivates: RuleDefinition = {
+  id: "A02",
+  title: "Primary CTA activates on Enter (type=submit OR onKeyDown)",
+  category: "ACCESSIBILITY",
+  severity: "RECOMMENDED",
+  async check(ctx) {
+    const files = readClientComponents(ctx);
+    if (files.length === 0) {
+      return { status: "warn", message: "no client component files to scan" };
+    }
+    const haveSubmit = files.some((f) => /type\s*=\s*["']submit["']/.test(f.text));
+    const haveKey = files.some((f) => /onKeyDown\s*=/.test(f.text));
+    if (haveSubmit || haveKey) {
+      return {
+        status: "pass",
+        message: haveSubmit ? "type=\"submit\" button found" : "onKeyDown handler found",
+      };
+    }
+    return {
+      status: "warn",
+      message: 'no type="submit" button or onKeyDown handler found in client components',
+    };
+  },
+};
+
+const A03_spaceActivates: RuleDefinition = {
+  id: "A03",
+  title: "Primary CTA activates on Space when focused",
+  category: "ACCESSIBILITY",
+  severity: "RECOMMENDED",
+  async check(ctx) {
+    // Native <button> handles Space automatically. The only way to lose
+    // it is to use a non-button element; A01 already catches that case.
+    // A03 is therefore satisfied iff A01 finds no offenders.
+    const files = readClientComponents(ctx);
+    if (files.length === 0) {
+      return { status: "warn", message: "no client component files to scan" };
+    }
+    const offenders = files.filter((f) =>
+      /<(div|span|a)[^>]*\bonClick\s*=/i.test(f.text),
+    );
+    if (offenders.length === 0) {
+      return { status: "pass", message: "all clickable elements appear to be <button> (Space activation native)" };
+    }
+    return {
+      status: "warn",
+      message: `${offenders.length} non-button onClick element(s) — Space won't activate`,
+    };
+  },
+};
+
+const A04_modifierEnter: RuleDefinition = {
+  id: "A04",
+  title: "Form has Cmd+Enter / Ctrl+Enter shortcut handler",
+  category: "ACCESSIBILITY",
+  severity: "RECOMMENDED",
+  async check(ctx) {
+    const files = readClientComponents(ctx);
+    if (files.length === 0) {
+      return { status: "warn", message: "no client component files to scan" };
+    }
+    const hit = files.some((f) =>
+      /(metaKey|ctrlKey)/.test(f.text) && /Enter/.test(f.text),
+    );
+    return hit
+      ? { status: "pass", message: "modifier+Enter handler reference found" }
+      : {
+          status: "warn",
+          message: "no Cmd+Enter / Ctrl+Enter handler found in client components",
+        };
+  },
+};
+
+const A05_focusRing: RuleDefinition = {
+  id: "A05",
+  title: "Primary CTA has visible focus ring",
+  category: "ACCESSIBILITY",
+  severity: "RECOMMENDED",
+  async check(ctx) {
+    const files = readClientComponents(ctx);
+    const css =
+      readIfExists(findRoot(ctx, "app/globals.css")) ||
+      readIfExists(findRoot(ctx, "src/app/globals.css")) ||
+      "";
+    const haystacks: string[] = [...files.map((f) => f.text), css];
+    const hit = haystacks.some((t) =>
+      /focus:ring|focus-visible|:focus(?!-within)/.test(t),
+    );
+    return hit
+      ? { status: "pass", message: "focus ring / focus-visible reference found" }
+      : {
+          status: "warn",
+          message: "no focus:ring, :focus-visible, or :focus selector found in client styles",
+        };
+  },
+};
+
+const A06_tabReachable: RuleDefinition = {
+  id: "A06",
+  title: "Primary CTA reachable via Tab navigation",
+  category: "ACCESSIBILITY",
+  severity: "RECOMMENDED",
+  async check(ctx) {
+    const files = readClientComponents(ctx);
+    if (files.length === 0) {
+      return { status: "warn", message: "no client component files to scan" };
+    }
+    // Native <button> is tabbable by default. The only thing that breaks
+    // this on the primary CTA is an explicit tabIndex={-1}. Flag any.
+    const offenders = files.filter((f) =>
+      /<button[^>]*tabIndex\s*=\s*\{?\s*-1/.test(f.text),
+    );
+    if (offenders.length === 0) {
+      return { status: "pass", message: "no <button tabIndex={-1}> found" };
+    }
+    return {
+      status: "warn",
+      message: `${offenders.length} <button> element(s) explicitly removed from Tab order via tabIndex={-1}`,
+    };
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Export the canonical list. Order is the audit report order; never reshuffle
 // because the v0.2 baselines pin to this sequence.
 // ---------------------------------------------------------------------------
@@ -597,6 +802,12 @@ export const RULES: ReadonlyArray<RuleDefinition> = [
   H26_envExample,
   H27_readme,
   H28_tsconfig,
+  A01_semanticButton,
+  A02_enterActivates,
+  A03_spaceActivates,
+  A04_modifierEnter,
+  A05_focusRing,
+  A06_tabReachable,
 ];
 
 export const RULE_IDS: ReadonlySet<string> = new Set(RULES.map((r) => r.id));

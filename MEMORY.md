@@ -415,6 +415,31 @@ Honest gap as of 2026-05-08: no engine actually calls `/api/govern` in productio
 
 ---
 
+### Rule #38 — `[HIVE_ACCESSIBILITY_STANDARD]`
+
+**Title:** Primary CTAs across every Hive engine work on mouse, Enter, Space, and Cmd/Ctrl+Enter — semantic `<button>`, visible focus ring, reachable via Tab. Six A-rules in HiveOps audit at warn-only until ≥80% of engines pass at least 5 of 6.
+
+**Body:** Every primary CTA in a Hive engine must be activatable on mouse click, Enter (when focused), Space (when focused), and Cmd+Enter (Mac) / Ctrl+Enter (Windows/Linux) when the form's textarea has focus. The CTA must be reachable via Tab navigation and have a visible focus ring (`focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-2` is the canonical Tailwind v4 form). The CTA must be a semantic `<button>` element — not a `<div onClick>` or `<span onClick>`.
+
+The canonical reference implementation is `apps/hive-plainscan/components/ReportInput.tsx`:
+
+- Wrap the input region in `<form ref={formRef} onSubmit={handleFormSubmit}>`.
+- Change the CTA to `<button type="submit">` so the form's onSubmit fires on Enter inside any input AND on click of the button.
+- Add `onKeyDown` to the textarea: when `(event.metaKey || event.ctrlKey) && event.key === "Enter"`, call `formRef.current?.requestSubmit()` (which fires onSubmit, which calls `event.preventDefault()` first).
+- Detect platform via `navigator.platform` (in `useEffect` for SSR safety) and render hint text "Cmd+Enter to submit" on Mac or "Ctrl+Enter to submit" elsewhere.
+- Add `focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-2 focus:outline-none` to the CTA's className.
+- Other buttons (tab switchers, "Try sample report", etc.) must keep `type="button"` so they don't accidentally submit the form.
+
+HiveOps enforces this via six rules added 2026-05-09: A01 (semantic button), A02 (Enter activation), A03 (Space activation), A04 (Cmd/Ctrl+Enter handler), A05 (focus ring), A06 (Tab reachable). All six are heuristics (regex over client component `.tsx` files) — false positives are preferred over silent gaps. The rules ship as `severity: "RECOMMENDED"` AND return `status: "warn"` rather than `"fail"` so they don't block existing engines on day one.
+
+Lift criterion: when ≥80% of audited engines (count, not traffic) pass at least 5 of 6 A-rules, swap the six rule definitions' `status: "warn"` returns for `status: "fail"` in the same PR that records the lift date in Constitution §V `[HIVE_ACCESSIBILITY_STANDARD]`. Initial baseline 2026-05-09 across 19 engines: HivePlainScan passes all 6 (post-fix); A04 (Cmd+Enter, ~16% pass) and A01 (semantic button, ~26% pass) are the lowest — the migration campaign starts there.
+
+**Source:** Locked 2026-05-09. Originated from a HivePlainScan user report — "Explain my report" only worked on mouse click, not keyboard. Fix shipped in `apps/hive-plainscan/components/ReportInput.tsx`; rule generalises the pattern across the fleet.
+
+**Constitution reference:** [§V "ACCESSIBILITY rules (A01..A06)"](docs/HIVE_CONSTITUTION.md#accessibility-rules-a01a06--hive_accessibility_standard).
+
+---
+
 ## Earlier-session rules — pre-2026-05-06
 
 ### `[ID_PROTECTION]`

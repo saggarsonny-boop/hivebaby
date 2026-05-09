@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ExplainRequestBody } from "@/types/plainscan";
 import { detectPhi } from "@/lib/privacy";
 import { SAMPLE_REPORT } from "@/lib/sampleReport";
@@ -97,8 +97,17 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
   const [pdfStatus, setPdfStatus] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [pdfText, setPdfText] = useState<string | null>(null);
+  const [isMac, setIsMac] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Platform detection runs in useEffect so SSR + initial hydration agree
+  // (the hint label otherwise mismatches between server and client).
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    setIsMac(/Mac|iPhone|iPod|iPad/.test(navigator.platform));
+  }, []);
 
   const cyclePlaceholder = () => {
     setPlaceholderIdx((i) => (i + 1) % PLACEHOLDERS.length);
@@ -157,8 +166,17 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
     setImageFile(file);
   };
 
-  const handleSubmit = async () => {
+  // The form's onSubmit handler. Fires on:
+  //   1. Click on a type="submit" button (the "Explain my report" CTA).
+  //   2. Enter pressed inside an input (browser default form submit).
+  //   3. Cmd/Ctrl+Enter inside the textarea (handleTextareaKeyDown calls
+  //      formRef.current?.requestSubmit()).
+  // Always preventDefault — we control navigation ourselves so the page
+  // doesn't reload.
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (disabled) return;
+    if (!canSubmit) return;
     const examOpt = normaliseSelectValue(examType);
     const regionOpt = normaliseSelectValue(bodyRegion);
     if (tab === "text") {
@@ -194,6 +212,19 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
     }
   };
 
+  // Cmd+Enter (Mac) / Ctrl+Enter (Windows/Linux) inside the textarea fires
+  // the form. Plain Enter without modifier still inserts a newline (default
+  // textarea behaviour) — this matches Slack, GitHub, Linear, and the
+  // ChatGPT convention so users don't have to learn a new shortcut.
+  const handleTextareaKeyDown = (
+    event: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
+    if (event.key !== "Enter") return;
+    if (!(event.metaKey || event.ctrlKey)) return;
+    event.preventDefault();
+    formRef.current?.requestSubmit();
+  };
+
   const canSubmit = (() => {
     if (disabled) return false;
     if (tab === "text") return reportText.trim().length > 0;
@@ -202,8 +233,10 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
     return false;
   })();
 
+  const submitHint = isMac ? "Cmd+Enter to submit" : "Ctrl+Enter to submit";
+
   return (
-    <div>
+    <form ref={formRef} onSubmit={handleFormSubmit} noValidate>
       <div className="tabs" role="tablist" aria-label="Report input method">
         <button
           type="button"
@@ -243,6 +276,7 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
               onFocus={cyclePlaceholder}
+              onKeyDown={handleTextareaKeyDown}
               aria-label="Paste your radiology report"
             />
             <div style={{ marginTop: "0.5rem" }}>
@@ -382,17 +416,32 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
           </label>
         </div>
 
-        <div className="actions">
+        <div
+          className="actions"
+          style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}
+        >
           <button
-            type="button"
-            className="btn btn-gold"
-            onClick={handleSubmit}
+            type="submit"
+            className="btn btn-gold focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-2"
             disabled={!canSubmit}
+            aria-keyshortcuts={isMac ? "Meta+Enter" : "Control+Enter"}
           >
             {disabled ? "Working..." : "Explain my report"}
           </button>
+          {tab === "text" && (
+            <span
+              className="submit-hint"
+              aria-hidden="true"
+              style={{
+                fontSize: "0.8rem",
+                color: "var(--muted)",
+              }}
+            >
+              {submitHint}
+            </span>
+          )}
         </div>
       </div>
-    </div>
+    </form>
   );
 }
