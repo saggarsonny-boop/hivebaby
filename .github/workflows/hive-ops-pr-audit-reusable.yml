@@ -209,17 +209,48 @@ jobs:
             echo "Posted new PR comment"
           fi
 
-      - name: Fail the check if verdict is fail
+      - name: Fail the check on verdict regression
         if: always()
         env:
+          BASELINE: ${{ steps.baseline.outputs.baseline }}
           VERDICT: ${{ steps.audit.outputs.verdict }}
         run: |
-          if [ "$VERDICT" = "fail" ]; then
-            echo "::error title=HiveOps verdict=fail::engine ${{ inputs.slug }} failed audit on this PR — see PR comment for failing rules"
-            exit 1
-          fi
+          # Delta-based gating per the spec: "Fails the PR check if
+          # engine state degrades (was PASS, becomes WARN/FAIL)".
+          # Verdict ordering (worse-is-higher): pass=0, warn=1, fail=2.
+          # tooling-error and unknown baseline are handled separately.
           if [ "$VERDICT" = "tooling-error" ]; then
+            echo "::error title=HiveOps tooling error::audit infra failed — see logs"
             exit 2
           fi
-          # pass / warn → check passes
-          echo "HiveOps verdict: $VERDICT — check passes"
+          rank() {
+            case "$1" in
+              pass) echo 0 ;;
+              warn) echo 1 ;;
+              fail) echo 2 ;;
+              *)    echo -1 ;;  # unknown
+            esac
+          }
+          B_RANK=$(rank "$BASELINE")
+          V_RANK=$(rank "$VERDICT")
+          # Unknown baseline → fall back to absolute gate on FAIL only,
+          # so a fresh repo subscribing for the first time isn't blocked
+          # by a passing-but-uncomputed baseline. (We still want FAIL to
+          # be loud even without history.)
+          if [ "$B_RANK" -lt 0 ]; then
+            if [ "$VERDICT" = "fail" ]; then
+              echo "::error title=HiveOps verdict=fail (no baseline)::engine ${{ inputs.slug }} fails this PR; could not compute main-branch baseline. Fix the failing rules or document a mode:warn override."
+              exit 1
+            fi
+            echo "HiveOps verdict: $VERDICT (baseline unknown) — check passes"
+            exit 0
+          fi
+          if [ "$V_RANK" -gt "$B_RANK" ]; then
+            echo "::error title=HiveOps verdict regression::engine ${{ inputs.slug }} degraded from $BASELINE on main to $VERDICT on this PR. Either fix the failing/warning rules or document a mode:warn override per HIVE_CONSTITUTION.md §V."
+            exit 1
+          fi
+          # No regression — even if absolute verdict is FAIL, this PR
+          # didn't introduce it. Pre-existing FAIL is surfaced via the
+          # PR comment and the daily cross-repo sweep, not by blocking
+          # unrelated PRs in the engine repo.
+          echo "HiveOps verdict: $VERDICT (baseline: $BASELINE) — check passes"
