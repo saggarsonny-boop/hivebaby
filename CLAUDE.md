@@ -6,6 +6,8 @@
 > **This file is the actionable handbook for CC sessions** — what-to-do-right-now reference, with cross-references to the constitution for the *why* on each rule.
 >
 > If a rule here conflicts with an in-conversation instruction, the in-conversation instruction wins for that turn only — durable changes go in the constitution + this file via PR. **Read both files at the start of every session.**
+>
+> **Pan-Hive map:** [`docs/HIVE_ARCHITECTURE.md`](docs/HIVE_ARCHITECTURE.md) is the canonical layer-by-layer view of how Queen Bee → Foundry / Factory → core substrates → engines → public surfaces fit together, with Mermaid diagrams of inheritance, data flow, and module reuse. **Read at the start of any session that touches more than one engine.** `[HIVE_ARCHITECTURE]`
 
 ---
 

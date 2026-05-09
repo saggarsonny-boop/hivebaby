@@ -536,6 +536,14 @@ Required env vars per engine: `OPERATOR_AUTH_SECRET` (32-byte base64; HMAC signi
 
 Reference implementation: `apps/converter/src/lib/operator-auth.ts` in `saggarsonny-boop/universal-document` (PR #22). HiveOps v0.3 will add a rule (likely **H29**) verifying any tier-gated engine imports this pattern; until then, the convention is documented here and engines self-attest in their `ENGINE_GRAMMAR.md`.
 
+### Pan-Hive architecture map  `[HIVE_ARCHITECTURE]`
+
+The pan-Hive architecture map lives at [`docs/HIVE_ARCHITECTURE.md`](HIVE_ARCHITECTURE.md). It documents the five-layer stack — Queen Bee (foundation) → Foundry + Factory (build infrastructure) → core substrates → engines → public surfaces — with Mermaid diagrams of inheritance, data flow, module reuse, and per-engine substrate adoption.
+
+The architecture map is the canonical answer to *"where does engine X fit?"* and *"which substrate does engine Y inherit?"* CC reads it at the start of any session that touches more than one engine. v0.1 (2026-05-08) covers everything verifiable today; sections marked **AWAITS T1 PR** will be amended when T1's Queen Bee discovery PR lands.
+
+The architecture map distinguishes four kinds of thing in the Hive: **engines** (own purpose, workflows, output, public domain, pricing tier, DB schema, `ENGINE_GRAMMAR.md`), **modules** (attach via API or component import, no own product surface, no own deployment), **substrates** (registry-tracked patterns, extracted at the 3-engine threshold), and **adoption amplifiers** (cross-cutting growth/retention features every engine inherits). Conflating these is the most common confusion; the map exists to keep them separated.
+
 ### Queen Bee Substrate Registry  `[QUEEN_BEE_SUBSTRATES]`
 
 When a pattern is built once for a single engine and then becomes a candidate for reuse, it lives in the substrate registry at [`docs/QUEEN_BEE_SUBSTRATES.md`](QUEEN_BEE_SUBSTRATES.md) until it crosses the **3-engine threshold** for extraction into a `@hive/*` package. The registry is the staging area between "one engine built this" and "this is part of the shared package set."
