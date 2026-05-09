@@ -168,10 +168,13 @@ All user-facing button labels and headings must use plain-language user-voice ph
 - Analytics: Plausible cloud, Umami self-hosted, or homemade Neon counter.
 
 ### C10. Standard new engine pattern
-- Next.js + TypeScript, Anthropic SDK (`claude-opus-4-5` for primary models; `claude-haiku-4-5-20251001` for safety scans / classification).
+- Next.js + TypeScript.
+- **AI provider routing** `[AI_PROVIDER_ROUTING]`:
+  - **Text generation, classification, summarization, reasoning** → Anthropic SDK (`claude-opus-4-5` for primary models; `claude-haiku-4-5-20251001` for safety scans / classification). Default in every engine; `ANTHROPIC_API_KEY` in Vercel env vars (Production scope).
+  - **Image generation** → OpenAI `gpt-image-1` via the OpenAI SDK. **Canonical exception** until Anthropic ships raster image generation, at which point the fleet migrates. `OPENAI_API_KEY` in Vercel env vars per engine that needs imaging. Engineering rationale: as of 2026-05-09 Anthropic does not offer raster image generation, and benchmarked image quality matters more for medical/anatomical illustration (HivePlainscan) than the "single-vendor" hygiene cost. Engines that don't need imaging don't add the SDK or the key.
+  - **Voice / audio** → no Hive standard yet; defer to engine-specific decisions and document the choice in the engine's `ENGINE_GRAMMAR.md`.
 - Tailwind CSS (check `package.json` — not universal).
 - Deploy to Vercel; domain `enginename.hive.baby`; Cloudflare CNAME → `cname.vercel-dns.com`.
-- `ANTHROPIC_API_KEY` in Vercel env vars (Production scope).
 - Vercel Deployment Protection: **OFF** (else every visitor sees an SSO gate).
 - Free tier forever; paid features via Stripe where appropriate.
 - Full onboarding stack via `@hive/onboarding`.

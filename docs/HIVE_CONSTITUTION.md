@@ -78,7 +78,9 @@ schema (§V) — never silent divergence.
 |---|---|
 | Framework | **Next.js 14 + TypeScript** (app router) |
 | Hosting | **Vercel** (auto-deploy on push to `main`) |
-| AI | **Anthropic API**, model `claude-haiku-4-5-20251001` unless an engine spec names a different one |
+| AI (text / classification / reasoning) | **Anthropic API**, model `claude-haiku-4-5-20251001` unless an engine spec names a different one. Default for every engine. |
+| AI (image generation, raster) | **OpenAI `gpt-image-1`** — canonical exception until Anthropic ships an image-generation API. Per `[AI_PROVIDER_ROUTING]` in `MEMORY.md` Rule #38 + `CLAUDE.md` §C10. Engines that don't generate images don't add `OPENAI_API_KEY`. |
+| AI (voice / audio) | No Hive standard yet. Engine-specific decisions until a second engine needs voice; record the choice in the engine's `ENGINE_GRAMMAR.md`. |
 | Database | **Neon PostgreSQL** (serverless) |
 | Auth | **Clerk** for user-account engines; HMAC-signed cookies for stateless tier auth |
 | Payments | **Stripe** (subscriptions: Plus monthly + Pro monthly/annual) |

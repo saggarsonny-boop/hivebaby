@@ -16,12 +16,20 @@ export interface ExplainResult {
   questionsForDoctor: string[];
   redFlags: string[];
   disclaimer: string;
-  /** AI-generated illustration URL (Replicate FLUX) when available; otherwise
-   *  a data: URL containing the SVG fallback diagram. Always set. */
+  /** AI-generated illustration when available, otherwise a data: URL
+   *  containing the SVG fallback diagram. Always set when illustration
+   *  step ran. OpenAI returns `data:image/png;base64,…`; Replicate
+   *  returns the Replicate-hosted HTTPS URL; SVG returns
+   *  `data:image/svg+xml,…`. */
   illustrationUrl?: string;
-  /** Where the illustration came from. "ai" = Replicate FLUX,
-   *  "svg" = local SVG fallback. */
-  illustrationSource?: "ai" | "svg";
+  /** Where the illustration came from.
+   *    "openai"    = OpenAI gpt-image-1 (primary, per [AI_PROVIDER_ROUTING])
+   *    "replicate" = Replicate FLUX schnell (graceful fallback)
+   *    "svg"       = local SVG diagram (final fallback before text-only)
+   *    "ai"        = retained for backwards-compat with already-deployed
+   *                  clients that branch on this field; treated as
+   *                  "image came from a model". */
+  illustrationSource?: "openai" | "replicate" | "svg" | "ai";
   /** Where the explanation came from. "ai" = Anthropic, "fallback" = local
    *  rule-based glossary. */
   source?: "ai" | "fallback";
@@ -34,10 +42,19 @@ export interface ExplainError {
 export type ExplainPayload = ExplainResult | ExplainError;
 
 export type ExplainRequestBody =
-  | { reportText: string; examType?: string; bodyRegion?: string }
+  | {
+      reportText: string;
+      examType?: string;
+      bodyRegion?: string;
+      /** Opaque per-session id for the per-session image-generation cap
+       *  in `lib/cost-cap.ts`. Optional — missing ids count against a
+       *  shared anonymous bucket (also capped). */
+      sessionId?: string;
+    }
   | {
       imageBase64: string;
       mediaType: "image/jpeg" | "image/png";
       examType?: string;
       bodyRegion?: string;
+      sessionId?: string;
     };

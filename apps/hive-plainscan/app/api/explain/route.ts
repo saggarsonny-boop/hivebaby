@@ -2,17 +2,20 @@
 //
 //   1. PHI scrub the report text server-side (defence in depth alongside
 //      client-side detectPhi preview).
-//   2. Cost-cap check — if today's per-process spend is over the cap, skip
-//      the Anthropic call and serve the rule-based fallback instead.
+//   2. Cost-cap check — if today's per-process Anthropic spend is over the
+//      cap, skip the Anthropic call and serve the rule-based fallback.
 //   3. Anthropic Sonnet 4 call → parse JSON.
-//   4. On Anthropic success: try Replicate FLUX for the medical illustration.
-//      On any FLUX failure (missing token, HTTP, malformed): fall back to
-//      the local SVG diagram. Both produce data the client can render
-//      directly.
-//   5. On Anthropic failure: rule-based fallback explanation + SVG diagram.
+//   4. On explanation success (AI or rule-based): try the illustration
+//      provider chain — OpenAI gpt-image-1 (primary, per [AI_PROVIDER_ROUTING])
+//      → Replicate FLUX (graceful tertiary) → local SVG diagram. The chain
+//      respects the per-day image cap and per-session image count in
+//      lib/cost-cap.ts; over-cap calls fall straight to the SVG diagram.
+//   5. On Anthropic failure: rule-based fallback explanation + illustration
+//      chain (which may still go to OpenAI if OPENAI_API_KEY is set, since
+//      illustration accuracy is independent of the explanation source).
 //
-// Returns ExplainResult with `illustrationUrl`, `illustrationSource`, and
-// `source` set in addition to the canonical explanation fields.
+// Returns ExplainResult with `illustrationUrl`, `illustrationSource`
+// ("openai" / "replicate" / "svg"), and `source` set.
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
@@ -28,7 +31,9 @@ import { buildDiagramSvg } from "@/lib/diagram";
 import { generateIllustration } from "@/lib/illustration";
 import {
   estimateAnthropicCents,
+  isImageOverCap,
   isOverCap,
+  recordImageSpend,
   recordSpend,
 } from "@/lib/cost-cap";
 import type { ExplainRequestBody, ExplainResult } from "@/types/plainscan";
@@ -65,10 +70,29 @@ function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
-async function attachIllustration(result: ExplainResult): Promise<ExplainResult> {
-  const ai = await generateIllustration(result);
-  if (ai) {
-    return { ...result, illustrationUrl: ai, illustrationSource: "ai" };
+async function attachIllustration(
+  result: ExplainResult,
+  sessionId: string | null,
+): Promise<ExplainResult> {
+  // Per-day fleet image cap or per-session image count → skip the
+  // provider call and degrade straight to the SVG diagram. Fail-closed
+  // is the canonical behavior per CLAUDE.md §C10 [AI_PROVIDER_ROUTING].
+  if (isImageOverCap(sessionId)) {
+    return {
+      ...result,
+      illustrationUrl: buildDiagramSvg(result),
+      illustrationSource: "svg",
+    };
+  }
+
+  const generated = await generateIllustration(result);
+  if (generated) {
+    recordImageSpend(generated.costCents, sessionId);
+    return {
+      ...result,
+      illustrationUrl: generated.url,
+      illustrationSource: generated.source,
+    };
   }
   return {
     ...result,
@@ -88,6 +112,10 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const examType = (body as { examType?: string }).examType ?? "";
   const bodyRegion = (body as { bodyRegion?: string }).bodyRegion ?? "";
+  const sessionId =
+    typeof (body as { sessionId?: unknown }).sessionId === "string"
+      ? ((body as { sessionId?: string }).sessionId as string)
+      : null;
 
   // ─── Text-input branch ──────────────────────────────────────────────
   if (isTextBody(body)) {
@@ -97,7 +125,7 @@ export async function POST(req: NextRequest) {
     // Cost-cap or no key → rule-based fallback path.
     if (!apiKey || isOverCap()) {
       const fb = fallbackExplanation(cleaned, examType, bodyRegion);
-      const withDiagram = await attachIllustration({ ...fb, source: "fallback" });
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
       return NextResponse.json(withDiagram);
     }
 
@@ -120,7 +148,7 @@ export async function POST(req: NextRequest) {
       });
     } catch {
       const fb = fallbackExplanation(cleaned, examType, bodyRegion);
-      const withDiagram = await attachIllustration({ ...fb, source: "fallback" });
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
       return NextResponse.json(withDiagram);
     }
 
@@ -138,19 +166,19 @@ export async function POST(req: NextRequest) {
     );
     if (!textBlock) {
       const fb = fallbackExplanation(cleaned, examType, bodyRegion);
-      const withDiagram = await attachIllustration({ ...fb, source: "fallback" });
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
       return NextResponse.json(withDiagram);
     }
 
     try {
       const parsed = parseModelResponse(textBlock.text);
       if ("error" in parsed) return NextResponse.json(parsed, { status: 422 });
-      const withDiagram = await attachIllustration({ ...parsed, source: "ai" });
+      const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId);
       return NextResponse.json(withDiagram);
     } catch (err) {
       if (err instanceof ParseError) {
         const fb = fallbackExplanation(cleaned, examType, bodyRegion);
-        const withDiagram = await attachIllustration({ ...fb, source: "fallback" });
+        const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
         return NextResponse.json(withDiagram);
       }
       return jsonError("Something went wrong. Please check your report and try again.", 500);
@@ -225,7 +253,7 @@ export async function POST(req: NextRequest) {
     try {
       const parsed = parseModelResponse(textBlock.text);
       if ("error" in parsed) return NextResponse.json(parsed, { status: 422 });
-      const withDiagram = await attachIllustration({ ...parsed, source: "ai" });
+      const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId);
       return NextResponse.json(withDiagram);
     } catch (err) {
       if (err instanceof ParseError) {
