@@ -707,19 +707,39 @@ Confirmed by reading the queen-bee repo on 2026-05-08:
 
 ### How engines inherit from Queen Bee
 
-The mechanism is **HTTP, not a package**. An engine inherits by:
+An engine inherits by:
 
 1. **Registering in `queen-bee/lib/registry.ts`** with `{id, name, domain, status, tone, safety, schema, multilingual, description}`. The engine's slug becomes the `engineId` it sends to the Grappler.
-2. **Calling `POST https://queenbee.hive.baby/api/govern`** with `{engineId, input, content}` before returning each output. QB returns either a stamped envelope (`200`) or a failure report with errors (`422`).
-3. **Returning the envelope** to the client unchanged — it carries `safe`, `governed`, `language`, `flags`, `version`, `timestamp` fields the client surface can render.
+2. **Importing `@queen-bee/client`** and calling `govern(...)` before returning each output. The package wraps `POST https://queenbee.hive.baby/api/govern`, handles retries / timeouts / error classification, and returns a typed `GovernResponse` (Result-style: `approved: true` with `stampedContent` + `governanceStamp`, or `approved: false` with `failureCode` + `failureReason` + `schemaErrors`). Transport failures throw `QueenBeeUnavailableError` so engines pick fail-open vs fail-closed policy explicitly.
+3. **Returning the stamp** to the client surface so users see the QB verdict (`safe`, `governed`, `language`, `flags`, `version`, `timestamp`).
 
-There is no shared library yet — engines that adopt this call the HTTP endpoint directly. This keeps QB out of every engine's bundle but means each engine has to wire its own fetch call and handle QB unavailability. A future `@hive/grappler-client` package becomes plausible once two or more engines are calling `/api/govern` in production.
+The canonical client package lives at [`saggarsonny-boop/queen-bee/packages/queen-bee-client/`](https://github.com/saggarsonny-boop/queen-bee/tree/main/packages/queen-bee-client) (shipped 2026-05-09 in queen-bee PR #3). Engines should never write a fresh `fetch` wrapper for `/api/govern` — the package handles retries, timeouts, error classification, and the Result-shape mapping. First-time wiring is documented step-by-step in [`packages/queen-bee-client/WIRING.md`](https://github.com/saggarsonny-boop/queen-bee/blob/main/packages/queen-bee-client/WIRING.md).
+
+```ts
+import { govern, QueenBeeUnavailableError } from "@queen-bee/client";
+
+const verdict = await govern({
+  engineId: "your-engine-slug",
+  input: userInput,
+  content: structuredOutput,
+  context: { tier, locale, sessionId },
+});
+
+if (verdict.approved) {
+  return { ok: true, content: verdict.stampedContent, stamp: verdict.governanceStamp };
+}
+return { ok: false, code: verdict.failureCode, reason: verdict.failureReason };
+```
+
+External-repo engines install via the git tarball pattern (see WIRING.md) until a registry publish path is decided.
 
 ### Adoption status — honest gap report
 
-As of 2026-05-08, **no Hive engine in this monorepo or in any standalone engine repo actually calls `/api/govern` in production**. Verified by `grep -r "queenbee\.|api/govern|queen-bee-v1" --include="*.ts" --include="*.tsx"` across `hivebaby/apps/`, `hivebaby/packages/`, `universal-document/apps/`, and the standalone engine repos. Queen Bee is deployed and ready, but engines still embed their own safety/schema logic.
+As of 2026-05-09, **no Hive engine in this monorepo or in any standalone engine repo yet imports `@queen-bee/client` in production**. Re-verified by `grep -r "@queen-bee/client\|queenbee\.|/api/govern" --include="*.ts" --include="*.tsx"` across `hivebaby/apps/`, `hivebaby/packages/`, `universal-document/apps/`, and the standalone engine repos. The client package itself shipped in queen-bee PR #3 on 2026-05-09 (the previous "no shared library" line of this section is therefore now stale; the gap is purely adoption, not infrastructure).
 
 The 14 engines listed in `queen-bee/lib/registry.ts` are *registered* (so QB knows about them and can audit their reachability), not *governed* (they don't route their outputs through QB). This is visible in the live audit feed at `queen-bee-v1.vercel.app/api/health`: `governed: true` is the dashboard's reachability check, not proof that the engine called QB.
+
+The first engine to consume `@queen-bee/client` will close the adoption gap and become the reference engine for `WIRING.md`. The package crosses the 2-engine threshold for `@hive/*` extraction as soon as the second engine wires it, at which point it becomes a Substrate Registry entry per §V `[QUEEN_BEE_SUBSTRATES]`.
 
 ### Things described elsewhere that don't exist yet
 
