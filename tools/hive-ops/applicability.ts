@@ -73,6 +73,20 @@ const NON_UNIVERSAL_RULES: Record<string, ReadonlyArray<EngineClass>> = {
   // via <meta>; we exempt static-html for the same reason as H16/H17.
   H25: ["nextjs", "hybrid"],
 
+  // ─── ACCESSIBILITY ────────────────────────────────────────────────
+  // A01..A06 — primary-CTA semantics, keyboard activation, focus ring.
+  // static-html engines (e.g. the planet front door) and api-only
+  // engines have no rich-client primary CTA to evaluate; the rules
+  // would always emit "no client component files to scan" warns,
+  // which is noise. Restrict to nextjs + hybrid where the rules can
+  // actually inspect React component source.
+  A01: ["nextjs", "hybrid"],
+  A02: ["nextjs", "hybrid"],
+  A03: ["nextjs", "hybrid"],
+  A04: ["nextjs", "hybrid"],
+  A05: ["nextjs", "hybrid"],
+  A06: ["nextjs", "hybrid"],
+
   // ─── GOVERNANCE (Queen Bee consumption) ────────────────────────────
   // G01 (package.json dep) and G03 (registry entry via /api/registry)
   // apply universally — every engine class can declare a dependency

@@ -304,8 +304,8 @@ The legacy `<GrapplerHook>` HTML-ish block is **retired**. HivePlainScan still u
 
 Required frontmatter fields include: `engine`, `id`, `domain`, `repo`, `owner`, `version`, `status`, `tier`, `schema`, `stack`, `premium`, `governance`, `safety`, `multilingual`, `onboarding_stack`, `vercel_project`, `deployment_protection`, `visibility`, `commercial_surface`, `viral_loop_targets`, `production_state`, `last_audit_at`. When `status: live`, `launch_checklist_state` (8 booleans) is also required.
 
-### E3. HiveOps rules — H-rules (filesystem)
-**28 rules · 26 MANDATORY · 2 RECOMMENDED.** Categories: CORE_BUILD, INTERNATIONALIZATION, SEO, FIRST_USE_ONBOARDING, HIVE_INTEGRATION, VISIBILITY_SURFACES, DESIGN_CONSISTENCY, ADOPTION_AMPLIFIERS, OPERATIONAL. Full list in `tools/hive-ops/README.md`. Highlights:
+### E3. HiveOps rules — H-rules (filesystem) + A-rules (accessibility)
+**28 H-rules · 26 MANDATORY · 2 RECOMMENDED · 6 A-rules (warn-only).** H-rule categories: CORE_BUILD, INTERNATIONALIZATION, SEO, FIRST_USE_ONBOARDING, HIVE_INTEGRATION, VISIBILITY_SURFACES, DESIGN_CONSISTENCY, ADOPTION_AMPLIFIERS, OPERATIONAL. New ACCESSIBILITY category (A01..A06) added 2026-05-09 — primary-CTA keyboard activation, focus visibility, semantic markup; ships warn-only until ≥80% of engines pass at least 5 of 6 (`[HIVE_ACCESSIBILITY_STANDARD]`). Full list in `tools/hive-ops/README.md`. Highlights:
 
 - **H05** — all 7 canonical free-tier locales present.
 - **H13** — `public/hive-logo-full.png` copied from `@hive/onboarding`.
@@ -315,6 +315,9 @@ Required frontmatter fields include: `engine`, `id`, `domain`, `repo`, `owner`, 
 - **H18** — `manifest.json` has all canonical fields.
 - **H19** — `ENGINE_GRAMMAR.md` present with frontmatter.
 - **H21** — engine entry in `hivebaby` planet `ENGINES` array.
+- **A01** — primary CTA uses semantic `<button>` (no `<div onClick>` masquerading as a button).
+- **A04** — form has Cmd+Enter (Mac) / Ctrl+Enter (Win/Linux) shortcut handler. Reference impl: `apps/hive-plainscan/components/ReportInput.tsx`.
+- **A05** — primary CTA has visible focus ring (`focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-2` is the canonical Tailwind v4 form).
 - **H01** is `unwaivable: true`. Any other rule may be overridden via the schema in §E5.
 
 ### E4. HiveFinalize rules — V-rules (manifest schema)

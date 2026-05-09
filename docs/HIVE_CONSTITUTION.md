@@ -562,6 +562,27 @@ Implementation lives at `tools/hive-ops/checks/governance/`. Each rule is a sepa
 
 **Lift criterion: when ≥80% of audited engines pass at least 4 of 5 G-rules**, flip `GOVERNANCE_FAIL_BLOCKING` to `true` in the same PR that records the lift date here. The 4-of-5 threshold gives migrating engines runway to land G02 (the `govern()` call) and G05 (stamp persistence) in a separate PR from G01 + G03 + G04 without going red between PRs.
 
+### ACCESSIBILITY rules (A01..A06)  `[HIVE_ACCESSIBILITY_STANDARD]`
+
+Primary-CTA keyboard activation, focus visibility, and semantic markup are now first-class HiveOps concerns. The category was added 2026-05-09 after a HivePlainScan user report — "Explain my report" only worked on mouse click, not Enter or Cmd+Enter. The fix shipped in `apps/hive-plainscan/components/ReportInput.tsx` and the rule generalises the pattern across the fleet.
+
+The six A-rules:
+
+- **A01** — primary CTA uses semantic `<button>` (no `<div onClick>` masquerading). Heuristic: greps client `.tsx` for `<div|span|a onClick=` patterns.
+- **A02** — primary CTA activates on Enter. Heuristic: any `type="submit"` button OR any `onKeyDown=` handler.
+- **A03** — primary CTA activates on Space. Native `<button>` does this for free; pass iff A01 finds no offenders.
+- **A04** — form has Cmd+Enter (Mac) / Ctrl+Enter (Win/Linux) shortcut. Heuristic: greps for `(metaKey|ctrlKey)` together with `Enter`. The shortcut is the standard Slack/GitHub/Linear/ChatGPT convention.
+- **A05** — primary CTA has visible focus ring. Heuristic: any of `focus:ring`, `focus-visible`, or `:focus` in client styles. Engines overriding `outline: none` without restoring a ring fail this.
+- **A06** — primary CTA reachable via Tab. Heuristic: flags `<button … tabIndex={-1}>` on the primary CTA. Native `<button>` is in the tab order by default; this is a regression check.
+
+The rules are heuristics, not full AST analysis — false positives (warn even when fine) are preferred over silent gaps.
+
+**WARN-only window.** A-rules ship with `status: "warn"` returns rather than `status: "fail"` until the migration campaign completes. Initial baseline 2026-05-09: across 19 engines audited (5 in-tree + 14 cloned external), only HivePlainScan passes all 6. Most-failed rules: A04 (Cmd+Enter, ~16% pass) and A01 (semantic button, ~26% pass). A06 passes universally (no engine deliberately removes its CTA from tab order).
+
+**Lift criterion: when ≥80% of audited engines pass at least 5 of 6 A-rules**, swap the six rule definitions' `status: "warn"` for `status: "fail"` in the same PR that records the lift date here. The 5-of-6 threshold gives migrating engines runway to land A04 (the Cmd+Enter handler) and A05 (focus ring) in a separate PR from the form-wrapping refactor (A01/A02/A03).
+
+The canonical reference implementation is HivePlainScan's `apps/hive-plainscan/components/ReportInput.tsx` — wrap the input region in `<form onSubmit={handleFormSubmit}>`, change the CTA to `<button type="submit">`, add an `onKeyDown` on the textarea that fires `formRef.current?.requestSubmit()` on `(metaKey || ctrlKey) && key === "Enter"`, detect platform via `navigator.platform` to render "Cmd+Enter to submit" or "Ctrl+Enter to submit" hint, append `focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-2` to the button's className.
+
 ### Queen Bee Substrate Registry  `[QUEEN_BEE_SUBSTRATES]`
 
 When a pattern is built once for a single engine and then becomes a candidate for reuse, it lives in the substrate registry at [`docs/QUEEN_BEE_SUBSTRATES.md`](QUEEN_BEE_SUBSTRATES.md) until it crosses the **3-engine threshold** for extraction into a `@hive/*` package. The registry is the staging area between "one engine built this" and "this is part of the shared package set."

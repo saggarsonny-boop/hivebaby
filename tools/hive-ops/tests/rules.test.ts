@@ -29,11 +29,11 @@ async function testEmptyEngineFails() {
 
   const report = await runHiveOps(join(root, "apps", "noop"));
   check("empty engine → verdict=fail", report.verdict === "fail");
-  // 28 H-rules + 5 G-rules = 33 (V-rules skipped without ENGINE_GRAMMAR.md).
-  // GOVERNANCE rules are WARN-only today, so the failure count expectation
-  // checks H-rule fails specifically.
-  check("empty engine → all rules ran (33: 28 H + 5 G; V skipped)",
-    report.rules.length === 33,
+  // 28 H-rules + 6 A-rules + 5 G-rules = 39 (V-rules skipped without
+  // ENGINE_GRAMMAR.md). GOVERNANCE + ACCESSIBILITY rules are WARN-only
+  // today, so the failure count expectation checks H-rule fails specifically.
+  check("empty engine → all rules ran (39: 28 H + 6 A + 5 G; V skipped)",
+    report.rules.length === 39,
     `got ${report.rules.length} rules`);
   const hFails = report.rules.filter((r) => /^H\d{2}$/.test(r.id) && r.status === "fail").length;
   check("empty engine → ≥20 H-rules fail", hFails >= 20, `H-fail count=${hFails}`);
@@ -132,15 +132,16 @@ function testOverrideUnknownRule() {
     `errors=${JSON.stringify(o.parseErrors)}`);
 }
 
-// MANDATORY/RECOMMENDED counts match user spec (28 total, 26 MANDATORY,
-// 2 RECOMMENDED). If you change the rules table, update this assertion to
-// match the new shape.
+// MANDATORY/RECOMMENDED counts match user spec (34 total, 26 MANDATORY,
+// 8 RECOMMENDED — H-rules: 26 mandatory + 2 recommended; A-rules:
+// 6 recommended, warn-only at intro). If you change the rules table,
+// update this assertion to match the new shape.
 function testRuleTableShape() {
-  check("RULES table has 28 entries", RULES.length === 28, `got ${RULES.length}`);
+  check("RULES table has 34 entries", RULES.length === 34, `got ${RULES.length}`);
   const m = RULES.filter((r) => r.severity === "MANDATORY").length;
   const rec = RULES.filter((r) => r.severity === "RECOMMENDED").length;
-  check("28 = MANDATORY + RECOMMENDED", m + rec === 28, `MANDATORY=${m} RECOMMENDED=${rec}`);
-  check("rule IDs all match /^H\\d{2}$/", RULES.every((r) => /^H\d{2}$/.test(r.id)));
+  check("34 = MANDATORY + RECOMMENDED", m + rec === 34, `MANDATORY=${m} RECOMMENDED=${rec}`);
+  check("rule IDs all match /^[HA]\\d{2}$/", RULES.every((r) => /^[HA]\d{2}$/.test(r.id)));
   check("rule IDs unique", new Set(RULES.map((r) => r.id)).size === RULES.length);
 }
 

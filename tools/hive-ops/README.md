@@ -5,7 +5,7 @@ in [`docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md`](../../docs/HIVE_ENGINE_FINALIZ
 **and** the canonical manifest schema in
 [`docs/specs/manifest-schema-final.md`](../../docs/specs/manifest-schema-final.md).
 
-> **As of v0.3 the audit runs three rule families in a single invocation:**
+> **As of v0.3 the audit runs four rule families in a single invocation:**
 >
 > - **H-rules (H01..H28)** — filesystem checks (favicon, manifest.json,
 >   service worker, install hint, layout metadata, …) implemented locally
@@ -19,10 +19,42 @@ in [`docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md`](../../docs/HIVE_ENGINE_FINALIZ
 >   **WARN-only mode** — failures report as `warn` until ≥80% of audited
 >   engines pass at least 4 of 5 G-rules; flip
 >   `GOVERNANCE_FAIL_BLOCKING` to `true` and amend Constitution §V then.
+> - **A-rules (A01..A06)** — ACCESSIBILITY category, primary-CTA
+>   keyboard activation + focus + semantic markup. Implemented inline in
+>   `rules.ts`. **WARN-only mode** at introduction (2026-05-09) — rules
+>   return `warn` rather than `fail` until ≥80% of audited engines pass
+>   at least 5 of 6 A-rules; the lift swaps `warn` to `fail` in the
+>   six rule definitions and amends Constitution §V then.
 >
-> All three rule families share the same override schema. Engines may
+> All four rule families share the same override schema. Engines may
 > waive or warn-mode any rule with the same YAML block in
 > `ENGINE_GRAMMAR.md`.
+
+## ACCESSIBILITY rules (A01..A06)  `[HIVE_ACCESSIBILITY_STANDARD]`
+
+Primary-CTA keyboard activation + focus visibility. Heuristics, not AST — the rules walk `components/` and `app/` for `.tsx` files and grep for evidence. False positives (rule warns even though the engine is fine) are preferred over silent gaps.
+
+| ID | Rule | What it checks |
+|---|---|---|
+| **A01** | Primary CTA uses semantic `<button>` | scans client component `.tsx` for `<div\|span\|a onClick=` patterns. Any match is a warn — non-button click handlers lose Enter and Space activation that browsers give to native `<button>` for free. |
+| **A02** | Primary CTA activates on Enter | passes if any client component contains `type="submit"` (so the button submits its enclosing form on Enter) OR any `onKeyDown=` handler. |
+| **A03** | Primary CTA activates on Space | duplicates the A01 check from a different angle: native `<button>` activates on Space; non-button onClick elements don't. Pass iff A01 finds no offenders. |
+| **A04** | Form has Cmd+Enter / Ctrl+Enter shortcut handler | greps for `(metaKey\|ctrlKey)` *and* `Enter` in the same client component. The shortcut is the standard way (Slack / GitHub / Linear / ChatGPT) to submit a textarea-based form without leaving the textarea. |
+| **A05** | Primary CTA has visible focus ring | greps client `.tsx` and `app/globals.css` for `focus:ring`, `focus-visible`, or `:focus`. Engines that override `outline: none` without restoring a visible ring fail this. |
+| **A06** | Primary CTA reachable via Tab | flags `<button … tabIndex={-1}>` on the primary CTA. Native `<button>` is in the tab order by default, so this is essentially a regression check for when someone explicitly removes a button from focus order. |
+
+The A04 hint label varies by platform: components that ship the hint as visible text should detect via `navigator.platform` and show "Cmd+Enter to submit" on Mac, "Ctrl+Enter to submit" elsewhere — the canonical reference implementation is `apps/hive-plainscan/components/ReportInput.tsx`.
+
+### A-rule lift criterion (warn-only → fail-blocking)
+
+Same shape as G-rules:
+
+- **≥80%** of audited engines (count, not traffic) pass at least **5 of 6** A-rules.
+- Flip the `status: "warn"` returns to `status: "fail"` in the six rule definitions.
+- Update Constitution §V and `MEMORY.md` `[HIVE_ACCESSIBILITY_STANDARD]` with the lift date.
+- Engines still failing at lift time need an override entry per the standard schema.
+
+The 5-of-6 threshold gives migrating engines runway to land A04 (the Cmd+Enter handler) and A05 (focus ring) in a separate PR from the form-wrapping refactor (A01/A02/A03).
 
 ## GOVERNANCE rules (G01..G05)
 
@@ -62,7 +94,7 @@ Exit codes:
 - **1** — verdict fail
 - **2** — could not resolve engine root or other tooling error
 
-## Rules (28 total · 26 MANDATORY · 2 RECOMMENDED)
+## Rules (34 total · 26 MANDATORY · 8 RECOMMENDED)
 
 | ID | Category | Title | Severity |
 |---|---|---|---|
@@ -94,6 +126,12 @@ Exit codes:
 | H26 | OPERATIONAL | .env.example or env_vars_required documented | RECOMMENDED |
 | H27 | OPERATIONAL | README.md present in engine root | MANDATORY |
 | H28 | OPERATIONAL | tsconfig.json with strict mode | MANDATORY |
+| A01 | ACCESSIBILITY | Primary CTA uses semantic `<button>` element | RECOMMENDED (warn-only at intro 2026-05-09) |
+| A02 | ACCESSIBILITY | Primary CTA activates on Enter (type=submit OR onKeyDown) | RECOMMENDED (warn-only at intro 2026-05-09) |
+| A03 | ACCESSIBILITY | Primary CTA activates on Space when focused | RECOMMENDED (warn-only at intro 2026-05-09) |
+| A04 | ACCESSIBILITY | Form has Cmd+Enter / Ctrl+Enter shortcut handler | RECOMMENDED (warn-only at intro 2026-05-09) |
+| A05 | ACCESSIBILITY | Primary CTA has visible focus ring | RECOMMENDED (warn-only at intro 2026-05-09) |
+| A06 | ACCESSIBILITY | Primary CTA reachable via Tab navigation | RECOMMENDED (warn-only at intro 2026-05-09) |
 
 ## Override schema — when a rule legitimately can't apply
 
