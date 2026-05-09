@@ -6,6 +6,7 @@ import ResultsSummary from "@/components/ResultsSummary";
 import FindingsTable from "@/components/FindingsTable";
 import DoctorQuestions from "@/components/DoctorQuestions";
 import RedFlagBox from "@/components/RedFlagBox";
+import IllustrationDisplay from "@/components/IllustrationDisplay";
 import PDFExport from "@/components/PDFExport";
 import Disclaimer from "@/components/Disclaimer";
 import type {
@@ -96,6 +97,7 @@ export default function PlainScanPage() {
       {result && (
         <>
           <ResultsSummary result={result} />
+          <IllustrationDisplay result={result} />
           <FindingsTable findings={result.findings} />
           <DoctorQuestions questions={result.questionsForDoctor} />
           <RedFlagBox redFlags={result.redFlags} />
