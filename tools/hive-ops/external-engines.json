@@ -1,6 +1,6 @@
 {
-  "$comment": "Registry of external-repo Hive engines audited by HiveOps daily-sweep cross-repo pass and consumed by the reusable hive-ops-pr-audit-reusable.yml workflow. Hivebaby-resident engines (apps/parkback, hive-imr, hive-aestheticbestie, hive-hivephoto) are NOT listed here — they're already covered by the in-tree daily sweep + .github/workflows/hive-ops.yml. To add a new external engine: append an entry, push the corresponding caller workflow into the engine repo's .github/workflows/hive-ops-pr-audit.yml referencing this slug.",
-  "version": 1,
+  "$comment": "Registry of external-repo Hive engines audited by HiveOps daily-sweep cross-repo pass and consumed by the reusable hive-ops-pr-audit-reusable.yml workflow. Hivebaby-resident engines (apps/parkback, hive-imr, hive-aestheticbestie, hive-hivephoto) are NOT listed here — they're already covered by the in-tree daily sweep + .github/workflows/hive-ops.yml. To add a new external engine: append an entry; if the repo is private set `private: true` and `deploy_key_secret`, then provision a per-repo deploy key per CLAUDE.md §E12 [DEPLOY_KEYS_HIVEOPS] before the next sweep.",
+  "version": 2,
   "engines": [
     {
       "slug": "converter",
@@ -16,7 +16,9 @@
       "repo": "saggarsonny-boop/hive-engine-builder",
       "default_branch": "main",
       "subdir_pattern": "root",
-      "domain": "heb.hive.baby"
+      "domain": "heb.hive.baby",
+      "private": true,
+      "deploy_key_secret": "HIVEOPS_DEPLOY_KEY_HIVE_ENGINE_BUILDER"
     },
     {
       "slug": "hive-support",
