@@ -1,0 +1,274 @@
+name: HivePlainScan paywall — provision Stripe TEST products
+
+# Phase 1 of the paywall pipeline. One-shot provisioning workflow that
+# creates the canonical 3 products + 3 prices in Stripe TEST mode and
+# writes the resulting price IDs to apps/hive-plainscan/lib/stripe-config.ts
+# via a follow-up PR for operator review.
+#
+# The workflow is idempotent in spirit: if products / prices matching the
+# canonical metadata already exist (preflight surfaced any prior footprint),
+# the operator is responsible for reviewing the new IDs against the old
+# before merging the follow-up PR. Stripe doesn't have an "upsert" for
+# products / prices — re-running this workflow creates fresh entities.
+#
+# Live-mode safety:
+#   - Reads STRIPE_KEY_TEST (NOT STRIPE_KEY). The latter is the live key
+#     and is intentionally not surfaced here.
+#   - Hard-fails before any write if the key prefix isn't `sk_test_`.
+#   - The dispatch input `confirm` must be the literal string `test-mode`.
+#     A second guard against an accidental fire.
+#
+# After this PR's follow-up commit lands, run the daily-sweep + per-PR
+# audit pipeline; the paywall checkout / webhook / entitlement code in
+# apps/hive-plainscan/ imports `STRIPE_PRICES` from stripe-config.ts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type `test-mode` to confirm Stripe TEST-mode provisioning. Anything else aborts."
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Confirm dispatch input
+        env:
+          CONFIRM: ${{ github.event.inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "test-mode" ]; then
+            echo "::error title=Aborted::Dispatch input \`confirm\` must equal 'test-mode'. Got: '$CONFIRM'."
+            exit 1
+          fi
+          echo "Confirmation OK — proceeding with TEST-mode provisioning."
+
+      - name: Verify STRIPE_KEY_TEST is sk_test_*
+        env:
+          STRIPE_KEY_TEST: ${{ secrets.STRIPE_KEY_TEST }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STRIPE_KEY_TEST:-}" ]; then
+            echo "::error title=Aborted::STRIPE_KEY_TEST secret is unset. Operator must add a sk_test_* key as a hivebaby Actions secret before re-running."
+            exit 1
+          fi
+          PREFIX="${STRIPE_KEY_TEST:0:8}"
+          if [[ "$PREFIX" != "sk_test_" ]]; then
+            echo "::error title=Aborted::STRIPE_KEY_TEST prefix is '$PREFIX', expected 'sk_test_'. Refusing to provision against a non-test key."
+            exit 1
+          fi
+          echo "STRIPE_KEY_TEST prefix confirmed: ${PREFIX}…"
+
+      - name: Provision products + prices
+        id: provision
+        env:
+          STRIPE_KEY_TEST: ${{ secrets.STRIPE_KEY_TEST }}
+        run: |
+          set -euo pipefail
+
+          # Helper: POST to Stripe API. First arg = path, remaining = -d ... -d ...
+          stripe_post() {
+            local path="$1"; shift
+            curl -sS -u "${STRIPE_KEY_TEST}:" "https://api.stripe.com/v1/${path}" "$@"
+          }
+
+          # ─── Product 1: Pay-per-Report ────────────────────────────────
+          PRODUCT_PPR=$(stripe_post products \
+            -d "name=HivePlainScan Pay-per-Report" \
+            -d "description=One-time access to a single AI-explained radiology report." \
+            -d "metadata[engine]=hive-plainscan" \
+            -d "metadata[tier]=pay-per-report" \
+            -d "metadata[provisioned_via]=hps-paywall-provision.yml" \
+            | jq -r '.id')
+          if [ -z "$PRODUCT_PPR" ] || [ "$PRODUCT_PPR" = "null" ]; then
+            echo "::error title=Stripe product creation failed::pay-per-report"
+            exit 1
+          fi
+          echo "Product (Pay-per-Report): $PRODUCT_PPR"
+
+          PRICE_PPR=$(stripe_post prices \
+            -d "product=${PRODUCT_PPR}" \
+            -d "unit_amount=499" \
+            -d "currency=usd" \
+            -d "nickname=HPS Pay-per-Report \$4.99 USD" \
+            -d "metadata[tier]=pay-per-report" \
+            | jq -r '.id')
+          if [ -z "$PRICE_PPR" ] || [ "$PRICE_PPR" = "null" ]; then
+            echo "::error title=Stripe price creation failed::pay-per-report"
+            exit 1
+          fi
+          echo "Price   (Pay-per-Report): $PRICE_PPR"
+
+          # ─── Product 2: Individual ────────────────────────────────────
+          PRODUCT_IND=$(stripe_post products \
+            -d "name=HivePlainScan Individual" \
+            -d "description=Personal-use unlimited reports while subscribed." \
+            -d "metadata[engine]=hive-plainscan" \
+            -d "metadata[tier]=individual" \
+            -d "metadata[provisioned_via]=hps-paywall-provision.yml" \
+            | jq -r '.id')
+          if [ -z "$PRODUCT_IND" ] || [ "$PRODUCT_IND" = "null" ]; then
+            echo "::error title=Stripe product creation failed::individual"
+            exit 1
+          fi
+          echo "Product (Individual):     $PRODUCT_IND"
+
+          PRICE_IND_MO=$(stripe_post prices \
+            -d "product=${PRODUCT_IND}" \
+            -d "unit_amount=999" \
+            -d "currency=usd" \
+            -d "recurring[interval]=month" \
+            -d "nickname=HPS Individual \$9.99/mo" \
+            -d "metadata[tier]=individual-monthly" \
+            | jq -r '.id')
+          if [ -z "$PRICE_IND_MO" ] || [ "$PRICE_IND_MO" = "null" ]; then
+            echo "::error title=Stripe price creation failed::individual-monthly"
+            exit 1
+          fi
+          echo "Price   (Individual MO):  $PRICE_IND_MO"
+
+          PRICE_IND_YR=$(stripe_post prices \
+            -d "product=${PRODUCT_IND}" \
+            -d "unit_amount=8900" \
+            -d "currency=usd" \
+            -d "recurring[interval]=year" \
+            -d "nickname=HPS Individual \$89/yr" \
+            -d "metadata[tier]=individual-yearly" \
+            | jq -r '.id')
+          if [ -z "$PRICE_IND_YR" ] || [ "$PRICE_IND_YR" = "null" ]; then
+            echo "::error title=Stripe price creation failed::individual-yearly"
+            exit 1
+          fi
+          echo "Price   (Individual YR):  $PRICE_IND_YR"
+
+          # ─── Verify each price by re-reading from Stripe ──────────────
+          for P in "$PRICE_PPR" "$PRICE_IND_MO" "$PRICE_IND_YR"; do
+            R=$(curl -sS -u "${STRIPE_KEY_TEST}:" "https://api.stripe.com/v1/prices/${P}" \
+              | jq -r '"  - " + .id + " unit_amount=" + (.unit_amount|tostring) + " currency=" + .currency + " recurring=" + ((.recurring//{})|tostring) + " active=" + (.active|tostring)')
+            echo "$R"
+          done
+
+          # Emit step outputs + a Markdown summary of the canonical IDs.
+          echo "product_ppr=$PRODUCT_PPR"   >> "$GITHUB_OUTPUT"
+          echo "product_ind=$PRODUCT_IND"   >> "$GITHUB_OUTPUT"
+          echo "price_ppr=$PRICE_PPR"       >> "$GITHUB_OUTPUT"
+          echo "price_ind_mo=$PRICE_IND_MO" >> "$GITHUB_OUTPUT"
+          echo "price_ind_yr=$PRICE_IND_YR" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Stripe TEST-mode provisioning"
+            echo ""
+            echo "| Tier | Product ID | Price ID | Amount |"
+            echo "|---|---|---|---|"
+            echo "| Pay-per-Report | \`$PRODUCT_PPR\` | \`$PRICE_PPR\` | \$4.99 USD one-time |"
+            echo "| Individual Monthly | \`$PRODUCT_IND\` | \`$PRICE_IND_MO\` | \$9.99/mo |"
+            echo "| Individual Yearly  | \`$PRODUCT_IND\` | \`$PRICE_IND_YR\` | \$89/yr |"
+            echo ""
+            echo "All three prices verified via \`GET /v1/prices/:id\`."
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Write stripe-config.ts and open follow-up PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRICE_PPR:    ${{ steps.provision.outputs.price_ppr }}
+          PRICE_IND_MO: ${{ steps.provision.outputs.price_ind_mo }}
+          PRICE_IND_YR: ${{ steps.provision.outputs.price_ind_yr }}
+          PRODUCT_PPR:  ${{ steps.provision.outputs.product_ppr }}
+          PRODUCT_IND:  ${{ steps.provision.outputs.product_ind }}
+        run: |
+          set -euo pipefail
+          mkdir -p apps/hive-plainscan/lib
+          cat > apps/hive-plainscan/lib/stripe-config.ts <<EOF
+          // ─── Stripe price IDs for HivePlainScan paywall Phase 1 ──────────
+          //
+          // GENERATED by .github/workflows/hps-paywall-provision.yml.
+          // Canonical IDs for the **TEST mode** Stripe environment as of the
+          // workflow run date. Live-mode IDs are NEVER hardcoded here — they
+          // come exclusively from Vercel project env vars at runtime.
+          //
+          // Resolution order, per-tier:
+          //   1. process.env.STRIPE_PRICE_HPS_<TIER>  (live-mode override)
+          //   2. The hardcoded test-mode ID below
+          //
+          // Live-mode operators set the env vars on the Vercel project; test
+          // / preview deploys use the hardcoded defaults so checkout works
+          // without any env wiring.
+
+          const TEST_DEFAULTS = {
+            payPerReport:      "${PRICE_PPR}",
+            individualMonthly: "${PRICE_IND_MO}",
+            individualYearly:  "${PRICE_IND_YR}",
+          } as const;
+
+          const TEST_PRODUCTS = {
+            payPerReport: "${PRODUCT_PPR}",
+            individual:   "${PRODUCT_IND}",
+          } as const;
+
+          export const STRIPE_PRICES = {
+            payPerReport:
+              process.env.STRIPE_PRICE_HPS_PAY_PER_REPORT ?? TEST_DEFAULTS.payPerReport,
+            individualMonthly:
+              process.env.STRIPE_PRICE_HPS_INDIVIDUAL_MONTHLY ?? TEST_DEFAULTS.individualMonthly,
+            individualYearly:
+              process.env.STRIPE_PRICE_HPS_INDIVIDUAL_YEARLY ?? TEST_DEFAULTS.individualYearly,
+          } as const;
+
+          export const STRIPE_PRODUCTS = TEST_PRODUCTS;
+
+          /** True iff the resolved price IDs are the test-mode defaults
+           *  (no live-mode env override present). UI banners can use this
+           *  to surface "TEST MODE — no real charges" warnings on preview. */
+          export function isTestModeStripe(): boolean {
+            return (
+              STRIPE_PRICES.payPerReport === TEST_DEFAULTS.payPerReport &&
+              STRIPE_PRICES.individualMonthly === TEST_DEFAULTS.individualMonthly &&
+              STRIPE_PRICES.individualYearly === TEST_DEFAULTS.individualYearly
+            );
+          }
+          EOF
+
+          BRANCH="ops/hps-paywall-stripe-config-$(date -u +%Y%m%d%H%M)"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+          git add apps/hive-plainscan/lib/stripe-config.ts
+          git commit -m "ops(hps-paywall): write Stripe TEST-mode price IDs to stripe-config.ts
+
+Generated by .github/workflows/hps-paywall-provision.yml on
+$(date -u +%Y-%m-%dT%H:%M:%SZ).
+
+Test-mode IDs:
+  - Pay-per-Report:    ${PRICE_PPR}
+  - Individual Monthly: ${PRICE_IND_MO}
+  - Individual Yearly:  ${PRICE_IND_YR}
+
+Products:
+  - Pay-per-Report: ${PRODUCT_PPR}
+  - Individual:     ${PRODUCT_IND}
+
+Live-mode operators override per-tier via Vercel env vars; defaults
+above keep test deploys + preview builds working without env wiring."
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "ops(hps-paywall): write Stripe TEST-mode price IDs to stripe-config.ts" \
+            --body "Generated by \`.github/workflows/hps-paywall-provision.yml\`. Updates \`apps/hive-plainscan/lib/stripe-config.ts\` with the canonical TEST-mode price IDs from the latest provisioning run. Live-mode IDs are not in code — operators override per-tier via Vercel env vars. Auto-merge once green.
+
+| Tier | Price ID |
+|---|---|
+| Pay-per-Report | \`${PRICE_PPR}\` |
+| Individual Monthly | \`${PRICE_IND_MO}\` |
+| Individual Yearly | \`${PRICE_IND_YR}\` |
+" \
+            --head "$BRANCH" \
+            --base main
