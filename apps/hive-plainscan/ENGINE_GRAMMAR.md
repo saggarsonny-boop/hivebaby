@@ -1,305 +1,191 @@
-# ENGINE GRAMMAR — HivePlainScan
-
-<GrapplerHook>
+---
 engine: HivePlainScan
 id: hiveplainscan
-version: 0.1.0
-governance: QueenBee.MasterGrappler
-safety: enabled
-multilingual: pending
-premium: false
+domain: plainscan.hive.baby
+domain_aliases:
+  - plainscan.hive.baby
+  - scan.hive.baby
+repo: saggarsonny-boop/hivebaby:apps/hive-plainscan
+owner: saggarsonny-boop
+
+version: 0.2.0
 status: building
 tier: 1
 schema: radiology-report-explanation
-stack: [nextjs, typescript, tailwind, anthropic]
-</GrapplerHook>
+stack: [nextjs, typescript, tailwind, anthropic, replicate, mammoth]
+premium: false
 
-## Engine Identity
-- **Name:** HivePlainScan
-- **Domain:** plainscan.hive.baby (alias: scan.hive.baby)
-- **Repo:** saggarsonny-boop/hivebaby (subdir `apps/hive-plainscan/`)
-- **Status:** Building (Tier 1)
-- **Stack:** Next.js + TypeScript + Tailwind + Anthropic SDK
+governance: QueenBee.MasterGrappler@pending
+safety: enabled
+multilingual: pending
+tone: calm, plain-language, sixth-grade reading level
+cost_profile: zero_marginal
+
+api_models:
+  - role: explain
+    model_id: claude-sonnet-4-20250514
+  - role: illustration
+    model_id: black-forest-labs/flux-schnell
+
+env_vars_required:
+  - ANTHROPIC_API_KEY
+  - REPLICATE_API_TOKEN
+  - NEXT_PUBLIC_APP_URL
+
+env_vars_optional:
+  - PLAINSCAN_DAILY_CAP_CENTS
+
+onboarding_stack:
+  auto_demo: pending
+  first_visit_card: pending
+  tooltip_tour: pending
+  rotating_placeholders: implemented
+
+vercel_project: hive-plainscan
+vercel_root_directory: apps/hive-plainscan
+deployment_protection: off
+visibility: public
+commercial_surface: donations
+viral_loop_targets:
+  - share_card
+  - pr_pickup
+production_state: not_listed
+last_audit_at: 2026-05-09
+
+health_check: /api/health
+
+planned_qb_consumption:
+  schemas:
+    - radiology-report-explanation
+  endpoint: /api/govern
+  status: not-yet-wired
+---
 
 ## Purpose
-HivePlainScan is a patient education tool. It explains finalized radiology
-reports in plain English. It does not diagnose, interpret raw scan images,
-recommend treatment, or replace a physician.
+
+HivePlainScan is a patient education tool. It explains finalized radiology reports in plain English at a 6th–8th grade reading level. It does **not** diagnose, interpret raw scan images, recommend treatment, or replace a physician — it explains what the report already says.
+
+The engine has a **rule-based local fallback** that runs without any AI keys. This keeps a base demo path free at the tier of `cost_profile: zero_marginal` even before AI keys are provisioned. With keys present, the AI explanation + Replicate FLUX illustration pipeline activates.
 
 ## Inputs
+
 - Pasted text from a finalized radiology report
-- Uploaded PDF report (text-extractable)
-- Uploaded photograph or screenshot of a report (JPEG / PNG)
+- PDF upload (parsed client-side via pdfjs-dist)
+- DOCX upload (parsed server-side via mammoth at `/api/extract-report`)
+- Image upload (PNG/JPEG; OCR'd server-side via Anthropic vision)
+- Optional exam type selector (MRI · CT · X-ray · Ultrasound · Other · Auto-detect)
+- Optional body region selector (Spine, Brain, Knee, Shoulder, Hip, Abdomen, Chest, Other · Auto-detect)
 
 ## Outputs
-- Plain-English summary at 6th to 8th grade reading level
-- Findings table: medical term, plain-English translation, location, severity, possible symptoms
-- 5 to 7 questions to bring to the patient's doctor
-- Red-flag highlights when present
-- Downloadable PDF summary
-- Downloadable Universal Document Sealed (.uds) export
+
+JSON `ExplainResult`:
+
+- `bodyRegion` (string)
+- `reportType` (string)
+- `summary` (string, 2–4 sentences, 6th–8th grade reading level)
+- `findings` (array of `{ level, finding, plainLanguage, severity, possibleSymptoms[] }`)
+- `questionsForDoctor` (array of strings, 5–7 entries)
+- `redFlags` (array of strings, urgent terms surfaced from the report)
+- `disclaimer` (string)
+- `illustrationUrl` (string — AI illustration when available, SVG diagram fallback otherwise)
+- `illustrationSource` (`ai` | `svg`)
+- `source` (`ai` | `fallback`)
 
 ## Rules
-- Never show a finding without its plain-English translation beside it
-- Never expose raw error stack traces to the user
-- Reading level: 6th to 8th grade
-- Disclaimer always renders below results, never hidden
-- Words that must not appear in copy: delve, leverage, paradigm, game-changer, meticulous
-- No em dashes in UI copy
-- ANTHROPIC_API_KEY never shipped to the browser
 
-## Onboarding Stack
-- Auto-demo: pending
-- First-visit card: pending
-- Tooltip tour: pending
-- Rotating placeholders: implemented (textarea cycles through real use cases)
+- Always use "the report describes" phrasing
+- Never say diagnose, treat, recommend, or urgent (except in `redFlags`)
+- Reading level: 6th to 8th grade
+- All body regions supported; spine variants (cervical, thoracic, lumbar) get diagrammatic detail
+- If the uploaded content is not a radiology report, return `{ "error": "This does not appear to be a radiology report. Please upload a completed imaging report." }`
+- PHI scrubbing is **mandatory** at two layers:
+  1. Client-side preview (`detectPhi` in `lib/privacy.ts`) — non-mutating; warns the user before submission
+  2. Server-side pre-call (`removePhi`) — mutates the text the AI sees
+- Cost-cap circuit breaker (`lib/cost-cap.ts`) — when daily Anthropic spend exceeds `PLAINSCAN_DAILY_CAP_CENTS` (default 500¢), the engine falls back to the local rule-based explanation + SVG diagram. Image-input requests return 503 in this state.
 
 ## Safety Templates
-- Health disclaimer on results and PDF: educational, not diagnostic
-- Red-flag box surfaces findings the report itself flags as needing prompt attention
-- Defer to the patient's clinician for interpretation
 
-## Multilingual Ribbon
-- Status: pending
+Every response carries the disclaimer:
 
-## Premium Locks
-- None at base tier; free forever for individual patients
+> This explanation is based on the radiology report you provided. It is for educational purposes only. It does not diagnose your condition, recommend treatment, or replace advice from your physician.
 
-## Governance Inheritance
-- Governed by: QueenBee.MasterGrappler (remote)
-- Safety level: enabled
-- Tone: warm, plain, calm, factual
+Layout-level footer (every page):
 
-## API Model Strings
-- Anthropic: `claude-sonnet-4-20250514`
-
-## Deployment Notes
-- Vercel project: `hive-plainscan` (root directory `apps/hive-plainscan/`)
-- Domain: plainscan.hive.baby → Cloudflare CNAME → cname.vercel-dns.com
-- Vercel Deployment Protection: OFF
-- Required env vars: `ANTHROPIC_API_KEY`
-- Health check: `GET /api/health`
+> No ads. No investors. No agenda. — Free at the base tier, forever. — This is not medical advice. Always consult a qualified clinician.
 
 ## Phase Plan
-1. Scaffold app, components, API routes, PDF/UDS export
-2. Vercel deploy + DNS (plainscan.hive.baby and scan.hive.baby alias)
-3. Add to test.hive.baby engine_slots with 10-item checklist
-4. Add to planet surface as a hexagonal cell
-5. Onboarding stack (auto-demo, first-visit card, tooltip tour)
-6. Multilingual ribbon
 
-## Out of Scope (Phase 1)
-- Stripe, Clerk, file storage, multi-tenant, HIPAA infrastructure, OCR for scanned PDFs (use the Image tab instead).
+- **Phase 1 (shipped):** Anthropic-powered explanation, ParseError handling, /api/explain text + image branches.
+- **Phase 2 (this PR):** PHI scrubbing, rule-based fallback, SVG diagrams, Replicate FLUX illustration pipeline, DOCX support, cost-cap circuit breaker, sample report, Hive footer signature, service worker registration, manifest.json, /api/health canonical shape.
+- **Phase 3 (next):** Locale catalogue expansion (es, fr, ar, hi, zh, pt — currently English only); seven-locale floor per Constitution §C2.
+- **Phase 4:** Wire Queen Bee `/api/govern` consumption per `planned_qb_consumption` block above. Until then, governance flag is `QueenBee.MasterGrappler@pending`.
+- **Phase 5:** DNS provisioning for `plainscan.hive.baby` (currently no DNS record) — flips status to `live`.
+
+## Out of Scope
+
+- Diagnostic interpretation of raw scan images (the AI vision branch only OCRs text from a report photo)
+- Treatment recommendations
+- Comparing against prior imaging
+- Reading non-radiology medical documents (lab reports, pathology, etc.)
+
+## Deployment Notes
+
+- Vercel project: `hive-plainscan` (root `apps/hive-plainscan`). Auto-deploy on push to `main`.
+- Required env vars in production: `ANTHROPIC_API_KEY`, `REPLICATE_API_TOKEN` (optional — graceful degrade when absent), `NEXT_PUBLIC_APP_URL`.
+- Vercel deployment protection: **off** (per C10).
+- DNS: `plainscan.hive.baby` not yet wired. Provision via Cloudflare CNAME → `cname.vercel-dns.com` per C11. Tracked in hivebaby#127.
 
 ## Hive-Ops Overrides
 
 ```yaml
 overrides:
-  - rule: H03
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: public/ directory present
-    # message:  public/ directory missing
-  - rule: H04
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: locales/ directory present
-    # message:  locales/ directory missing — strings must be externalized
   - rule: H05
     mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
+    reason: "Locale catalog seeded with English only this PR; remaining six (es, fr, ar, hi, zh, pt) generated in follow-up PR per Phase 3."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: all 7 canonical free-tier locales present (en, es, fr, ar, hi, zh, pt)
-    # message:  missing locales/en.json, locales/es.json, locales/fr.json, locales/ar.json, locales/hi.json, locales/zh.json, locales/pt.json
-  - rule: H06
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: navigator.language detection wired in strings loader
-    # message:  no navigator.language reference in strings loader candidates
+    date: 2026-05-09
+    warn_until: 2026-06-08
   - rule: H08
     mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
+    reason: "OG image not yet generated; the engine has SVG fallback diagrams for in-product imagery, OG image is a post-DNS asset."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: public/og.png present
-    # message:  public/og.png missing — share previews fall back to Vercel default
-  - rule: H09
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: robots.txt present (public/ or app/robots.ts)
-    # message:  none of public/robots.txt, app/robots.ts, src/app/robots.ts exists
-  - rule: H10
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: sitemap present (public/sitemap.xml or app/sitemap.ts)
-    # message:  none of public/sitemap.xml, app/sitemap.ts, src/app/sitemap.ts exists
+    date: 2026-05-09
+    warn_until: 2026-06-08
   - rule: H11
     mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
+    reason: "HiveInstallHint not yet wired; canonical onboarding stack is Phase 3 (with locales)."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: PWA install hint banner present (HiveInstallHint or local equivalent)
-    # message:  no install-hint reference in primary surface files
+    date: 2026-05-09
+    warn_until: 2026-06-08
   - rule: H12
     mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
+    reason: "HiveFirstVisitExplainer not yet wired; Phase 3."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: first-visit explainer present (HiveFirstVisitExplainer or local equivalent)
-    # message:  no FirstVisitExplainer reference in primary surface files
+    date: 2026-05-09
+    warn_until: 2026-06-08
   - rule: H13
     mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
+    reason: "public/hive-logo-full.png not yet copied from @hive/onboarding; asset port is part of Phase 3 onboarding stack work."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: HIVE_HEADER_LOGO — public/hive-logo-full.png copied
-    # message:  public/hive-logo-full.png|webp missing
-  - rule: H14
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: HIVE_FOOTER_SIGNATURE — "Made with ♥ in the Hive" rendered
-    # message:  no "Made with ♥ in the Hive" reference in footer/page/layout
+    date: 2026-05-09
+    warn_until: 2026-06-08
   - rule: H15
     mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
+    reason: "Favicon binaries not generated this PR — manifest.json declares them but actual PNG files are a follow-up asset commit."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: FAVICON_COMPLETE — full canonical favicon set in public/
-    # message:  missing public/favicon.ico, public/icon-192.png, public/icon-512.png, public/apple-touch-icon.png
-  - rule: H16
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: THEME_COLOR_CANONICAL — #D4AF37 in metadata + manifest
-    # message:  #D4AF37 missing from both layout themeColor and manifest theme_color
-  - rule: H17
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: APPLE_WEB_APP_META — metadata.appleWebApp configured
-    # message:  metadata.appleWebApp missing — iOS standalone status bar will default
-  - rule: H18
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: MANIFEST_COMPLETE — public/manifest.json has canonical fields
-    # message:  public/manifest.json missing
-  - rule: H19
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: ENGINE_GRAMMAR.md present in repo root with frontmatter
-    # message:  ENGINE_GRAMMAR.md present but no YAML frontmatter detected
-  - rule: H20
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: service worker registrar present
-    # message:  none of public/sw.js, public/service-worker.js, app/_lib/ServiceWorkerRegistrar.tsx, src/app/_lib/ServiceWorkerRegistrar.tsx present
+    date: 2026-05-09
+    warn_until: 2026-06-08
   - rule: H21
     mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
+    reason: "Engine entry in hivebaby planet ENGINES array pending DNS provisioning; engine is currently DORMANT in inventory."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: engine entry present in hivebaby planet ENGINES array
-    # message:  no reference to hive-plainscan in hivebaby planet/registry candidates
-  - rule: H22
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: Hive gold #D4AF37 referenced in component / styles
-    # message:  #D4AF37 not referenced in layout/page/globals
-  - rule: H23
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: canonical dark ink #0a0a0a referenced
-    # message:  canonical ink #0a0a0a not referenced — engine may read as a stranger
-  - rule: H24
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: manifest registered in layout (<link rel="manifest"...>)
-    # message:  manifest not registered in layout — install prompts may not fire
-  - rule: H25
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: viewport meta with width=device-width set in layout
-    # message:  no viewport export / device-width meta in layout — mobile rendering breaks
-  - rule: H26
-    mode: warn
-    reason: "Engine pre-dates canonical HiveOps v0.1+ Hive-integration standards. Legacy <GrapplerHook> grammar shape (V-rules cannot run). Full migration tracked in hivebaby#101; warn-mode for 30 days."
-    issue: "https://github.com/saggarsonny-boop/hivebaby/issues/101"
-    reviewer: Sonny
-    date: 2026-05-06
-    warn_until: 2026-06-05
-    # original: .env.example or env_vars_required documented
-    # message:  neither .env.example nor env_vars_required in grammar
+    date: 2026-05-09
+    warn_until: 2026-06-08
 ```

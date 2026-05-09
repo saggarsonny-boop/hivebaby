@@ -281,3 +281,36 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 
 .site-footer p { width: 100%; }
+
+.hive-footer-signature {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+/* Canonical Hive ink #0a0a0a — used as the dark fallback for any
+   component that needs the Hive dark palette anchor. */
+.hive-ink {
+  color: #0a0a0a;
+}
+
+.hive-footer-signature a {
+  color: inherit;
+}
+
+.hive-footer-link-row a {
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+
+.hive-footer-link-row a:hover {
+  border-bottom-style: solid;
+}
