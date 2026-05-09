@@ -315,6 +315,24 @@ escalate to a human.
 
 ---
 
+## Today's session — locked 2026-05-08 (architecture map)
+
+### Rule #36 — `[HIVE_ARCHITECTURE]`
+
+**Title:** The pan-Hive architecture map at `docs/HIVE_ARCHITECTURE.md` is the canonical layer-by-layer view of how the Hive fits together.
+
+**Body:** The architecture doc maps the five-layer stack (Queen Bee → Foundry/Factory → core substrates → engines → public surfaces) with Mermaid diagrams of inheritance, data flow, module reuse, and per-engine substrate adoption. CC reads it at the start of any session that touches more than one engine, and amends it whenever a new engine is scaffolded, a substrate is extracted to a `@hive/*` package, or an adoption amplifier is added.
+
+The map distinguishes four kinds of thing — **engines** (own purpose, workflows, public domain, DB, ENGINE_GRAMMAR.md), **modules** (attach via import, no own product surface), **substrates** (registry-tracked patterns, extracted at the 3-engine threshold), and **adoption amplifiers** (HiveOps-enforced cross-cutting features every engine inherits). Conflating these is the most common confusion the doc exists to prevent.
+
+v0.1 (2026-05-08) captures everything verifiable today; sections marked **AWAITS T1 PR** are placeholders for content T1's Queen Bee discovery PR will land canonically (Layer-1 Queen Bee surface; Tarka / Broomstick / Oompa Loompas in Layer 2; Hive Core / Tone Engine / AI Activity Partner in Layer 3; HiveVitality status; the remaining 2 of the 27 adoption amplifiers).
+
+**Source:** Locked 2026-05-08. Originated from a request to make the pan-Hive architecture visible from every chat and CC session. v0.1 shipped before T1's Queen Bee PR landed; v0.2 amendment is queued for after T1 merges.
+
+**Constitution reference:** [§V "Pan-Hive architecture map"](docs/HIVE_CONSTITUTION.md#pan-hive-architecture-map--hive_architecture).
+
+---
+
 ## Today's session — locked 2026-05-08 (substrate registry)
 
 ### Rule #35 — `[QUEEN_BEE_SUBSTRATES]`
