@@ -173,7 +173,7 @@ function appendRuleBlock(lines: string[], rules: RuleResult[]): void {
 
 /** ruleFamily() throws on malformed IDs; the reporter shouldn't crash on
  *  one bad entry, so we coerce to "H" as a defensive fallback. */
-function safeFamily(r: RuleResult): "H" | "V" {
+function safeFamily(r: RuleResult): "H" | "V" | "G" {
   try { return ruleFamily(r.id); } catch { return "H"; }
 }
 

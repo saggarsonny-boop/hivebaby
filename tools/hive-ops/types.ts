@@ -96,14 +96,16 @@ export interface RuleResult {
 }
 
 /** Rule family. H-rules are filesystem checks; V-rules are manifest schema
- *  validation supplied by hive-finalize. Used by the reporter to group
+ *  validation supplied by hive-finalize; G-rules are GOVERNANCE checks
+ *  that detect Queen Bee consumption. Used by the reporter to group
  *  output and by metrics consumers to attribute coverage. */
-export type RuleFamily = "H" | "V";
+export type RuleFamily = "H" | "V" | "G";
 
 /** Determine which family a rule ID belongs to. Throws on malformed input. */
 export function ruleFamily(id: string): RuleFamily {
   if (/^H\d{2}$/.test(id)) return "H";
   if (/^V\d{2}$/.test(id)) return "V";
+  if (/^G\d{2}$/.test(id)) return "G";
   throw new Error(`Invalid rule ID format: ${id}`);
 }
 

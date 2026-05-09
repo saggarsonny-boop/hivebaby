@@ -1,0 +1,8 @@
+{
+  "name": "pass-engine",
+  "version": "0.1.0",
+  "dependencies": {
+    "@queen-bee/client": "workspace:*",
+    "next": "^15.0.0"
+  }
+}

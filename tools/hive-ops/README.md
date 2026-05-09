@@ -5,8 +5,7 @@ in [`docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md`](../../docs/HIVE_ENGINE_FINALIZ
 **and** the canonical manifest schema in
 [`docs/specs/manifest-schema-final.md`](../../docs/specs/manifest-schema-final.md).
 
-> **As of v0.2 the audit is unified.** HiveOps runs both rule families in
-> a single CLI invocation:
+> **As of v0.3 the audit runs three rule families in a single invocation:**
 >
 > - **H-rules (H01..H28)** — filesystem checks (favicon, manifest.json,
 >   service worker, install hint, layout metadata, …) implemented locally
@@ -15,10 +14,38 @@ in [`docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md`](../../docs/HIVE_ENGINE_FINALIZ
 >   `tools/hive-finalize/validate.ts` and re-exposed under normalized
 >   V01..V29 IDs (hive-finalize ships them as V1..V29; the runner
 >   zero-pads when ingesting).
+> - **G-rules (G01..G05)** — GOVERNANCE category, detects Queen Bee
+>   consumption. Implemented in `checks/governance/`. Currently in
+>   **WARN-only mode** — failures report as `warn` until ≥80% of audited
+>   engines pass at least 4 of 5 G-rules; flip
+>   `GOVERNANCE_FAIL_BLOCKING` to `true` and amend Constitution §V then.
 >
-> Both rule families share the same override schema. Engines may waive or
-> warn-mode either H-rules or V-rules with the same YAML block in
+> All three rule families share the same override schema. Engines may
+> waive or warn-mode any rule with the same YAML block in
 > `ENGINE_GRAMMAR.md`.
+
+## GOVERNANCE rules (G01..G05)
+
+| ID | Rule | What it checks |
+|---|---|---|
+| **G01** | engine package.json declares `@queen-bee/client` | parses `package.json`; looks for the dep in `dependencies`/`peerDependencies`. `devDependencies` only is a fail (govern() runs in production). |
+| **G02** | engine calls `govern()` in at least one route handler | greps `app/api/**/route.ts(x)` for an import of `govern` from `@queen-bee/client` plus a call site. Engines that consume QB outside route handlers declare an override pointing at the call site. |
+| **G03** | engine slug present in `queen-bee/lib/registry.ts` | hits `https://queenbee.hive.baby/api/registry` (override via `QB_REGISTRY_URL`) and looks for `engineSlug`. Network failure reports `skip`, never `fail`. |
+| **G04** | `ENGINE_GRAMMAR.md` declares `queen_bee_schemas` | YAML frontmatter must include a list of canonical schema names (15 valid: see `queen-bee/lib/schemas.ts`). Inline and block lists both supported. |
+| **G05** | engine DB schema persists `governance_stamp` | scans `db/schema/`, `migrations/`, `prisma/schema.prisma` for `governance_stamp` / `governanceStamp` / `stamp_id` / `stampId`. Static-html engines are exempted by the applicability matrix. |
+
+The rules are ordered cheapest-first — G01 + G04 are config-only, G03 is a registry update, G02 + G05 are the real wiring. The `@queen-bee/client` package's `WIRING.md` walks an engine through all five.
+
+## Lift criterion (warn-only → fail-blocking)
+
+GOVERNANCE rules ship in WARN-only mode so the migration campaign can move incrementally. The lift target:
+
+- **≥80%** of audited engines (count, not traffic) PASS at least **4 of 5** G-rules.
+- Flip the constant `GOVERNANCE_FAIL_BLOCKING` in `checks/governance/index.ts` to `true`.
+- Update Constitution §V and `MEMORY.md` `[HIVEOPS_GOVERNANCE]` with the lift date.
+- Engines that haven't migrated by then need an override per `[QUEEN_BEE_LOCATION]` planning, not a silent pass.
+
+The 4-of-5 threshold gives migrating engines runway to land G02 (the `govern()` call) and G05 (DB stamp persistence) in a separate PR from the package install + registration + grammar update without going red between PRs.
 
 ## Quick start
 

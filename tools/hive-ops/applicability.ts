@@ -72,6 +72,23 @@ const NON_UNIVERSAL_RULES: Record<string, ReadonlyArray<EngineClass>> = {
   // H25 viewport meta — Next.js viewport export. Static-html declares it
   // via <meta>; we exempt static-html for the same reason as H16/H17.
   H25: ["nextjs", "hybrid"],
+
+  // ─── GOVERNANCE (Queen Bee consumption) ────────────────────────────
+  // G01 (package.json dep) and G03 (registry entry via /api/registry)
+  // apply universally — every engine class can declare a dependency
+  // and every engine should be registered with QB whether or not it
+  // serves UI traffic.
+  // G04 (queen_bee_schemas in ENGINE_GRAMMAR.md) is also universal.
+  // G02 (govern() call in route handlers) — static-html engines have
+  // no Next.js route handlers, so the rule cannot apply meaningfully.
+  // api-only engines DO have route handlers and should call govern();
+  // hybrid engines are subject to all rules.
+  G02: ["nextjs", "api-only", "hybrid"],
+  // G05 (governance_stamp persistence in DB schema) — engines without
+  // a database (static-html PWAs like ParkBack, HiveMoon) genuinely
+  // have nowhere to persist a stamp. api-only engines often DO have a
+  // DB and are kept in-scope; hybrid is in-scope for safety.
+  G05: ["nextjs", "api-only", "hybrid"],
 };
 
 /** Returns true iff `ruleId` applies to engines of class `cls`. Rules not

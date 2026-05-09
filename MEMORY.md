@@ -315,6 +315,30 @@ escalate to a human.
 
 ---
 
+## Today's session — locked 2026-05-08 (HiveOps GOVERNANCE)
+
+### Rule #37 — `[HIVEOPS_GOVERNANCE]`
+
+**Title:** HiveOps gains a GOVERNANCE rule category (G01..G05) that enforces Queen Bee consumption. Currently WARN-only; lifts to FAIL-blocking at ≥80% engine adoption.
+
+**Body:** HiveOps now runs three rule families: H (filesystem, H01..H28), V (manifest schema, V01..V29), and **G (GOVERNANCE, G01..G05)**. G-rules detect whether engines actually inherit from Queen Bee:
+
+- **G01** — engine `package.json` declares `@queen-bee/client` (in `dependencies`/`peerDependencies`; devDependencies-only fails).
+- **G02** — engine code imports `govern` from `@queen-bee/client` and calls it from at least one `app/api/**/route.ts(x)` handler.
+- **G03** — engine slug present in `queen-bee/lib/registry.ts` (verified via HTTP `GET /api/registry`; network failure reports `skip`, never `fail`).
+- **G04** — `ENGINE_GRAMMAR.md` declares `queen_bee_schemas` in frontmatter, with names from the canonical 15 in `queen-bee/lib/schemas.ts`.
+- **G05** — engine DB schema persists the governance stamp (column `governance_stamp`/`governanceStamp` or FK `stamp_id`/`stampId`); static-html engines exempted by applicability.
+
+Implementation: `tools/hive-ops/checks/governance/{index.ts,g01..g05}.ts`. Tests + 3 fixture engines (PASS / FAIL / mixed-3-of-5) at `tools/hive-ops/tests/governance.test.ts`.
+
+WARN-only mode: `GOVERNANCE_FAIL_BLOCKING = false` in `checks/governance/index.ts`. The runner softens any G-rule's `fail` into `warn` until the constant flips. Lift criterion: ≥80% of audited engines pass ≥4 of 5 G-rules. The 4-of-5 threshold lets engines migrate G02 + G05 in a separate PR from G01 + G03 + G04 without going red between PRs.
+
+**Source:** Locked 2026-05-08. Originated from making QB consumption auditable across the fleet — without G-rules, engines could declare governance compliance in their grammar without any code path actually calling `govern()`.
+
+**Constitution reference:** [§V "GOVERNANCE rule category"](docs/HIVE_CONSTITUTION.md#governance-rule-category--queen-bee-consumption-enforcement--hiveops_governance).
+
+---
+
 ## Today's session — locked 2026-05-08 (architecture map)
 
 ### Rule #36 — `[HIVE_ARCHITECTURE]`
