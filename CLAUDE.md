@@ -407,6 +407,28 @@ Update at the same time you check checklist items:
 - `registry/billing-reconciliation.md` — monthly COGS estimate.
 - `docs/engine-archives/<engine-slug>/` — archived spec (`ENGINE_GRAMMAR.md`, `README.md`, `test-station-slot.md`).
 
+### E12. `HIVEOPS_CROSS_REPO_TOKEN` — annual rotation `[PAT_ROTATION_HIVEOPS]`
+
+The cross-repo daily sweep + per-PR audit guardrail (`tools/hive-ops/crossRepoAudit.ts` + `.github/workflows/hive-ops-daily-sweep.yml`) clone external engine repos to run `runHiveOps()` against fresh checkouts. The default Actions `GITHUB_TOKEN` reads only public repos; **private engine repos (currently `saggarsonny-boop/hive-engine-builder`) surface as `🚧 ERROR` rows without a fine-grained PAT.**
+
+The PAT lives in hivebaby Actions secrets as `HIVEOPS_CROSS_REPO_TOKEN`. Required attributes:
+
+- **Resource owner:** `saggarsonny-boop`
+- **Repository access:** All repositories
+- **Repository permissions:** Contents (Read), Metadata (Read), Pull requests (Read) — everything else **No access**.
+- **Expiration:** 1 year. Rotation date is recorded here on issue.
+
+**Rotation: yearly.** GitHub doesn't support programmatic PAT minting (POST endpoints return 404 on user-self-creation as of January 2026), so rotation is the one HiveOps-pipeline operation that genuinely requires a dashboard step. When rotation is due:
+
+1. Open https://github.com/settings/personal-access-tokens/new with the attributes above.
+2. Paste the new token: `gh secret set HIVEOPS_CROSS_REPO_TOKEN --repo saggarsonny-boop/hivebaby --body "$NEW_VALUE"`.
+3. Trigger a manual dry-run sweep to confirm: `gh workflow run hive-ops-daily-sweep.yml -f dry_run=true`. The cross-repo step should report all engines (private included) with real verdicts, no `ERROR` rows.
+4. Update the rotation-due date here.
+
+**Current rotation due:** _2027-05-09_ (initial provision 2026-05-09).
+
+The workflow gracefully degrades when the secret is unset or expired — public engines still audit; private engines just report `🚧 ERROR`. So rotation drift produces visible signal in the daily issue, not silent failure.
+
 ---
 
 ## F. hive.baby PLANET — THE FRONT DOOR

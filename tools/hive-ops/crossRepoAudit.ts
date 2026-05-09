@@ -96,14 +96,24 @@ function loadRegistry(path: string): ExternalRegistry {
 }
 
 /** Fresh clone of repo into `<cloneDir>/<repo-basename>`. Replaces any
- *  existing clone at that path. Uses GITHUB_TOKEN if present (so private
- *  repos work in CI); otherwise falls back to anonymous HTTPS. */
+ *  existing clone at that path. Token preference order:
+ *    1. HIVEOPS_CROSS_REPO_TOKEN — fine-grained PAT scoped to read every
+ *       saggarsonny-boop engine repo (public + private). Set as a
+ *       hivebaby Actions secret; rotates yearly per CLAUDE.md §E.
+ *    2. GITHUB_TOKEN  — workflow's auto-provided token. Reads public
+ *       repos only; private engine repos surface as ERROR rows (graceful
+ *       degradation, not a tooling failure).
+ *    3. GH_TOKEN      — local-dev fallback (operator's gh CLI auth).
+ *  Anonymous HTTPS only on public repos with no token at all. */
 function cloneRepo(engine: ExternalEngine, cloneDir: string): string {
   const repoBasename = engine.repo.split("/").pop()!;
   const dest = join(cloneDir, repoBasename);
   if (existsSync(dest)) rmSync(dest, { recursive: true, force: true });
   mkdirSync(cloneDir, { recursive: true });
-  const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
+  const token =
+    process.env.HIVEOPS_CROSS_REPO_TOKEN ??
+    process.env.GITHUB_TOKEN ??
+    process.env.GH_TOKEN;
   const url = token
     ? `https://x-access-token:${token}@github.com/${engine.repo}.git`
     : `https://github.com/${engine.repo}.git`;

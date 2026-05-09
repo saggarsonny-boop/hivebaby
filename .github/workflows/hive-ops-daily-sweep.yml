@@ -31,14 +31,21 @@ name: HiveOps — daily warn-mode sweep + cross-repo audit
 #   pull-requests: write  — reserved; not used today (commits go direct)
 #
 # Secrets / tokens:
-#   DATABASE_URL          — Postgres connection string for hive_alerts
-#                           (already in repo secrets per ci-doctor + the
-#                           query-hive-alerts.yml workflow)
-#   GITHUB_TOKEN          — default token; used by crossRepoAudit.ts to
-#                           clone external Hive engine repos. The default
-#                           token only has read access to the org's public
-#                           repos, which is exactly what we need (no
-#                           write back to external repos from the sweep).
+#   DATABASE_URL                — Postgres connection string for hive_alerts
+#                                 (already in repo secrets per ci-doctor +
+#                                 the query-hive-alerts.yml workflow)
+#   HIVEOPS_CROSS_REPO_TOKEN    — optional fine-grained PAT, scoped to read
+#                                 (Contents + Metadata + Pull-requests) every
+#                                 repo in saggarsonny-boop. When present, the
+#                                 cross-repo audit can clone PRIVATE engine
+#                                 repos (hive-engine-builder, etc.) instead
+#                                 of surfacing them as ERROR rows. Rotates
+#                                 yearly per CLAUDE.md §E [PAT_ROTATION_HIVEOPS].
+#                                 If absent, audit gracefully degrades —
+#                                 public repos still audit correctly.
+#   GITHUB_TOKEN                — default token; used by crossRepoAudit.ts
+#                                 when HIVEOPS_CROSS_REPO_TOKEN is unset.
+#                                 Reads public org repos only.
 
 on:
   schedule:
@@ -118,9 +125,15 @@ jobs:
       - name: Run cross-repo audit (external engines)
         id: cross
         env:
-          # GITHUB_TOKEN gives the cloner read access to
-          # saggarsonny-boop's public repos. DATABASE_URL is required
-          # for tier-2 FAIL alerts.
+          # HIVEOPS_CROSS_REPO_TOKEN: fine-grained PAT scoped to the
+          # saggarsonny-boop org with Contents + Metadata + Pull-requests
+          # read on all repos. When set, the audit can clone PRIVATE
+          # engine repos (hive-engine-builder is currently the only one).
+          # When unset, the audit falls back to GITHUB_TOKEN (public repos
+          # only) and surfaces private repos as ERROR rows. The fallback
+          # in tools/hive-ops/crossRepoAudit.ts:cloneRepo() does the
+          # actual selection.
+          HIVEOPS_CROSS_REPO_TOKEN: ${{ secrets.HIVEOPS_CROSS_REPO_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
