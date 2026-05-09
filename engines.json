@@ -42,6 +42,14 @@
       "description": "AI photo intelligence — upload, search, understand your photos",
       "status": "live",
       "category": "media"
+    },
+    {
+      "id": "secret-box",
+      "name": "HiveSecretBox",
+      "url": "https://secretbox.hive.baby",
+      "description": "Anonymous secrets — no account, no IP storage, you are not alone",
+      "status": "live",
+      "category": "social"
     }
   ]
 }
