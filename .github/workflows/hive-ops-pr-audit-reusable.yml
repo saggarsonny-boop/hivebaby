@@ -111,20 +111,35 @@ jobs:
 
       - name: Run HiveOps audit on PR branch
         id: audit
+        # GitHub Actions wraps `run:` blocks in `bash --noprofile --norc -eo
+        # pipefail`, which means a non-zero exit from any command kills the
+        # step. cli.ts intentionally exits 1 on verdict=fail (and 2 on
+        # tooling error) — both are SIGNAL, not failure of the audit
+        # itself. We capture the exit code explicitly and route on it.
         run: |
-          set -uo pipefail
+          set +e  # we want to read the cli's exit code, not be killed by it
           npx --prefix hivebaby/tools/hive-ops tsx hivebaby/tools/hive-ops/cli.ts "${{ inputs.slug }}" --repo "$GITHUB_WORKSPACE/engine" --json > /tmp/hive-ops-report.json
           AUDIT_EXIT=$?
+          set -e
           if [ $AUDIT_EXIT -eq 2 ]; then
             echo "verdict=tooling-error" >> "$GITHUB_OUTPUT"
             echo "::error title=HiveOps tooling error::audit exited 2 — see logs"
             exit 2
           fi
-          VERDICT=$(jq -r '.verdict' /tmp/hive-ops-report.json)
+          # cli.ts exits 0 (pass/warn) or 1 (fail) — both produce valid
+          # JSON. Read the verdict from the JSON, not the exit code.
+          VERDICT=$(jq -r '.verdict' /tmp/hive-ops-report.json 2>/dev/null || echo "")
+          if [ -z "$VERDICT" ]; then
+            echo "verdict=tooling-error" >> "$GITHUB_OUTPUT"
+            echo "::error title=HiveOps tooling error::audit produced no parseable JSON (exit $AUDIT_EXIT)"
+            exit 2
+          fi
           echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
-          echo "PR-branch verdict: $VERDICT"
+          echo "PR-branch verdict: $VERDICT (audit exited $AUDIT_EXIT)"
           # also produce human-readable for the comment + step summary
-          npx --prefix hivebaby/tools/hive-ops tsx hivebaby/tools/hive-ops/cli.ts "${{ inputs.slug }}" --repo "$GITHUB_WORKSPACE/engine" > /tmp/hive-ops-report.txt 2>&1 || true
+          set +e
+          npx --prefix hivebaby/tools/hive-ops tsx hivebaby/tools/hive-ops/cli.ts "${{ inputs.slug }}" --repo "$GITHUB_WORKSPACE/engine" > /tmp/hive-ops-report.txt 2>&1
+          set -e
           {
             echo "## HiveOps PR audit — \`${{ inputs.slug }}\`"
             echo ""
