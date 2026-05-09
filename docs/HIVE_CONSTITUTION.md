@@ -720,7 +720,7 @@ Confirmed by reading the queen-bee repo on 2026-05-08:
 | Master Grappler | `lib/grappler.ts` | Implemented. Schema field validation, safety check, language detection (zh/ar/ja/ru/en heuristic), QB envelope stamping with version `0.2.0`. |
 | Engine registry | `lib/registry.ts` | 14 engines registered with `id, name, domain, status, tone, safety, schema, multilingual, description`. |
 | Safety enforcement | `lib/safety.ts` | Tiered rules: universal blocks (suicide/self-harm, weapons synthesis, CSAM); standard blocks; medical-flag patterns; elevated-flag patterns; per-tier disclaimer requirements. |
-| Output schemas | `lib/schemas.ts` | Required-field map for 15 schema types (`time-response`, `clarity-response`, `scenario-response`, `coaching-response`, `health-log-response`, `governance-response`, `moon-response`, `lookup-response`, `builder-response`, `conversion-response`, `reader-response`, `creator-response`, `validator-response`, `secret-response`, `generic`). |
+| Output schemas | `lib/schemas.ts` | Required-field map for **16 schema types** (`time-response`, `clarity-response`, `scenario-response`, `coaching-response`, `health-log-response`, `governance-response`, `moon-response`, `lookup-response`, `builder-response`, `conversion-response`, `reader-response`, `creator-response`, `validator-response`, `secret-response`, `radiology-report-explanation`, `generic`). The 16th, `radiology-report-explanation`, was added 2026-05-09 via [queen-bee#6](https://github.com/saggarsonny-boop/queen-bee/pull/6) for HivePlainScan consumption — required fields: `plainEnglishSummary, keyFindings, redFlags, suggestedDoctorQuestions, illustrationSource, disclaimer, reportType, bodyRegion`. |
 | Public API | `app/api/` | `POST /api/govern` (validate + stamp), `GET /api/registry`, `GET /api/audit` (dashboard data), `GET /api/health` (live engine reachability). |
 | Audit dashboard | `app/page.tsx` | Live UI at `queen-bee-v1.vercel.app` rendering reachability + governed-flag for every registered engine. |
 | Onboarding stack | `components/{AutoDemo,FirstVisitCard,TooltipTour}.tsx` | Implemented. |
@@ -761,7 +761,7 @@ A pattern in the Substrate Registry can move toward "consumed via QB" rather tha
 
 Before scaffolding any of the following into a new engine, check whether QB already provides it:
 
-- Output schema validation (QB has 15 schema types in `lib/schemas.ts`)
+- Output schema validation (QB has 16 schema types in `lib/schemas.ts`)
 - Safety enforcement (QB has tiered rules in `lib/safety.ts`)
 - Language detection (QB has a Unicode-range heuristic in `lib/grappler.ts`)
 - Compliance audit dashboard for the engine fleet (QB has `/api/audit` and the live page at `queen-bee-v1.vercel.app`)
