@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ExplainRequestBody } from "@/types/plainscan";
 import { detectPhi } from "@/lib/privacy";
 import { SAMPLE_REPORT } from "@/lib/sampleReport";
+import { isDisclaimerAccepted } from "@/components/DisclaimerModal";
 
 type Tab = "text" | "pdf" | "image";
 
@@ -97,6 +98,14 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
   const [pdfStatus, setPdfStatus] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [pdfText, setPdfText] = useState<string | null>(null);
+  // Per-submit personal-use confirmation. Pre-checked from the session-
+  // wide DisclaimerModal acceptance so users who already clicked "I Agree"
+  // don't have to re-affirm on every report — but they CAN uncheck.
+  // Per the paywall Phase 1 spec, this checkbox MUST be true to submit.
+  const [personalUseConfirmed, setPersonalUseConfirmed] = useState(false);
+  useEffect(() => {
+    setPersonalUseConfirmed(isDisclaimerAccepted());
+  }, []);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -196,6 +205,10 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
 
   const canSubmit = (() => {
     if (disabled) return false;
+    // Personal-use checkbox is required for every submission. The
+    // sessionStorage-gated DisclaimerModal pre-checks it; if the user
+    // unchecks it the submit button greys out.
+    if (!personalUseConfirmed) return false;
     if (tab === "text") return reportText.trim().length > 0;
     if (tab === "pdf") return Boolean(pdfText);
     if (tab === "image") return Boolean(imageFile);
@@ -382,6 +395,28 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
           </label>
         </div>
 
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            margin: "16px 0 12px",
+            fontSize: 13,
+            lineHeight: 1.5,
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={personalUseConfirmed}
+            onChange={(e) => setPersonalUseConfirmed(e.target.checked)}
+            style={{ marginTop: 3, flex: "0 0 auto" }}
+          />
+          <span>
+            I confirm this report is for my own personal use only.
+          </span>
+        </label>
+
         <div className="actions">
           <button
             type="button"
@@ -389,7 +424,11 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
             onClick={handleSubmit}
             disabled={!canSubmit}
           >
-            {disabled ? "Working..." : "Explain my report"}
+            {disabled
+              ? "Working..."
+              : personalUseConfirmed
+                ? "Explain my report"
+                : "Confirm personal use to continue"}
           </button>
         </div>
       </div>

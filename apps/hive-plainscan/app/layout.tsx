@@ -4,6 +4,7 @@
 import type { Metadata, Viewport } from "next";
 import HiveFooter from "@/components/HiveFooter";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import { DisclaimerModal } from "@/components/DisclaimerModal";
 import "./globals.css";
 
 const APP_URL =
@@ -64,6 +65,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen antialiased">
+        <DisclaimerModal />
         {children}
         <footer className="site-footer">
           <p>No ads. No investors. No agenda.</p>
