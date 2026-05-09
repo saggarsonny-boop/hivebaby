@@ -1,0 +1,17 @@
+{
+  "name": "HiveVitality",
+  "short_name": "HiveVitality",
+  "description": "Daily fifteen-minute mobility ritual. Reps grow from three to twenty-one over ten weeks. Free, forever.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#D4AF37",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/maskable-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
