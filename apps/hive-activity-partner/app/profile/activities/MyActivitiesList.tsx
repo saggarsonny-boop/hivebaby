@@ -10,7 +10,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useStrings, type Strings } from "../../_lib/strings";
+import { type Strings } from "../../_lib/strings";
+import { useStrings } from "../../_lib/useStrings";
 import {
   CARD,
   CHIP,

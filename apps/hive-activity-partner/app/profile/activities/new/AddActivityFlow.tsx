@@ -20,7 +20,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useStrings, type Strings } from "../../../_lib/strings";
+import { type Strings } from "../../../_lib/strings";
+import { useStrings } from "../../../_lib/useStrings";
 import {
   CARD,
   ERROR_BOX,
