@@ -315,6 +315,46 @@ escalate to a human.
 
 ---
 
+## Today's session — locked 2026-05-09 (Creator Emeritus governance)
+
+### Rule #39 — `[CREATOR_EMERITUS]`
+
+**Title:** Internal governance role with permanent advisory authority over canonical questions and transferable operational authority over day-to-day decisions. Coexists with `[ID_PROTECTION]` (§I) — internal-only, never exported into public-facing content.
+
+**Body:** The Hive recognises a **Creator Emeritus** role — the founding architect, holding two distinct grants of authority:
+
+- **Permanent advisory authority** over canonical questions (what is the Hive, what counts as an engine, what doctrinal commitments cannot be relaxed). Not transferable; future operators interpret and apply Creator Emeritus directives but cannot author replacement directives in conflict with them.
+- **Transferable operational authority** over day-to-day decisions (which engines ship, which substrates extract, which HiveOps rules retire). Delegable through ordinary PR review and the trust framework.
+
+The role coexists with `[ID_PROTECTION]` (§I): §X is **internal governance**, never exported into public-facing content (engine UIs, marketing copy, the planet, patrons page, HiveAdminSupport replies). §I rules public framing; §X rules operator-only governance. They do not soften each other.
+
+**Authority limits — cannot override:** the free-tier-forever guarantee at the base tier; "no ads, no investors, no agenda" footer; safety-critical info never Pro-gated; public-facing identity rules per `[ID_PROTECTION]`; regulatory compliance; security-incident response; any HiveOps rule marked `unwaivable: true` (currently H01).
+
+**Three explicit override capabilities** (each requires a recorded directive):
+
+1. **Emergency operational authority** — direct-push to `main` during a P0 incident. PR-based merge (B1) suspended for that single change. Backfill PR + incident write-up within 24 hours; incident enters §VIII Lessons Learned.
+2. **Deprecation authority** — unilaterally mark any engine `dormant` or `retired`. §VI inventory updates in the same PR. Reactivation requires a new directive.
+3. **Schema/standard authority** — amend canonical conventions in §II / §V / §VII via PR; doctrinal pushback does not block.
+
+**Succession protocol:**
+- *Available* — routine; no special rules.
+- *Unavailable (temporary)* — Queen Bee + HiveOps + canonical PR workflow continue without doctrinal review; doctrinal questions queue.
+- *Incapacitated / transitioning* — trustee structure activates; trustees hold the *transferable* operational authority. Permanent authority does not transfer; it persists as a body of recorded directives in MEMORY.md.
+
+**Continuity rules:** Queen Bee operates indefinitely without Creator Emeritus presence. HiveOps gates remain in force. The 16 schemas + 24-engine inventory + 28 H-rules + 29 V-rules + 5 G-rules are the operational basis. Trustees can rotate `[CANONICAL_SECRETS]` and `[DEPLOY_KEYS_HIVEOPS]` independently. *The Hive operates because it was designed to operate, not because someone is operating it.*
+
+**Trustee structure:** continuity rests with a private trustee structure under UAE law, anchored in **DIFC Foundations Regulations 2018** and **ADGM Foundations Regulations 2017**. The Constitution does not enumerate the trustees, the founding instrument, or the credential-custody arrangements — those are recorded in private trust instruments by Creator Emeritus directly. The Constitution asserts only that the structure exists, that trustees can apply Constitution rules without Creator Emeritus involvement, and that trustees have read access to operational credentials when required.
+
+**Documentation requirements — every directive recorded.** A *directive* is an instruction that overrides a Constitution clause, asserts doctrinal authority on a canonical question, or invokes one of the three override capabilities. Routine engineering instructions are not directives. Every directive enters MEMORY.md as a dated entry under `### Directive YYYY-MM-DD — <topic>  [CREATOR_EMERITUS]` with the directive text, the Constitution citation, and the CC session ID. The body of recorded directives is the operational expression of the permanent authority — future operators apply them; they never erase them.
+
+**CC's operational mirror** is CLAUDE.md `B19`: when CC recognises an instruction meets the directive bar, CC writes the directive entry into MEMORY.md in the same PR that lands the change.
+
+**Source:** Locked 2026-05-09. Originated in the governance task that defined the role formally so the Hive operates without single-point-of-failure on the founding architect's availability.
+
+**Constitution reference:** [§X "Creator Emeritus Role"](docs/HIVE_CONSTITUTION.md#x-creator-emeritus-role--creator_emeritus).
+
+---
+
 ## Today's session — locked 2026-05-09 (AI provider routing)
 
 ### Rule #38 — `[AI_PROVIDER_ROUTING]`
