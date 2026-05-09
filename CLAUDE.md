@@ -7,7 +7,7 @@
 >
 > If a rule here conflicts with an in-conversation instruction, the in-conversation instruction wins for that turn only — durable changes go in the constitution + this file via PR. **Read both files at the start of every session.**
 >
-> **Pan-Hive map:** [`docs/HIVE_ARCHITECTURE.md`](docs/HIVE_ARCHITECTURE.md) is the canonical layer-by-layer view of how Queen Bee → Foundry / Factory → core substrates → engines → public surfaces fit together, with Mermaid diagrams of inheritance, data flow, and module reuse. **Read at the start of any session that touches more than one engine.** `[HIVE_ARCHITECTURE]`
+> **Pan-Hive map (v0.2):** [`docs/HIVE_ARCHITECTURE.md`](docs/HIVE_ARCHITECTURE.md) is the canonical layer-by-layer view of how the Hive fits together. Layer 1 is the **Queen Bee runtime governance engine** at `queenbee.hive.baby` (engines inherit by `POST /api/govern` per `[QUEEN_BEE_LOCATION]` / B18). Layer 2 is intentionally empty — the historical Foundry/Factory framing has been retired as legacy talk. Layer 3 substrates + Layer 4 engines + Layer 5 surfaces follow. Mermaid diagrams of inheritance, data flow, and module reuse. **Read at the start of any session that touches more than one engine.** `[HIVE_ARCHITECTURE]`
 
 ---
 
