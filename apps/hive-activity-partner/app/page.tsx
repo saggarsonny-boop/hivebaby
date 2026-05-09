@@ -1,7 +1,11 @@
 // Landing page. Plain English, mobile-first, no marketing fluff.
 // CTA routes to /signup which captures the age band BEFORE Clerk.
+//
+// Plain <a> rather than next/link: under Next 16.2.3 + React 19 + Clerk 6 +
+// Turbopack, the Link onClick handler preventDefaults the click but never
+// triggers router.push (verified with Playwright on prod). Native <a>
+// navigation reliably reaches /signup.
 
-import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { strings } from "./_lib/strings";
@@ -42,12 +46,12 @@ export default async function Home() {
         </div>
       </div>
 
-      <Link href="/signup" style={ctaStyle} aria-label={s.ctaAria}>
+      <a href="/signup" style={ctaStyle} aria-label={s.ctaAria}>
         {s.cta}
-      </Link>
-      <Link href="/sign-in" style={signInLinkStyle}>
+      </a>
+      <a href="/sign-in" style={signInLinkStyle}>
         {s.signInPrompt}
-      </Link>
+      </a>
 
       <HiveInstallHint />
       <HiveFirstVisitExplainer />
