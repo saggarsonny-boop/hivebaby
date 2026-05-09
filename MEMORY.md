@@ -35,7 +35,7 @@ WebKit; until then, the rule is enforced by review + the engine's own
 `launch_checklist_state.test_slot` boolean.
 
 **Source:** Locked 2026-05-06. Originated from ParkBack PR #70 iOS Safari
-render-only-the-compass bug (see Constitution §VII).
+render-only-the-compass bug (see Constitution §VIII).
 
 **Constitution reference:** [§IV "Device verification mandatory"](docs/HIVE_CONSTITUTION.md#device-verification-mandatory).
 
@@ -146,7 +146,7 @@ the From-format dropdown showed 234 potential output formats but only
 ~30 were actually implemented.
 
 **Constitution reference:** [§II "Production copy hygiene"](docs/HIVE_CONSTITUTION.md#production-copy-hygiene)
-+ [§VII "Coming soon labels in production"](docs/HIVE_CONSTITUTION.md#coming-soon-labels-in-production--bait-and-switch-ux).
++ [§VIII "Coming soon labels in production"](docs/HIVE_CONSTITUTION.md#coming-soon-labels-in-production--bait-and-switch-ux).
 
 ---
 
@@ -166,7 +166,7 @@ tracked in universal-document issue #13. Free-tier UD Converter capped at
 memory.
 
 **Constitution reference:** [§V "HiveOps Governance"](docs/HIVE_CONSTITUTION.md#v-hiveops-governance)
-+ [§VII "CI workflow only installed hive-ops deps"](docs/HIVE_CONSTITUTION.md#ci-workflow-only-installed-hive-ops-deps--install-all-consumed-packages).
++ [§VIII "CI workflow only installed hive-ops deps"](docs/HIVE_CONSTITUTION.md#ci-workflow-only-installed-hive-ops-deps--install-all-consumed-packages).
 
 ---
 
@@ -185,7 +185,7 @@ budget choice.
 **Source:** Locked 2026-05-06. Architectural decision recorded so future
 sessions don't propose Vercel Pro upgrade as a path.
 
-**Constitution reference:** [§VII "UD Converter Vercel edge body limit"](docs/HIVE_CONSTITUTION.md#ud-converter-vercel-edge-body-limit--free-tier-4-mb-cap).
+**Constitution reference:** [§VIII "UD Converter Vercel edge body limit"](docs/HIVE_CONSTITUTION.md#ud-converter-vercel-edge-body-limit--free-tier-4-mb-cap).
 
 ---
 
@@ -205,7 +205,7 @@ lands.
 
 **Source:** Locked 2026-05-06. Originated from PR #17 (universal-document).
 
-**Constitution reference:** [§VII "@hive/onboarding inlined in universal-document"](docs/HIVE_CONSTITUTION.md#hiveonboarding-inlined-in-universal-document--cross-tree-react-deduplication).
+**Constitution reference:** [§VIII "@hive/onboarding inlined in universal-document"](docs/HIVE_CONSTITUTION.md#hiveonboarding-inlined-in-universal-document--cross-tree-react-deduplication).
 
 ---
 
@@ -333,6 +333,22 @@ CC adopts existing patterns from the registry when applicable, rather than re-im
 
 ---
 
+### Rule #36 — `[QUEEN_BEE_LOCATION]`
+
+**Title:** Queen Bee runtime governance engine lives at `saggarsonny-boop/queen-bee` → `queenbee.hive.baby`. Inherit from it before re-implementing safety/schema/language/audit.
+
+**Body:** The runtime governance engine is at `https://github.com/saggarsonny-boop/queen-bee`, deployed at `queen-bee-v1.vercel.app` with public DNS at `queenbee.hive.baby`. It exposes `POST /api/govern` for engine output validation + envelope stamping, plus `GET /api/registry`, `GET /api/audit`, `GET /api/health`. Engines inherit by registering their config in `queen-bee/lib/registry.ts` and calling `/api/govern` from their server routes — there is no shared package yet; integration is HTTP. The Master Grappler (`lib/grappler.ts`) handles schema validation, safety enforcement (`lib/safety.ts`), language detection, and envelope stamping in one pass. Schema types and required fields are in `lib/schemas.ts`.
+
+Before scaffolding output schema validation, safety enforcement, language detection, compliance audits, or cross-engine reachability monitoring into a new engine, check what QB already provides — if the capability is in QB, register the engine and call the endpoint instead of re-implementing.
+
+Honest gap as of 2026-05-08: no engine actually calls `/api/govern` in production yet. The 14 engines in `queen-bee/lib/registry.ts` are *registered* (so QB knows about them and audits their reachability), not *governed* (they don't route outputs through QB). Aspirational references to "Hive Core", "Foundry", "Factory", or "27 adoption amplifiers" do not correspond to anything in any repo and should be treated as legacy talk pending evidence.
+
+**Source:** Locked 2026-05-08. Originated from a discovery sweep across hivebaby, queen-bee, universal-document, and standalone engine repos to make QB findable from every future CC session — without this rule the queen-bee repo is reachable only by name search and CC has historically re-implemented governance functions that QB already provides.
+
+**Constitution reference:** [§VII "Queen Bee Architecture"](docs/HIVE_CONSTITUTION.md#vii-queen-bee-architecture--queen_bee_location).
+
+---
+
 ## Earlier-session rules — pre-2026-05-06
 
 ### `[ID_PROTECTION]`
@@ -389,7 +405,7 @@ logs automatically on any 500 or deployment failure.
 PR #2 Anthropic whole-PDF fallback timeout.
 
 **Constitution reference:** [§IV "Diagnostic rule"](docs/HIVE_CONSTITUTION.md#diagnostic-rule)
-+ [§VII "Anthropic whole-PDF fallback timeout"](docs/HIVE_CONSTITUTION.md#anthropic-whole-pdf-fallback-timeout--diagnose-first-rule).
++ [§VIII "Anthropic whole-PDF fallback timeout"](docs/HIVE_CONSTITUTION.md#anthropic-whole-pdf-fallback-timeout--diagnose-first-rule).
 
 ---
 
@@ -413,7 +429,7 @@ the prompt.
 key paste leak incident.
 
 **Constitution reference:** [§II "Canonical secret names"](docs/HIVE_CONSTITUTION.md#canonical-secret-names)
-+ [§VII "Anthropic API key paste leak"](docs/HIVE_CONSTITUTION.md#anthropic-api-key-paste-leak--never-paste-secrets-in-cc-chat).
++ [§VIII "Anthropic API key paste leak"](docs/HIVE_CONSTITUTION.md#anthropic-api-key-paste-leak--never-paste-secrets-in-cc-chat).
 
 ---
 
@@ -511,7 +527,7 @@ updates require a PR; no direct-to-main, no exceptions.
 **Source:** Standing rule from prior sessions; locked when Constitution
 shipped 2026-05-06 (PR #91).
 
-**Constitution reference:** [§VIII "Update Mechanism"](docs/HIVE_CONSTITUTION.md#viii-update-mechanism).
+**Constitution reference:** [§IX "Update Mechanism"](docs/HIVE_CONSTITUTION.md#ix-update-mechanism).
 
 ---
 
