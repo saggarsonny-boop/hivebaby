@@ -5,3 +5,4 @@ Subdomains under `hive.baby` (Cloudflare zone `bcb5522993ecf90a4f1d5dfe101e5a5c`
 | Subdomain | Target | Type | Registered date | Notes |
 |---|---|---|---|---|
 | parkback.hive.baby | cname.vercel-dns.com | CNAME | 2026-05-04 | Live. Vercel project: `hivebaby-7c1o` (root: `apps/parkback`). |
+| activitypartner.hive.baby | cname.vercel-dns.com | CNAME | 2026-05-08 | Live. Vercel project: `hive-activity-partner` (root: `apps/hive-activity-partner`). Git connection wired to `saggarsonny-boop/hivebaby` main. |
