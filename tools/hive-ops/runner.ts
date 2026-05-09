@@ -22,6 +22,11 @@ import { RULES, RULE_IDS as H_RULE_IDS } from "./rules.js";
 import { runVRules, V_RULE_IDS } from "./v-rules.js";
 import { loadOverrides } from "./overrides.js";
 import { ruleApplies, inapplicableReason } from "./applicability.js";
+import {
+  GOVERNANCE_RULES,
+  G_RULE_IDS,
+  softenIfWarnOnly,
+} from "./checks/governance/index.js";
 
 /** Resolve an engine slug to its on-disk root. Search order:
  *  1. <repoRoot>/apps/<slug>
@@ -56,11 +61,12 @@ export interface RunOptions {
   engineClassOverride?: EngineClass;
 }
 
-/** Combined H + V rule IDs, used by the override parser to validate that
- *  every entry references a real rule. */
+/** Combined H + V + G rule IDs, used by the override parser to validate
+ *  that every entry references a real rule. */
 const ALL_RULE_IDS: ReadonlySet<string> = new Set([
   ...H_RULE_IDS,
   ...V_RULE_IDS,
+  ...G_RULE_IDS,
 ]);
 
 export async function runHiveOps(engineRoot: string, opts: RunOptions = {}): Promise<EngineReport> {
@@ -117,6 +123,48 @@ export async function runHiveOps(engineRoot: string, opts: RunOptions = {}): Pro
   const vRules = await runVRules(engineRoot);
   for (const vr of vRules.results) {
     const result = applyOverride(vr, vr.message, overrides, now, false);
+    if (result.status === "warn" && result.warnUntil) {
+      warnModeRules.push({ id: result.id, warnUntil: result.warnUntil });
+    }
+    results.push(result);
+  }
+
+  // ─── G-rules (GOVERNANCE — Queen Bee consumption) ───────────────────
+  // G-rules detect whether the engine inherits from QB or rolls its own
+  // safety/schema/audit machinery. They run AFTER H + V rules so the
+  // override parser has already validated every G-id, and they share the
+  // same applicability + override semantics. Currently in WARN-only mode
+  // (see checks/governance/index.ts).
+  for (const rule of GOVERNANCE_RULES) {
+    if (!ruleApplies(rule.id, engineClass)) {
+      results.push({
+        id: rule.id,
+        title: rule.title,
+        category: rule.category,
+        severity: rule.severity,
+        status: "n/a",
+        message: inapplicableReason(rule.id, engineClass),
+        overrideApplied: false,
+      });
+      continue;
+    }
+    const raw = await rule.check({ engineRoot, engineSlug, overrides, now, engineClass });
+    const softened = softenIfWarnOnly(raw.status, raw.message);
+    const result = applyOverride(
+      {
+        id: rule.id,
+        title: rule.title,
+        category: rule.category,
+        severity: rule.severity,
+        status: softened.status,
+        message: softened.message,
+        overrideApplied: false,
+      },
+      softened.message,
+      overrides,
+      now,
+      rule.unwaivable === true,
+    );
     if (result.status === "warn" && result.warnUntil) {
       warnModeRules.push({ id: result.id, warnUntil: result.warnUntil });
     }

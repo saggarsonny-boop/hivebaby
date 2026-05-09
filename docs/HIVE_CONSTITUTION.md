@@ -544,6 +544,24 @@ The architecture map is the canonical answer to *"where does engine X fit?"* and
 
 The architecture map distinguishes four kinds of thing in the Hive: **engines** (own purpose, workflows, output, public domain, pricing tier, DB schema, `ENGINE_GRAMMAR.md`), **modules** (attach via API or component import, no own product surface, no own deployment), **substrates** (registry-tracked patterns, extracted at the 3-engine threshold), and **adoption amplifiers** (cross-cutting growth/retention features every engine inherits). Conflating these is the most common confusion; the map exists to keep them separated.
 
+### GOVERNANCE rule category — Queen Bee consumption enforcement  `[HIVEOPS_GOVERNANCE]`
+
+HiveOps has three rule families: H (filesystem, H01..H28), V (manifest schema, V01..V29), and **G (GOVERNANCE, G01..G05)** — added 2026-05-08 to detect whether engines actually inherit from Queen Bee or have rolled their own safety / schema / language / audit machinery.
+
+The five G-rules:
+
+- **G01** — engine `package.json` declares `@queen-bee/client` (dependencies or peerDependencies; devDependencies-only fails because `govern()` runs in production code paths).
+- **G02** — engine code imports `govern` from `@queen-bee/client` and calls it from at least one route handler. Greps `app/api/**/route.ts(x)` by default; engines with calls elsewhere (server actions, middleware) declare an override pointing at the call site.
+- **G03** — engine slug present in `queen-bee/lib/registry.ts`. Verified by HTTP `GET https://queenbee.hive.baby/api/registry`; network failure reports `skip`, never `fail`. `QB_REGISTRY_URL` env var overrides the endpoint.
+- **G04** — `ENGINE_GRAMMAR.md` declares `queen_bee_schemas` in frontmatter (canonical names from `queen-bee/lib/schemas.ts`). Inline and block YAML lists both supported.
+- **G05** — engine DB schema persists the governance stamp (column `governance_stamp` / `governanceStamp` or FK `stamp_id` / `stampId`). Static-html engines (client-only PWAs without a DB) are exempted by the applicability matrix.
+
+Implementation lives at `tools/hive-ops/checks/governance/`. Each rule is a separate file; the index re-exports the array.
+
+**WARN-only window.** As of 2026-05-08 no engine consumes `/api/govern` in production (Constitution §VII honest gap). Running G-rules at FAIL severity now would block every audit on day one. So G-rules ship with `GOVERNANCE_FAIL_BLOCKING = false` in `checks/governance/index.ts` — the runner softens any G-rule's `fail` into `warn` until the constant flips. Pass / Skip / N/A are unaffected.
+
+**Lift criterion: when ≥80% of audited engines pass at least 4 of 5 G-rules**, flip `GOVERNANCE_FAIL_BLOCKING` to `true` in the same PR that records the lift date here. The 4-of-5 threshold gives migrating engines runway to land G02 (the `govern()` call) and G05 (stamp persistence) in a separate PR from G01 + G03 + G04 without going red between PRs.
+
 ### Queen Bee Substrate Registry  `[QUEEN_BEE_SUBSTRATES]`
 
 When a pattern is built once for a single engine and then becomes a candidate for reuse, it lives in the substrate registry at [`docs/QUEEN_BEE_SUBSTRATES.md`](QUEEN_BEE_SUBSTRATES.md) until it crosses the **3-engine threshold** for extraction into a `@hive/*` package. The registry is the staging area between "one engine built this" and "this is part of the shared package set."

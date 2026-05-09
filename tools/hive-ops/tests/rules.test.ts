@@ -29,10 +29,14 @@ async function testEmptyEngineFails() {
 
   const report = await runHiveOps(join(root, "apps", "noop"));
   check("empty engine → verdict=fail", report.verdict === "fail");
-  check("empty engine → all rules ran (28)", report.rules.length === 28,
+  // 28 H-rules + 5 G-rules = 33 (V-rules skipped without ENGINE_GRAMMAR.md).
+  // GOVERNANCE rules are WARN-only today, so the failure count expectation
+  // checks H-rule fails specifically.
+  check("empty engine → all rules ran (33: 28 H + 5 G; V skipped)",
+    report.rules.length === 33,
     `got ${report.rules.length} rules`);
-  const failCount = report.rules.filter((r) => r.status === "fail").length;
-  check("empty engine → ≥20 rules fail", failCount >= 20, `failCount=${failCount}`);
+  const hFails = report.rules.filter((r) => /^H\d{2}$/.test(r.id) && r.status === "fail").length;
+  check("empty engine → ≥20 H-rules fail", hFails >= 20, `H-fail count=${hFails}`);
 }
 
 // Override parser: malformed YAML reports an error.
