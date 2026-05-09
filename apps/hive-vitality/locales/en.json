@@ -1,0 +1,73 @@
+{
+  "engine": {
+    "name": "HiveVitality",
+    "tagline": "Fifteen minutes a day. Reps that grow with you."
+  },
+  "home": {
+    "h1": "Move every day. For yourself.",
+    "lede": "Fifteen minutes. Six rounds. Reps grow from three to twenty-one over ten weeks. No equipment. No gym. Free, forever.",
+    "cta_start_ritual": "Start today's ritual",
+    "cta_resume_ritual": "Resume today's ritual",
+    "streak_label": "Day",
+    "streak_label_plural": "Days"
+  },
+  "onboarding": {
+    "step1_title": "What is HiveVitality?",
+    "step1_body": "A daily fifteen-minute mobility ritual. Tibetan Rites plus balance plus a deep squat plus a hinge plus bridges plus a plank plus sumo squats. Reps grow with you.",
+    "step2_title": "Here is what the ritual looks like",
+    "step2_body": "Six rounds. About fifteen minutes. The reps you do today are not the reps you do in week ten — they grow as you do.",
+    "step3_title": "You are someone who moves every day",
+    "step3_body": "Not a workout. Not a goal. A daily practice you keep with yourself. Tap the button below when you are ready.",
+    "step3_cta": "I'm ready"
+  },
+  "ritual": {
+    "h1": "Today's ritual",
+    "next": "Next",
+    "skip": "Skip this one",
+    "done": "Done",
+    "complete_h1": "You did the ritual today.",
+    "complete_lede": "Tap below to add a ten-second reflection, or close the page — your streak is already saved.",
+    "complete_cta_reflect": "Add a reflection",
+    "complete_cta_close": "Close"
+  },
+  "reflection": {
+    "h1": "Ten seconds",
+    "lede": "How did the body feel today? One sentence. Skip if you don't feel like it.",
+    "placeholder": "Today my body felt…",
+    "submit": "Save",
+    "skip": "Skip"
+  },
+  "checkin": {
+    "h1": "How is the week going?",
+    "lede": "Your weekly check-in. Pick a number; the rest is optional.",
+    "mood_1": "Heavy",
+    "mood_2": "Tired",
+    "mood_3": "Steady",
+    "mood_4": "Open",
+    "mood_5": "Light",
+    "submit": "Save"
+  },
+  "identity": {
+    "imprint": "I am someone who moves every day.",
+    "aside": "Not a workout. A practice."
+  },
+  "milestones": {
+    "30day": "Thirty days. The ritual is yours now.",
+    "90day": "Ninety days. The body knows the shape of the day.",
+    "1year": "One year. You are someone who moves every day."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "db_unavailable": "Cannot reach the database. Your streak will sync when the connection comes back.",
+    "qb_unavailable": "Could not reach Queen Bee. The session was logged locally and will sync next time."
+  },
+  "disclaimer": {
+    "footer": "This is not medical advice. Always consult a qualified clinician before starting a new movement practice.",
+    "no_ads": "No ads. No investors. No agenda.",
+    "free_forever": "Free at the base tier, forever."
+  },
+  "hive_footer": {
+    "made_with": "Made with",
+    "in_the": "in the"
+  }
+}
