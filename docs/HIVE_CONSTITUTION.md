@@ -536,6 +536,14 @@ Required env vars per engine: `OPERATOR_AUTH_SECRET` (32-byte base64; HMAC signi
 
 Reference implementation: `apps/converter/src/lib/operator-auth.ts` in `saggarsonny-boop/universal-document` (PR #22). HiveOps v0.3 will add a rule (likely **H29**) verifying any tier-gated engine imports this pattern; until then, the convention is documented here and engines self-attest in their `ENGINE_GRAMMAR.md`.
 
+### Queen Bee Substrate Registry  `[QUEEN_BEE_SUBSTRATES]`
+
+When a pattern is built once for a single engine and then becomes a candidate for reuse, it lives in the substrate registry at [`docs/QUEEN_BEE_SUBSTRATES.md`](QUEEN_BEE_SUBSTRATES.md) until it crosses the **3-engine threshold** for extraction into a `@hive/*` package. The registry is the staging area between "one engine built this" and "this is part of the shared package set."
+
+The registry is the canonical pointer for the 13 substrate patterns extracted from the 2026-05-08 HAP scaffolding work — operator auth, audit dashboards, the inline `@hive/onboarding` workaround, the strings/useStrings split, direct-to-blob upload, the cost-cap circuit breaker, the 7-language locale generator, the validation utility shape, defense-in-depth response stripping, the atomic bounded counter, `hive_alerts` telemetry, tier-based rate limiting, and the Stripe tier subscription pattern. Each entry documents its current implementations, canonical shape, when-to-use criteria, and the threshold at which it should be extracted.
+
+When an engine needs any of these patterns, it reads the registry first. When an engine adds a new reusable pattern, the engine's PR also amends the registry. When a pattern crosses three production engines, the next PR extracts it to `@hive/<package-name>` and the registry entry becomes a historical pointer.
+
 ### Cross-repo audit — daily sweep covers external engines  `[CROSS_REPO_AUDIT]`
 
 The daily sweep (`.github/workflows/hive-ops-daily-sweep.yml`) used to scan only `apps/<engine>/ENGINE_GRAMMAR.md` inside the hivebaby monorepo. External-repo engines — UD Converter, HiveEngineBuilder, HiveAdminSupport, UniversalDocumentInc, etc. — were invisible to it; verdict drift went undetected for days at a time. PR #131 (the T4 audit doc) surfaced this gap, and the next PR built the fix.

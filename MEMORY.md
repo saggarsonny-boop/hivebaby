@@ -315,6 +315,24 @@ escalate to a human.
 
 ---
 
+## Today's session — locked 2026-05-08 (substrate registry)
+
+### Rule #35 — `[QUEEN_BEE_SUBSTRATES]`
+
+**Title:** Reusable substrate patterns live in `docs/QUEEN_BEE_SUBSTRATES.md` until they cross the 3-engine threshold for `@hive/*` extraction.
+
+**Body:** When CC builds a pattern in one engine that's a plausible candidate for reuse — operator auth, audit dashboards, the inline `@hive/onboarding` workaround, the strings/useStrings split, direct-to-blob upload, the cost-cap circuit breaker, the 7-language locale generator, the validation utility shape, defense-in-depth response stripping, the atomic bounded counter, `hive_alerts` telemetry, tier-based rate limiting, the Stripe tier subscription pattern, etc. — the pattern goes into the substrate registry at `docs/QUEEN_BEE_SUBSTRATES.md` *before* a second engine adopts it, so the second engine doesn't re-design it. Each entry documents Name, Purpose, Current implementations, Canonical shape, When to use, and When to extract.
+
+The registry is the staging area, not a permanent home. When a pattern crosses 3 production engines, the next PR extracts it to `@hive/<package-name>` and the registry entry becomes a historical pointer. The 3-engine threshold guarantees the registry never becomes a dumping ground of single-engine "patterns" that never actually got reused.
+
+CC adopts existing patterns from the registry when applicable, rather than re-implementing. CC adds new patterns to the registry when shipping reusable shape. CC never silently re-implements an existing substrate.
+
+**Source:** Locked 2026-05-08. Originated from extracting 13 patterns out of the HAP scaffolding work after HAP itself was retracted (wrong product premise — companion module, not matching system); the substrate patterns survived the retraction and were captured before they were lost.
+
+**Constitution reference:** [§V "Queen Bee Substrate Registry"](docs/HIVE_CONSTITUTION.md#queen-bee-substrate-registry--queen_bee_substrates).
+
+---
+
 ## Earlier-session rules — pre-2026-05-06
 
 ### `[ID_PROTECTION]`
