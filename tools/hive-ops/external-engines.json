@@ -1,0 +1,38 @@
+{
+  "$comment": "Registry of external-repo Hive engines audited by HiveOps daily-sweep cross-repo pass and consumed by the reusable hive-ops-pr-audit-reusable.yml workflow. Hivebaby-resident engines (apps/parkback, hive-imr, hive-aestheticbestie, hive-hivephoto) are NOT listed here — they're already covered by the in-tree daily sweep + .github/workflows/hive-ops.yml. To add a new external engine: append an entry, push the corresponding caller workflow into the engine repo's .github/workflows/hive-ops-pr-audit.yml referencing this slug.",
+  "version": 1,
+  "engines": [
+    {
+      "slug": "converter",
+      "engine_name": "UDConverter",
+      "repo": "saggarsonny-boop/universal-document",
+      "default_branch": "main",
+      "subdir_pattern": "monorepo",
+      "domain": "converter.hive.baby"
+    },
+    {
+      "slug": "hive-engine-builder",
+      "engine_name": "HiveEngineBuilder",
+      "repo": "saggarsonny-boop/hive-engine-builder",
+      "default_branch": "main",
+      "subdir_pattern": "root",
+      "domain": "heb.hive.baby"
+    },
+    {
+      "slug": "hive-support",
+      "engine_name": "HiveAdminSupport",
+      "repo": "saggarsonny-boop/hive-support",
+      "default_branch": "main",
+      "subdir_pattern": "root",
+      "domain": "support.hive.baby"
+    },
+    {
+      "slug": "ud-inc",
+      "engine_name": "UniversalDocumentInc",
+      "repo": "saggarsonny-boop/ud-inc",
+      "default_branch": "main",
+      "subdir_pattern": "root",
+      "domain": "universaldocument.hive.baby"
+    }
+  ]
+}

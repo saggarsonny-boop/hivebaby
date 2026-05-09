@@ -536,6 +536,65 @@ Required env vars per engine: `OPERATOR_AUTH_SECRET` (32-byte base64; HMAC signi
 
 Reference implementation: `apps/converter/src/lib/operator-auth.ts` in `saggarsonny-boop/universal-document` (PR #22). HiveOps v0.3 will add a rule (likely **H29**) verifying any tier-gated engine imports this pattern; until then, the convention is documented here and engines self-attest in their `ENGINE_GRAMMAR.md`.
 
+### Cross-repo audit — daily sweep covers external engines  `[CROSS_REPO_AUDIT]`
+
+The daily sweep (`.github/workflows/hive-ops-daily-sweep.yml`) used to scan only `apps/<engine>/ENGINE_GRAMMAR.md` inside the hivebaby monorepo. External-repo engines — UD Converter, HiveEngineBuilder, HiveAdminSupport, UniversalDocumentInc, etc. — were invisible to it; verdict drift went undetected for days at a time. PR #131 (the T4 audit doc) surfaced this gap, and the next PR built the fix.
+
+The sweep now ALSO clones every engine listed in `tools/hive-ops/external-engines.json`, runs the same `runHiveOps()` against each clone, and merges the results into the daily issue body under an `## External-repo engines` section. Tier-2 `hive_alerts` are inserted on every external FAIL (action_url points at the engine repo so the alert is actionable). The orchestrator is `tools/hive-ops/crossRepoAudit.ts`; it uses `GITHUB_TOKEN` to clone (read-only, public repos only) and is best-effort — clone failures or missing manifests show up as `🚧 ERROR` rows, never crash the sweep.
+
+To register a new external engine:
+
+```jsonc
+// tools/hive-ops/external-engines.json
+{
+  "engines": [
+    {
+      "slug": "converter",                              // dir name HiveOps uses
+      "engine_name": "UDConverter",                     // display label
+      "repo": "saggarsonny-boop/universal-document",    // owner/name
+      "default_branch": "main",
+      "subdir_pattern": "monorepo",                     // "monorepo" if at apps/<slug>; "root" if standalone
+      "domain": "converter.hive.baby"
+    }
+  ]
+}
+```
+
+The runner's `resolveEngineRoot()` checks three locations in order: `<repoRoot>/apps/<slug>`, `<repoRoot>/<slug>`, `<repoRoot>` itself (when an `ENGINE_GRAMMAR.md` lives at the repo root). External-repo engines work in either monorepo or standalone form without code changes.
+
+### Per-PR audit guardrail — every engine repo, every PR  `[PR_GUARDRAIL]`
+
+In-tree engines (anything under `hivebaby/apps/`) are PR-audited by `.github/workflows/hive-ops.yml`. External-repo engines have a corresponding reusable workflow: `.github/workflows/hive-ops-pr-audit-reusable.yml`. Each engine repo subscribes by committing a short caller workflow:
+
+```yaml
+# .github/workflows/hive-ops-pr-audit.yml in the engine repo
+name: HiveOps PR audit
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  audit:
+    uses: saggarsonny-boop/hivebaby/.github/workflows/hive-ops-pr-audit-reusable.yml@main
+    with:
+      slug: <engine-slug>      # "converter" for monorepo apps, repo basename for standalone
+    permissions:
+      pull-requests: write     # PR comment posting
+      contents: read
+```
+
+The reusable workflow:
+
+1. Clones the engine repo's PR branch.
+2. Clones hivebaby for the hive-ops + hive-finalize tooling.
+3. Resolves the **baseline** verdict by running the audit on `main` of the engine repo first.
+4. Runs the audit on the PR branch.
+5. Posts (or updates in place via marker comment) a PR comment with the verdict, the rule-by-rule detail, and a **VERDICT REGRESSION** banner if main was PASS but this PR isn't.
+6. Fails the check if PR-branch verdict is `fail`. Pass/Warn = green check.
+
+This is the canary that prevents UD-Converter-style "regressed PASS → FAIL silently" — every PR sees its own audit and a delta against main before merge.
+
+Engines onboarded as of the inaugural rollout: UD Converter (`saggarsonny-boop/universal-document`), HiveEngineBuilder, HiveAdminSupport, UniversalDocumentInc. Onboard a new engine by committing the caller workflow above to its repo's main branch.
+
 ---
 
 ## VI. Engine Inventory and Compliance Status
@@ -573,7 +632,7 @@ PR before that date will revert to FAIL on the next audit run.
 
 | Engine | Repo | Domain | HiveOps verdict (latest) | Notes |
 |---|---|---|---|---|
-| UD Converter | `universal-document` | converter.hive.baby | ❌ **FAIL** — 48 pass / 4 fail (V04, V18, V19, V23) / 1 override (H21) | Pre-existing V-rule findings; `--write-overrides` proposal scaffolded but not yet committed in the universal-document repo |
+| UD Converter | `universal-document` | converter.hive.baby | ⚠️ **WARN** — 50 pass / 1 warn (V19→2026-06-07) / 0 fail / 4 skip / 2 override (H21, V18) | V04/V18/V23 fixed in universal-document PR #29 (2026-05-08); V19 retains a 30-day warn for `tooltip_tour=pending`. Now audited daily by the cross-repo sweep + per-PR via `hive-ops-pr-audit-reusable.yml`. |
 
 ### External-repo engines (no canonical schema yet)
 

@@ -1,0 +1,225 @@
+name: HiveOps PR audit (reusable)
+
+# Reusable workflow that any external Hive engine repo can call from
+# its own .github/workflows/hive-ops-pr-audit.yml on pull_request to
+# main. Checks out hivebaby for the hive-ops + hive-finalize tooling,
+# then runs `tsx tools/hive-ops/cli.ts <slug> --repo <caller-checkout>`.
+#
+# The caller workflow is the canonical "subscribe my engine to HiveOps"
+# pattern — see HIVE_CONSTITUTION.md §V "Per-PR audit guardrail".
+#
+# Caller form (commit at .github/workflows/hive-ops-pr-audit.yml in
+# the engine repo):
+#
+#   name: HiveOps PR audit
+#   on:
+#     pull_request:
+#       branches: [main]
+#   jobs:
+#     audit:
+#       uses: saggarsonny-boop/hivebaby/.github/workflows/hive-ops-pr-audit-reusable.yml@main
+#       with:
+#         slug: <engine-slug>          # e.g. "converter" for monorepo, or
+#                                      #      the standalone repo's name
+#       permissions:
+#         pull-requests: write         # so the audit comment can be posted
+#         contents: read
+#
+# Behaviour:
+#   - PASS  → CI green, no PR comment.
+#   - WARN  → CI green, PR comment with the warn-rule list and warn_until.
+#   - FAIL  → CI red, PR comment with failing rules and what to fix.
+#   - tooling error → CI red, exits 2 (so the caller knows the audit
+#     itself didn't run, not that the engine failed compliance).
+#
+# Verdict-degradation guard: if the engine's main-branch verdict is
+# PASS but this PR's verdict is WARN/FAIL, the comment escalates to
+# bold "VERDICT REGRESSION" wording. The check still passes/fails on
+# the absolute verdict, not the delta — preventing a "was already FAIL"
+# pre-existing state from blocking unrelated PRs.
+
+on:
+  workflow_call:
+    inputs:
+      slug:
+        description: "Engine slug — directory name under apps/<slug> for monorepos, or the engine's own name for standalone repos. Must match the slug HiveOps uses to resolve the manifest."
+        required: true
+        type: string
+      hivebaby_ref:
+        description: "Ref of saggarsonny-boop/hivebaby to pull tooling from. Defaults to main."
+        required: false
+        type: string
+        default: main
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout caller (the engine repo PR branch)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          path: engine
+
+      - name: Checkout hivebaby (for hive-ops + hive-finalize tooling)
+        uses: actions/checkout@v4
+        with:
+          repository: saggarsonny-boop/hivebaby
+          ref: ${{ inputs.hivebaby_ref }}
+          path: hivebaby
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install hive-ops deps
+        working-directory: hivebaby/tools/hive-ops
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Install hive-finalize deps
+        working-directory: hivebaby/tools/hive-finalize
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Resolve engine main-branch verdict (for regression detection)
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Best-effort: clone main of the caller repo into a sibling
+          # directory and run the audit there. If anything fails, we
+          # treat the baseline as "unknown" — the PR audit still runs
+          # and reports its own absolute verdict.
+          BASE_SLUG="${{ inputs.slug }}"
+          BASELINE_DIR="${RUNNER_TEMP}/baseline"
+          rm -rf "$BASELINE_DIR"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "$BASELINE_DIR" || {
+            echo "baseline=unknown" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          BASE_VERDICT=$(npx --prefix hivebaby/tools/hive-ops tsx hivebaby/tools/hive-ops/cli.ts "$BASE_SLUG" --repo "$BASELINE_DIR" --json 2>/dev/null | jq -r '.verdict // empty' || echo "")
+          if [ -z "${BASE_VERDICT}" ]; then BASE_VERDICT=unknown; fi
+          echo "baseline=$BASE_VERDICT" >> "$GITHUB_OUTPUT"
+          echo "Baseline verdict on main: $BASE_VERDICT"
+
+      - name: Run HiveOps audit on PR branch
+        id: audit
+        run: |
+          set -uo pipefail
+          npx --prefix hivebaby/tools/hive-ops tsx hivebaby/tools/hive-ops/cli.ts "${{ inputs.slug }}" --repo "$GITHUB_WORKSPACE/engine" --json > /tmp/hive-ops-report.json
+          AUDIT_EXIT=$?
+          if [ $AUDIT_EXIT -eq 2 ]; then
+            echo "verdict=tooling-error" >> "$GITHUB_OUTPUT"
+            echo "::error title=HiveOps tooling error::audit exited 2 — see logs"
+            exit 2
+          fi
+          VERDICT=$(jq -r '.verdict' /tmp/hive-ops-report.json)
+          echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
+          echo "PR-branch verdict: $VERDICT"
+          # also produce human-readable for the comment + step summary
+          npx --prefix hivebaby/tools/hive-ops tsx hivebaby/tools/hive-ops/cli.ts "${{ inputs.slug }}" --repo "$GITHUB_WORKSPACE/engine" > /tmp/hive-ops-report.txt 2>&1 || true
+          {
+            echo "## HiveOps PR audit — \`${{ inputs.slug }}\`"
+            echo ""
+            echo "Baseline (main): \`${{ steps.baseline.outputs.baseline }}\`"
+            echo "PR verdict:      \`$VERDICT\`"
+            echo ""
+            echo '```'
+            cat /tmp/hive-ops-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build PR comment body
+        if: github.event_name == 'pull_request'
+        id: comment
+        env:
+          BASELINE: ${{ steps.baseline.outputs.baseline }}
+          VERDICT: ${{ steps.audit.outputs.verdict }}
+          SLUG: ${{ inputs.slug }}
+        run: |
+          set -euo pipefail
+          REGRESSION="false"
+          if [ "$BASELINE" = "pass" ] && [ "$VERDICT" != "pass" ]; then REGRESSION="true"; fi
+          {
+            if [ "$REGRESSION" = "true" ]; then
+              echo "## ⚠️ HiveOps verdict regression on \`${SLUG}\`"
+              echo ""
+              echo "**Baseline (main): \`${BASELINE}\` → PR branch: \`${VERDICT}\`.**"
+              echo ""
+              echo "This PR moves the engine off PASS. Either fix the failing/warning rules or add a documented \`mode: warn\` override per the schema in [HIVE_CONSTITUTION.md §V](https://github.com/saggarsonny-boop/hivebaby/blob/main/docs/HIVE_CONSTITUTION.md#v-hiveops-governance) before merge."
+            elif [ "$VERDICT" = "fail" ]; then
+              echo "## ❌ HiveOps verdict: FAIL"
+              echo ""
+              echo "Engine \`${SLUG}\` is FAILing on this PR (and was already FAIL on main — not introduced here, but flagged for visibility)."
+            elif [ "$VERDICT" = "warn" ]; then
+              echo "## ⚠️ HiveOps verdict: WARN"
+              echo ""
+              echo "Engine \`${SLUG}\` audits as WARN on this PR. Each warn entry expires on a date documented in the engine's \`ENGINE_GRAMMAR.md\` overrides block; check the audit detail below."
+            else
+              # PASS — only post a comment if regression flag would have flipped (it didn't)
+              echo ""
+            fi
+            if [ "$VERDICT" != "pass" ] || [ "$REGRESSION" = "true" ]; then
+              echo ""
+              echo "<details><summary>HiveOps audit detail</summary>"
+              echo ""
+              echo '```'
+              cat /tmp/hive-ops-report.txt
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
+          } > /tmp/hive-ops-comment.md
+          # only set output if we have meaningful content
+          if [ -s /tmp/hive-ops-comment.md ] && [ "$VERDICT" != "pass" -o "$REGRESSION" = "true" ]; then
+            echo "post=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "post=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post / update PR comment
+        if: github.event_name == 'pull_request' && steps.comment.outputs.post == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          MARKER="<!-- hive-ops-pr-audit-${{ inputs.slug }} -->"
+          BODY=$(cat /tmp/hive-ops-comment.md)
+          BODY="${MARKER}"$'\n'"${BODY}"
+          # Look for an existing comment with our marker; update in
+          # place if found, otherwise create.
+          EXISTING=$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"${MARKER}\")) | .id" | head -n 1)
+          if [ -n "${EXISTING:-}" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${EXISTING}" \
+              -f body="${BODY}" >/dev/null
+            echo "Updated existing PR comment ${EXISTING}"
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR}/comments" \
+              -f body="${BODY}" >/dev/null
+            echo "Posted new PR comment"
+          fi
+
+      - name: Fail the check if verdict is fail
+        if: always()
+        env:
+          VERDICT: ${{ steps.audit.outputs.verdict }}
+        run: |
+          if [ "$VERDICT" = "fail" ]; then
+            echo "::error title=HiveOps verdict=fail::engine ${{ inputs.slug }} failed audit on this PR — see PR comment for failing rules"
+            exit 1
+          fi
+          if [ "$VERDICT" = "tooling-error" ]; then
+            exit 2
+          fi
+          # pass / warn → check passes
+          echo "HiveOps verdict: $VERDICT — check passes"
