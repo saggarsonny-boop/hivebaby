@@ -707,13 +707,13 @@ Confirmed by reading the queen-bee repo on 2026-05-08:
 
 ### How engines inherit from Queen Bee
 
-The mechanism is **HTTP, not a package**. An engine inherits by:
+The mechanism is **HTTP, wrapped by a canonical client package**. An engine inherits by:
 
 1. **Registering in `queen-bee/lib/registry.ts`** with `{id, name, domain, status, tone, safety, schema, multilingual, description}`. The engine's slug becomes the `engineId` it sends to the Grappler.
-2. **Calling `POST https://queenbee.hive.baby/api/govern`** with `{engineId, input, content}` before returning each output. QB returns either a stamped envelope (`200`) or a failure report with errors (`422`).
-3. **Returning the envelope** to the client unchanged — it carries `safe`, `governed`, `language`, `flags`, `version`, `timestamp` fields the client surface can render.
+2. **Installing `@queen-bee/client`** (workspace member at `saggarsonny-boop/queen-bee/packages/queen-bee-client/`) and calling `govern({engineId, input, content, context?})` before returning each output. The client handles retries, timeouts, AbortController, error classification, and stamp extraction. QB returns either a stamped envelope (`200`) or a failure report with errors (`422`); the client maps both into a Result-style `{approved, stampedContent?, governanceStamp?, failureReason?, failureCode?, schemaErrors?}` shape.
+3. **Returning the stamped content + governance stamp** to the client surface unchanged. The stamp carries `safe`, `governed`, `language`, `flags`, `version`, `timestamp` fields surface UIs can render.
 
-There is no shared library yet — engines that adopt this call the HTTP endpoint directly. This keeps QB out of every engine's bundle but means each engine has to wire its own fetch call and handle QB unavailability. A future `@hive/grappler-client` package becomes plausible once two or more engines are calling `/api/govern` in production.
+The canonical client lives at [`saggarsonny-boop/queen-bee` `packages/queen-bee-client/`](https://github.com/saggarsonny-boop/queen-bee/tree/main/packages/queen-bee-client). Engines never write a fresh fetch wrapper — they install the package and call `govern()`. The first-time wiring guide is [`packages/queen-bee-client/WIRING.md`](https://github.com/saggarsonny-boop/queen-bee/blob/main/packages/queen-bee-client/WIRING.md), which walks through the 10 steps from registry entry to PR. The package is a workspace member of queen-bee today; out-of-tree engines install via `git+https://github.com/saggarsonny-boop/queen-bee.git#main` until a registry publish target is decided.
 
 ### Adoption status — honest gap report
 
@@ -747,7 +747,7 @@ Before scaffolding any of the following into a new engine, check whether QB alre
 - Compliance audit dashboard for the engine fleet (QB has `/api/audit` and the live page at `queen-bee-v1.vercel.app`)
 - Cross-engine reachability monitoring (QB has `/api/health`)
 
-If QB already has it, add the engine to `queen-bee/lib/registry.ts` and call `/api/govern` instead of re-implementing. If QB doesn't have it, document the gap in this section before building locally — the next engine will face the same question.
+If QB already has it, add the engine to `queen-bee/lib/registry.ts` and consume via `@queen-bee/client` (`govern()`) instead of re-implementing. If QB doesn't have it, document the gap in this section before building locally — the next engine will face the same question.
 
 ---
 

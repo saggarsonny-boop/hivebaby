@@ -104,10 +104,10 @@ sequenceDiagram
 An engine inherits from QB by:
 
 1. **Registering** in `queen-bee/lib/registry.ts` with `{id, name, domain, status, tone, safety, schema, multilingual, description}`. The slug becomes the `engineId` it sends to the Grappler.
-2. **Calling** `POST https://queenbee.hive.baby/api/govern` with `{engineId, input, content}` before returning each output.
-3. **Returning the envelope** to the client unchanged — it carries `safe`, `governed`, `language`, `flags`, `version`, `timestamp` fields the client surface can render.
+2. **Installing `@queen-bee/client`** and calling `govern({engineId, input, content, context?})` before returning each output. The client handles retries, timeouts, AbortController, error classification (transport vs business), and stamp extraction. Engines never write a fresh fetch wrapper for `/api/govern`.
+3. **Returning the stamped content + governance stamp** to the client surface unchanged — the stamp carries `safe`, `governed`, `language`, `flags`, `version`, `timestamp` fields the surface UI can render.
 
-There is no shared library yet. A future `@hive/grappler-client` package becomes plausible once two or more engines are calling `/api/govern` in production.
+The canonical client lives at [`saggarsonny-boop/queen-bee` `packages/queen-bee-client/`](https://github.com/saggarsonny-boop/queen-bee/tree/main/packages/queen-bee-client) (workspace member of the queen-bee monorepo). First-time wiring guide: [`WIRING.md`](https://github.com/saggarsonny-boop/queen-bee/blob/main/packages/queen-bee-client/WIRING.md). The 13-substrate registry's "future `@queen-bee/grappler-client`" entry lands here as v0.1.
 
 ### Honest gap — adoption status
 
@@ -156,7 +156,7 @@ Things that live across engines without being engines themselves.
 | `@hive/rate-limit` | **planned** (substrate registry [12]) | Tier-based rate limiter. 3 engines today. |
 | `@hive/stripe-tiers` | **planned** (substrate registry [13]) | Plus / Pro tier checkout + webhook + signed cookie verification. |
 | `@hive/i18n-generate` (tool, hivebaby-resident) | **planned** (substrate registry [7]) | Anthropic-Haiku-driven 7-language translator. Every engine uses it; today it's duplicated. |
-| `@hive/grappler-client` | **plausible** | HTTP client for `POST /api/govern`. Becomes worth building once 2+ engines call QB. |
+| [`@queen-bee/client`](https://github.com/saggarsonny-boop/queen-bee/tree/main/packages/queen-bee-client) | **live (v0.1)** | HTTP client for `POST /api/govern`. Workspace member of the queen-bee monorepo; engines outside install via git tarball. WIRING.md walks first-time adoption. No engine consumes yet — landed before adoption to be the canonical template. |
 
 The 13 substrate patterns currently in flight are tracked in [`docs/QUEEN_BEE_SUBSTRATES.md`](QUEEN_BEE_SUBSTRATES.md). When a substrate crosses the 3-engine threshold, it's extracted into a real package and graduates from the registry into this list.
 
