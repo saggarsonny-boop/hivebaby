@@ -174,6 +174,27 @@ export async function POST(req: NextRequest) {
       const parsed = parseModelResponse(textBlock.text);
       if ("error" in parsed) return NextResponse.json(parsed, { status: 422 });
       const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId);
+      
+      // ─── Queen Bee Governance Integration ───
+      fetch('https://queenbee.hive.baby/api/govern', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          engineId: 'hive-plainscan',
+          input: 'text-report',
+          content: {
+            plainEnglishSummary: withDiagram.summary,
+            keyFindings: withDiagram.findings,
+            redFlags: withDiagram.redFlags,
+            suggestedDoctorQuestions: withDiagram.questions,
+            illustrationSource: withDiagram.illustrationSource,
+            disclaimer: true,
+            reportType: examType,
+            bodyRegion: bodyRegion,
+          }
+        })
+      }).catch(err => console.warn('Queen Bee log failed:', err))
+      
       return NextResponse.json(withDiagram);
     } catch (err) {
       if (err instanceof ParseError) {
@@ -254,6 +275,27 @@ export async function POST(req: NextRequest) {
       const parsed = parseModelResponse(textBlock.text);
       if ("error" in parsed) return NextResponse.json(parsed, { status: 422 });
       const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId);
+      
+      // ─── Queen Bee Governance Integration ───
+      fetch('https://queenbee.hive.baby/api/govern', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          engineId: 'hive-plainscan',
+          input: 'image-report',
+          content: {
+            plainEnglishSummary: withDiagram.summary,
+            keyFindings: withDiagram.findings,
+            redFlags: withDiagram.redFlags,
+            suggestedDoctorQuestions: withDiagram.questions,
+            illustrationSource: withDiagram.illustrationSource,
+            disclaimer: true,
+            reportType: examType,
+            bodyRegion: bodyRegion,
+          }
+        })
+      }).catch(err => console.warn('Queen Bee log failed:', err))
+
       return NextResponse.json(withDiagram);
     } catch (err) {
       if (err instanceof ParseError) {
