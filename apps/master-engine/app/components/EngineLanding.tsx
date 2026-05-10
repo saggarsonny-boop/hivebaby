@@ -3,17 +3,17 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
 
-export default function Home({ params }: { params: { engine: string } }) {
+export default function EngineLanding({ engine }: { engine: string }) {
   const router = useRouter();
 
   // ud-maritime -> Maritime
-  const domainKey = params.engine ? params.engine.replace("ud-", "") : "System";
+  const domainKey = engine ? engine.replace("ud-", "") : "System";
   const domainKeyUpper = domainKey.charAt(0).toUpperCase() + domainKey.slice(1);
 
   // Temporarily bypass auth redirect for UI testing
   useEffect(() => {
-    // if (isLoaded && isSignedIn) router.push(`/${params.engine}/dashboard`);
-  }, [router, params.engine]);
+    // if (isLoaded && isSignedIn) router.push(`/${engine}/dashboard`);
+  }, [router, engine]);
 
   let heroSubtitle = "A Sovereign-Lite tactical engine specifically engineered to parse domain-specific UDS files, extract logic flaws, and flag immediate liabilities in seconds. Legacy PDF processing supported.";
   let cap1Title = "Native UDS Inference";
@@ -21,13 +21,13 @@ export default function Home({ params }: { params: { engine: string } }) {
   let cap2Title = "Zero-Retention Security";
   let cap2Desc = "Every document is parsed in-memory and destroyed immediately. No retention. No indexing. Total privilege protection.";
 
-  if (params.engine === "ud-audit") {
+  if (engine === "ud-audit") {
     heroSubtitle = "The Cryptographic Chain of Custody Engine. Instantly cryptographically seal and verify documents to prove absolute provenance for SOC2, HIPAA, and legal compliance. Uncover any tampering down to the pixel.";
     cap1Title = "Immutable Provenance Ledger";
     cap1Desc = "Generates a mathematically verifiable cryptographic seal for every document, proving zero tampering since the exact millisecond of ingestion.";
     cap2Title = "Compliance-Ready Reporting";
     cap2Desc = "Automatically structures audit trails for rapid SOC2, ISO, and SEC compliance parsing.";
-  } else if (params.engine === "ud-bulk") {
+  } else if (engine === "ud-bulk") {
     heroSubtitle = "The Enterprise Mass Ingestion Data Lake. Connect an S3 bucket or upload massive archives of legacy PDFs to automatically index millions of files into a highly-scalable, searchable UDS vector database.";
     cap1Title = "Asynchronous Batch Pipelines";
     cap1Desc = "Process 10,000+ documents concurrently in the background using cost-optimized AI batch layers, discounting compute costs by over 50%.";
