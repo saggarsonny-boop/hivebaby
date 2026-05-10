@@ -3,7 +3,7 @@ import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "COM-NAV | Sovereign Tactical",
+  title: "HiveArrive | Sovereign Tactical",
   description: "Real-time clarity for high-stakes conversations.",
 };
 
@@ -18,7 +18,7 @@ export default function RootLayout({
         <body>
           <div className="container">
             <header className="navbar">
-              <a href="/" className="logo">COM-NAV</a>
+              <a href="/" className="logo">HiveArrive</a>
               <div>
                 <SignedIn>
                   <UserButton afterSignOutUrl="/"/>

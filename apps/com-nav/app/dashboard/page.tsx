@@ -7,6 +7,8 @@ export default function ComNavDashboard() {
   const { user } = useUser();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [syncStatus, setSyncStatus] = useState("SYNCED");
   
   // Simulated streams
   const [transcript, setTranscript] = useState<string[]>([
@@ -14,18 +16,38 @@ export default function ComNavDashboard() {
   ]);
   
   const [analysis, setAnalysis] = useState<any[]>([
-    { type: "info", text: "COM-NAV engine ready. Standing by for strategic analysis." }
+    { type: "info", text: "HiveArrive engine ready. Standing by for strategic analysis." }
   ]);
 
-  // Mock subscription check
+  // Mock subscription check & network listeners
   useEffect(() => {
-    // In production, this checks the `stripe_customer_id` and entitlement DB.
-    // For MVP, we simulate a prompt to upgrade.
+    setIsOnline(navigator.onLine);
+    
+    const handleOnline = () => {
+      setIsOnline(true);
+      setSyncStatus("SYNCING...");
+      // Simulate sync of cached transcripts to server
+      setTimeout(() => {
+        setSyncStatus("SYNCED");
+      }, 1500);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setSyncStatus("OFFLINE - CACHING LOCALLY");
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     const checkSub = async () => {
-      // Simulate delay
       setTimeout(() => setIsSubscribed(false), 500); 
     };
     checkSub();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const toggleListening = () => {
@@ -49,7 +71,7 @@ export default function ComNavDashboard() {
         <div className="card">
           <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--hive-gold)' }}>Authentication Required</h2>
           <p style={{ color: '#94a3b8', marginBottom: '2rem', lineHeight: 1.6 }}>
-            COM-NAV is a Sovereign-Lite tactical engine restricted to Enterprise subscribers. 
+            HiveArrive is a Sovereign-Lite tactical engine restricted to Enterprise subscribers. 
             To access the HUD and activate real-time inference, initiate your deployment sequence.
           </p>
           <div style={{ padding: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginBottom: '2rem' }}>
@@ -77,9 +99,14 @@ export default function ComNavDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tactical HUD</h1>
-          <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem' }}>
-            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: isListening ? 'var(--danger)' : 'var(--hive-gold)', marginRight: '0.5rem' }}></span>
-            Status: {isListening ? "ACTIVE INTERCEPT" : "STANDBY"}
+          <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem', display: 'flex', gap: '1rem' }}>
+            <span>
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: isListening ? 'var(--danger)' : 'var(--hive-gold)', marginRight: '0.5rem' }}></span>
+              Status: {isListening ? "ACTIVE INTERCEPT" : "STANDBY"}
+            </span>
+            <span style={{ borderLeft: '1px solid var(--accent)', paddingLeft: '1rem', color: isOnline ? 'var(--success)' : 'var(--danger)' }}>
+              Network: {syncStatus}
+            </span>
           </div>
         </div>
         <button 

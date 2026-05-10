@@ -22,13 +22,13 @@ export default function Home() {
           <span style={{ color: 'var(--hive-gold)' }}>Own the room.</span>
         </h1>
         <p style={{ fontSize: '1.25rem', color: '#94a3b8', maxWidth: '600px', margin: '0 auto 3rem auto', lineHeight: 1.6 }}>
-          COM-NAV is a tactical communication engine for high-stakes conversations. 
+          HiveArrive is a tactical communication engine for high-stakes conversations. 
           Real-time transcription, immediate logical audits, and tactical counter-measures 
           delivered silently to your screen during negotiations, depositions, and sales calls.
         </p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
           <a href="/sign-up" className="btn btn-solid" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
-            Deploy COM-NAV
+            Deploy HiveArrive
           </a>
         </div>
       </div>
