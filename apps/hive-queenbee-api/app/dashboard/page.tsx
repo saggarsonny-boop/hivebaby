@@ -1,47 +1,56 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import PhilanthropicFooter from "@/components/PhilanthropicFooter";
+import { useUser } from "@clerk/nextjs";
 
-export default function QueenBeeDashboard() {
-  const [credits, setCredits] = useState<{ allowed: boolean; tier: string; creditsUsed: number; maxCredits: number } | null>(null);
+export default function Dashboard() {
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    fetch("/api/me").then(res => res.json()).then(data => setCredits(data));
+    setIsOnline(navigator.onLine);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Simulated Stripe gate check
+    setTimeout(() => setIsSubscribed(false), 500);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
-  return (
-    <main className="mx-auto max-w-4xl p-8">
-      <h1 className="text-3xl font-bold text-[#1E3A8A] mb-2">QueenBee API Dashboard</h1>
-      <p className="text-[#243b53] mb-8">Secure your LLM wrappers with the Hive's central governance layer.</p>
-
-      {credits && credits.allowed === false && (
-        <div className="mb-8 p-6 rounded-lg border border-[#fca5a5] bg-[#fef2f2] shadow-sm flex flex-col gap-4">
-          <h3 className="font-bold text-[#b91c1c] text-lg">Compute Allocation Exhausted</h3>
-          <p className="text-[#991b1b]">
-            You have exhausted your free compute allocation. Analyzing complex data requires heavy API usage which costs the Hive real money. 
-            To protect our systems from bankruptcy, we must pause your processing.
+  if (!isSubscribed) {
+    return (
+      <div style={{ maxWidth: '600px', margin: '4rem auto', textAlign: 'center' }}>
+        <div className="card">
+          <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--hive-gold)' }}>Authentication Required</h2>
+          <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
+            This Sovereign-Lite tactical engine is restricted to Enterprise subscribers.
           </p>
-          <p className="text-[#991b1b]">
-            If this tool has earned a place in your day, please support the Hive below to unlock unlimited compute access.
-          </p>
-          <div className="flex gap-3 mt-4">
-            <a href="https://buy.stripe.com/test_123" className="bg-[#b91c1c] text-white px-6 py-2 rounded-md font-semibold text-sm hover:bg-[#991b1b] transition-colors">$1.99 per month</a>
-            <a href="https://buy.stripe.com/test_456" className="border border-[#b91c1c] text-[#b91c1c] px-6 py-2 rounded-md font-semibold text-sm hover:bg-[#fef2f2] transition-colors">$19 per year</a>
+          <div style={{ padding: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginBottom: '2rem' }}>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700 }}>$699 <span style={{ fontSize: '1rem', color: '#64748b' }}>/ month</span></div>
           </div>
+          <button className="btn btn-solid" style={{ width: '100%', padding: '1rem' }} onClick={() => {
+            alert("Routing to Stripe Checkout... (Simulated success)");
+            setIsSubscribed(true);
+          }}>Authorize Payment & Deploy</button>
         </div>
-      )}
-
-
-      
-
-      <div className="p-6 rounded-lg border border-[#e2e8f0] bg-white shadow-sm">
-        <h2 className="text-xl font-bold text-[#1E3A8A] mb-4">Integration Guide</h2>
-        <pre className="bg-slate-900 text-green-400 p-4 rounded-md text-sm overflow-x-auto">
-{"curl -X POST https://hive-queenbee-api.vercel.app/api/v1/moderate -H 'Authorization: Bearer sk_live_qb_...' -H 'Content-Type: application/json' -d '{\"prompt\": \"Generate a summary.\"}'"}
-        </pre>
       </div>
-      <PhilanthropicFooter />
-    </main>
+    );
+  }
+
+  return (
+    <div className="card">
+      <h2 style={{ color: 'var(--hive-gold)', marginBottom: '1rem' }}>Hive Queenbee Api HUD</h2>
+      <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', marginBottom: '2rem' }}>
+        Network Status: <span style={{ color: isOnline ? '#10b981' : '#ef4444' }}>{isOnline ? "ONLINE (SYNCED)" : "OFFLINE (CACHING LOCALLY)"}</span>
+      </div>
+      <div style={{ border: '2px dashed var(--accent)', padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
+        Drag and drop documentation here for strategic analysis.
+      </div>
+    </div>
   );
 }

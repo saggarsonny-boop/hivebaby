@@ -1,55 +1,38 @@
-import Link from "next/link";
+"use client";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
+export default function Home() {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
 
-export default function Landing() {
+  useEffect(() => {
+    if (isLoaded && isSignedIn) router.push("/dashboard");
+  }, [isLoaded, isSignedIn, router]);
+
   return (
-    <main className="min-h-screen bg-white text-[#243b53] flex flex-col items-center justify-center p-6 font-sans">
-      <div className="z-10 text-center max-w-4xl w-full">
-        <h1 className="text-5xl font-black tracking-tight mb-4 font-serif text-[#1e2d3d]">
-          QueenBee Governance API
+    <div style={{ maxWidth: '800px', margin: '4rem auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>
+          Universal Document: <br/>
+          <span style={{ color: 'var(--hive-gold)' }}>Queenbee Api Analysis</span>
         </h1>
-        <p className="text-xl text-[#64748b] mb-12 font-light tracking-wide">
-          B2B AI Safety & Alignment Infrastructure.
+        <p style={{ fontSize: '1.25rem', color: '#94a3b8', maxWidth: '600px', margin: '0 auto 3rem auto', lineHeight: 1.6 }}>
+          A Sovereign-Lite tactical engine specifically engineered to parse, analyze, and extract strategic leverage from queenbee api documentation.
         </p>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-16 text-left">
-          
-    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
-      <h3 className="text-xl font-bold text-[#1E3A8A] mb-2">Free</h3>
-      <p className="text-3xl font-black text-[#D4AF37] mb-4">$0<span className="text-sm font-normal text-gray-500">/mo</span></p>
-      <ul className="text-sm text-gray-600 mb-6 flex-grow space-y-2">
-        <li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>10k requests/mo</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>Standard toxicity filter</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>Watermark required</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>Cancel anytime</span></li>
-      </ul>
-      <button className="w-full py-3 rounded-lg font-bold transition-all border border-gray-300 text-gray-700 hover:bg-gray-50">Get API Key</button>
-    </div>
-  
-    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
-      <h3 className="text-xl font-bold text-[#1E3A8A] mb-2">Pro</h3>
-      <p className="text-3xl font-black text-[#D4AF37] mb-4">$49<span className="text-sm font-normal text-gray-500">/mo</span></p>
-      <ul className="text-sm text-gray-600 mb-6 flex-grow space-y-2">
-        <li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>100k requests/mo</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>No watermark</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>Custom thresholds</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>Cancel anytime</span></li>
-      </ul>
-      <button className="w-full py-3 rounded-lg font-bold transition-all bg-[#D4AF37] text-[#1e2d3d] hover:bg-[#b08d2b]">Upgrade to Pro</button>
-    </div>
-  
-    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col">
-      <h3 className="text-xl font-bold text-[#1E3A8A] mb-2">Enterprise</h3>
-      <p className="text-3xl font-black text-[#D4AF37] mb-4">$2000<span className="text-sm font-normal text-gray-500">/mo</span></p>
-      <ul className="text-sm text-gray-600 mb-6 flex-grow space-y-2">
-        <li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>SLA guarantees</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>Dedicated throughput</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>Custom models</span></li><li className="flex gap-2"><span className="text-[#0a7a6a] font-bold">✓</span> <span>Cancel anytime</span></li>
-      </ul>
-      <button className="w-full py-3 rounded-lg font-bold transition-all border border-gray-300 text-gray-700 hover:bg-gray-50">Contact Sales</button>
-    </div>
-  
-        </div>
-
-        <div className="flex justify-center gap-4">
-          <Link href="/dashboard" className="px-8 py-4 bg-[#1e2d3d] text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
-            Access Dashboard →
-          </Link>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <a href="/sign-up" className="btn btn-solid" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+            Deploy Engine
+          </a>
         </div>
       </div>
-      
-    </main>
+      <div className="card">
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--hive-gold)', textAlign: 'center' }}>Enterprise Capabilities</h2>
+        <div style={{ textAlign: 'center', color: '#94a3b8' }}>
+          Real-Time Inference • Zero-Retention Security • $699/month Uncapped
+        </div>
+      </div>
+    </div>
   );
 }

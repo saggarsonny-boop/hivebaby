@@ -1,26 +1,38 @@
 "use client";
-import React from 'react';
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function HiveFeedbackV0() {
+export default function Home() {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) router.push("/dashboard");
+  }, [isLoaded, isSignedIn, router]);
+
   return (
-    <main className="min-h-screen bg-[#F9FAFB] text-[#111827] flex flex-col items-center justify-center font-sans p-6">
-      <div className="text-center max-w-lg">
-         <h1 className="text-3xl font-extrabold mb-4 tracking-tight">Feedback Categorization</h1>
-         <div className="grid grid-cols-2 gap-4 text-left">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-               <div className="text-2xl mb-2">💡</div>
-               <div className="font-bold text-sm">Suggestions (14)</div>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-               <div className="text-2xl mb-2">🐞</div>
-               <div className="font-bold text-sm">Bugs (2)</div>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-               <div className="text-2xl mb-2">❤️</div>
-               <div className="font-bold text-sm">Praise (45)</div>
-            </div>
-         </div>
+    <div style={{ maxWidth: '800px', margin: '4rem auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>
+          Universal Document: <br/>
+          <span style={{ color: 'var(--hive-gold)' }}>Feedback Analysis</span>
+        </h1>
+        <p style={{ fontSize: '1.25rem', color: '#94a3b8', maxWidth: '600px', margin: '0 auto 3rem auto', lineHeight: 1.6 }}>
+          A Sovereign-Lite tactical engine specifically engineered to parse, analyze, and extract strategic leverage from feedback documentation.
+        </p>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <a href="/sign-up" className="btn btn-solid" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+            Deploy Engine
+          </a>
+        </div>
       </div>
-    </main>
+      <div className="card">
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--hive-gold)', textAlign: 'center' }}>Enterprise Capabilities</h2>
+        <div style={{ textAlign: 'center', color: '#94a3b8' }}>
+          Real-Time Inference • Zero-Retention Security • $699/month Uncapped
+        </div>
+      </div>
+    </div>
   );
 }

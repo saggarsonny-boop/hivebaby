@@ -1,53 +1,38 @@
-﻿
-import { UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
-import Link from "next/link";
+"use client";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default async function ParkbackLanding() {
-  const { userId } = await auth();
+export default function Home() {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) router.push("/dashboard");
+  }, [isLoaded, isSignedIn, router]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#111111] to-[#000000] text-white flex flex-col items-center justify-center p-6 fabulous-glass">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#D4AF37] opacity-[0.03] blur-[120px]"></div>
-        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-[#c8960a] opacity-[0.02] blur-[100px]"></div>
-      </div>
-      
-      <div className="z-10 text-center max-w-2xl">
-        <div className="inline-block p-4 rounded-full bg-white/5 border border-white/10 mb-8 fabulous-hover">
-          <svg className="w-12 h-12 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </div>
-        
-        <h1 className="text-6xl font-bold tracking-tight mb-4 font-serif text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-          Parkback Vault
+    <div style={{ maxWidth: '800px', margin: '4rem auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>
+          Universal Document: <br/>
+          <span style={{ color: 'var(--hive-gold)' }}>Parkback Analysis</span>
         </h1>
-        <p className="text-xl text-gray-400 mb-10 font-light tracking-wide">
-          Military-grade encrypted storage for your most sensitive assets. Locked down by the Hive.
+        <p style={{ fontSize: '1.25rem', color: '#94a3b8', maxWidth: '600px', margin: '0 auto 3rem auto', lineHeight: 1.6 }}>
+          A Sovereign-Lite tactical engine specifically engineered to parse, analyze, and extract strategic leverage from parkback documentation.
         </p>
-
-        {userId ? (
-          <div className="flex flex-col items-center gap-6 ud-fade-in">
-            <div className="p-1 rounded-full bg-white/10 border border-[#D4AF37]/30">
-               <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-12 h-12" } }} />
-            </div>
-            <Link href="/clinic" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#D4AF37] to-[#c8960a] border-none shadow-[0_0_40px_rgba(212,175,55,0.3)]">
-              Access the Vault
-            </Link>
-          </div>
-        ) : (
-          <div className="flex gap-4 justify-center ud-fade-in">
-            <Link href="/sign-in" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/20 shadow-none">
-              Authenticate
-            </Link>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <a href="/sign-up" className="btn btn-solid" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+            Deploy Engine
+          </a>
+        </div>
       </div>
-      
-      <div className="absolute bottom-8 left-0 right-0 text-center text-sm text-gray-600 font-mono tracking-widest">
-        POWERED BY QUEEN BEE GOVERNANCE
+      <div className="card">
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--hive-gold)', textAlign: 'center' }}>Enterprise Capabilities</h2>
+        <div style={{ textAlign: 'center', color: '#94a3b8' }}>
+          Real-Time Inference • Zero-Retention Security • $699/month Uncapped
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

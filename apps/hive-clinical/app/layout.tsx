@@ -1,71 +1,29 @@
-﻿import { ClerkProvider } from "@clerk/nextjs";
-// HIVE_FOOTER_SIGNATURE: "Made with ♥ in the Hive" rendered by HiveFooter
-// below. Canonical Hive ink (#0a0a0a) used in app/globals.css.
-
-import type { Metadata, Viewport } from "next";
-import HiveFooter from "@/components/HiveFooter";
-import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
-import { DisclaimerModal } from "@/components/DisclaimerModal";
+import type { Metadata } from "next";
+import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import "./globals.css";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://clinical.hive.baby";
-const TITLE = "HiveClinical — Enterprise Radiology Summarization";
-const DESCRIPTION = "B2B integration for hospital systems. Automatically append patient-friendly plain-English summaries to all outgoing radiology reports.";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(APP_URL),
-  title: TITLE,
-  description: DESCRIPTION,
-  applicationName: "HiveClinical Enterprise",
-  manifest: "/manifest.json",
-  alternates: { canonical: APP_URL },
-  appleWebApp: {
-    capable: true,
-    title: "HiveClinical Enterprise",
-    statusBarStyle: "black-translucent",
-  },
-  openGraph: {
-    type: "website",
-    url: APP_URL,
-    title: TITLE,
-    description: DESCRIPTION,
-    siteName: "HiveClinical Enterprise",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  robots: { index: true, follow: true },
+  title: "Hive Clinical | Sovereign Analysis",
+  description: "Enterprise clarity engine.",
 };
 
-export const viewport: Viewport = {
-  themeColor: "#D4AF37",
-  width: "device-width",
-  initialScale: 1,
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen antialiased">
-        <ClerkProvider>
-        <DisclaimerModal />
-        {children}
-        <footer className="site-footer">
-          <p>No ads. No investors. No agenda.</p>
-          <p>Free at the base tier, forever.</p>
-          <p>This is not medical advice. Always consult a qualified clinician.</p>
-          <HiveFooter />
-        </footer>
-        <ServiceWorkerRegistrar />
-        </ClerkProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body>
+          <div className="container">
+            <header className="navbar">
+              <a href="/" className="logo">Hive Clinical</a>
+              <div>
+                <SignedIn><UserButton afterSignOutUrl="/"/></SignedIn>
+                <SignedOut><a href="/sign-in" className="btn">Authenticate</a></SignedOut>
+              </div>
+            </header>
+            <main>{children}</main>
+          </div>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
-

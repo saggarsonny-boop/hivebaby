@@ -1,20 +1,29 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
+import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "hivePlainscan",
-  description: "Plain-English imaging report explanations for patients."
+  title: "Hive Plainscan2 | Sovereign Analysis",
+  description: "Enterprise clarity engine.",
 };
 
-export default function RootLayout({
-  children
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body>
+          <div className="container">
+            <header className="navbar">
+              <a href="/" className="logo">Hive Plainscan2</a>
+              <div>
+                <SignedIn><UserButton afterSignOutUrl="/"/></SignedIn>
+                <SignedOut><a href="/sign-in" className="btn">Authenticate</a></SignedOut>
+              </div>
+            </header>
+            <main>{children}</main>
+          </div>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
-

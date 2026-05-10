@@ -1,0 +1,8 @@
+{
+  "name": "Hive Solitude",
+  "short_name": "Hive Solitude",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#D4AF37",
+  "start_url": "/dashboard"
+}

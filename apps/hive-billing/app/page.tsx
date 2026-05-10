@@ -1,29 +1,38 @@
 "use client";
-import React from 'react';
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function HiveBillingV0() {
+export default function Home() {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) router.push("/dashboard");
+  }, [isLoaded, isSignedIn, router]);
+
   return (
-    <main className="min-h-screen bg-[#FDFBF7] text-[#2D2B2A] flex flex-col items-center justify-center font-sans p-6">
-      <div className="text-center max-w-lg">
-         <h1 className="text-3xl font-serif mb-4">Billing & Subscriptions</h1>
-         <p className="text-[#8C857B] mb-8">Handles upgrades, 30-day instant refunds, and failed payments with zero shaming.</p>
-         <div className="bg-white border border-[#EAE6DF] rounded-2xl p-6 text-left shadow-sm">
-            <div className="flex justify-between items-center border-b border-[#EAE6DF] pb-4 mb-4">
-               <div>
-                  <div className="font-bold text-sm">john@example.com</div>
-                  <div className="text-xs text-[#8C857B]">Requested refund (28 days ago)</div>
-               </div>
-               <button className="bg-[#10B981] text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-widest">Approve</button>
-            </div>
-            <div className="flex justify-between items-center">
-               <div>
-                  <div className="font-bold text-sm">mary@example.com</div>
-                  <div className="text-xs text-[#8C857B]">Payment failed</div>
-               </div>
-               <span className="text-xs font-bold text-[#F59E0B] uppercase tracking-widest">7-Day Grace</span>
-            </div>
-         </div>
+    <div style={{ maxWidth: '800px', margin: '4rem auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>
+          Universal Document: <br/>
+          <span style={{ color: 'var(--hive-gold)' }}>Billing Analysis</span>
+        </h1>
+        <p style={{ fontSize: '1.25rem', color: '#94a3b8', maxWidth: '600px', margin: '0 auto 3rem auto', lineHeight: 1.6 }}>
+          A Sovereign-Lite tactical engine specifically engineered to parse, analyze, and extract strategic leverage from billing documentation.
+        </p>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <a href="/sign-up" className="btn btn-solid" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+            Deploy Engine
+          </a>
+        </div>
       </div>
-    </main>
+      <div className="card">
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--hive-gold)', textAlign: 'center' }}>Enterprise Capabilities</h2>
+        <div style={{ textAlign: 'center', color: '#94a3b8' }}>
+          Real-Time Inference • Zero-Retention Security • $699/month Uncapped
+        </div>
+      </div>
+    </div>
   );
 }

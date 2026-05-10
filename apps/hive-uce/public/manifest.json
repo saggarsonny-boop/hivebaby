@@ -1,0 +1,8 @@
+{
+  "name": "Hive Uce",
+  "short_name": "Hive Uce",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#D4AF37",
+  "start_url": "/dashboard"
+}

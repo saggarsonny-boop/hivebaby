@@ -1,0 +1,8 @@
+{
+  "name": "Hive Chess",
+  "short_name": "Hive Chess",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#D4AF37",
+  "start_url": "/dashboard"
+}
