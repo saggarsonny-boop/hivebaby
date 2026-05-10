@@ -24,7 +24,7 @@ import {
   USER_TEXT_INSTRUCTION,
   USER_IMAGE_INSTRUCTION,
 } from "@/lib/promptTemplate";
-import { checkAndConsumeCredit } from "@/lib/credits";
+
 import { ParseError, parseModelResponse } from "@/lib/parseReport";
 import { removePhi } from "@/lib/privacy";
 import { fallbackExplanation } from "@/lib/fallback";
@@ -118,10 +118,9 @@ export async function POST(req: NextRequest) {
       ? ((body as { sessionId?: string }).sessionId as string)
       : null;
 
-  const creditCheck = await checkAndConsumeCredit();
-  if (!creditCheck.allowed) {
-    return jsonError("Credit limit reached. Please upgrade to Pro to continue generating.", 402);
-  }
+  
+  // Freedom applied. No paywalls.
+
 
   // ─── Text-input branch ──────────────────────────────────────────────
   if (isTextBody(body)) {

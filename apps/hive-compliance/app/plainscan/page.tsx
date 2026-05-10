@@ -10,6 +10,7 @@ import IllustrationDisplay from "@/components/IllustrationDisplay";
 import ReportExport from "@/components/ReportExport";
 import Disclaimer from "@/components/Disclaimer";
 import type {
+import PhilanthropicFooter from "@/components/PhilanthropicFooter";
   ExplainPayload,
   ExplainRequestBody,
   ExplainResult,
@@ -85,20 +86,7 @@ export default function PlainScanPage() {
         </p>
       </header>
 
-      {credits && (
-        <div className="mx-auto max-w-4xl mb-8 p-4 rounded-lg border border-[#e2e8f0] bg-white shadow-sm flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-[#1E3A8A] uppercase text-xs tracking-wider">Plan: {credits.tier}</h3>
-            <p className="text-[#243b53] font-medium mt-1">Credits Used: {credits.creditsUsed} / {credits.tier === "free" ? credits.maxCredits : "Unlimited"}</p>
-          </div>
-          {credits.tier === "free" && (
-            <div className="flex gap-3">
-              <a href="https://buy.stripe.com/test_123_pro" className="bg-[#2563eb] text-white px-4 py-2 rounded-md font-semibold text-sm hover:bg-[#1d4ed8]">Upgrade to Pro ($99)</a>
-              <a href="https://buy.stripe.com/test_123_premium" className="border border-[#2563eb] text-[#2563eb] px-4 py-2 rounded-md font-semibold text-sm hover:bg-[#eff6ff]">Premium ($999)</a>
-            </div>
-          )}
-        </div>
-      )}
+      
 
       {credits && !credits.allowed ? (
         <div className="mx-auto max-w-4xl p-8 rounded-lg bg-red-50 border border-red-200 text-center">
@@ -135,6 +123,7 @@ export default function PlainScanPage() {
       )}
 
       {!result && !loading && !error && <Disclaimer />}
+      <PhilanthropicFooter />
     </main>
   );
 }

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { checkAndConsumeCredit } from "@/lib/credits";
 
 export async function POST(req: Request) {
   const authHeader = req.headers.get("Authorization");
@@ -7,9 +6,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing Authorization Header" }, { status: 401 });
   }
 
-  const creditCheck = await checkAndConsumeCredit();
-  if (!creditCheck.allowed) {
-    return NextResponse.json({ error: "API limit reached. Please upgrade to Premium." }, { status: 402 });
+  
+  // Freedom applied. No paywalls.
+, { status: 402 });
   }
 
   try {
