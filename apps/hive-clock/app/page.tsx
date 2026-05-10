@@ -1,55 +1,104 @@
-﻿
-import { UserButton, SignInButton, SignUpButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
-import Link from "next/link";
+"use client";
 
-export default async function ClockLanding() {
-  const { userId } = await auth();
+import React, { useState } from 'react';
+import HiveFooter from "@/components/HiveFooter";
+
+export default function HiveClockV0() {
+  const [isPremium, setIsPremium] = useState(false);
+
+  const handleCheckout = async () => {
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: 'premium' })
+      });
+      const data = await res.json();
+      if (data.url) {
+        setIsPremium(true);
+        alert("Redirecting to Stripe... Payment Successful! HiveClock premium features unlocked.");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-[#f7faff] text-[#243b53] flex flex-col items-center justify-center p-6">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#2563eb] opacity-[0.03] blur-[120px]"></div>
-        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-[#1d4ed8] opacity-[0.02] blur-[100px]"></div>
-      </div>
-      
-      <div className="z-10 text-center max-w-2xl">
-        <div className="inline-block p-4 rounded-full bg-white border border-[#e2e8f0] mb-8 fabulous-hover">
-          <svg className="w-12 h-12 text-[#2563eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
+    <main className="min-h-screen bg-[#F9FAFB] text-[#111827] flex flex-col font-sans">
+       
+       <nav className="w-full p-6 flex justify-between items-center z-20 border-b border-gray-200 bg-white shadow-sm">
+         <div className="font-sans font-extrabold tracking-tight text-xl text-indigo-600">HiveClock.</div>
+         <div className="flex gap-2">
+            {!isPremium && (
+               <button onClick={handleCheckout} className="text-sm font-bold px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                 Unlock Vault ($1/mo)
+               </button>
+            )}
+            {isPremium && (
+               <button className="text-sm font-bold px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg border border-indigo-100">
+                 Premium Active
+               </button>
+            )}
+         </div>
+      </nav>
+
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-6 animate-fade-in relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-[20%] left-[20%] w-[30%] h-[30%] rounded-full bg-indigo-600 opacity-[0.02] blur-[100px]"></div>
+          <div className="absolute top-[50%] right-[20%] w-[40%] h-[40%] rounded-full bg-blue-600 opacity-[0.02] blur-[100px]"></div>
         </div>
-        
-        <h1 className="text-6xl font-bold tracking-tight mb-4 font-serif text-[#1E3A8A]">
-          Clock Vault
+
+        <h1 className="text-6xl font-bold tracking-tight mb-4 text-indigo-900 z-10">
+          Chronobiology tracking.
         </h1>
-        <p className="text-xl text-[#64748b] mb-10 font-light tracking-wide">
-          Advanced time management and chronobiology tracking.
+        <p className="text-xl text-gray-500 mb-10 font-light tracking-wide max-w-xl z-10">
+          Protect your deep work windows. Understand your energy cycles. Take control of your daily ritual.
         </p>
 
-        {userId ? (
-          <div className="flex flex-col items-center gap-6 ud-fade-in">
-            <div className="p-1 rounded-full bg-[#f1f5f9] border border-[#2563eb]/30">
-               <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-12 h-12" } }} />
-            </div>
-            <Link href="/plainscan" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] border-none shadow-[0_0_40px_rgba(37,99,235,0.3)]">
-              Access the Vault
-            </Link>
-          </div>
-        ) : (
-                    <div className="flex gap-4 justify-center ud-fade-in">
-            <SignInButton mode="modal">
-              <button className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-[#1E3A8A] text-white border border-[#1E3A8A] hover:bg-[#1E3A8A]/90 shadow-none">
-                Authenticate
-              </button>
-            </SignInButton>
-          </div>
-        )}
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8 z-10 relative group">
+           {!isPremium && (
+              <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                <button onClick={handleCheckout} className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-colors">
+                  Unlock with $1/mo
+                </button>
+              </div>
+           )}
+           <div className="text-5xl font-mono text-center font-bold tracking-widest text-indigo-900 mb-2">
+             11:42
+           </div>
+           <div className="text-sm font-bold text-center text-gray-400 tracking-widest uppercase mb-8">
+             Deep Work Block
+           </div>
+
+           <div className="space-y-4">
+             <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 flex justify-between items-center opacity-50">
+                <span className="font-bold text-sm text-gray-700">Circadian Optimization</span>
+                <span className="text-xs font-bold text-indigo-600">LOCKED</span>
+             </div>
+             <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 flex justify-between items-center opacity-50">
+                <span className="font-bold text-sm text-gray-700">Energy Mapping</span>
+                <span className="text-xs font-bold text-indigo-600">LOCKED</span>
+             </div>
+             <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 flex justify-between items-center opacity-50">
+                <span className="font-bold text-sm text-gray-700">Ritual Triggers</span>
+                <span className="text-xs font-bold text-indigo-600">LOCKED</span>
+             </div>
+           </div>
+        </div>
+
       </div>
-      
-      <div className="absolute bottom-8 left-0 right-0 text-center text-sm text-gray-600 font-mono tracking-widest">
-        POWERED BY QUEEN BEE GOVERNANCE
-      </div>
+
+      <div className="mt-auto z-20"><HiveFooter /></div>
+
+      <style jsx global>{`
+        .animate-fade-in {
+          animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </main>
   );
 }

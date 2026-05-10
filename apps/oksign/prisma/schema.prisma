@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String     @id @default(uuid())
+  clerkUserId        String     @unique
+  email              String     @unique
+  role               String     // "seeker" | "signer"
+  isSubscribed       Boolean    @default(false)
+  signature1         String?
+  signature2         String?
+  signature3         String?
+  preferredSignature String?
+  documentsAsSeeker  Document[] @relation("SeekerDocuments")
+  documentsAsSigner  Document[] @relation("SignerDocuments")
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+}
+
+model Document {
+  id                 String   @id @default(uuid())
+  title              String
+  fileUrl            String
+  status             String   // "pending" | "signed" | "declined" | "blurry"
+  seekerId           String
+  seeker             User     @relation("SeekerDocuments", fields: [seekerId], references: [id])
+  signerId           String
+  signer             User     @relation("SignerDocuments", fields: [signerId], references: [id])
+  signedAt           DateTime?
+  signatureUsed      String?
+  auditLog           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
