@@ -1,40 +1,31 @@
-# ParkBack
+# HivePlainScan
 
-Drop a pin where you parked. Walk back to it. Nothing leaves the device.
+User education tool that explains finalized radiology reports in plain
+English. Part of the [Hive](https://hive.baby) ecosystem.
 
-A client-only PWA. No accounts, no backend, no database. The pin, the photo,
-and the voice memo all live in `localStorage` on the device that dropped them.
+- Domain: [plainscan.hive.baby](https://plainscan.hive.baby)
+- Stack: Next.js + TypeScript + Anthropic SDK
 
-- **Domain:** parkback.hive.baby
-- **Repo:** `apps/parkback/` inside `saggarsonny-boop/hivebaby`
-- **Stack:** Next.js 16 + TypeScript
-
-## Routes
-
-| Path | What it does |
-|------|--------------|
-| `/` | Drop-pin / find-my-car (uses local pin from `localStorage`) |
-| `/find?lat=…&lng=…&t=…&landmark=…` | Read-only view of a spot someone shared with you |
-
-## Local dev
+## Local development
 
 ```bash
-cd apps/parkback
 npm install
-npm run dev
-# → http://localhost:3000
+ANTHROPIC_API_KEY=sk-... npm run dev
 ```
 
-## Deploy
+Then open http://localhost:3000/plainscan.
 
-Vercel project on `saggarsonny-3909s-projects`. Root directory: `apps/parkback`.
-Domain: `parkback.hive.baby` via Cloudflare CNAME → `cname.vercel-dns.com`.
-No env vars required.
+## API
 
-## What it doesn't do
-- Doesn't sync anything anywhere
-- Doesn't track you
-- Doesn't show ads
-- Doesn't upload your photo or voice memo to a server (they stay on your phone)
+- `GET /api/health` -> `{ status, engine, timestamp }`
+- `POST /api/explain` -> `{ reportText }` or `{ imageBase64, mediaType }`
 
-No ads. No investors. No agenda.
+## Deployment
+
+Vercel project root directory: `apps/hive-parkback/`. Required env var:
+`ANTHROPIC_API_KEY`.
+
+## Notes
+
+- No diagnosis. No jargon. Educational use only.
+- This is not medical advice. Always consult a qualified clinician.

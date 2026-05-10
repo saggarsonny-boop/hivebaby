@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://parkback.hive.baby/sitemap.xml
+Sitemap: https://plainscan.hive.baby/sitemap.xml

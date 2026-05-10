@@ -2,14 +2,14 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #1e2d3d;
-  --paper: #fafaf8;
-  --paper-2: #f2f1ee;
-  --gold: #c8960a;
-  --border: #e0ddd6;
-  --muted: #6b7280;
-  --red: #b91c1c;
-  --red-bg: #fef2f2;
+  --ink: #e5e7eb;
+  --paper: #0f172a;
+  --paper-2: #1e293b;
+  --gold: #c084fc;
+  --border: #334155;
+  --muted: #94a3b8;
+  --red: #f87171;
+  --red-bg: #450a0a;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

@@ -1,182 +1,191 @@
 ---
-engine: HiveActivityPartner
-id: hiveactivitypartner
-name_display: HiveActivityPartner
-domain: activitypartner.hive.baby
+engine: HivePlainScan
+id: hiveplainscan
+domain: plainscan.hive.baby
 domain_aliases:
-  - activitypartner.hive.baby
+  - plainscan.hive.baby
+  - scan.hive.baby
 repo: saggarsonny-boop/hivebaby:apps/hive-activity-partner
 owner: saggarsonny-boop
 
-version: 0.1.0
+version: 0.2.0
 status: building
 tier: 1
-schema: stranger-meeting-with-safety-rails
-stack: [nextjs, typescript, clerk, neon, anthropic, stripe, resend]
+schema: radiology-report-explanation
+stack: [nextjs, typescript, tailwind, anthropic, replicate, mammoth]
 premium: false
 
 governance: QueenBee.MasterGrappler@pending
 safety: enabled
-multilingual: enabled
-tone: direct, plain-english, mobile-first
-cost_profile: medium_marginal
+multilingual: pending
+tone: calm, plain-language, sixth-grade reading level
+cost_profile: zero_marginal
 
 api_models:
-  - role: safety_scan
-    model_id: claude-haiku-4-5-20251001
+  - role: explain
+    model_id: claude-sonnet-4-20250514
+  - role: illustration
+    model_id: black-forest-labs/flux-schnell
 
 env_vars_required:
-  - DATABASE_URL
-  - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  - CLERK_SECRET_KEY
-  - NEXT_PUBLIC_APP_URL
-  - HAP_EMERGENCY_CONTACT_KEY
   - ANTHROPIC_API_KEY
-  - STRIPE_SECRET_KEY
-  - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  - RESEND_API_KEY
+  - REPLICATE_API_TOKEN
+  - NEXT_PUBLIC_APP_URL
 
-health_check: /api/health
+env_vars_optional:
+  - PLAINSCAN_DAILY_CAP_CENTS
 
 onboarding_stack:
   auto_demo: pending
-  first_visit_card: implemented
+  first_visit_card: pending
   tooltip_tour: pending
-  rotating_placeholders: n/a
+  rotating_placeholders: implemented
 
-vercel_project: TBD
+vercel_project: hive-activity-partner
 vercel_root_directory: apps/hive-activity-partner
 deployment_protection: off
-auto_deploy_branch: main
-
 visibility: public
-commercial_surface: none
-viral_loop_targets: [referral]
-launch_checklist_state:
-  test_slot: false
-  seo_layout: true
-  tooltip_tour: false
-  planet_or_udnav: false
-  env_vars_confirmed: false
-  health_check: true
-  health_workflow_listed: false
-  engine_count_updated: true
+commercial_surface: donations
+viral_loop_targets:
+  - share_card
+  - pr_pickup
 production_state: not_listed
-last_audit_at: 2026-05-06
+last_audit_at: 2026-05-09
+
+health_check: /api/health
+
+planned_qb_consumption:
+  schemas:
+    - radiology-report-explanation
+  endpoint: /api/govern
+  status: not-yet-wired
 ---
 
-# ENGINE GRAMMAR — HiveActivityPartner
-
-## Engine Identity
-- **Name:** HiveActivityPartner
-- **Domain:** activitypartner.hive.baby
-- **Repo:** saggarsonny-boop/hivebaby (subdir `apps/hive-activity-partner/`)
-- **Status:** Building (Phase 1 of 6 — schema, auth, minimal profile)
-- **Stack:** Next.js + TypeScript + Clerk + Neon PostgreSQL + Anthropic (Haiku for Phase 4 safety scans) + Stripe (live, for Phase 1 Stripe Identity + Phase 5 paid features) + Resend (transactional)
-
 ## Purpose
-HiveActivityPartner pairs strangers around a shared activity — sport,
-walks, study sessions, language exchanges, art classes — within a safety
-architecture that is load-bearing rather than optional.
 
-The 6-phase build:
-1. **Phase 1 (this PR):** schema for all 6 phases, Clerk auth with age-band
-   gate, minimal profile creation + self-view.
-2. **Phase 2:** activity taxonomy, "add an activity" flow.
-3. **Phase 3:** match request flow, public-meet-only default.
-4. **Phase 4:** in-app messaging with Claude Haiku safety scans.
-5. **Phase 5:** verification methods, trust signals, reporting +
-   moderator review.
-6. **Phase 6:** paid features (verified+ tier, optional dating overlay).
+HivePlainScan is a patient education tool. It explains finalized radiology reports in plain English at a 6th–8th grade reading level. It does **not** diagnose, interpret raw scan images, recommend treatment, or replace a physician — it explains what the report already says.
 
-## Safety architecture (Phase 1 invariants)
-- Age band is captured BEFORE Clerk signup — there is no "skip for now".
-- `hap_users.exact_location_lat` / `exact_location_lng` columns exist for
-  matching but are NEVER returned in API responses. Defense in depth:
-  every SELECT in `lib/auth.ts` and the `stripForbidden` sanitizer in
-  `lib/profile.ts` both omit them.
-- `hap_profiles.emergency_contact_encrypted` is AES-256-GCM ciphertext
-  via `lib/encryption.ts`. Decryption is only invoked from the moderator
-  review path (Phase 5+).
-- The entire engine is `noindex,nofollow` (root-layout meta + robots.txt
-  `Disallow: /`). No HAP page is ever indexable.
-- Photo upload (deferred to Phase 2) is blurred-by-default in API
-  responses; the unblurred URL is only served to a matched-and-mutually-
-  contact-share-accepted user pair.
-- Trust score starts neutral at 100 (range 0–200); modified only by
-  verification completion in Phase 1.
+The engine has a **rule-based local fallback** that runs without any AI keys. This keeps a base demo path free at the tier of `cost_profile: zero_marginal` even before AI keys are provisioned. With keys present, the AI explanation + Replicate FLUX illustration pipeline activates.
 
 ## Inputs
-- Clerk-issued session (Clerk handles email + email-verified state)
-- Age band selection from `/signup` gate
-- Profile fields submitted via `POST /api/users` (idempotent)
+
+- Pasted text from a finalized radiology report
+- PDF upload (parsed client-side via pdfjs-dist)
+- DOCX upload (parsed server-side via mammoth at `/api/extract-report`)
+- Image upload (PNG/JPEG; OCR'd server-side via Anthropic vision)
+- Optional exam type selector (MRI · CT · X-ray · Ultrasound · Other · Auto-detect)
+- Optional body region selector (Spine, Brain, Knee, Shoulder, Hip, Abdomen, Chest, Other · Auto-detect)
 
 ## Outputs
-- `hap_users` row + `hap_profiles` row keyed by Clerk user ID
-- `hap_verifications` row with `method=stripe_identity, status=pending`
-  for users in the 18-24 band (async pipeline picks it up)
-- Self-only profile view at `/profile/[userId]`
 
-## Database
-See `db/README.md` and `db/schema/*.sql`. All 6 phases of tables ship in
-this PR so future phases land without migrations.
+JSON `ExplainResult`:
 
-## Phase 1 Out of Scope (deferred to later phases)
-- Activity selection / taxonomy seed (Phase 2)
-- Photo upload to Vercel Blob with blurred-by-default rendering (Phase 2)
-- Match requests + contact share flow (Phase 3)
-- In-app messaging + Claude Haiku safety scans (Phase 4)
-- Verification methods beyond email (Phase 5)
-- Trust signal pipeline (Phase 5)
-- Reports + moderator review UI (Phase 5)
+- `bodyRegion` (string)
+- `reportType` (string)
+- `summary` (string, 2–4 sentences, 6th–8th grade reading level)
+- `findings` (array of `{ level, finding, plainLanguage, severity, possibleSymptoms[] }`)
+- `questionsForDoctor` (array of strings, 5–7 entries)
+- `redFlags` (array of strings, urgent terms surfaced from the report)
+- `disclaimer` (string)
+- `illustrationUrl` (string — AI illustration when available, SVG diagram fallback otherwise)
+- `illustrationSource` (`ai` | `svg`)
+- `source` (`ai` | `fallback`)
 
-## Onboarding
-HiveActivityPartner uses the canonical Hive onboarding stack via
-`@hive/onboarding`:
-- `<HiveInstallHint />` — install banner on the home page
-- `<HiveFirstVisitExplainer />` — under-CTA explainer card
+## Rules
 
-Engine-specific copy is passed via the `customMessage` prop and lives in
-`locales/<code>.json` so localization extends without touching the
-component code.
+- Always use "the report describes" phrasing
+- Never say diagnose, treat, recommend, or urgent (except in `redFlags`)
+- Reading level: 6th to 8th grade
+- All body regions supported; spine variants (cervical, thoracic, lumbar) get diagrammatic detail
+- If the uploaded content is not a radiology report, return `{ "error": "This does not appear to be a radiology report. Please upload a completed imaging report." }`
+- PHI scrubbing is **mandatory** at two layers:
+  1. Client-side preview (`detectPhi` in `lib/privacy.ts`) — non-mutating; warns the user before submission
+  2. Server-side pre-call (`removePhi`) — mutates the text the AI sees
+- Cost-cap circuit breaker (`lib/cost-cap.ts`) — when daily Anthropic spend exceeds `PLAINSCAN_DAILY_CAP_CENTS` (default 500¢), the engine falls back to the local rule-based explanation + SVG diagram. Image-input requests return 503 in this state.
 
-## Privacy posture
-- No third-party analytics. No Google Analytics, no Hotjar, no Segment.
-- No cookies beyond session auth (Clerk's session cookie).
-- robots.txt `Disallow: /` + every page `noindex,nofollow`.
-- Public profile pages do not exist; profile viewing is self-only in
-  Phase 1 and matched-pair-only thereafter.
+## Safety Templates
+
+Every response carries the disclaimer:
+
+> This explanation is based on the radiology report you provided. It is for educational purposes only. It does not diagnose your condition, recommend treatment, or replace advice from your physician.
+
+Layout-level footer (every page):
+
+> No ads. No investors. No agenda. — Free at the base tier, forever. — This is not medical advice. Always consult a qualified clinician.
+
+## Phase Plan
+
+- **Phase 1 (shipped):** Anthropic-powered explanation, ParseError handling, /api/explain text + image branches.
+- **Phase 2 (this PR):** PHI scrubbing, rule-based fallback, SVG diagrams, Replicate FLUX illustration pipeline, DOCX support, cost-cap circuit breaker, sample report, Hive footer signature, service worker registration, manifest.json, /api/health canonical shape.
+- **Phase 3 (next):** Locale catalogue expansion (es, fr, ar, hi, zh, pt — currently English only); seven-locale floor per Constitution §C2.
+- **Phase 4:** Wire Queen Bee `/api/govern` consumption per `planned_qb_consumption` block above. Until then, governance flag is `QueenBee.MasterGrappler@pending`.
+- **Phase 5:** DNS provisioning for `plainscan.hive.baby` (currently no DNS record) — flips status to `live`.
+
+## Out of Scope
+
+- Diagnostic interpretation of raw scan images (the AI vision branch only OCRs text from a report photo)
+- Treatment recommendations
+- Comparing against prior imaging
+- Reading non-radiology medical documents (lab reports, pathology, etc.)
 
 ## Deployment Notes
-- Auto-deploy on push to `main` (after PR merges)
-- Cloudflare CNAME → cname.vercel-dns.com (`activitypartner.hive.baby`)
-- Vercel Deployment Protection: off
-- Required env vars listed in `env_vars_required` frontmatter above. The
-  hivebaby Actions secrets store already holds DATABASE_URL,
-  CLERK_PK/CLERK_SK, ANTHROPIC_API_KEY, STRIPE_KEY/STRIPE_PK,
-  RESEND_API_KEY, CF_TOKEN. `HAP_EMERGENCY_CONTACT_KEY` is new and
-  needs generating per the post-merge launch checklist.
+
+- Vercel project: `hive-activity-partner` (root `apps/hive-activity-partner`). Auto-deploy on push to `main`.
+- Required env vars in production: `ANTHROPIC_API_KEY`, `REPLICATE_API_TOKEN` (optional — graceful degrade when absent), `NEXT_PUBLIC_APP_URL`.
+- Vercel deployment protection: **off** (per C10).
+- DNS: `plainscan.hive.baby` not yet wired. Provision via Cloudflare CNAME → `cname.vercel-dns.com` per C11. Tracked in hivebaby#127.
 
 ## Hive-Ops Overrides
 
 ```yaml
 overrides:
-  - rule: V18
-    mode: waive
-    reason: "Phase 1 ships only the install hint + first-visit card. Activity-selection auto_demo and tooltip_tour land in Phase 2; rotating placeholders are n/a (no free-text chat surface in Phase 1). The frontmatter declares pending/implemented/n/a honestly; V18 treats non-implemented as fail, which is overly strict for a phased build."
-    issue: https://github.com/saggarsonny-boop/hivebaby/issues/87
+  - rule: H05
+    mode: warn
+    reason: "Locale catalog seeded with English only this PR; remaining six (es, fr, ar, hi, zh, pt) generated in follow-up PR per Phase 3."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
-  - rule: V19
-    mode: waive
-    reason: "Phase 1 launch checklist has 4 false booleans by design: tooltip_tour (Phase 2), planet_or_udnav (added once Phase 1 deploys), env_vars_confirmed (true once Vercel project is provisioned post-merge), health_workflow_listed (added once the engine is in production). test_slot tracks an unfiled hive-testing-station entry. Phase 1 closes the items it can; the rest are tracked openly in this manifest."
-    issue: https://github.com/saggarsonny-boop/hivebaby/issues/87
+    date: 2026-05-09
+    warn_until: 2026-06-08
+  - rule: H08
+    mode: warn
+    reason: "OG image not yet generated; the engine has SVG fallback diagrams for in-product imagery, OG image is a post-DNS asset."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-06
+    date: 2026-05-09
+    warn_until: 2026-06-08
+  - rule: H11
+    mode: warn
+    reason: "HiveInstallHint not yet wired; canonical onboarding stack is Phase 3 (with locales)."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-09
+    warn_until: 2026-06-08
+  - rule: H12
+    mode: warn
+    reason: "HiveFirstVisitExplainer not yet wired; Phase 3."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-09
+    warn_until: 2026-06-08
+  - rule: H13
+    mode: warn
+    reason: "public/hive-logo-full.png not yet copied from @hive/onboarding; asset port is part of Phase 3 onboarding stack work."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-09
+    warn_until: 2026-06-08
+  - rule: H15
+    mode: warn
+    reason: "Favicon binaries not generated this PR — manifest.json declares them but actual PNG files are a follow-up asset commit."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-09
+    warn_until: 2026-06-08
+  - rule: H21
+    mode: warn
+    reason: "Engine entry in hivebaby planet ENGINES array pending DNS provisioning; engine is currently DORMANT in inventory."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-09
+    warn_until: 2026-06-08
 ```
-
-## Launch checklist
-See **[/docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md](../../docs/HIVE_ENGINE_FINALIZATION_CHECKLIST.md)**.
-HiveOps audit (`tsx tools/hive-ops/cli.ts hive-activity-partner`) is the
-programmatic gate; current run is the source of truth for
-`launch_checklist_state` above.

@@ -1,14 +1,14 @@
 {
-  "name": "ParkBack",
-  "short_name": "ParkBack",
-  "description": "Find your car. No accounts. No cloud. Works offline.",
-  "theme_color": "#D4AF37",
-  "background_color": "#000000",
-  "display": "standalone",
-  "orientation": "portrait",
+  "name": "HivePlainScan",
+  "short_name": "HivePlainScan",
+  "description": "Radiology reports explained in plain English. No diagnosis. No jargon. Free, forever.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
-  "id": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#D4AF37",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -27,12 +27,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
     }
   ]
 }

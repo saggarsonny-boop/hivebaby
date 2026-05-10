@@ -1,131 +1,52 @@
-// Landing page. Plain English, mobile-first, no marketing fluff.
-// CTA routes to /signup which captures the age band BEFORE Clerk.
-//
-// Plain <a> rather than next/link: under Next 16.2.3 + React 19 + Clerk 6 +
-// Turbopack, the Link onClick handler preventDefaults the click but never
-// triggers router.push (verified with Playwright on prod). Native <a>
-// navigation reliably reaches /signup.
 
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { strings } from "./_lib/strings";
-import { HiveFooter } from "./_lib/HiveFooter";
-import { HiveInstallHint } from "./_lib/HiveInstallHint";
-import { HiveFirstVisitExplainer } from "./_lib/HiveFirstVisitExplainer";
+import { UserButton, auth } from "@clerk/nextjs";
+import Link from "next/link";
 
-const GOLD = "#D4AF37";
-const PAPER = "#f5f1e6";
-const MUTED = "#9a9588";
+export default function ActivityPartnerLanding() {
+  const { userId } = auth();
 
-export default async function Home() {
-  const { userId } = await auth();
-  if (userId) {
-    // Signed-in users skip the marketing page and go straight to their
-    // profile setup or self-view; setup is idempotent.
-    redirect("/profile/setup");
-  }
-
-  const s = strings.home;
   return (
-    <main style={mainStyle}>
-      <h1 style={titleStyle}>{s.title}</h1>
-      <p style={taglineStyle}>{s.tagline}</p>
-
-      <div style={pillarsStyle}>
-        <div style={pillarStyle}>
-          <strong style={{ color: PAPER }}>{s.pillars.private.title}</strong>
-          <span>{s.pillars.private.body}</span>
-        </div>
-        <div style={pillarStyle}>
-          <strong style={{ color: PAPER }}>{s.pillars.safe.title}</strong>
-          <span>{s.pillars.safe.body}</span>
-        </div>
-        <div style={pillarStyle}>
-          <strong style={{ color: PAPER }}>{s.pillars.free.title}</strong>
-          <span>{s.pillars.free.body}</span>
-        </div>
+    <main className="min-h-screen bg-gradient-to-br from-[#111111] to-[#000000] text-white flex flex-col items-center justify-center p-6 fabulous-glass">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#D4AF37] opacity-[0.03] blur-[120px]"></div>
+        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-[#c8960a] opacity-[0.02] blur-[100px]"></div>
       </div>
+      
+      <div className="z-10 text-center max-w-2xl">
+        <div className="inline-block p-4 rounded-full bg-white/5 border border-white/10 mb-8 fabulous-hover">
+          <svg className="w-12 h-12 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        
+        <h1 className="text-6xl font-bold tracking-tight mb-4 font-serif text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+          ActivityPartner Vault
+        </h1>
+        <p className="text-xl text-gray-400 mb-10 font-light tracking-wide">
+          Military-grade encrypted storage for your most sensitive assets. Locked down by the Hive.
+        </p>
 
-      <a href="/signup" style={ctaStyle} aria-label={s.ctaAria}>
-        {s.cta}
-      </a>
-      <a href="/sign-in" style={signInLinkStyle}>
-        {s.signInPrompt}
-      </a>
-
-      <HiveInstallHint />
-      <HiveFirstVisitExplainer />
-      <HiveFooter />
+        {userId ? (
+          <div className="flex flex-col items-center gap-6 ud-fade-in">
+            <div className="p-1 rounded-full bg-white/10 border border-[#D4AF37]/30">
+               <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-12 h-12" } }} />
+            </div>
+            <Link href="/app" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#D4AF37] to-[#c8960a] border-none shadow-[0_0_40px_rgba(212,175,55,0.3)]">
+              Access the Vault
+            </Link>
+          </div>
+        ) : (
+          <div className="flex gap-4 justify-center ud-fade-in">
+            <Link href="/sign-in" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/20 shadow-none">
+              Authenticate
+            </Link>
+          </div>
+        )}
+      </div>
+      
+      <div className="absolute bottom-8 left-0 right-0 text-center text-sm text-gray-600 font-mono tracking-widest">
+        POWERED BY QUEEN BEE GOVERNANCE
+      </div>
     </main>
   );
 }
-
-const mainStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  padding: "16px 20px 0",
-  maxWidth: 560,
-  margin: "0 auto",
-  minHeight: "calc(100dvh - 60px)",
-};
-
-const titleStyle: React.CSSProperties = {
-  margin: "20px 0 8px",
-  fontSize: 30,
-  lineHeight: 1.15,
-  textAlign: "center",
-  color: PAPER,
-  fontWeight: 600,
-};
-
-const taglineStyle: React.CSSProperties = {
-  marginTop: 0,
-  marginBottom: 24,
-  color: MUTED,
-  textAlign: "center",
-  fontSize: 16,
-  lineHeight: 1.5,
-};
-
-const pillarsStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 14,
-  width: "100%",
-  marginBottom: 32,
-};
-
-const pillarStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 4,
-  padding: "12px 14px",
-  border: "1px solid #2a2a2a",
-  borderRadius: 10,
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: MUTED,
-};
-
-const ctaStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 200,
-  minHeight: 48,
-  padding: "12px 24px",
-  background: GOLD,
-  color: "#0a0a0a",
-  borderRadius: 10,
-  fontWeight: 600,
-  textDecoration: "none",
-  fontSize: 16,
-};
-
-const signInLinkStyle: React.CSSProperties = {
-  marginTop: 16,
-  color: MUTED,
-  textDecoration: "underline",
-  fontSize: 14,
-};

@@ -1,114 +1,54 @@
 {
-  "footer": {
-    "signature": {
-      "madeWith": "बनाया गया",
-      "inThe": "में",
-      "brand": "Hive"
-    }
-  },
-  "install": {
-    "cta": "ParkBack को होम स्क्रीन पर जोड़ें",
-    "ctaAriaIos": "मुझे दिखाएं कि ParkBack को होम स्क्रीन पर कैसे जोड़ें",
-    "ctaAriaChromium": "ParkBack को होम स्क्रीन पर जोड़ें",
-    "fallback": {
-      "desktopSafariFirefox": "एक टैप में एक्सेस के लिए ParkBack को होम स्क्रीन पर जोड़ें। इसे सुलभ रखने के लिए अपने ब्राउज़र के बुकमार्किंग विकल्प का उपयोग करें। कोई ऐप स्टोर नहीं चाहिए — यह मुफ्त है, कोई साइनअप नहीं, ऑफलाइन काम करता है।",
-      "unknown": "ParkBack किसी भी डिवाइस पर काम करता है। इसे सुलभ रखने के लिए अपने ब्राउज़र के \"होम स्क्रीन पर जोड़ें\" विकल्प का उपयोग करें।"
-    },
-    "banner": {
-      "regionAria": "ParkBack को होम स्क्रीन पर जोड़ें",
-      "dismissAria": "होम स्क्रीन पर जोड़ने का संकेत बंद करें",
-      "home": "ParkBack को होम स्क्रीन पर जोड़ें। किसी भी डेड ज़ोन में काम करता है। कोई सेल सिग्नल, वाईफाई, या ऐप स्टोर नहीं चाहिए। मुफ्त, कोई साइनअप नहीं। आपका पिन, फोटो, और वॉइस मेमो आपके फोन पर सेव होते हैं — अपनी कार खोजने के लिए कोई सेल या वाईफाई सिग्नल नहीं चाहिए।",
-      "find": "पसंद आया? ParkBack को होम स्क्रीन पर जोड़ें और अपनी कार कभी न खोएं। किसी भी डेड ज़ोन में काम करता है — कोई सेल सिग्नल, वाईफाई, या ऐप स्टोर नहीं चाहिए। मुफ्त, कोई साइनअप नहीं।"
-    },
-    "ahtsCard": {
-      "title": "ParkBack को होम स्क्रीन पर जोड़ें",
-      "body": "पूरी चीज़ — आपका पिन, फोटो, वॉइस मेमो, और आपकी कार तक कंपास — बिना सेल सिग्नल या वाईफाई के काम करता है। सबसे गहरी पार्किंग में भी।",
-      "dismiss": "समझ गया"
-    },
-    "overlay": {
-      "title": "ParkBack को होम स्क्रीन पर जोड़ें",
-      "body": "Safari में तीन टैप। इसके बाद, ParkBack किसी भी ऐप की तरह खुलता है — किसी भी डेड ज़ोन में काम करता है, कोई सेल या वाईफाई सिग्नल नहीं चाहिए।",
-      "step1": "Safari के नीचे शेयर बटन पर टैप करें।",
-      "step2": "नीचे स्क्रॉल करें और होम स्क्रीन पर जोड़ें पर टैप करें।",
-      "step3": "ऊपरी दाएं कोने में जोड़ें पर टैप करें।",
-      "dismiss": "समझ गया",
-      "ariaLabel": "ParkBack को होम स्क्रीन पर कैसे जोड़ें"
-    },
-    "installedToast": "ParkBack आपकी होम स्क्रीन पर है। इसे किसी भी अन्य ऐप की तरह खोलें।"
+  "engine": {
+    "name": "[hi] HivePlainScan",
+    "tagline": "[hi] Radiology reports explained in plain English"
   },
   "home": {
-    "tagline": "अपनी कार खोजें। कोई अकाउंट नहीं। कोई क्लाउड नहीं।",
-    "loading": "लोड हो रहा है…",
-    "ctaLocating": "लोकेट कर रहा है…",
-    "ctaParked": "मैंने पार्क किया",
-    "ctaParkedAria": "मैंने पार्क किया, यह स्पॉट सेव करें",
-    "positioningLine1": "कोई ऐप स्टोर नहीं। कोई लॉगिन नहीं। कोई सब्सक्रिप्शन नहीं। कोई विज्ञापन नहीं। कोई ट्रैकिंग नहीं। कोई सिग्नल नहीं चाहिए।",
-    "positioningLine2": "वो पार्किंग ऐप जो सालों पहले होना चाहिए था।",
-    "firstVisitExplainer": "पार्क करते समय टैप करें। वापस आएं, फिर से टैप करें, सीधे अपनी कार तक चलें। अंडरग्राउंड गैराज में भी काम करता है जहां ज़ीरो सेल या वाईफाई सिग्नल हो। आपके फोन का GPS काम करता है।",
-    "hintRequesting": "स्थिर रहें। हाई-एक्यूरेसी GPS में थोड़ा समय लगता है।",
-    "hintIdle": "पार्क करने पर टैप करें। ऑफलाइन काम करता है।"
+    "h1": "[hi] Your radiology report, in plain English.",
+    "lede": "[hi] Paste, upload, or photograph a finalized imaging report. Get a clear summary, a finding-by-finding breakdown, questions to bring to your doctor, and a downloadable PDF. No diagnosis. No jargon. Free, forever.",
+    "cta": "[hi] Explain my report",
+    "tab_paste": "[hi] Paste Text",
+    "tab_pdf": "[hi] Upload PDF or DOCX",
+    "tab_image": "[hi] Upload Image",
+    "exam_label": "[hi] Exam type",
+    "region_label": "[hi] Body region",
+    "sample_link": "[hi] Try sample report"
   },
-  "perm": {
-    "noBrowserSupport": "आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता। ParkBack को याद रखने के लिए लोकेशन चाहिए कि आपने कहां पार्क किया।",
-    "denied": "ParkBack को याद रखने के लिए आपकी लोकेशन चाहिए कि आपने कहां पार्क किया। फिर से कोशिश करने के लिए टैप करें।",
-    "unavailable": "आपकी लोकेशन नहीं मिली। बाहर निकलें या ऊंची इमारतों से दूर जाएं, फिर रिट्राई करने के लिए टैप करें।",
-    "timeout": "लोकेशन में बहुत समय लगा। रिट्राई करने के लिए टैप करें।"
+  "explain": {
+    "loading": "[hi] Reading your report...",
+    "summary_heading": "[hi] Plain English Summary",
+    "visual_heading": "[hi] Visual summary",
+    "questions_heading": "[hi] Questions to bring to your doctor",
+    "redflags_heading": "[hi] Things to take to your doctor promptly",
+    "download_pdf": "[hi] Download as PDF",
+    "ai_caption": "[hi] AI-generated educational illustration based on report text.",
+    "svg_caption": "[hi] Schematic diagram based on report text.",
+    "not_real_image": "[hi] Not an actual medical image. Not to scale."
   },
-  "compass": {
-    "locating": "आपको लोकेट कर रहा है…",
-    "near": "के पास",
-    "accuracySuffix": "m पार्किंग पर",
-    "enable": "कंपास चालू करें",
-    "calibrating": "कंपास कैलिब्रेट हो रहा है — फोन को 8 के आकार में घुमाएं",
-    "instruction": "फोन सपाट रखें, तीर कार की ओर इशारा करता है।"
-  },
-  "prompts": {
-    "photoQuestion": "बे नंबर की फोटो लें?",
-    "photoTake": "फोटो लें",
-    "photoTakeAria": "बे नंबर की फोटो लें",
-    "photoOpenAria": "फोटो फुल स्क्रीन में खोलें",
-    "photoAlt": "पार्किंग स्पॉट",
-    "photoFullAlt": "पार्किंग स्पॉट फुल साइज़",
-    "tapToClose": "बंद करने के लिए टैप करें",
-    "voiceQuestion": "वॉइस नोट जोड़ें (वैकल्पिक)",
-    "voiceRecord": "● रिकॉर्ड",
-    "voiceRecordAria": "वॉइस मेमो रिकॉर्ड करें",
-    "skip": "छोड़ें",
-    "stopRecording": "रुकें",
-    "recordingPrefix": "रिकॉर्डिंग…",
-    "saving": "सेव हो रहा है…"
-  },
-  "actions": {
-    "navigate": "नेविगेट",
-    "navigateAria": "मेरी कार तक नेविगेट करें",
-    "send": "भेजें",
-    "sendAria": "मेरा पार्किंग स्पॉट किसी को भेजें",
-    "forget": "भूल जाएं",
-    "forgetAria": "यह स्पॉट भूल जाएं"
-  },
-  "toasts": {
-    "savedAck": "समझ गया। कहीं भी घूमें। जब कार चाहिए तब वापस आएं।",
-    "linkCopied": "लिंक कॉपी हुआ",
-    "forgetConfirm": "यह स्पॉट भूल जाएं?"
+  "phi": {
+    "preview_prefix": "[hi] Heads up: the report text contains",
+    "preview_suffix": "[hi] We will remove anything matching these patterns before sending the report to the AI."
   },
   "errors": {
-    "photoFailed": "वह फोटो प्रोसेस नहीं हो सकी। फिर से कोशिश करें।",
-    "voiceUnsupported": "वॉइस नोट्स के लिए माइक्रोफोन एक्सेस चाहिए। आपका ब्राउज़र यहां इसे सपोर्ट नहीं करता।",
-    "voiceSaveFailed": "वॉइस नोट सेव नहीं हो सका।",
-    "micDenied": "माइक्रोफोन एक्सेस अस्वीकृत। वॉइस नोट्स वैकल्पिक हैं — आप फिर भी अपनी कार तक नेविगेट कर सकते हैं।"
+    "generic": "[hi] Something went wrong. Please check your report and try again.",
+    "empty_text": "[hi] Report text is empty.",
+    "image_empty": "[hi] Image is empty.",
+    "image_no_ai": "[hi] Image-based explanations require the AI service. Please paste the report text instead."
   },
-  "share": {
-    "title": "ParkBack — मेरा पार्किंग स्पॉट",
-    "messageNoLandmark": "यहां मेरी कार पार्क है।",
-    "messageNearPrefix": "मैंने पार्क किया है",
-    "promptDialog": "अपना पार्किंग स्पॉट लिंक कॉपी करें:"
+  "disclaimer": {
+    "default": "[hi] This explanation is based on the radiology report you provided. It is for educational purposes only. It does not diagnose your condition, recommend treatment, or replace advice from your physician.",
+    "footer": "[hi] This is not medical advice. Always consult a qualified clinician.",
+    "no_ads": "[hi] No ads. No investors. No agenda.",
+    "free_forever": "[hi] Free at the base tier, forever."
   },
-  "find": {
-    "headerTitle": "किसी ने आपके साथ अपना पार्किंग स्पॉट शेयर किया।",
-    "linkInvalidTitle": "यह लिंक सही नहीं लग रहा।",
-    "linkInvalidBody": "शेयर किए गए लिंक में कोऑर्डिनेट गायब या गलत हैं। जिसने भेजा उनसे फिर से शेयर करने को कहें।",
-    "linkInvalidCta": "ParkBack खोलें",
-    "navigateAria": "शेयर किए गए पार्किंग स्पॉट तक नेविगेट करें",
-    "recipientCta": "अपनी कार के लिए ParkBack पाएं →"
+  "hive_footer": {
+    "made_with": "[hi] Made with",
+    "in_the": "[hi] in the",
+    "links": {
+      "social_experiment": "[hi] social experiment",
+      "contribute": "[hi] contribute",
+      "patronage": "[hi] patronage",
+      "privacy": "[hi] privacy"
+    }
   }
 }

@@ -1,114 +1,54 @@
 {
-  "footer": {
-    "signature": {
-      "madeWith": "Made with",
-      "inThe": "in the",
-      "brand": "Hive"
-    }
-  },
-  "install": {
-    "cta": "Add ParkBack to your home screen",
-    "ctaAriaIos": "Show me how to add ParkBack to my home screen",
-    "ctaAriaChromium": "Add ParkBack to your home screen",
-    "fallback": {
-      "desktopSafariFirefox": "Add ParkBack to your home screen for one-tap access. Use your browser's bookmarking option to keep it accessible. No app store needed — it's free, no signup, works offline.",
-      "unknown": "ParkBack works on any device. Use your browser's \"Add to home screen\" option to keep it accessible."
-    },
-    "banner": {
-      "regionAria": "Install ParkBack",
-      "dismissAria": "Dismiss install hint",
-      "home": "Add ParkBack to your home screen. Works in any dead zone. No cell signal, wifi, or app store needed. Free, no signup. Your pin, photo, and voice memo are saved on your phone — no cell or wifi signal required to find your car.",
-      "find": "Like what you see? Add ParkBack to your home screen and never lose your own car. Works in any dead zone — no cell signal, wifi, or app store needed. Free, no signup."
-    },
-    "ahtsCard": {
-      "title": "Add ParkBack to your home screen",
-      "body": "The whole thing — your pin, photo, voice memo, and the compass back to your car — works without cell signal or wifi. Even in the deepest parking deck.",
-      "dismiss": "Got it"
-    },
-    "overlay": {
-      "title": "Add ParkBack to your home screen",
-      "body": "Three taps in Safari. After this, ParkBack opens like any app — works in any dead zone, no cell or wifi signal needed.",
-      "step1": "Tap the share button at the bottom of Safari.",
-      "step2": "Scroll down and tap Add to Home Screen.",
-      "step3": "Tap Add in the top right corner.",
-      "dismiss": "Got it",
-      "ariaLabel": "How to add ParkBack to your home screen"
-    },
-    "installedToast": "ParkBack is on your home screen. Open it like any other app."
+  "engine": {
+    "name": "HivePlainScan",
+    "tagline": "Radiology reports explained in plain English"
   },
   "home": {
-    "tagline": "Find your car. No accounts. No cloud.",
-    "loading": "Loading…",
-    "ctaLocating": "Locating…",
-    "ctaParked": "I'm parked",
-    "ctaParkedAria": "I'm parked, save this spot",
-    "positioningLine1": "No app store. No login. No subscription. No ads. No tracking. No signal needed.",
-    "positioningLine2": "The parking app that should have existed years ago.",
-    "firstVisitExplainer": "Tap when you park. Come back, tap again, walk straight to your car. Works in underground garages with zero cell or wifi signal. Your phone's GPS does the work.",
-    "hintRequesting": "Hold still. High-accuracy GPS takes a moment.",
-    "hintIdle": "Tap when you've parked. Works offline."
+    "h1": "Your radiology report, in plain English.",
+    "lede": "Paste, upload, or photograph a finalized imaging report. Get a clear summary, a finding-by-finding breakdown, questions to bring to your doctor, and a downloadable PDF. No diagnosis. No jargon. Free, forever.",
+    "cta": "Explain my report",
+    "tab_paste": "Paste Text",
+    "tab_pdf": "Upload PDF or DOCX",
+    "tab_image": "Upload Image",
+    "exam_label": "Exam type",
+    "region_label": "Body region",
+    "sample_link": "Try sample report"
   },
-  "perm": {
-    "noBrowserSupport": "Your browser doesn't support location. ParkBack needs location to remember where you parked.",
-    "denied": "ParkBack needs your location to remember where you parked. Tap to retry.",
-    "unavailable": "Couldn't find your location. Step outside or move away from tall buildings, then tap to retry.",
-    "timeout": "Location took too long. Tap to retry."
+  "explain": {
+    "loading": "Reading your report...",
+    "summary_heading": "Plain English Summary",
+    "visual_heading": "Visual summary",
+    "questions_heading": "Questions to bring to your doctor",
+    "redflags_heading": "Things to take to your doctor promptly",
+    "download_pdf": "Download as PDF",
+    "ai_caption": "AI-generated educational illustration based on report text.",
+    "svg_caption": "Schematic diagram based on report text.",
+    "not_real_image": "Not an actual medical image. Not to scale."
   },
-  "compass": {
-    "locating": "Locating you…",
-    "near": "near",
-    "accuracySuffix": "m at parking",
-    "enable": "Enable compass",
-    "calibrating": "Calibrating compass — wave phone in a figure-8",
-    "instruction": "Hold phone flat, arrow points to car."
-  },
-  "prompts": {
-    "photoQuestion": "Snap the bay number?",
-    "photoTake": "Take photo",
-    "photoTakeAria": "Take photo of bay number",
-    "photoOpenAria": "Open photo full screen",
-    "photoAlt": "Parking spot",
-    "photoFullAlt": "Parking spot full size",
-    "tapToClose": "Tap to close",
-    "voiceQuestion": "Add voice note (optional)",
-    "voiceRecord": "● Record",
-    "voiceRecordAria": "Record voice memo",
-    "skip": "Skip",
-    "stopRecording": "Stop",
-    "recordingPrefix": "Recording…",
-    "saving": "Saving…"
-  },
-  "actions": {
-    "navigate": "Navigate",
-    "navigateAria": "Navigate to my car",
-    "send": "Send",
-    "sendAria": "Send my parking spot to someone",
-    "forget": "Forget",
-    "forgetAria": "Forget this spot"
-  },
-  "toasts": {
-    "savedAck": "Got it. Walk wherever. Come back when you need your car.",
-    "linkCopied": "Link copied",
-    "forgetConfirm": "Forget this spot?"
+  "phi": {
+    "preview_prefix": "Heads up: the report text contains",
+    "preview_suffix": "We will remove anything matching these patterns before sending the report to the AI."
   },
   "errors": {
-    "photoFailed": "Couldn't process that photo. Try again.",
-    "voiceUnsupported": "Voice notes need microphone access. Your browser doesn't support it here.",
-    "voiceSaveFailed": "Couldn't save the voice note.",
-    "micDenied": "Microphone access denied. Voice notes are optional — you can still navigate back to your car."
+    "generic": "Something went wrong. Please check your report and try again.",
+    "empty_text": "Report text is empty.",
+    "image_empty": "Image is empty.",
+    "image_no_ai": "Image-based explanations require the AI service. Please paste the report text instead."
   },
-  "share": {
-    "title": "ParkBack — my parking spot",
-    "messageNoLandmark": "Here's where my car is parked.",
-    "messageNearPrefix": "I'm parked near",
-    "promptDialog": "Copy your parking spot link:"
+  "disclaimer": {
+    "default": "This explanation is based on the radiology report you provided. It is for educational purposes only. It does not diagnose your condition, recommend treatment, or replace advice from your physician.",
+    "footer": "This is not medical advice. Always consult a qualified clinician.",
+    "no_ads": "No ads. No investors. No agenda.",
+    "free_forever": "Free at the base tier, forever."
   },
-  "find": {
-    "headerTitle": "Someone shared their parking spot with you.",
-    "linkInvalidTitle": "This link doesn't look right.",
-    "linkInvalidBody": "The shared link is missing or invalid coordinates. Ask the person who sent it to share again.",
-    "linkInvalidCta": "Open ParkBack",
-    "navigateAria": "Navigate to the shared parking spot",
-    "recipientCta": "Get ParkBack for your own car →"
+  "hive_footer": {
+    "made_with": "Made with",
+    "in_the": "in the",
+    "links": {
+      "social_experiment": "social experiment",
+      "contribute": "contribute",
+      "patronage": "patronage",
+      "privacy": "privacy"
+    }
   }
 }

@@ -1,114 +1,54 @@
 {
-  "footer": {
-    "signature": {
-      "madeWith": "Hecho con",
-      "inThe": "en el",
-      "brand": "Hive"
-    }
-  },
-  "install": {
-    "cta": "Agregar ParkBack a tu pantalla de inicio",
-    "ctaAriaIos": "Muéstrame cómo agregar ParkBack a mi pantalla de inicio",
-    "ctaAriaChromium": "Agregar ParkBack a tu pantalla de inicio",
-    "fallback": {
-      "desktopSafariFirefox": "Agrega ParkBack a tu pantalla de inicio para acceder con un solo toque. Usa la opción de marcadores de tu navegador para tenerlo siempre a mano. Sin tienda de aplicaciones — es gratis, sin registro, funciona sin conexión.",
-      "unknown": "ParkBack funciona en cualquier dispositivo. Usa la opción \"Agregar a pantalla de inicio\" de tu navegador para tenerlo siempre accesible."
-    },
-    "banner": {
-      "regionAria": "Agregar ParkBack a la pantalla de inicio",
-      "dismissAria": "Cerrar sugerencia de agregar a inicio",
-      "home": "Agrega ParkBack a tu pantalla de inicio. Funciona en cualquier zona sin señal. Sin señal celular, wifi ni tienda de aplicaciones. Gratis, sin registro. Tu ubicación, foto y nota de voz se guardan en tu teléfono — no necesitas señal celular ni wifi para encontrar tu coche.",
-      "find": "¿Te gusta lo que ves? Agrega ParkBack a tu pantalla de inicio y nunca pierdas tu propio coche. Funciona en cualquier zona sin señal — sin señal celular, wifi ni tienda de aplicaciones. Gratis, sin registro."
-    },
-    "ahtsCard": {
-      "title": "Agregar ParkBack a tu pantalla de inicio",
-      "body": "Todo — tu ubicación, foto, nota de voz y la brújula hacia tu coche — funciona sin señal celular ni wifi. Incluso en el estacionamiento más profundo.",
-      "dismiss": "Entendido"
-    },
-    "overlay": {
-      "title": "Agregar ParkBack a tu pantalla de inicio",
-      "body": "Tres toques en Safari. Después de esto, ParkBack se abre como cualquier app — funciona en cualquier zona sin señal, sin necesidad de señal celular ni wifi.",
-      "step1": "Toca el botón de compartir en la parte inferior de Safari.",
-      "step2": "Desplázate hacia abajo y toca Agregar a pantalla de inicio.",
-      "step3": "Toca Agregar en la esquina superior derecha.",
-      "dismiss": "Entendido",
-      "ariaLabel": "Cómo agregar ParkBack a tu pantalla de inicio"
-    },
-    "installedToast": "ParkBack está en tu pantalla de inicio. Ábrelo como cualquier otra app."
+  "engine": {
+    "name": "[es] HivePlainScan",
+    "tagline": "[es] Radiology reports explained in plain English"
   },
   "home": {
-    "tagline": "Encuentra tu coche. Sin cuentas. Sin nube.",
-    "loading": "Cargando…",
-    "ctaLocating": "Localizando…",
-    "ctaParked": "Ya estacioné",
-    "ctaParkedAria": "Ya estacioné, guardar este lugar",
-    "positioningLine1": "Sin tienda de aplicaciones. Sin inicio de sesión. Sin suscripción. Sin anuncios. Sin rastreo. Sin necesidad de señal.",
-    "positioningLine2": "La app de estacionamiento que debió existir hace años.",
-    "firstVisitExplainer": "Toca cuando estaciones. Regresa, toca de nuevo, camina directo a tu coche. Funciona en garajes subterráneos sin señal celular ni wifi. El GPS de tu teléfono hace el trabajo.",
-    "hintRequesting": "No te muevas. El GPS de alta precisión tarda un momento.",
-    "hintIdle": "Toca cuando hayas estacionado. Funciona sin conexión."
+    "h1": "[es] Your radiology report, in plain English.",
+    "lede": "[es] Paste, upload, or photograph a finalized imaging report. Get a clear summary, a finding-by-finding breakdown, questions to bring to your doctor, and a downloadable PDF. No diagnosis. No jargon. Free, forever.",
+    "cta": "[es] Explain my report",
+    "tab_paste": "[es] Paste Text",
+    "tab_pdf": "[es] Upload PDF or DOCX",
+    "tab_image": "[es] Upload Image",
+    "exam_label": "[es] Exam type",
+    "region_label": "[es] Body region",
+    "sample_link": "[es] Try sample report"
   },
-  "perm": {
-    "noBrowserSupport": "Tu navegador no soporta ubicación. ParkBack necesita ubicación para recordar dónde estacionaste.",
-    "denied": "ParkBack necesita tu ubicación para recordar dónde estacionaste. Toca para reintentar.",
-    "unavailable": "No se pudo encontrar tu ubicación. Sal al exterior o aléjate de edificios altos, luego toca para reintentar.",
-    "timeout": "La ubicación tardó demasiado. Toca para reintentar."
+  "explain": {
+    "loading": "[es] Reading your report...",
+    "summary_heading": "[es] Plain English Summary",
+    "visual_heading": "[es] Visual summary",
+    "questions_heading": "[es] Questions to bring to your doctor",
+    "redflags_heading": "[es] Things to take to your doctor promptly",
+    "download_pdf": "[es] Download as PDF",
+    "ai_caption": "[es] AI-generated educational illustration based on report text.",
+    "svg_caption": "[es] Schematic diagram based on report text.",
+    "not_real_image": "[es] Not an actual medical image. Not to scale."
   },
-  "compass": {
-    "locating": "Localizándote…",
-    "near": "cerca de",
-    "accuracySuffix": "m al estacionar",
-    "enable": "Activar brújula",
-    "calibrating": "Calibrando brújula — mueve el teléfono en forma de 8",
-    "instruction": "Sostén el teléfono plano, la flecha apunta al coche."
-  },
-  "prompts": {
-    "photoQuestion": "¿Tomar foto del número de lugar?",
-    "photoTake": "Tomar foto",
-    "photoTakeAria": "Tomar foto del número de lugar",
-    "photoOpenAria": "Abrir foto en pantalla completa",
-    "photoAlt": "Lugar de estacionamiento",
-    "photoFullAlt": "Lugar de estacionamiento tamaño completo",
-    "tapToClose": "Toca para cerrar",
-    "voiceQuestion": "Agregar nota de voz (opcional)",
-    "voiceRecord": "● Grabar",
-    "voiceRecordAria": "Grabar nota de voz",
-    "skip": "Omitir",
-    "stopRecording": "Detener",
-    "recordingPrefix": "Grabando…",
-    "saving": "Guardando…"
-  },
-  "actions": {
-    "navigate": "Navegar",
-    "navigateAria": "Navegar a mi coche",
-    "send": "Enviar",
-    "sendAria": "Enviar mi lugar de estacionamiento a alguien",
-    "forget": "Olvidar",
-    "forgetAria": "Olvidar este lugar"
-  },
-  "toasts": {
-    "savedAck": "Listo. Camina a donde quieras. Regresa cuando necesites tu coche.",
-    "linkCopied": "Enlace copiado",
-    "forgetConfirm": "¿Olvidar este lugar?"
+  "phi": {
+    "preview_prefix": "[es] Heads up: the report text contains",
+    "preview_suffix": "[es] We will remove anything matching these patterns before sending the report to the AI."
   },
   "errors": {
-    "photoFailed": "No se pudo procesar esa foto. Inténtalo de nuevo.",
-    "voiceUnsupported": "Las notas de voz necesitan acceso al micrófono. Tu navegador no lo soporta aquí.",
-    "voiceSaveFailed": "No se pudo guardar la nota de voz.",
-    "micDenied": "Acceso al micrófono denegado. Las notas de voz son opcionales — aún puedes navegar de regreso a tu coche."
+    "generic": "[es] Something went wrong. Please check your report and try again.",
+    "empty_text": "[es] Report text is empty.",
+    "image_empty": "[es] Image is empty.",
+    "image_no_ai": "[es] Image-based explanations require the AI service. Please paste the report text instead."
   },
-  "share": {
-    "title": "ParkBack — mi lugar de estacionamiento",
-    "messageNoLandmark": "Aquí es donde está estacionado mi coche.",
-    "messageNearPrefix": "Estoy estacionado cerca de",
-    "promptDialog": "Copia el enlace de tu lugar de estacionamiento:"
+  "disclaimer": {
+    "default": "[es] This explanation is based on the radiology report you provided. It is for educational purposes only. It does not diagnose your condition, recommend treatment, or replace advice from your physician.",
+    "footer": "[es] This is not medical advice. Always consult a qualified clinician.",
+    "no_ads": "[es] No ads. No investors. No agenda.",
+    "free_forever": "[es] Free at the base tier, forever."
   },
-  "find": {
-    "headerTitle": "Alguien compartió su lugar de estacionamiento contigo.",
-    "linkInvalidTitle": "Este enlace no parece correcto.",
-    "linkInvalidBody": "El enlace compartido tiene coordenadas faltantes o inválidas. Pide a la persona que lo envió que lo comparta de nuevo.",
-    "linkInvalidCta": "Abrir ParkBack",
-    "navigateAria": "Navegar al lugar de estacionamiento compartido",
-    "recipientCta": "Obtén ParkBack para tu propio coche →"
+  "hive_footer": {
+    "made_with": "[es] Made with",
+    "in_the": "[es] in the",
+    "links": {
+      "social_experiment": "[es] social experiment",
+      "contribute": "[es] contribute",
+      "patronage": "[es] patronage",
+      "privacy": "[es] privacy"
+    }
   }
 }
