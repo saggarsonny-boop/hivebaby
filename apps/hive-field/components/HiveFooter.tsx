@@ -56,8 +56,9 @@ export default function HiveFooter() {
           privacy
         </a>
         {" \u00B7 "}
-        <a href="https://converter.hive.baby" target="_blank" rel="noopener noreferrer" style={{ color: "#D4AF37" }}>
-          Convert legacy PDFs to UDS
+        <a href="https://converter.hive.baby" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "#D4AF37", opacity: 0.85, textDecoration: "none", verticalAlign: "middle" }}>
+          <img src="/ud-logo-micro.png" width="14" height="14" alt="UD" style={{ borderRadius: "3px" }} />
+          Try UD Converter — Free →
         </a>
       </p>
     </div>
