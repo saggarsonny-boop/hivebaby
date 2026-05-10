@@ -1,5 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap");
-@tailwind base;\n@tailwind components;\n@tailwind utilities;
+﻿@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --ink: #1e2d3d;
@@ -296,7 +298,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
   letter-spacing: 0.02em;
 }
 
-/* Canonical Hive ink #0a0a0a — used as the dark fallback for any
+/* Canonical Hive ink #0a0a0a â€” used as the dark fallback for any
    component that needs the Hive dark palette anchor. */
 .hive-ink {
   color: #0a0a0a;
