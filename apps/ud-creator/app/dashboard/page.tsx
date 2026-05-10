@@ -1,55 +1,157 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
-export default function Dashboard() {
-  const [isSubscribed, setIsSubscribed] = useState(false);
+export default function SpaceStationDashboard() {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
   const [isOnline, setIsOnline] = useState(true);
+  const [commandText, setCommandText] = useState("");
+  const [commandLog, setCommandLog] = useState([
+    { time: "09:41", msg: "Hive Core synced. 228 engines online." },
+    { time: "09:42", msg: "Preston module active. Waiting for command." }
+  ]);
 
   useEffect(() => {
+    if (isLoaded && !isSignedIn) router.push("/sign-in");
+
     setIsOnline(navigator.onLine);
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Simulated Stripe gate check
-    setTimeout(() => setIsSubscribed(false), 500);
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [isLoaded, isSignedIn, router]);
 
-  if (!isSubscribed) {
-    return (
-      <div style={{ maxWidth: '600px', margin: '4rem auto', textAlign: 'center' }}>
-        <div className="card">
-          <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--hive-gold)' }}>Authentication Required</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
-            This Sovereign-Lite tactical engine is restricted to Enterprise subscribers.
-          </p>
-          <div style={{ padding: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginBottom: '2rem' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700 }}>$699 <span style={{ fontSize: '1rem', color: '#64748b' }}>/ month</span></div>
-          </div>
-          <button className="btn btn-solid" style={{ width: '100%', padding: '1rem' }} onClick={() => {
-            alert("Routing to Stripe Checkout... (Simulated success)");
-            setIsSubscribed(true);
-          }}>Authorize Payment & Deploy</button>
-        </div>
-      </div>
-    );
-  }
+  const handleCommand = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commandText.trim()) return;
+    
+    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    setCommandLog(prev => [{ time: timeStr, msg: `User: ${commandText}` }, ...prev]);
+    
+    setTimeout(() => {
+      setCommandLog(prev => [{ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), msg: `Preston: Acknowledged. Executing rule change for PPP tiers.` }, ...prev]);
+    }, 800);
+    
+    setCommandText("");
+  };
 
   return (
-    <div className="card">
-      <h2 style={{ color: 'var(--hive-gold)', marginBottom: '1rem' }}>UD Creator HUD</h2>
-      <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', marginBottom: '2rem' }}>
-        Network Status: <span style={{ color: isOnline ? '#10b981' : '#ef4444' }}>{isOnline ? "ONLINE (SYNCED)" : "OFFLINE (CACHING LOCALLY)"}</span>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', maxWidth: '1600px', margin: '0 auto' }}>
+      {/* Left: Honeycomb / Navigation */}
+      <div className="card" style={{ padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(16px)' }}>
+        <h3 style={{ color: 'var(--hive-gold)', fontSize: '1rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.5rem', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '0.5rem' }}>
+          Hive Topology
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderLeft: '3px solid var(--success)', borderRadius: '4px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Medical Cluster</span>
+            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>42 Engines</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(255, 255, 255, 0.02)', borderLeft: '3px solid #64748b', borderRadius: '4px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Legal Cluster</span>
+            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>38 Engines</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(255, 255, 255, 0.02)', borderLeft: '3px solid #64748b', borderRadius: '4px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Ritual Cluster</span>
+            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>15 Engines</span>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '3rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
+            {/* Simulated Honeycomb Map */}
+            {[...Array(24)].map((_, i) => (
+              <div key={i} style={{ width: '20px', height: '24px', backgroundColor: i % 7 === 0 ? 'var(--success)' : 'rgba(255,255,255,0.1)', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', opacity: i % 7 === 0 ? 0.8 : 0.3 }} />
+            ))}
+          </div>
+        </div>
       </div>
-      <div style={{ border: '2px dashed var(--accent)', padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
-        Drag and drop documentation here for strategic analysis.
+
+      {/* Center: Macro Metrics */}
+      <div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <div className="card" style={{ padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)' }}>
+            <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '0.5rem' }}>Total Daily Active Users (DAU)</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--foreground)' }}>142,891</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '0.5rem' }}>↑ 12.4% vs last week</div>
+          </div>
+          <div className="card" style={{ padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)' }}>
+            <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '0.5rem' }}>Real-Time Revenue (24h)</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--hive-gold)' }}>$18,492</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '0.5rem' }}>↑ 4.1% vs yesterday</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)' }}>
+          <h3 style={{ color: 'var(--hive-gold)', fontSize: '1rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
+            Revenue Breakdown
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
+                <span>Subscriptions (PPP Adjusted)</span>
+                <span style={{ fontWeight: 600 }}>$11,240</span>
+              </div>
+              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>
+                <div style={{ width: '60%', height: '100%', background: 'var(--hive-gold)', borderRadius: '3px' }}></div>
+              </div>
+            </div>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
+                <span>Enterprise API Ingestion</span>
+                <span style={{ fontWeight: 600 }}>$4,100</span>
+              </div>
+              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>
+                <div style={{ width: '25%', height: '100%', background: '#3b82f6', borderRadius: '3px' }}></div>
+              </div>
+            </div>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
+                <span>Optional Support (Tip-Jar)</span>
+                <span style={{ fontWeight: 600 }}>$3,152</span>
+              </div>
+              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>
+                <div style={{ width: '15%', height: '100%', background: 'var(--success)', borderRadius: '3px' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Command Center */}
+      <div className="card" style={{ padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)', display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ color: 'var(--hive-gold)', fontSize: '1rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.5rem', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '0.5rem' }}>
+          Preston Command Center
+        </h3>
+        
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column-reverse', gap: '0.75rem', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
+          {commandLog.map((log, i) => (
+            <div key={i} style={{ color: log.msg.startsWith('Preston') ? 'var(--hive-gold)' : '#94a3b8' }}>
+              <span style={{ opacity: 0.5, marginRight: '0.5rem' }}>[{log.time}]</span>
+              {log.msg}
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleCommand} style={{ position: 'relative' }}>
+          <input 
+            type="text" 
+            value={commandText}
+            onChange={(e) => setCommandText(e.target.value)}
+            placeholder="e.g., Set Medical Quiz price to $2 in India..."
+            style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(212, 175, 55, 0.3)', borderRadius: '6px', color: 'var(--foreground)', fontSize: '0.9rem', outline: 'none' }}
+          />
+          <button type="submit" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--hive-gold)', cursor: 'pointer', padding: '0.5rem' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
       </div>
     </div>
   );

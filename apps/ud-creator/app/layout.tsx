@@ -3,8 +3,8 @@ import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "UD Creator | Sovereign Analysis",
-  description: "Enterprise clarity engine.",
+  title: "Hive Space Station | Founder Dashboard",
+  description: "Central command and telemetry.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -12,9 +12,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="en">
         <body>
-          <div className="container">
+          <div className="grid-bg"></div>
+          <div className="container" style={{ maxWidth: '1400px' }}>
             <header className="navbar">
-              <a href="/" className="logo">UD Creator</a>
+              <a href="/" className="logo">Space <span style={{ color: 'var(--foreground)' }}>Station</span></a>
               <div>
                 <SignedIn><UserButton afterSignOutUrl="/"/></SignedIn>
                 <SignedOut><a href="/sign-in" className="btn">Authenticate</a></SignedOut>

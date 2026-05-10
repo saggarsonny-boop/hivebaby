@@ -783,7 +783,7 @@ function checkPassword() {
   const val = document.getElementById('pw-input').value.trim();
   if (val === PW) {
     closePwModal();
-    window.location.href = 'https://station.hive.baby';
+    window.location.href = 'https://ud-creator.universaldocument.org';
   } else {
     document.getElementById('pw-error').style.display = 'block';
     document.getElementById('pw-input').value = '';
@@ -801,8 +801,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closePwModal();
 const ADMIN_ENGINES = [
   { name:'Queen Bee',          emoji:'👑', url:'https://queenbee.hive.baby',                    tagline:'Sovereign governance engine' },
   { name:'HiveEngine Builder', emoji:'⚙️', url:'https://hiveenginebuilder.hive.baby',           tagline:'Design and deploy engines' },
-  { name:'Creator Console',    emoji:'🎛️', url:'https://creatorconsole.hive.baby',              tagline:'Private ops dashboard' },
-  { name:'Space Station',      emoji:'🛸', url:'https://station.hive.baby',                      tagline:'Internal hub — ops access only' },
+  { name:'Creator Console / Space Station', emoji:'🛸', url:'https://ud-creator.universaldocument.org', tagline:'Internal hub — ops access only' },
 ];
 
 // tier: 1=Live, 2=Building, 3=Planned. status drives visual tier.
