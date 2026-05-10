@@ -1,8 +1,8 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default clerkMiddleware((auth, req) => {
-  const url = req.nextUrl;
+export function middleware(req: NextRequest) {
+  const url = req.nextUrl.clone();
   const hostname = req.headers.get("host") || "";
   
   let engine = "ud-default";
@@ -15,14 +15,9 @@ export default clerkMiddleware((auth, req) => {
     return NextResponse.next();
   }
 
-  // Rewrite the request to the dynamic /[engine] route
-  const newUrl = req.nextUrl.clone();
-  newUrl.pathname = `/${engine}${url.pathname === "/" ? "" : url.pathname}`;
-  return NextResponse.rewrite(newUrl);
-}, {
-  publishableKey: "pk_test_Y2hvaWNlLWRhc3NpZS02NS5jbGVyay5hY2NvdW50cy5kZXYk",
-  secretKey: "sk_test_NZX6GkWzVeHuY4WKI8Fw8Qlh43i17pFF9la6Rx6AWB"
-});
+  url.pathname = `/${engine}${url.pathname === "/" ? "" : url.pathname}`;
+  return NextResponse.rewrite(url);
+}
 
 export const config = {
   matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],

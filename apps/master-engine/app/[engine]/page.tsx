@@ -1,20 +1,19 @@
 "use client";
-import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
 
 export default function Home({ params }: { params: { engine: string } }) {
-  const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
 
   // ud-maritime -> Maritime
   const domainKey = params.engine ? params.engine.replace("ud-", "") : "System";
   const domainKeyUpper = domainKey.charAt(0).toUpperCase() + domainKey.slice(1);
 
+  // Temporarily bypass auth redirect for UI testing
   useEffect(() => {
-    if (isLoaded && isSignedIn) router.push(`/${params.engine}/dashboard`);
-  }, [isLoaded, isSignedIn, router, params.engine]);
+    // if (isLoaded && isSignedIn) router.push(`/${params.engine}/dashboard`);
+  }, [router, params.engine]);
 
   let heroSubtitle = "A Sovereign-Lite tactical engine specifically engineered to parse domain-specific UDS files, extract logic flaws, and flag immediate liabilities in seconds. Legacy PDF processing supported.";
   let cap1Title = "Native UDS Inference";
