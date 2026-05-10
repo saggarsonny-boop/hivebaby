@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    
       <html lang="en">
         <body>
           <div className="grid-bg"></div>
@@ -17,14 +17,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <header className="navbar">
               <a href="/" className="logo">UD<span>Compliance</span></a>
               <div>
-                <SignedIn><UserButton afterSignOutUrl="/"/></SignedIn>
-                <SignedOut><a href="/sign-in" className="btn">Authenticate</a></SignedOut>
+                
+                <a href="/sign-in" className="btn">Authenticate</a>
               </div>
             </header>
             <main>{children}</main>
           </div>
         </body>
       </html>
-    </ClerkProvider>
+    
   );
 }
+
