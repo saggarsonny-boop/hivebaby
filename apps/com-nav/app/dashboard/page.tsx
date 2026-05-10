@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
-export default function ComNavDashboard() {
+export default function HiveArriveDashboard() {
   const { user } = useUser();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -12,7 +12,7 @@ export default function ComNavDashboard() {
   
   // Simulated streams
   const [transcript, setTranscript] = useState<string[]>([
-    "System Initialized. Awaiting audio stream...",
+    "Local Recorder Initialized. Awaiting audio stream...",
   ]);
   
   const [analysis, setAnalysis] = useState<any[]>([
@@ -26,10 +26,7 @@ export default function ComNavDashboard() {
     const handleOnline = () => {
       setIsOnline(true);
       setSyncStatus("SYNCING...");
-      // Simulate sync of cached transcripts to server
-      setTimeout(() => {
-        setSyncStatus("SYNCED");
-      }, 1500);
+      setTimeout(() => setSyncStatus("SYNCED"), 1500);
     };
     const handleOffline = () => {
       setIsOnline(false);
@@ -54,45 +51,22 @@ export default function ComNavDashboard() {
     if (!isListening) {
       setIsListening(true);
       setTranscript(prev => [...prev, "[Stream started...]"]);
-      // Simulate incoming text
       setTimeout(() => setTranscript(prev => [...prev, "Opponent: 'We can't budge on the valuation, it's firmly locked at $15M.'"]), 2000);
-      setTimeout(() => setAnalysis(prev => [...prev, { type: "danger", text: "HARD COMMITMENT DETECTED: Valuation locked at $15M." }]), 2500);
+      
+      if (isSubscribed) {
+        setTimeout(() => setAnalysis(prev => [...prev, { type: "danger", text: "HARD COMMITMENT DETECTED: Valuation locked at $15M." }]), 2500);
+      }
+      
       setTimeout(() => setTranscript(prev => [...prev, "Opponent: 'However, there might be some flexibility in the equity vest schedule if we close today.'"]), 4000);
-      setTimeout(() => setAnalysis(prev => [...prev, { type: "success", text: "CONCESSION OPENING: Flexible equity vest schedule identified. Pivot to this." }]), 4500);
+      
+      if (isSubscribed) {
+        setTimeout(() => setAnalysis(prev => [...prev, { type: "success", text: "CONCESSION OPENING: Flexible equity vest schedule identified. Pivot to this." }]), 4500);
+      }
     } else {
       setIsListening(false);
       setTranscript(prev => [...prev, "[Stream stopped.]"]);
     }
   };
-
-  if (!isSubscribed) {
-    return (
-      <div style={{ maxWidth: '600px', margin: '4rem auto', textAlign: 'center' }}>
-        <div className="card">
-          <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--hive-gold)' }}>Authentication Required</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '2rem', lineHeight: 1.6 }}>
-            HiveArrive is a Sovereign-Lite tactical engine restricted to Enterprise subscribers. 
-            To access the HUD and activate real-time inference, initiate your deployment sequence.
-          </p>
-          <div style={{ padding: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginBottom: '2rem' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>$699 <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 400 }}>/ month</span></div>
-            <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Billed monthly. Cancel anytime.</div>
-          </div>
-          <button 
-            className="btn btn-solid" 
-            style={{ width: '100%', padding: '1rem' }}
-            onClick={() => {
-              // MVP Hook: We simulate successful Stripe Checkout returning to the dashboard
-              alert("Routing to Stripe Checkout... (Simulated payment success)");
-              setIsSubscribed(true);
-            }}
-          >
-            Authorize Payment & Deploy
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }}>
@@ -102,7 +76,7 @@ export default function ComNavDashboard() {
           <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem', display: 'flex', gap: '1rem' }}>
             <span>
               <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: isListening ? 'var(--danger)' : 'var(--hive-gold)', marginRight: '0.5rem' }}></span>
-              Status: {isListening ? "ACTIVE INTERCEPT" : "STANDBY"}
+              Status: {isListening ? "ACTIVE RECORDING" : "STANDBY"}
             </span>
             <span style={{ borderLeft: '1px solid var(--accent)', paddingLeft: '1rem', color: isOnline ? 'var(--success)' : 'var(--danger)' }}>
               Network: {syncStatus}
@@ -119,17 +93,38 @@ export default function ComNavDashboard() {
       </div>
 
       <div className="dashboard-grid">
-        <div className="analysis-panel">
-          <div className="hud-title">Real-Time Analysis</div>
-          {analysis.map((item, i) => (
-            <div key={i} className={`indicator ${item.type}`}>
-              {item.text}
+        <div className="analysis-panel" style={{ position: 'relative' }}>
+          <div className="hud-title">Real-Time AI Analysis</div>
+          
+          {!isSubscribed ? (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(15, 23, 42, 0.95)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '2rem', textAlign: 'center', borderRadius: '8px' }}>
+               <h3 style={{ color: 'var(--hive-gold)', marginBottom: '1rem', fontSize: '1.25rem' }}>Enterprise Analysis Locked</h3>
+               <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                 Upgrade to the $699/mo Enterprise tier to unlock real-time tactical flagging, logic audits, and counter-measures.
+               </p>
+               <button 
+                className="btn btn-solid"
+                onClick={() => {
+                  alert("Routing to Stripe Checkout... (Simulated payment success)");
+                  setIsSubscribed(true);
+                }}
+               >
+                 Unlock Analysis
+               </button>
             </div>
-          ))}
+          ) : (
+            <>
+              {analysis.map((item, i) => (
+                <div key={i} className={`indicator ${item.type}`}>
+                  {item.text}
+                </div>
+              ))}
+            </>
+          )}
         </div>
         
         <div className="transcript-panel">
-          <div className="hud-title" style={{ position: 'sticky', top: '-1.5rem', background: 'var(--accent)', paddingBottom: '1rem', zIndex: 10 }}>Raw Transcript Stream</div>
+          <div className="hud-title" style={{ position: 'sticky', top: '-1.5rem', background: 'var(--accent)', paddingBottom: '1rem', zIndex: 10 }}>Raw Transcript Stream (Free Local Recording)</div>
           {transcript.map((line, i) => (
             <div key={i} style={{ marginBottom: '1rem', color: line.startsWith('[') ? '#64748b' : 'var(--foreground)' }}>
               {line}
