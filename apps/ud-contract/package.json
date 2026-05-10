@@ -21,7 +21,9 @@
     "pdf-parse": "^1.1.1",
     "mammoth": "^1.8.0",
     "@hive/auth": "file:../../packages/hive-auth",
-    "@hive/billing": "file:../../packages/hive-billing"
+    "@hive/billing": "file:../../packages/hive-billing",
+    "@hive/ud-schema": "file:../../packages/hive-ud-schema",
+    "@hive/storage": "file:../../packages/hive-storage"
   },
   "devDependencies": {
     "@types/node": "^20",

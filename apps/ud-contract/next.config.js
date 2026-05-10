@@ -7,7 +7,7 @@ const withPWA = require('next-pwa')({
 });
 
 const nextConfig = {
-  transpilePackages: ['@hive/telemetry', '@hive/auth', '@hive/parser', '@hive/billing'],
+  transpilePackages: ['@hive/telemetry', '@hive/auth', '@hive/parser', '@hive/billing', '@hive/ud-schema', '@hive/storage'],
   reactStrictMode: true,
 };
 
