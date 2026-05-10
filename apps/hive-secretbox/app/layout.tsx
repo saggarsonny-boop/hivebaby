@@ -1,4 +1,5 @@
-// HIVE_FOOTER_SIGNATURE: "Made with ♥ in the Hive" rendered by HiveFooter
+﻿import { ClerkProvider } from "@clerk/nextjs";
+// HIVE_FOOTER_SIGNATURE: "Made with â™¥ in the Hive" rendered by HiveFooter
 // below. Canonical Hive ink (#0a0a0a) used in app/globals.css.
 
 import type { Metadata, Viewport } from "next";
@@ -11,7 +12,7 @@ const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://plainscan.hive.baby";
 
 const TITLE =
-  "HivePlainScan — Radiology reports explained in plain English";
+  "HivePlainScan â€” Radiology reports explained in plain English";
 const DESCRIPTION =
   "Upload your radiology report and get a clear plain-English explanation, a visual summary, questions for your doctor, and a downloadable PDF. No diagnosis. No jargon.";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen antialiased">
+        <ClerkProvider>
         <DisclaimerModal />
         {children}
         <footer className="site-footer">
@@ -74,6 +76,7 @@ export default function RootLayout({
           <HiveFooter />
         </footer>
         <ServiceWorkerRegistrar />
+        </ClerkProvider>
       </body>
     </html>
   );
