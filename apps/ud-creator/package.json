@@ -18,7 +18,8 @@
     "react-dom": "^18",
     "stripe": "^15.5.0",
     "@hive/auth": "file:../../packages/hive-auth",
-    "@hive/parser": "file:../../packages/hive-parser"
+    "@hive/parser": "file:../../packages/hive-parser",
+    "@hive/billing": "file:../../packages/hive-billing"
   },
   "devDependencies": {
     "@types/node": "^20",
