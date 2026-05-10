@@ -9,8 +9,8 @@ import RedFlagBox from "@/components/RedFlagBox";
 import IllustrationDisplay from "@/components/IllustrationDisplay";
 import ReportExport from "@/components/ReportExport";
 import Disclaimer from "@/components/Disclaimer";
-import type {
 import PhilanthropicFooter from "@/components/PhilanthropicFooter";
+import type {
   ExplainPayload,
   ExplainRequestBody,
   ExplainResult,
@@ -145,3 +145,4 @@ export default function PlainScanPage() {
     </main>
   );
 }
+
