@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "UD-Api | Sovereign Analysis",
-  description: "Enterprise clarity engine.",
+  title: "UD Bulk | Enterprise Dropzone",
+  description: "Secure bulk ingestion.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="grid-bg"></div>
         <div className="container">
           <header className="navbar">
-            <a href="/" className="logo">UD<span>Api</span></a>
+            <a href="/" className="logo">UD<span>Bulk</span></a>
           </header>
           <main>{children}</main>
         </div>

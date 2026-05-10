@@ -1,46 +1,32 @@
 "use client";
 import { useState, useEffect } from "react";
 
-export default function Dashboard() {
+export default function ApiKeysDashboard() {
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
+  const [apiKey, setApiKey] = useState("ud_live_*************************");
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
-    setIsOnline(navigator.onLine);
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
     // Simulated Stripe gate check
     setTimeout(() => setIsSubscribed(false), 500);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
   }, []);
 
   if (!isSubscribed) {
     return (
       <div style={{ maxWidth: '600px', margin: '6rem auto', textAlign: 'center' }}>
-        <div className="glass-card">
-          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--hive-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          </div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--foreground)' }}>Authorization Required</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-            The Api AI Analysis Engine is restricted to Enterprise subscribers. Activate your license to unlock sovereign legal inference.
+        <div className="card" style={{ background: 'rgba(15, 23, 42, 0.6)' }}>
+          <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--foreground)', fontFamily: 'system-ui' }}>Activate Mass Ingestion</h2>
+          <p style={{ color: '#94a3b8', marginBottom: '2.5rem', lineHeight: 1.6, fontFamily: 'system-ui' }}>
+            The Mass Ingestion API requires an active enterprise billing account.
           </p>
           <div style={{ padding: '2rem', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '2.5rem' }}>
-            <div style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--hive-gold)' }}>$1,500 <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 400 }}>/ month</span></div>
+            <div style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--hive-gold)', fontFamily: 'system-ui' }}>$1,500 <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 400 }}>/ month</span></div>
           </div>
-          <button className="btn btn-solid" style={{ width: '100%', padding: '1.25rem', fontSize: '1.125rem' }} onClick={() => {
+          <button className="btn btn-solid" style={{ width: '100%', padding: '1.25rem', fontSize: '1.125rem', fontFamily: 'system-ui' }} onClick={() => {
             alert("Routing to Stripe Checkout... (Simulated success)");
             setIsSubscribed(true);
           }}>
-            Authorize Payment & Deploy
+            Authorize Payment & Generate Keys
           </button>
         </div>
       </div>
@@ -48,27 +34,45 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ maxWidth: '900px', margin: '2rem auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>Api Analysis HUD</h1>
-          <div style={{ color: '#94a3b8', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isOnline ? 'var(--success)' : 'var(--danger)', boxShadow: `0 0 10px ${isOnline ? 'var(--success)' : 'var(--danger)'}` }}></div>
-            {isOnline ? "System Online & Synced" : "System Offline (Local Mode)"}
-          </div>
+    <div style={{ maxWidth: '900px', margin: '4rem auto', fontFamily: 'system-ui' }}>
+      <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: 700, marginBottom: '2rem' }}>API Keys</h1>
+      
+      <div className="card" style={{ background: 'rgba(15, 23, 42, 0.6)' }}>
+        <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--foreground)' }}>Production Secret Key</h2>
+        <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Use this key to authenticate your requests to the ingestion endpoint.</p>
+        
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <input 
+            type="text" 
+            readOnly 
+            value={revealed ? "ud_live_5h8f9j2k1l0m3n4b5v6c7x8z" : apiKey}
+            style={{ flex: 1, padding: '1rem', background: '#000', border: '1px solid var(--accent)', borderRadius: '4px', color: 'var(--hive-gold)', fontFamily: 'monospace', fontSize: '1rem' }}
+          />
+          <button 
+            onClick={() => setRevealed(!revealed)}
+            style={{ padding: '1rem', background: 'var(--accent)', color: 'var(--foreground)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            {revealed ? "Hide" : "Reveal"}
+          </button>
         </div>
       </div>
 
-      <div 
-        className="dropzone"
-        style={{ borderColor: isDragging ? 'var(--hive-gold)' : 'rgba(212, 175, 55, 0.3)', background: isDragging ? 'rgba(212, 175, 55, 0.05)' : 'rgba(212, 175, 55, 0.02)' }}
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setIsDragging(false); alert("File received. Initiating parse sequence..."); }}
-      >
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--hive-gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 1.5rem auto', opacity: 0.8 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 600 }}>Secure Document Dropzone</h3>
-        <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Drag and drop PDF or DOCX files here.<br/>Files are processed entirely in memory.</p>
+      <div className="card" style={{ background: 'rgba(15, 23, 42, 0.6)', marginTop: '2rem' }}>
+        <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--foreground)' }}>Webhook Configuration</h2>
+        <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Set your default webhook URL to receive asynchronous UDS JSON payloads.</p>
+        
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <input 
+            type="text" 
+            placeholder="https://your-server.com/webhooks/ud"
+            style={{ flex: 1, padding: '1rem', background: '#000', border: '1px solid var(--accent)', borderRadius: '4px', color: 'var(--foreground)', fontSize: '1rem' }}
+          />
+          <button 
+            style={{ padding: '1rem 2rem', background: 'var(--hive-gold)', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );
