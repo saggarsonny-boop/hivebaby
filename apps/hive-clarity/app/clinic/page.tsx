@@ -1,10 +1,10 @@
-import { B2BTierLanding } from "@/components/B2BTierLanding";
+﻿import { B2BTierLanding } from "@/components/B2BTierLanding";
 import { tierById } from "@/lib/tiers";
 
 export const metadata = {
-  title: "HivePlainScan Clinic — Coming Q2 2026 — Join Waitlist",
+  title: "HivePlainScan Clinic â€” Coming Q2 2026 â€” Join Waitlist",
   description:
-    "HivePlainScan Clinic — for small clinical groups. Up to 10 named clinicians, per-seat unlimited reports, BAA-covered data handling. Join the waitlist; we'll notify you when it launches.",
+    "HivePlainScan Clinic â€” for small clinical groups. Up to 10 named clinicians, per-seat unlimited reports, BAA-covered data handling. Join the waitlist; we'll notify you when it launches.",
 };
 
 export default function ClinicPage() {

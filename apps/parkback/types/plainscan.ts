@@ -1,4 +1,4 @@
-export type Severity = "mild" | "moderate" | "severe" | "not specified";
+﻿export type Severity = "mild" | "moderate" | "severe" | "not specified";
 
 export interface Finding {
   level: string | null;
@@ -9,6 +9,7 @@ export interface Finding {
 }
 
 export interface ExplainResult {
+  questions?: string[];
   bodyRegion: string;
   reportType: string;
   summary: string;
@@ -18,9 +19,9 @@ export interface ExplainResult {
   disclaimer: string;
   /** AI-generated illustration when available, otherwise a data: URL
    *  containing the SVG fallback diagram. Always set when illustration
-   *  step ran. OpenAI returns `data:image/png;base64,…`; Replicate
+   *  step ran. OpenAI returns `data:image/png;base64,â€¦`; Replicate
    *  returns the Replicate-hosted HTTPS URL; SVG returns
-   *  `data:image/svg+xml,…`. */
+   *  `data:image/svg+xml,â€¦`. */
   illustrationUrl?: string;
   /** Where the illustration came from.
    *    "openai"    = OpenAI gpt-image-1 (primary, per [AI_PROVIDER_ROUTING])
@@ -47,7 +48,7 @@ export type ExplainRequestBody =
       examType?: string;
       bodyRegion?: string;
       /** Opaque per-session id for the per-session image-generation cap
-       *  in `lib/cost-cap.ts`. Optional — missing ids count against a
+       *  in `lib/cost-cap.ts`. Optional â€” missing ids count against a
        *  shared anonymous bucket (also capped). */
       sessionId?: string;
     }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Activity,
@@ -753,13 +753,13 @@ function Upload(props: {
                   onClick={() => props.setFidelity("fast")}
                   className={\`flex-1 rounded py-2 text-sm font-semibold transition-all \${props.fidelity === "fast" ? "bg-clinical-blue text-white shadow-sm" : "text-clinical-calm hover:text-clinical-ink"}\`}
                 >
-                  ⚡ Lightning Fast
+                  âš¡ Lightning Fast
                 </button>
                 <button
                   onClick={() => props.setFidelity("high")}
                   className={\`flex-1 rounded py-2 text-sm font-semibold transition-all \${props.fidelity === "high" ? "bg-clinical-blue text-white shadow-sm" : "text-clinical-calm hover:text-clinical-ink"}\`}
                 >
-                  ✨ Max Detail
+                  âœ¨ Max Detail
                 </button>
               </div>
               <p className="mt-2 text-xs text-clinical-calm">
@@ -961,7 +961,7 @@ function Handout({ draft, setDraft }: { draft: ClinicalDraft; setDraft: (draft: 
             <p className="font-bold text-clinical-blue">North Valley Orthopedics</p>
             <h1 className="mt-2 text-3xl font-bold text-clinical-navy">Your imaging report in plain English</h1>
             <p className="mt-2 text-sm text-clinical-calm">
-              Date: {new Date().toLocaleDateString()} Â· Exam: {draft.explanation.exam_type} Â· {draft.explanation.body_region}
+              Date: {new Date().toLocaleDateString()} Ã‚Â· Exam: {draft.explanation.exam_type} Ã‚Â· {draft.explanation.body_region}
             </p>
           </div>
           <StatusBadge status={draft.status} />
