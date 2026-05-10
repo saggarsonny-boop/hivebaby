@@ -1,0 +1,371 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  physician
+  clinician_reviewer
+  staff
+  viewer
+}
+
+enum ImagingReportStatus {
+  draft
+  ready_for_review
+  approved
+  sent_to_patient
+  needs_revision
+  archived
+  deleted
+}
+
+enum ExplanationStatus {
+  draft
+  ready_for_review
+  approved
+  needs_revision
+  archived
+}
+
+enum SafetyFlagLevel {
+  none
+  caution
+  urgent
+}
+
+enum SourceType {
+  pasted_text
+  pdf_upload
+}
+
+enum UploadedFileStatus {
+  pending_scan
+  accepted
+  rejected
+  deleted
+}
+
+enum ApprovalStatus {
+  approved
+  rejected
+  reopened
+}
+
+enum BaaStatus {
+  not_started
+  in_review
+  confirmed
+}
+
+model Organization {
+  id                              String                @id @default(cuid())
+  name                            String
+  slug                            String                @unique
+  isActive                        Boolean               @default(true)
+  hipaaModeEnabled                Boolean               @default(true)
+  allowClinicianReviewerApproval  Boolean               @default(false)
+  defaultRetentionDays            Int                   @default(90)
+  dailyAiCostCapCents             Int                   @default(500)
+  baaStatus                       BaaStatus             @default(not_started)
+  incidentResponseContact         String?
+  createdAt                       DateTime              @default(now())
+  updatedAt                       DateTime              @updatedAt
+  users                           UserProfile[]
+  patients                        Patient[]
+  reports                         ImagingReport[]
+  uploadedFiles                   UploadedFile[]
+  explanations                    GeneratedExplanation[]
+  keyFindings                     KeyFinding[]
+  diagrams                        Diagram[]
+  approvals                       PhysicianApproval[]
+  auditLogs                       AuditLog[]
+  aiUsageLogs                     AIUsageLog[]
+  settings                        OrganizationSettings?
+  brandingSettings                BrandingSettings?
+  retentionPolicy                 RetentionPolicy?
+  complianceChecklist             ComplianceChecklist?
+}
+
+model UserProfile {
+  id             String        @id @default(cuid())
+  clerkUserId    String        @unique
+  organizationId String
+  email          String
+  firstName      String?
+  lastName       String?
+  role           Role
+  isActive       Boolean       @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  createdReports ImagingReport[] @relation("CreatedReports")
+  generatedExplanations GeneratedExplanation[] @relation("GeneratedBy")
+  approvals      PhysicianApproval[]
+
+  @@index([organizationId, role])
+}
+
+model Patient {
+  id             String          @id @default(cuid())
+  organizationId String
+  firstName      String?
+  lastName       String?
+  dateOfBirth    DateTime?
+  mrn            String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  reports        ImagingReport[]
+  uploadedFiles  UploadedFile[]
+
+  @@index([organizationId, mrn])
+  @@index([organizationId, deletedAt])
+}
+
+model ImagingReport {
+  id                  String                @id @default(cuid())
+  organizationId      String
+  patientId           String
+  createdByUserId     String
+  examType            String
+  bodyRegion          String
+  modality            String
+  examDate            DateTime?
+  orderingClinician   String?
+  reportTextEncrypted String
+  reportTextHash      String
+  sourceType          SourceType
+  status              ImagingReportStatus  @default(draft)
+  safetyFlagLevel     SafetyFlagLevel      @default(none)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  deletedAt           DateTime?
+  organization        Organization          @relation(fields: [organizationId], references: [id])
+  patient             Patient               @relation(fields: [patientId], references: [id])
+  createdBy           UserProfile           @relation("CreatedReports", fields: [createdByUserId], references: [id])
+  uploadedFiles       UploadedFile[]
+  explanations        GeneratedExplanation[]
+  approvals           PhysicianApproval[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, patientId])
+  @@index([organizationId, deletedAt])
+}
+
+model UploadedFile {
+  id               String             @id @default(cuid())
+  organizationId   String
+  patientId        String?
+  imagingReportId  String?
+  uploadedByUserId String
+  fileName         String
+  fileType         String
+  fileSize         Int
+  storageKey       String
+  sha256Hash       String
+  status           UploadedFileStatus @default(pending_scan)
+  createdAt        DateTime           @default(now())
+  deletedAt        DateTime?
+  organization     Organization       @relation(fields: [organizationId], references: [id])
+  patient          Patient?           @relation(fields: [patientId], references: [id])
+  imagingReport    ImagingReport?     @relation(fields: [imagingReportId], references: [id])
+
+  @@index([organizationId, imagingReportId])
+}
+
+model GeneratedExplanation {
+  id                    String             @id @default(cuid())
+  organizationId        String
+  imagingReportId       String
+  generatedByUserId     String
+  version               Int
+  patientFriendlyTitle  String
+  plainEnglishSummary   String
+  questionsForDoctorJson Json
+  redFlagsJson          Json
+  diagramPrompt         String
+  patientDisclaimer     String
+  status                ExplanationStatus  @default(ready_for_review)
+  isLocked              Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  approvedAt            DateTime?
+  organization          Organization       @relation(fields: [organizationId], references: [id])
+  imagingReport         ImagingReport      @relation(fields: [imagingReportId], references: [id])
+  generatedBy           UserProfile        @relation("GeneratedBy", fields: [generatedByUserId], references: [id])
+  keyFindings           KeyFinding[]
+  diagram               Diagram?
+  approval              PhysicianApproval?
+
+  @@index([organizationId, imagingReportId])
+}
+
+model KeyFinding {
+  id                       String               @id @default(cuid())
+  organizationId           String
+  generatedExplanationId   String
+  originalReportPhrase     String?
+  medicalTerm              String
+  plainLanguageExplanation String
+  anatomicLocation         String?
+  severityIfStated         String?
+  lateralityIfStated       String?
+  patientRelevance         String?
+  clinicianReviewNote      String?
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  organization             Organization         @relation(fields: [organizationId], references: [id])
+  generatedExplanation     GeneratedExplanation @relation(fields: [generatedExplanationId], references: [id])
+
+  @@index([organizationId, generatedExplanationId])
+}
+
+model Diagram {
+  id                         String               @id @default(cuid())
+  organizationId             String
+  generatedExplanationId     String               @unique
+  diagramType                String
+  diagramPromptDeidentified  String
+  storageKey                 String?
+  altText                    String
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+  organization               Organization         @relation(fields: [organizationId], references: [id])
+  generatedExplanation       GeneratedExplanation @relation(fields: [generatedExplanationId], references: [id])
+}
+
+model PhysicianApproval {
+  id                    String               @id @default(cuid())
+  organizationId        String
+  generatedExplanationId String              @unique
+  imagingReportId       String
+  approvedByUserId      String
+  approvalStatus        ApprovalStatus
+  approvalAttestation   String
+  approvedAt            DateTime?
+  rejectedAt            DateTime?
+  rejectionReason       String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  organization          Organization         @relation(fields: [organizationId], references: [id])
+  generatedExplanation  GeneratedExplanation @relation(fields: [generatedExplanationId], references: [id])
+  imagingReport         ImagingReport        @relation(fields: [imagingReportId], references: [id])
+  approvedBy            UserProfile          @relation(fields: [approvedByUserId], references: [id])
+
+  @@index([organizationId, imagingReportId])
+}
+
+model AuditLog {
+  id              String       @id @default(cuid())
+  organizationId  String
+  actorUserId     String?
+  actorRole       Role?
+  eventType       String
+  resourceType    String
+  resourceId      String?
+  patientId       String?
+  imagingReportId String?
+  ipAddress       String?
+  userAgent       String?
+  metadataJson    Json?
+  createdAt       DateTime     @default(now())
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, eventType])
+  @@index([organizationId, imagingReportId])
+}
+
+model AIUsageLog {
+  id                     String       @id @default(cuid())
+  organizationId          String
+  userId                  String?
+  imagingReportId         String?
+  generatedExplanationId  String?
+  provider                String
+  model                   String
+  requestType             String
+  inputTokenEstimate      Int
+  outputTokenEstimate     Int
+  estimatedCostCents      Int
+  status                  String
+  errorCode               String?
+  createdAt               DateTime     @default(now())
+  organization            Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+}
+
+model OrganizationSettings {
+  id                         String       @id @default(cuid())
+  organizationId             String       @unique
+  requirePhysicianApproval   Boolean      @default(true)
+  allowPdfBeforeApproval     Boolean      @default(false)
+  retainDeletedRecordsDays   Int          @default(30)
+  sessionTimeoutMinutes      Int          @default(15)
+  phiLoggingDisabled         Boolean      @default(true)
+  allowPdfUpload             Boolean      @default(true)
+  allowImageUpload           Boolean      @default(false)
+  allowPatientEmail          Boolean      @default(false)
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+  organization               Organization @relation(fields: [organizationId], references: [id])
+}
+
+model BrandingSettings {
+  id                String       @id @default(cuid())
+  organizationId    String       @unique
+  logoStorageKey    String?
+  primaryColor      String       @default("#2563eb")
+  clinicDisplayName String
+  address           String?
+  phone             String?
+  website           String?
+  defaultPdfFooter  String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id])
+}
+
+model RetentionPolicy {
+  id                       String       @id @default(cuid())
+  organizationId           String       @unique
+  retainReportsDays        Int          @default(90)
+  retainAuditLogsDays      Int          @default(2190)
+  retainUploadedFilesDays  Int          @default(90)
+  autoArchiveAfterDays     Int          @default(30)
+  secureDeleteEnabled      Boolean      @default(true)
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+  organization             Organization @relation(fields: [organizationId], references: [id])
+}
+
+model ComplianceChecklist {
+  id                         String       @id @default(cuid())
+  organizationId             String       @unique
+  hostingBaaConfirmed        Boolean      @default(false)
+  databaseBaaConfirmed       Boolean      @default(false)
+  aiVendorBaaConfirmed       Boolean      @default(false)
+  storageBaaConfirmed        Boolean      @default(false)
+  auditLogsEnabled           Boolean      @default(true)
+  phiLoggingDisabled         Boolean      @default(true)
+  encryptionAtRestConfirmed  Boolean      @default(false)
+  tlsConfirmed               Boolean      @default(false)
+  roleAccessConfigured       Boolean      @default(false)
+  retentionPolicyConfigured  Boolean      @default(false)
+  incidentResponseContactSet Boolean      @default(false)
+  accessReviewCompleted      Boolean      @default(false)
+  lastReviewedByUserId       String?
+  lastReviewedAt             DateTime?
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+  organization               Organization @relation(fields: [organizationId], references: [id])
+}
