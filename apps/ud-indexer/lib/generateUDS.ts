@@ -1,22 +1,4 @@
-﻿"use client";
-
-// Universal Document â€” Sealed (UDS) builder for HivePlainScan reports.
-//
-// Per the paywall Phase 1 spec the UDS export is now the canonical
-// download (PDF is secondary). This file produces a sealed UDS payload
-// with the report content, AI explanation, illustration reference,
-// generation timestamp, engine identity, content hash, and a placeholder
-// governance stamp slot for the future Queen Bee `/api/govern`
-// integration.
-//
-// Format compatibility: matches the UD Converter UDS shape used by the
-// `universal-document` repo's reader (`apps/reader/`). Block types are
-// the canonical set; we extend with an `image` block for the medical
-// illustration when the explanation pipeline produces one.
-//
-// Content hash is a SHA-256 of the canonical block payload (id + type +
-// text per block, JSON-stringified with stable key order). The hash is
-// included in `seal` so a downstream UD verifier can detect tampering.
+"use client";
 
 import type { ExplainResult } from "@/types/plainscan";
 
@@ -31,16 +13,9 @@ interface UDSBlock {
 }
 
 interface GovernanceStampPlaceholder {
-  /** Marker indicating this engine has not yet wired Queen Bee.
-   *  Replaced with the real GovernanceStamp object when /api/explain
-   *  starts importing @queen-bee/client and calling govern(). */
   status: "pending";
-  /** Engine slug used in queen-bee/lib/registry.ts (when registered). */
   engine_id: string;
-  /** Schema name the engine WOULD pass to QB. Documented here so the
-   *  reader can show "would be governed by â€¦" copy. */
   intended_schema: "lookup-response";
-  /** ISO-8601 timestamp recording when this UDS was minted. */
   generated_at: string;
 }
 
@@ -48,35 +23,31 @@ export interface UDSDocument {
   ud_version: "1.0.0";
   state: "sealed";
   metadata: {
-    title: string;
-    created: string;
-    engine: string;
-    
+    id: string;
+    created_at: string;
+    updated_at: string;
+    created_by: string;
+    revoked: boolean;
   };
   manifest: {
-    block_count: number;
-    types_used: UDSBlockType[];
+    base_language: string;
+    language_manifest: string[];
+    clarity_layer_manifest: string[];
+    permissions: string[];
   };
   blocks: UDSBlock[];
   governance: GovernanceStampPlaceholder;
   seal: {
-    sealed_at: string;
-    sealed_by: string;
-    content_hash: string;
-    hash_algorithm: "sha-256";
+    hash: string;
+    chain_of_custody: string[];
   };
 }
-
-const ENGINE_VERSION = "0.3.0";
 
 function pad(n: number): string {
   return String(n).padStart(3, "0");
 }
 
 function canonicalBlockPayload(blocks: UDSBlock[]): string {
-  // Stable serialization: sort each block's keys alphabetically and
-  // serialize the array in document order. Keeps the hash stable
-  // across JSON.stringify property-order quirks.
   const stable = blocks.map((b) => ({
     base_content: b.base_content,
     id: b.id,
@@ -93,22 +64,30 @@ async function sha256Hex(input: string): Promise<string> {
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
   }
-  // Browser without SubtleCrypto (extremely rare; old WebView). The
-  // export still works â€” we just emit a sentinel so a verifier can see
-  // the gap and the user gets a download.
   return "unavailable";
+}
+
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
 
 export async function buildUDS(result: ExplainResult): Promise<UDSDocument> {
   const blocks: UDSBlock[] = [];
   let counter = 1;
-  const next = () => `block-${pad(counter++)}`;
+  const next = () => \`block-\${pad(counter++)}\`;
   const now = new Date().toISOString();
 
   blocks.push({
     id: next(),
     type: "heading",
-    base_content: { text: "HivePlainScan Report Explanation" },
+    base_content: { text: "Document Explanation" },
   });
 
   blocks.push({
@@ -128,14 +107,11 @@ export async function buildUDS(result: ExplainResult): Promise<UDSDocument> {
       id: next(),
       type: "paragraph",
       base_content: {
-        text: `${f.finding} â€” ${f.plainLanguage}${f.severity && f.severity !== "not specified" ? ` (severity: ${f.severity})` : ""}`,
+        text: \`\${f.finding} — \${f.plainLanguage}\${f.severity && f.severity !== "not specified" ? \` (severity: \${f.severity})\` : ""}\`,
       },
     });
   });
 
-  // Medical illustration â€” included as an image block when the
-  // /api/explain pipeline produced one. Carries the source so the UD
-  // reader can show "OpenAI gpt-image-1" provenance.
   if (result.illustrationUrl) {
     blocks.push({
       id: next(),
@@ -147,7 +123,7 @@ export async function buildUDS(result: ExplainResult): Promise<UDSDocument> {
       type: "image",
       base_content: {
         url: result.illustrationUrl,
-        alt: "Medical illustration generated to accompany the report explanation.",
+        alt: "Illustration generated to accompany the report explanation.",
         source: result.illustrationSource ?? "svg",
       },
     });
@@ -156,13 +132,13 @@ export async function buildUDS(result: ExplainResult): Promise<UDSDocument> {
   blocks.push({
     id: next(),
     type: "heading",
-    base_content: { text: "Questions for Your Doctor" },
+    base_content: { text: "Questions for Your Specialist" },
   });
 
   blocks.push({
     id: next(),
     type: "list",
-    base_content: { text: result.questionsForDoctor.join("\n") },
+    base_content: { text: result.questionsForDoctor.join("\\n") },
   });
 
   if (result.redFlags.length > 0) {
@@ -174,7 +150,7 @@ export async function buildUDS(result: ExplainResult): Promise<UDSDocument> {
     blocks.push({
       id: next(),
       type: "list",
-      base_content: { text: result.redFlags.join("\n") },
+      base_content: { text: result.redFlags.join("\\n") },
     });
   }
 
@@ -184,36 +160,34 @@ export async function buildUDS(result: ExplainResult): Promise<UDSDocument> {
     base_content: { text: result.disclaimer },
   });
 
-  const typesSet = new Set<UDSBlockType>();
-  blocks.forEach((b) => typesSet.add(b.type));
-
   const hash = await sha256Hex(canonicalBlockPayload(blocks));
 
   return {
     ud_version: "1.0.0",
     state: "sealed",
     metadata: {
-      title: "HivePlainScan Report Explanation",
-      created: now,
-      engine: "HivePlainScan",
-      
+      id: generateUUID(),
+      created_at: now,
+      updated_at: now,
+      created_by: "Hive UD Engine",
+      revoked: false
     },
     manifest: {
-      block_count: blocks.length,
-      types_used: Array.from(typesSet),
+      base_language: "en",
+      language_manifest: ["en"],
+      clarity_layer_manifest: ["plain-english"],
+      permissions: ["read"]
     },
     blocks,
     governance: {
       status: "pending",
-      engine_id: "hive-confession",
+      engine_id: "hive-universal-document",
       intended_schema: "lookup-response",
       generated_at: now,
     },
     seal: {
-      sealed_at: now,
-      sealed_by: "HivePlainScan",
-      content_hash: hash,
-      hash_algorithm: "sha-256",
+      hash: hash,
+      chain_of_custody: ["Hive UD Engine"],
     },
   };
 }
@@ -225,10 +199,9 @@ export async function downloadUDS(result: ExplainResult): Promise<void> {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "plainscan-report.uds";
+  link.download = "processed-document.uds";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
-
