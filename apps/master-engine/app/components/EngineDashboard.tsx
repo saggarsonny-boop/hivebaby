@@ -1,8 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function EngineDashboard({ engine }: { engine: string }) {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -11,6 +15,8 @@ export default function EngineDashboard({ engine }: { engine: string }) {
   const domainKeyUpper = domainKey.charAt(0).toUpperCase() + domainKey.slice(1);
 
   useEffect(() => {
+    if (isLoaded && !isSignedIn) router.push(`/${engine}`);
+
     setIsOnline(navigator.onLine);
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -24,7 +30,7 @@ export default function EngineDashboard({ engine }: { engine: string }) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [isLoaded, isSignedIn, router, engine]);
 
   if (!isSubscribed) {
     return (
