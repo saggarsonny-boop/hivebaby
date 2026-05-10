@@ -1,5 +1,5 @@
 ﻿// @ts-nocheck
-// Canonical Hive footer signature: "Made with â™¥ in the Hive" with the â™¥
+// Canonical Hive footer signature: "Made with ♥ in the Hive" with the â™¥
 // in Hive gold (#D4AF37). The word "Hive" links to https://hive.baby in a
 // new tab. Sits below the engine-local disclaimers in app/layout.tsx.
 
@@ -59,3 +59,4 @@ export default function HiveFooter() {
     </div>
   );
 }
+

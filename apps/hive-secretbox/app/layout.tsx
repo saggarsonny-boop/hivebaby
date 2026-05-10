@@ -1,5 +1,5 @@
 ﻿import { ClerkProvider } from "@clerk/nextjs";
-// HIVE_FOOTER_SIGNATURE: "Made with â™¥ in the Hive" rendered by HiveFooter
+// HIVE_FOOTER_SIGNATURE: "Made with ♥ in the Hive" rendered by HiveFooter
 // below. Canonical Hive ink (#0a0a0a) used in app/globals.css.
 
 import type { Metadata, Viewport } from "next";
@@ -81,3 +81,4 @@ export default function RootLayout({
     </html>
   );
 }
+
