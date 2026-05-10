@@ -358,6 +358,12 @@ export default function Home() {
           <SettingsPage />
         </Shell>
       )}
+      <CrossPollinationModal 
+        sourceEngine="PlainScan Professional" 
+        targetEngine="Confession" 
+        targetUrl="https://confession.hive.baby" 
+        description="Dealing with a highly stressful case? Vent anonymously and securely in the Sanctuary." 
+      />
     </main>
   );
 }
@@ -598,9 +604,14 @@ function Shell({ children, view, setView, role }: { children: React.ReactNode; v
   );
 }
 
+import HiveDashboard from "../components/HiveDashboard";
+import CrossPollinationModal from "../components/CrossPollinationModal";
+
 function Dashboard({ draft, setView }: { draft: ClinicalDraft; setView: (view: View) => void }) {
   return (
     <div className="space-y-6">
+      <HiveDashboard engineName="PlainScan Professional" creditsUsed={2} maxCredits={5} />
+      
       <SectionHeader
         eyebrow="Clinic dashboard"
         title="Pending clinical communication work"
