@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { checkStripeAccess } from "@/lib/stripe-access";
 import { buildDiagramSvg } from "@/lib/diagram";
 import { fallbackExplanation } from "@/lib/fallback";
@@ -164,7 +164,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Report text is required." }, { status: 400 });
   }
 
-  // ─── Stripe Paywall Check ───
+  // â”€â”€â”€ Stripe Paywall Check â”€â”€â”€
   const mockUserId = "user_" + (body.organizationId || "demo-clinic");
   const access = await checkStripeAccess(mockUserId, "hive-plainscan2");
   if (!access.hasAccess) {
@@ -209,7 +209,7 @@ export async function POST(request: Request) {
   const diagramImage = illustration ? illustration.url : buildDiagramSvg(explanation);
   const diagramSource: DiagramSource = illustration ? "ai-image" : "svg-fallback";
 
-  // ─── Queen Bee Governance Integration ───
+  // â”€â”€â”€ Queen Bee Governance Integration â”€â”€â”€
   fetch('https://queenbee.hive.baby/api/govern', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

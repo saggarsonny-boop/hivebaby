@@ -1,3 +1,4 @@
+import { checkAndConsumeCredit } from "@/lib/credits";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -7,7 +8,10 @@ export async function POST(req: Request) {
   }
 
   
-  // Freedom applied. No paywalls.
+  const creditCheck = await checkAndConsumeCredit();
+  if (!creditCheck.allowed) {
+    return NextResponse.json({ error: "Compute allocation exhausted. Please support the Hive to continue." }, { status: 402 });
+  }
 , { status: 402 });
   }
 

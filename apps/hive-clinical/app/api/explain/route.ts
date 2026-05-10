@@ -1,3 +1,4 @@
+import { checkAndConsumeCredit } from "@/lib/credits";
 // /api/explain — main pipeline.
 //
 //   1. PHI scrub the report text server-side (defence in depth alongside
@@ -119,7 +120,10 @@ export async function POST(req: NextRequest) {
       : null;
 
   
-  // Freedom applied. No paywalls.
+  const creditCheck = await checkAndConsumeCredit();
+  if (!creditCheck.allowed) {
+    return jsonError("Compute allocation exhausted. Please support the Hive to continue.", 402);
+  }
 
 
   // ─── Text-input branch ──────────────────────────────────────────────
