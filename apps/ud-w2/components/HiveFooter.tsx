@@ -55,6 +55,10 @@ export default function HiveFooter() {
         >
           privacy
         </a>
+        {" \u00B7 "}
+        <a href="https://converter.hive.baby" target="_blank" rel="noopener noreferrer" style={{ color: "#D4AF37" }}>
+          Convert legacy PDFs to UDS
+        </a>
       </p>
     </div>
   );
