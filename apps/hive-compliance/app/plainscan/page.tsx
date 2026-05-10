@@ -126,9 +126,9 @@ export default function PlainScanPage() {
         <>
           <ResultsSummary result={result} />
           <IllustrationDisplay result={result} />
-          <FindingsTable findings={result.findings} />
-          <DoctorQuestions questions={result.questionsForDoctor} />
-          <RedFlagBox redFlags={result.redFlags} />
+          <div className="mt-8 mb-4 font-bold text-lg">Control Gap Analysis</div><FindingsTable findings={result.findings} />
+          <div className="mt-8 mb-4 font-bold text-lg">Required Remediation Steps</div><DoctorQuestions questions={result.questionsForDoctor} />
+          <div className="mt-8 mb-4 font-bold text-lg">Critical Security Vulnerabilities</div><RedFlagBox redFlags={result.redFlags} />
           <ReportExport result={result} />
           <Disclaimer text={result.disclaimer} />
         </>
