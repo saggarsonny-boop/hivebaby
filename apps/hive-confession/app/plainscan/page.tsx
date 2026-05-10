@@ -76,7 +76,7 @@ export default function PlainScanPage() {
     <main className="shell">
       <header className="hero">
         <p className="eyebrow">HivePlainScan</p>
-        <h1>Your radiology report, in plain English.</h1>
+        <h1>Your HiveConfession analysis, secured by the Hive.</h1>
         <p className="lede">
           Paste, upload, or photograph a finalized imaging report. Get a clear
           summary, a finding-by-finding breakdown, questions to bring to your
@@ -126,9 +126,9 @@ export default function PlainScanPage() {
         <>
           <ResultsSummary result={result} />
           <IllustrationDisplay result={result} />
-          <FindingsTable findings={result.findings} />
-          <DoctorQuestions questions={result.questionsForDoctor} />
-          <RedFlagBox redFlags={result.redFlags} />
+          <div className="mt-8 mb-4 font-bold text-lg">Core Moral Dilemmas</div><FindingsTable findings={result.findings} />
+          <div className="mt-8 mb-4 font-bold text-lg">Steps for Penance & Growth</div><DoctorQuestions questions={result.questionsForDoctor} />
+          <div className="mt-8 mb-4 font-bold text-lg">Self-Destructive Patterns</div><RedFlagBox redFlags={result.redFlags} />
           <ReportExport result={result} />
           <Disclaimer text={result.disclaimer} />
         </>

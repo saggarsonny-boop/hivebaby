@@ -126,9 +126,9 @@ export default function PlainScanPage() {
         <>
           <ResultsSummary result={result} />
           <IllustrationDisplay result={result} />
-          <FindingsTable findings={result.findings} />
-          <DoctorQuestions questions={result.questionsForDoctor} />
-          <RedFlagBox redFlags={result.redFlags} />
+          <div className="mt-8 mb-4 font-bold text-lg">Key Site Observations</div><FindingsTable findings={result.findings} />
+          <div className="mt-8 mb-4 font-bold text-lg">Next Operational Steps</div><DoctorQuestions questions={result.questionsForDoctor} />
+          <div className="mt-8 mb-4 font-bold text-lg">Environmental & Safety Hazards</div><RedFlagBox redFlags={result.redFlags} />
           <ReportExport result={result} />
           <Disclaimer text={result.disclaimer} />
         </>
