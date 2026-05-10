@@ -1,5 +1,5 @@
 ﻿// @ts-nocheck
-// Canonical Hive footer signature: "Made with ♥ in the Hive" with the â™¥
+// Canonical Hive footer signature: "Made with   in the Hive" with the  
 // in Hive gold (#D4AF37). The word "Hive" links to https://hive.baby in a
 // new tab. Sits below the engine-local disclaimers in app/layout.tsx.
 
@@ -9,7 +9,7 @@ export default function HiveFooter() {
       <p>
         Made with{" "}
         <span style={{ color: "#D4AF37" }} aria-hidden="true">
-          â™¥
+          {"\u2665"}
         </span>{" "}
         in the{" "}
         <a
@@ -29,9 +29,9 @@ export default function HiveFooter() {
         >
           hive.baby
         </a>
-        {" Â· "}
+        {" \u00B7 "}
         social experiment
-        {" Â· "}
+        {" \u00B7 "}
         <a
           href="https://hive.baby/contribute.html"
           target="_blank"
@@ -39,7 +39,7 @@ export default function HiveFooter() {
         >
           contribute
         </a>
-        {" Â· "}
+        {" \u00B7 "}
         <a
           href="https://hive.baby/patrons.html"
           target="_blank"
@@ -47,7 +47,7 @@ export default function HiveFooter() {
         >
           patronage
         </a>
-        {" Â· "}
+        {" \u00B7 "}
         <a
           href="https://hive.baby/privacy.html"
           target="_blank"
@@ -58,10 +58,9 @@ export default function HiveFooter() {
         {" \u00B7 "}
         <a href="https://converter.hive.baby" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "#D4AF37", opacity: 0.85, textDecoration: "none", verticalAlign: "middle" }}>
           <img src="/ud-logo-micro.png" width="14" height="14" alt="UD" style={{ borderRadius: "3px" }} />
-          Try UD Converter — Free →
+          Try UD Converter {"\u2014"} Free {"\u2192"}
         </a>
       </p>
     </div>
   );
 }
-
