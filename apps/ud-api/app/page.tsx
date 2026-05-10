@@ -1,7 +1,10 @@
 "use client";
 import { useState } from "react";
+import { useHiveTelemetry } from "@hive/telemetry";
 
 export default function Home() {
+  useHiveTelemetry('ud-api');
+  
   const [copied, setCopied] = useState(false);
   const curlCode = `curl -X POST https://ud-api.universaldocument.org/api/v1/ingest \\
   -H "Authorization: Bearer ud_live_YOUR_API_KEY" \\

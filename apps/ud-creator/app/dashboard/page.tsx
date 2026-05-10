@@ -8,10 +8,19 @@ export default function SpaceStationDashboard() {
   const router = useRouter();
   const [isOnline, setIsOnline] = useState(true);
   const [commandText, setCommandText] = useState("");
+  const [metrics, setMetrics] = useState<any>(null);
   const [commandLog, setCommandLog] = useState([
     { time: "09:41", msg: "Hive Core synced. 228 engines online." },
     { time: "09:42", msg: "Preston module active. Waiting for command." }
   ]);
+
+  useEffect(() => {
+    // Fetch live telemetry metrics
+    fetch('/api/telemetry')
+      .then(res => res.json())
+      .then(data => setMetrics(data.metrics))
+      .catch(err => console.error("Telemetry fetch failed", err));
+  }, []);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) router.push("/sign-in");
@@ -50,18 +59,14 @@ export default function SpaceStationDashboard() {
           Hive Topology
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderLeft: '3px solid var(--success)', borderRadius: '4px' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Medical Cluster</span>
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>42 Engines</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(255, 255, 255, 0.02)', borderLeft: '3px solid #64748b', borderRadius: '4px' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Legal Cluster</span>
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>38 Engines</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(255, 255, 255, 0.02)', borderLeft: '3px solid #64748b', borderRadius: '4px' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Ritual Cluster</span>
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>15 Engines</span>
-          </div>
+          {metrics ? metrics.clusters.map((c: any, i: number) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: i === 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.02)', borderLeft: `3px solid ${i === 0 ? 'var(--success)' : '#64748b'}`, borderRadius: '4px' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{c.name}</span>
+              <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{c.count} Engines</span>
+            </div>
+          )) : (
+            <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Loading clusters...</div>
+          )}
         </div>
 
         <div style={{ marginTop: '3rem' }}>
@@ -79,13 +84,13 @@ export default function SpaceStationDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
           <div className="card" style={{ padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)' }}>
             <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '0.5rem' }}>Total Daily Active Users (DAU)</div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--foreground)' }}>142,891</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '0.5rem' }}>↑ 12.4% vs last week</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--foreground)' }}>{metrics ? metrics.dau.toLocaleString() : '---'}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '0.5rem' }}>{metrics ? metrics.dauGrowth : '---'}</div>
           </div>
           <div className="card" style={{ padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)' }}>
             <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '0.5rem' }}>Real-Time Revenue (24h)</div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--hive-gold)' }}>$18,492</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '0.5rem' }}>↑ 4.1% vs yesterday</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--hive-gold)' }}>${metrics ? metrics.revenue.toLocaleString() : '---'}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '0.5rem' }}>{metrics ? metrics.revenueGrowth : '---'}</div>
           </div>
         </div>
 
@@ -94,33 +99,22 @@ export default function SpaceStationDashboard() {
             Revenue Breakdown
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
-                <span>Subscriptions (PPP Adjusted)</span>
-                <span style={{ fontWeight: 600 }}>$11,240</span>
-              </div>
-              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>
-                <div style={{ width: '60%', height: '100%', background: 'var(--hive-gold)', borderRadius: '3px' }}></div>
-              </div>
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
-                <span>Enterprise API Ingestion</span>
-                <span style={{ fontWeight: 600 }}>$4,100</span>
-              </div>
-              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>
-                <div style={{ width: '25%', height: '100%', background: '#3b82f6', borderRadius: '3px' }}></div>
-              </div>
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
-                <span>Optional Support (Tip-Jar)</span>
-                <span style={{ fontWeight: 600 }}>$3,152</span>
-              </div>
-              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>
-                <div style={{ width: '15%', height: '100%', background: 'var(--success)', borderRadius: '3px' }}></div>
-              </div>
-            </div>
+            {metrics ? metrics.revenueBreakdown.map((r: any, i: number) => {
+              const colors = ['var(--hive-gold)', '#3b82f6', 'var(--success)'];
+              return (
+                <div key={i}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
+                    <span>{r.name}</span>
+                    <span style={{ fontWeight: 600 }}>${r.amount.toLocaleString()}</span>
+                  </div>
+                  <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>
+                    <div style={{ width: `${r.pct}%`, height: '100%', background: colors[i % colors.length], borderRadius: '3px' }}></div>
+                  </div>
+                </div>
+              );
+            }) : (
+              <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Loading breakdown...</div>
+            )}
           </div>
         </div>
       </div>

@@ -1,7 +1,10 @@
 "use client";
 import { useState } from "react";
+import { useHiveTelemetry } from "@hive/telemetry";
 
 export default function BulkDropzone() {
+  useHiveTelemetry('ud-bulk');
+  
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);

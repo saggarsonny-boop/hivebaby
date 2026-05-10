@@ -17,8 +17,8 @@
     "stripe": "^15.5.0",
     "@anthropic-ai/sdk": "^0.20.1",
     "mammoth": "^1.8.0",
-    "@neondatabase/serverless": "^0.9.0",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "@hive/telemetry": "*"
   },
   "devDependencies": {
     "@types/node": "^20",
