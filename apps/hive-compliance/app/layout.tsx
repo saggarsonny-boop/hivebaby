@@ -8,13 +8,9 @@ import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import { DisclaimerModal } from "@/components/DisclaimerModal";
 import "./globals.css";
 
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://plainscan.hive.baby";
-
-const TITLE =
-  "HivePlainScan â€” Radiology reports explained in plain English";
-const DESCRIPTION =
-  "Upload your radiology report and get a clear plain-English explanation, a visual summary, questions for your doctor, and a downloadable PDF. No diagnosis. No jargon.";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://compliance.hive.baby";
+const TITLE = "HiveCompliance — SOC2 & HIPAA Architecture Auditing";
+const DESCRIPTION = "Instant gap analysis for SOC2, HIPAA, and GDPR by scanning your architecture and policy documents.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),

@@ -8,13 +8,9 @@ import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import { DisclaimerModal } from "@/components/DisclaimerModal";
 import "./globals.css";
 
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://plainscan.hive.baby";
-
-const TITLE =
-  "HivePlainScan â€” Radiology reports explained in plain English";
-const DESCRIPTION =
-  "Upload your radiology report and get a clear plain-English explanation, a visual summary, questions for your doctor, and a downloadable PDF. No diagnosis. No jargon.";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://clinical.hive.baby";
+const TITLE = "HiveClinical — Enterprise Radiology Summarization";
+const DESCRIPTION = "B2B integration for hospital systems. Automatically append patient-friendly plain-English summaries to all outgoing radiology reports.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
