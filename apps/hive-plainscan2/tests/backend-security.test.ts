@@ -5,7 +5,7 @@ import { roleHasPermission } from "../lib/server/permissions";
 import { detectSafetyFlags } from "../lib/server/safety";
 import { ApiError } from "../lib/server/errors";
 
-describe("ReportBridge backend safeguards", () => {
+describe("HivePlainScanProfessional backend safeguards", () => {
   beforeEach(() => {
     process.env.APP_ENCRYPTION_KEY = "0000000000000000000000000000000000000000000000000000000000000000";
   });

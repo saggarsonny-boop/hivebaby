@@ -31,7 +31,7 @@ export async function PATCH(request: Request) {
       update: input,
       create: {
         organizationId: context.organizationId,
-        clinicDisplayName: input.clinicDisplayName || "ReportBridge Clinical",
+        clinicDisplayName: input.clinicDisplayName || "HivePlainScanProfessional (HPSP)",
         primaryColor: input.primaryColor || "#2563eb",
         ...input
       }

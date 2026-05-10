@@ -1,6 +1,6 @@
-# ReportBridge Clinical Backend
+# HivePlainScanProfessional (HPSP) Backend
 
-ReportBridge Clinical is a patient education and communication-support platform for finalized imaging reports. It does not interpret images, create diagnoses, recommend treatment, or replace clinician judgment. Patient-facing output requires clinician approval before release.
+HivePlainScanProfessional (HPSP) is a patient education and communication-support platform for finalized imaging reports. It does not interpret images, create diagnoses, recommend treatment, or replace clinician judgment. Patient-facing output requires clinician approval before release.
 
 ## Backend Safeguards
 

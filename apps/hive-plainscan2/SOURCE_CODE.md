@@ -1,4 +1,4 @@
-﻿# hivePlainscan / ReportBridge Source Code
+﻿# hivePlainscan / HivePlainScanProfessional Source Code
 
 ## package.json
 ```json
@@ -359,7 +359,7 @@ const starterExplanation: Explanation = {
 
 const auditSeed = [
   ["08:42", "Olivia Chen, MA", "Uploaded report", "MRI cervical spine report added to draft queue"],
-  ["08:43", "ReportBridge AI", "Generated draft", "Plain-language explanation and diagram prompt created"],
+  ["08:43", "HivePlainScanProfessional AI", "Generated draft", "Plain-language explanation and diagram prompt created"],
   ["08:48", "Dr. Shah", "Edited summary", "Reworded cord flattening caution"],
   ["08:52", "Dr. Shah", "Approved", "Patient handout marked approved"],
   ["08:55", "System", "Exported PDF", "PDF handout downloaded for after-visit summary"]
@@ -549,7 +549,7 @@ function TopNav({ view, setView }: { view: View; setView: (view: View) => void }
             <Stethoscope size={21} />
           </span>
           <span className="text-left">
-            <span className="block text-lg font-bold text-clinical-navy">ReportBridge</span>
+            <span className="block text-lg font-bold text-clinical-navy">HivePlainScanProfessional</span>
             <span className="block text-xs font-semibold uppercase tracking-wide text-clinical-calm">
               Clinician-reviewed patient education
             </span>
@@ -621,7 +621,7 @@ function Landing({ setView }: { setView: (view: View) => void }) {
         <SectionHeader
           eyebrow="Workflow"
           title="Upload report -> AI draft -> clinician review -> patient-ready visual summary"
-          text="ReportBridge is positioned as patient education, report translation, visual explanation, and communication support."
+          text="HivePlainScanProfessional is positioned as patient education, report translation, visual explanation, and communication support."
         />
         <div className="mt-8 grid gap-4 md:grid-cols-4">
           {["Secure ingestion", "AI draft", "Clinician approval", "Portal-ready output"].map((item, index) => (
@@ -736,7 +736,7 @@ function Login({ role, setRole, setView }: { role: string; setRole: (role: strin
           onClick={() => setView("dashboard")}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-clinical-blue px-4 py-3 font-semibold text-white"
         >
-          Enter ReportBridge
+          Enter HivePlainScanProfessional
           <ArrowRight size={17} />
         </button>
       </div>
