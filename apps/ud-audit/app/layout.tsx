@@ -3,7 +3,7 @@ import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "UD-Compliance | Sovereign Analysis",
+  title: "UD-Audit | Sovereign Analysis",
   description: "Enterprise clarity engine.",
 };
 
@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="grid-bg"></div>
           <div className="container">
             <header className="navbar">
-              <a href="/" className="logo">UD<span>Compliance</span></a>
+              <a href="/" className="logo">UD<span>Audit</span></a>
               <div>
                 <SignedIn><UserButton afterSignOutUrl="/"/></SignedIn>
                 <SignedOut><a href="/sign-in" className="btn">Authenticate</a></SignedOut>

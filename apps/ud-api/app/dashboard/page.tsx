@@ -31,7 +31,7 @@ export default function Dashboard() {
           </div>
           <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--foreground)' }}>Authorization Required</h2>
           <p style={{ color: '#94a3b8', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-            The Compliance AI Analysis Engine is restricted to Enterprise subscribers. Activate your license to unlock sovereign legal inference.
+            The Api AI Analysis Engine is restricted to Enterprise subscribers. Activate your license to unlock sovereign legal inference.
           </p>
           <div style={{ padding: '2rem', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '2.5rem' }}>
             <div style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--hive-gold)' }}>$1,500 <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 400 }}>/ month</span></div>
@@ -51,7 +51,7 @@ export default function Dashboard() {
     <div style={{ maxWidth: '900px', margin: '2rem auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>Compliance Analysis HUD</h1>
+          <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>Api Analysis HUD</h1>
           <div style={{ color: '#94a3b8', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isOnline ? 'var(--success)' : 'var(--danger)', boxShadow: \`0 0 10px \${isOnline ? 'var(--success)' : 'var(--danger)'}\` }}></div>
             {isOnline ? "System Online & Synced" : "System Offline (Local Mode)"}

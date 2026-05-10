@@ -20,7 +20,7 @@ export default function Home() {
       <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
         <h1 className="hero-title">
           Universal Document <br/>
-          <span style={{ color: 'var(--hive-gold)', WebkitTextFillColor: 'initial' }}>Compliance Analysis</span>
+          <span style={{ color: 'var(--hive-gold)', WebkitTextFillColor: 'initial' }}>Audit Analysis</span>
         </h1>
         <p className="hero-subtitle">
           A Sovereign-Lite tactical engine specifically engineered to parse 500-page M&A contracts, extract logic flaws, and flag immediate legal liabilities in seconds.
