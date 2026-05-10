@@ -1,3 +1,4 @@
+import { checkAndConsumeCredit } from "@/lib/credits";
 // /api/explain — main pipeline.
 //
 //   1. PHI scrub the report text server-side (defence in depth alongside

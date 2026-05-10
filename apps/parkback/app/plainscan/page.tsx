@@ -10,6 +10,7 @@ import IllustrationDisplay from "@/components/IllustrationDisplay";
 import ReportExport from "@/components/ReportExport";
 import Disclaimer from "@/components/Disclaimer";
 import type {
+import PhilanthropicFooter from "@/components/PhilanthropicFooter";
   ExplainPayload,
   ExplainRequestBody,
   ExplainResult,
@@ -79,6 +80,24 @@ export default function PlainScanPage() {
         </p>
       </header>
 
+      
+      {credits && credits.allowed === false && (
+        <div className="mb-8 p-6 rounded-lg border border-[#fca5a5] bg-[#fef2f2] shadow-sm flex flex-col gap-4">
+          <h3 className="font-bold text-[#b91c1c] text-lg">Compute Allocation Exhausted</h3>
+          <p className="text-[#991b1b]">
+            You have exhausted your free compute allocation. Analyzing complex data requires heavy API usage which costs the Hive real money. 
+            To protect our systems from bankruptcy, we must pause your processing.
+          </p>
+          <p className="text-[#991b1b]">
+            If this tool has earned a place in your day, please support the Hive below to unlock unlimited compute access.
+          </p>
+          <div className="flex gap-3 mt-4">
+            <a href="https://buy.stripe.com/test_123" className="bg-[#b91c1c] text-white px-6 py-2 rounded-md font-semibold text-sm hover:bg-[#991b1b] transition-colors">$1.99 per month</a>
+            <a href="https://buy.stripe.com/test_456" className="border border-[#b91c1c] text-[#b91c1c] px-6 py-2 rounded-md font-semibold text-sm hover:bg-[#fef2f2] transition-colors">$19 per year</a>
+          </div>
+        </div>
+      )}
+
       <ReportInput onSubmit={submit} disabled={loading} />
 
       {loading && (
@@ -98,8 +117,8 @@ export default function PlainScanPage() {
         <>
           <ResultsSummary result={result} />
           <IllustrationDisplay result={result} />
-          <div className="mt-8 mb-4 font-bold text-lg">Parking Rules & Time Limits</div><FindingsTable findings={result.findings} />
-          <div className="mt-8 mb-4 font-bold text-lg">Alternative Options / Meter Instructions</div><DoctorQuestions questions={result.questionsForDoctor} />
+          <div className="mt-8 mb-4 font-bold text-lg">Location Landmarks & Identifiers</div><FindingsTable findings={result.findings} />
+          <div className="mt-8 mb-4 font-bold text-lg">Directions & Recovery Steps</div><DoctorQuestions questions={result.questionsForDoctor} />
           <div className="mt-8 mb-4 font-bold text-lg">Towing & Ticketing Risks</div><RedFlagBox redFlags={result.redFlags} />
           <ReportExport result={result} />
           <Disclaimer text={result.disclaimer} />
@@ -107,6 +126,7 @@ export default function PlainScanPage() {
       )}
 
       {!result && !loading && !error && <Disclaimer />}
+      <PhilanthropicFooter />
     </main>
   );
 }
