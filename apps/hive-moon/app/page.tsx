@@ -32,7 +32,7 @@ export default async function MoonLanding() {
             <div className="p-1 rounded-full bg-[#f1f5f9] border border-[#2563eb]/30">
                <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-12 h-12" } }} />
             </div>
-            <Link href="/clinic" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] border-none shadow-[0_0_40px_rgba(37,99,235,0.3)]">
+            <Link href="/plainscan" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] border-none shadow-[0_0_40px_rgba(37,99,235,0.3)]">
               Access the Vault
             </Link>
           </div>

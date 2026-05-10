@@ -24,6 +24,7 @@ import {
   USER_TEXT_INSTRUCTION,
   USER_IMAGE_INSTRUCTION,
 } from "@/lib/promptTemplate";
+import { checkAndConsumeCredit } from "@/lib/credits";
 import { ParseError, parseModelResponse } from "@/lib/parseReport";
 import { removePhi } from "@/lib/privacy";
 import { fallbackExplanation } from "@/lib/fallback";
