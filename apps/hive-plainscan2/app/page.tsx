@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   Activity,
@@ -204,6 +204,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [draft, setDraft] = useState<ClinicalDraft>(() => createDraft(starterExplanation, ""));
   const [approvalChecked, setApprovalChecked] = useState(false);
+  const [fidelity, setFidelity] = useState<"fast" | "high">("fast");
 
   const phiWarnings = useMemo<PhiWarning[]>(() => detectPhi(reportText), [reportText]);
   const flaggedTerms = useMemo(() => urgentFindings(draft.explanation), [draft]);
@@ -236,7 +237,7 @@ export default function Home() {
       const res = await fetch("/api/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reportText: text, examType, bodyRegion, deleteAfterGeneration })
+        body: JSON.stringify({ reportText: text, examType, bodyRegion, deleteAfterGeneration, fidelity })
       });
       const data = (await res.json()) as ApiResponse & { error?: string };
       if (!res.ok) throw new Error(data.error || "Could not generate draft.");
@@ -322,6 +323,8 @@ export default function Home() {
             error={error}
             extractReportFromFile={extractReportFromFile}
             generateDraft={generateDraft}
+            fidelity={fidelity}
+            setFidelity={setFidelity}
           />
         </Shell>
       )}
@@ -660,6 +663,8 @@ function Upload(props: {
   error: string;
   extractReportFromFile: (file: File | undefined) => void;
   generateDraft: () => void;
+  fidelity: "fast" | "high";
+  setFidelity: (value: "fast" | "high") => void;
 }) {
   return (
     <div>
@@ -729,6 +734,27 @@ function Upload(props: {
               checked={props.deleteAfterGeneration}
               onChange={props.setDeleteAfterGeneration}
             />
+            
+            <div className="pt-2">
+              <span className="mb-2 block text-sm font-semibold text-clinical-navy">Image Generation Fidelity</span>
+              <div className="flex rounded-md border border-clinical-line bg-[#fbfdff] p-1">
+                <button
+                  onClick={() => props.setFidelity("fast")}
+                  className={\`flex-1 rounded py-2 text-sm font-semibold transition-all \${props.fidelity === "fast" ? "bg-clinical-blue text-white shadow-sm" : "text-clinical-calm hover:text-clinical-ink"}\`}
+                >
+                  ⚡ Lightning Fast
+                </button>
+                <button
+                  onClick={() => props.setFidelity("high")}
+                  className={\`flex-1 rounded py-2 text-sm font-semibold transition-all \${props.fidelity === "high" ? "bg-clinical-blue text-white shadow-sm" : "text-clinical-calm hover:text-clinical-ink"}\`}
+                >
+                  ✨ Max Detail
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-clinical-calm">
+                {props.fidelity === "fast" ? "Standard delivery (1-3s). Cost-efficient models for immediate drafts." : "High-fidelity clinical detail (~10s). Uses premium multi-step generation."}
+              </p>
+            </div>
           </div>
           <button
             onClick={props.generateDraft}

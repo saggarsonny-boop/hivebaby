@@ -1,4 +1,4 @@
-// DALL-E-native medical-illustration prompt builder for HivePlainscan.
+// DALL-E-native medical-illustration prompt builder for HiveConfessionEngine.
 //
 // gpt-image-1 / DALL-E follows multi-section prompts well (unlike FLUX
 // schnell, which prefers <256 tokens in a single sentence). We structure
@@ -18,7 +18,7 @@
 // the prompt so a malicious or sloppy report can't pivot the model into
 // non-medical output via prompt injection.
 
-import type { Explanation } from "@/lib/types";
+import type { ExplainResult } from "@/types/plainscan";
 
 // ─── Prompt-injection sanitization ──────────────────────────────────────
 //
@@ -51,14 +51,14 @@ export function sanitizeForPrompt(s: string): string {
 
 // ─── Region inference ──────────────────────────────────────────────────
 
-function spineRegion(result: Explanation): string {
-  const combined = `${result.body_region} ${result.key_findings
-    .map((f) => `${f.body_location || ""} ${f.medical_term} ${f.plain_language_explanation}`)
+function spineRegion(result: ExplainResult): string {
+  const combined = `${result.bodyRegion} ${result.findings
+    .map((f) => `${f.level || ""} ${f.finding} ${f.plainLanguage}`)
     .join(" ")}`;
   if (/\bC\d|cervical/i.test(combined)) return "cervical spine (C-spine)";
   if (/\bL\d|lumbar/i.test(combined)) return "lumbar spine (L-spine)";
   if (/\bT\d|thoracic/i.test(combined)) return "thoracic spine (T-spine)";
-  return result.body_region ? `${result.body_region} region` : "the reported anatomy";
+  return result.bodyRegion ? `${result.bodyRegion} region` : "the reported anatomy";
 }
 
 // ─── Section builders ──────────────────────────────────────────────────
@@ -66,22 +66,22 @@ function spineRegion(result: Explanation): string {
 const STYLE_ANCHOR =
   "Anatomical medical illustration in the style of Frank H. Netter and the Gray's Anatomy textbook plates — professional medical educational diagram, anatomically accurate, photorealistic where appropriate, clean lines, soft anatomical color palette (warm bone tones, muted blue-grey discs and fascia, yellow nerve roots, pale pink soft tissue), neutral white background, color-coded callout markers at finding sites without text labels, no patient face, no scan data overlay, no UI chrome, no watermark.";
 
-function buildAnatomicalSubject(result: Explanation): string {
+function buildAnatomicalSubject(result: ExplainResult): string {
   const region = spineRegion(result);
-  const scope = result.exam_type
-    ? `${sanitizeForPrompt(result.exam_type)} of the ${region}`
+  const scope = result.reportType
+    ? `${sanitizeForPrompt(result.reportType)} of the ${region}`
     : region;
   return `Subject: a clinically accurate cross-sectional and lateral view of ${scope}. Show the anatomical context relevant to the findings below — bony elements, intervertebral discs, spinal cord, exiting nerve roots, neural foramina, ligamentum flavum, and adjacent soft tissue.`;
 }
 
-function buildFindingLocations(result: Explanation): string {
-  const items = result.key_findings
+function buildFindingLocations(result: ExplainResult): string {
+  const items = result.findings
     .slice(0, 4)
     .map((f) => {
-      const level = sanitizeForPrompt(f.body_location || "");
-      const finding = sanitizeForPrompt(f.medical_term || "");
+      const level = sanitizeForPrompt(f.level || "");
+      const finding = sanitizeForPrompt(f.finding || "");
       const severity =
-        f.severity && f.severity !== "unspecified"
+        f.severity && f.severity !== "not specified"
           ? `${sanitizeForPrompt(f.severity)} `
           : "";
       const located = level ? `at ${level}` : "";
@@ -104,7 +104,7 @@ const CLINICAL_CONTEXT =
  *  handles multi-section prompts well; FLUX-style prompts (single comma-
  *  separated line) leave quality on the table. Return is plain text — the
  *  caller passes it directly to `openai.images.generate({ prompt })`. */
-export function buildIllustrationPrompt(result: Explanation): string {
+export function buildIllustrationPrompt(result: ExplainResult): string {
   return [
     STYLE_ANCHOR,
     "",
@@ -120,18 +120,18 @@ export function buildIllustrationPrompt(result: Explanation): string {
  *  truncates around 256 tokens and prefers a single comma-separated line.
  *  Kept inline here so both providers share the same sanitization +
  *  region inference. */
-export function buildFluxFallbackPrompt(result: Explanation): string {
-  const findings = result.key_findings
+export function buildFluxFallbackPrompt(result: ExplainResult): string {
+  const findings = result.findings
     .slice(0, 4)
     .map((f) => {
       const sev =
-        f.severity && f.severity !== "unspecified"
+        f.severity && f.severity !== "not specified"
           ? `${sanitizeForPrompt(f.severity)} `
           : "";
-      return `${sanitizeForPrompt(f.body_location || "anatomy")}: ${sev}${sanitizeForPrompt(f.medical_term)}`;
+      return `${sanitizeForPrompt(f.level || "anatomy")}: ${sev}${sanitizeForPrompt(f.finding)}`;
     })
     .filter(Boolean)
     .join(", ");
   const region = spineRegion(result);
-  return `Patient education medical illustration of ${region}. Hand-painted anatomical realism, warm bone tones, blue-grey intervertebral discs, yellow nerve roots, clean white background, color-coded callout labels for: ${findings || "reported findings"}. Educational atlas style, no real scan data, no faces, no text overlays.`;
+  return `User education medical illustration of ${region}. Hand-painted anatomical realism, warm bone tones, blue-grey intervertebral discs, yellow nerve roots, clean white background, color-coded callout labels for: ${findings || "reported findings"}. Educational atlas style, no real scan data, no faces, no text overlays.`;
 }

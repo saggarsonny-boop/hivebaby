@@ -50,7 +50,6 @@ export type ExplainRequestBody =
        *  in `lib/cost-cap.ts`. Optional — missing ids count against a
        *  shared anonymous bucket (also capped). */
       sessionId?: string;
-      fidelity?: "fast" | "high";
     }
   | {
       imageBase64: string;
@@ -58,5 +57,4 @@ export type ExplainRequestBody =
       examType?: string;
       bodyRegion?: string;
       sessionId?: string;
-      fidelity?: "fast" | "high";
     };

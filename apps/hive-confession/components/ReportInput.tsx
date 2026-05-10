@@ -94,7 +94,6 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
   const [reportText, setReportText] = useState("");
   const [examType, setExamType] = useState("Auto-detect");
   const [bodyRegion, setBodyRegion] = useState("Auto-detect");
-  const [fidelity, setFidelity] = useState<"fast" | "high">("fast");
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [pdfStatus, setPdfStatus] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -178,7 +177,6 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
         reportText: trimmed,
         examType: examOpt,
         bodyRegion: regionOpt,
-        fidelity,
       });
       return;
     }
@@ -188,7 +186,6 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
         reportText: pdfText,
         examType: examOpt,
         bodyRegion: regionOpt,
-        fidelity,
       });
       return;
     }
@@ -202,7 +199,6 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
         mediaType,
         examType: examOpt,
         bodyRegion: regionOpt,
-        fidelity,
       });
     }
   };
@@ -397,46 +393,6 @@ export default function ReportInput({ onSubmit, disabled }: Props) {
               ))}
             </select>
           </label>
-        </div>
-
-        <div style={{ marginTop: "1rem" }}>
-          <span style={{ fontSize: "0.85rem", color: "var(--muted)", display: "block", marginBottom: 4 }}>
-            Image Generation Fidelity
-          </span>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button
-              type="button"
-              onClick={() => setFidelity("fast")}
-              style={{
-                flex: 1,
-                padding: "0.5rem",
-                borderRadius: 8,
-                border: fidelity === "fast" ? "2px solid var(--gold)" : "1px solid var(--line)",
-                background: fidelity === "fast" ? "var(--gold-light)" : "white",
-                fontWeight: "bold",
-                color: "var(--ink)",
-                cursor: "pointer",
-              }}
-            >
-              ⚡ Lightning Fast
-            </button>
-            <button
-              type="button"
-              onClick={() => setFidelity("high")}
-              style={{
-                flex: 1,
-                padding: "0.5rem",
-                borderRadius: 8,
-                border: fidelity === "high" ? "2px solid var(--gold)" : "1px solid var(--line)",
-                background: fidelity === "high" ? "var(--gold-light)" : "white",
-                fontWeight: "bold",
-                color: "var(--ink)",
-                cursor: "pointer",
-              }}
-            >
-              ✨ Max Detail
-            </button>
-          </div>
         </div>
 
         <label

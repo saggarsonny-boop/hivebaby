@@ -22,7 +22,7 @@
 // (counted at Replicate quota level, not in our ledger).
 
 import OpenAI from "openai";
-import type { ExplainResult } from "@/types/plainscan";
+import type { Explanation } from "@/lib/types";
 import {
   buildFluxFallbackPrompt,
   buildIllustrationPrompt,
@@ -58,7 +58,7 @@ function getOpenAIClient(): OpenAI | null {
 // when the daily cap is tight.
 
 async function tryOpenAI(
-  result: ExplainResult,
+  result: Explanation,
 ): Promise<IllustrationResult | null> {
   const client = getOpenAIClient();
   if (!client) return null;
@@ -92,7 +92,7 @@ async function tryOpenAI(
 // ─── Replicate FLUX (graceful-degradation tertiary) ────────────────────
 
 async function tryReplicate(
-  result: ExplainResult,
+  result: Explanation,
 ): Promise<IllustrationResult | null> {
   const token = process.env.REPLICATE_API_TOKEN;
   if (!token) return null;
@@ -175,7 +175,7 @@ async function pollPrediction(url: string, token: string): Promise<string | null
  * yields null so the engine never blocks on the illustration step.
  */
 export async function generateIllustration(
-  result: ExplainResult,
+  result: Explanation,
   fidelity: "fast" | "high" = "high"
 ): Promise<IllustrationResult | null> {
   if (fidelity === "fast") {

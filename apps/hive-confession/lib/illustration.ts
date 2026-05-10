@@ -1,4 +1,4 @@
-// Medical-illustration provider chain for HivePlainscan.
+// Medical-illustration provider chain for HiveConfessionEngine.
 //
 // Three-tier fallback per CLAUDE.md §C10 [AI_PROVIDER_ROUTING]:
 //
@@ -176,11 +176,7 @@ async function pollPrediction(url: string, token: string): Promise<string | null
  */
 export async function generateIllustration(
   result: ExplainResult,
-  fidelity: "fast" | "high" = "high"
 ): Promise<IllustrationResult | null> {
-  if (fidelity === "fast") {
-    return (await tryReplicate(result)) ?? (await tryOpenAI(result));
-  }
   return (await tryOpenAI(result)) ?? (await tryReplicate(result));
 }
 

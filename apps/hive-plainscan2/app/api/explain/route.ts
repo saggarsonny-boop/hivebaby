@@ -3,6 +3,7 @@ import { buildDiagramSvg } from "@/lib/diagram";
 import { fallbackExplanation } from "@/lib/fallback";
 import { removePhi } from "@/lib/privacy";
 import type { DiagramSource, ExplainRequest, Explanation } from "@/lib/types";
+import { generateIllustration } from "@/lib/illustration";
 
 export const runtime = "nodejs";
 
@@ -149,7 +150,7 @@ async function callClaude(safeRequest: ExplainRequest) {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as ExplainRequest & { organizationId?: string };
+  const body = (await request.json()) as ExplainRequest & { organizationId?: string; fidelity?: "fast" | "high" };
   const cleanedReport = removePhi(body.reportText || "").slice(0, 15000);
   const normalizedBody = {
     ...body,
@@ -187,8 +188,11 @@ export async function POST(request: Request) {
     }
   }
 
-  const diagramImage = buildDiagramSvg(explanation);
-  const diagramSource: DiagramSource = "svg-fallback";
+  const fidelity = body.fidelity || "high";
+  const illustration = await generateIllustration(explanation, fidelity);
+  
+  const diagramImage = illustration ? illustration.url : buildDiagramSvg(explanation);
+  const diagramSource: DiagramSource = illustration ? "ai-image" : "svg-fallback";
 
   // ─── Queen Bee Governance Integration ───
   fetch('https://queenbee.hive.baby/api/govern', {
