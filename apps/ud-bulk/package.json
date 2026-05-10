@@ -18,7 +18,7 @@
     "@anthropic-ai/sdk": "^0.20.1",
     "mammoth": "^1.8.0",
     "pdf-parse": "^1.1.1",
-    "@hive/telemetry": "*"
+    "@hive/telemetry": "file:../../packages/hive-telemetry"
   },
   "devDependencies": {
     "@types/node": "^20",

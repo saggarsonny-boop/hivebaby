@@ -7,6 +7,7 @@ const withPWA = require('next-pwa')({
 });
 
 const nextConfig = {
+  transpilePackages: ['@hive/telemetry'],
   reactStrictMode: true,
 };
 

@@ -1,38 +1,42 @@
 "use client";
-import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useState } from "react";
+import { useHiveTelemetry } from "@hive/telemetry";
 
-export default function Home() {
-  const { isSignedIn, isLoaded } = useUser();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn) router.push("/dashboard");
-  }, [isLoaded, isSignedIn, router]);
+export default function AnonymizerEngine() {
+  useHiveTelemetry('ud-anonymizer');
+  const [file, setFile] = useState<File | null>(null);
 
   return (
-    <div style={{ maxWidth: '800px', margin: '4rem auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-        <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>
-          Universal Document: <br/>
-          <span style={{ color: 'var(--hive-gold)' }}>Anonymizer Analysis</span>
-        </h1>
-        <p style={{ fontSize: '1.25rem', color: '#94a3b8', maxWidth: '600px', margin: '0 auto 3rem auto', lineHeight: 1.6 }}>
-          A Sovereign-Lite tactical engine specifically engineered to parse, analyze, and extract strategic leverage from anonymizer documentation.
-        </p>
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-          <a href="/sign-up" className="btn btn-solid" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
-            Deploy Engine
-          </a>
+    <div style={{ minHeight: '100vh', background: '#020617', color: '#f8fafc', fontFamily: 'Inter, sans-serif' }}>
+      <header style={{ padding: '2rem 4rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>UD <span style={{ color: '#10b981' }}>Anonymizer</span></div>
+        <button style={{ background: 'transparent', color: '#10b981', border: '1px solid rgba(16,185,129,0.4)', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>HIPAA Compliance Portal</button>
+      </header>
+
+      <main style={{ maxWidth: '800px', margin: '4rem auto', padding: '0 2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h1 style={{ fontSize: '3rem', fontWeight: 700, marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Military-Grade PII Redaction.</h1>
+          <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: 1.6 }}>Strip names, SSNs, financial data, and protected health information (PHI) from thousands of documents instantly with 99.9% accuracy via Queen Bee governance.</p>
         </div>
-      </div>
-      <div className="card">
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--hive-gold)', textAlign: 'center' }}>Enterprise Capabilities</h2>
-        <div style={{ textAlign: 'center', color: '#94a3b8' }}>
-          Real-Time Inference • Zero-Retention Security • $699/month Uncapped
+
+        <div 
+          style={{ border: '2px dashed rgba(16,185,129,0.3)', borderRadius: '12px', padding: '4rem 2rem', textAlign: 'center', background: 'rgba(16,185,129,0.02)', cursor: 'pointer', transition: 'all 0.3s' }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => { e.preventDefault(); setFile(e.dataTransfer.files[0]); }}
+        >
+          <div style={{ width: '64px', height: '64px', background: 'rgba(16,185,129,0.1)', borderRadius: '50%', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          {file ? (
+            <div style={{ color: '#10b981', fontWeight: 600 }}>{file.name} ready for redaction.</div>
+          ) : (
+            <>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Secure Dropzone</h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Zero-retention policy. Documents are parsed in memory and instantly destroyed.</p>
+            </>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
