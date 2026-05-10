@@ -32,7 +32,7 @@ export default async function ParkbackLanding() {
             <div className="p-1 rounded-full bg-white/10 border border-[#D4AF37]/30">
                <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-12 h-12" } }} />
             </div>
-            <Link href="/app" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#D4AF37] to-[#c8960a] border-none shadow-[0_0_40px_rgba(212,175,55,0.3)]">
+            <Link href="/clinic" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#D4AF37] to-[#c8960a] border-none shadow-[0_0_40px_rgba(212,175,55,0.3)]">
               Access the Vault
             </Link>
           </div>

@@ -1,5 +1,5 @@
 ﻿
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, SignInButton, SignUpButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 
@@ -24,7 +24,7 @@ export default async function ActivityPartnerLanding() {
           ActivityPartner Vault
         </h1>
         <p className="text-xl text-gray-400 mb-10 font-light tracking-wide">
-          Military-grade encrypted storage for your most sensitive assets. Locked down by the Hive.
+          Find and manage activity partners securely.
         </p>
 
         {userId ? (
@@ -32,15 +32,17 @@ export default async function ActivityPartnerLanding() {
             <div className="p-1 rounded-full bg-white/10 border border-[#D4AF37]/30">
                <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-12 h-12" } }} />
             </div>
-            <Link href="/app" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#D4AF37] to-[#c8960a] border-none shadow-[0_0_40px_rgba(212,175,55,0.3)]">
+            <Link href="/clinic" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-gradient-to-r from-[#D4AF37] to-[#c8960a] border-none shadow-[0_0_40px_rgba(212,175,55,0.3)]">
               Access the Vault
             </Link>
           </div>
         ) : (
-          <div className="flex gap-4 justify-center ud-fade-in">
-            <Link href="/sign-in" className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/20 shadow-none">
-              Authenticate
-            </Link>
+                    <div className="flex gap-4 justify-center ud-fade-in">
+            <SignInButton mode="modal">
+              <button className="ud-btn-primary px-8 py-4 text-lg fabulous-hover rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/20 shadow-none">
+                Authenticate
+              </button>
+            </SignInButton>
           </div>
         )}
       </div>
