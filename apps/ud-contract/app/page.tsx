@@ -7,6 +7,16 @@ export default function ContractEngine() {
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+
+  const handleShare = () => {
+    // Adoption Amplifier #4: The Viral Share Hook
+    // In production, this saves the result to Neon and generates a unique ID.
+    const mockId = crypto.randomUUID().substring(0, 8);
+    const link = `${window.location.origin}/share/${mockId}`;
+    setShareLink(link);
+    navigator.clipboard.writeText(`I just analyzed an M&A contract using Universal Document. View my results: ${link}`);
+  };
 
   const handleUpload = async (uploadedFile: File) => {
     setFile(uploadedFile);
@@ -55,8 +65,27 @@ export default function ContractEngine() {
             <div style={{ color: '#D4AF37', fontWeight: 600 }}>Analyzing document via Queen Bee...</div>
           ) : result ? (
             <div style={{ textAlign: 'left', background: 'rgba(0,0,0,0.5)', padding: '2rem', borderRadius: '8px' }}>
-              <pre style={{ whiteSpace: 'pre-wrap', color: '#f8fafc', fontFamily: 'inherit' }}>{result}</pre>
-              <button style={{ marginTop: '2rem', background: '#D4AF37', color: '#020617', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>Share Analysis (Adoption Amplifier)</button>
+              <pre style={{ whiteSpace: 'pre-wrap', color: '#f8fafc', fontFamily: 'inherit', marginBottom: '1rem' }}>{result}</pre>
+              
+              <div style={{ padding: '1rem', background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '8px' }}>
+                <p style={{ color: '#D4AF37', margin: 0, fontWeight: 'bold' }}>
+                  ⚡ Adoption Amplifier Triggered
+                </p>
+                <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                  Share this analysis with your legal team. They will view it in the UD Reader and be prompted to create their own Hive account.
+                </p>
+                <button 
+                  onClick={handleShare}
+                  style={{ background: '#D4AF37', color: '#020617', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  {shareLink ? 'Link Copied to Clipboard!' : 'Share Analysis & Generate Link'}
+                </button>
+                {shareLink && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#64748b' }}>
+                    {shareLink}
+                  </div>
+                )}
+              </div>
             </div>
           ) : file ? (
             <div style={{ color: '#D4AF37', fontWeight: 600 }}>{file.name} ready for analysis.</div>
