@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-// Universal Document — Sealed (UDS) builder for HivePlainScan reports.
+// Universal Document â€” Sealed (UDS) builder for HivePlainScan reports.
 //
 // Per the paywall Phase 1 spec the UDS export is now the canonical
 // download (PDF is secondary). This file produces a sealed UDS payload
@@ -38,7 +38,7 @@ interface GovernanceStampPlaceholder {
   /** Engine slug used in queen-bee/lib/registry.ts (when registered). */
   engine_id: string;
   /** Schema name the engine WOULD pass to QB. Documented here so the
-   *  reader can show "would be governed by …" copy. */
+   *  reader can show "would be governed by â€¦" copy. */
   intended_schema: "lookup-response";
   /** ISO-8601 timestamp recording when this UDS was minted. */
   generated_at: string;
@@ -51,8 +51,7 @@ export interface UDSDocument {
     title: string;
     created: string;
     engine: string;
-    engine_id: string;
-    engine_version: string;
+    
   };
   manifest: {
     block_count: number;
@@ -95,7 +94,7 @@ async function sha256Hex(input: string): Promise<string> {
       .join("");
   }
   // Browser without SubtleCrypto (extremely rare; old WebView). The
-  // export still works — we just emit a sentinel so a verifier can see
+  // export still works â€” we just emit a sentinel so a verifier can see
   // the gap and the user gets a download.
   return "unavailable";
 }
@@ -129,12 +128,12 @@ export async function buildUDS(result: ExplainResult): Promise<UDSDocument> {
       id: next(),
       type: "paragraph",
       base_content: {
-        text: `${f.finding} — ${f.plainLanguage}${f.severity && f.severity !== "not specified" ? ` (severity: ${f.severity})` : ""}`,
+        text: `${f.finding} â€” ${f.plainLanguage}${f.severity && f.severity !== "not specified" ? ` (severity: ${f.severity})` : ""}`,
       },
     });
   });
 
-  // Medical illustration — included as an image block when the
+  // Medical illustration â€” included as an image block when the
   // /api/explain pipeline produced one. Carries the source so the UD
   // reader can show "OpenAI gpt-image-1" provenance.
   if (result.illustrationUrl) {
@@ -197,8 +196,7 @@ export async function buildUDS(result: ExplainResult): Promise<UDSDocument> {
       title: "HivePlainScan Report Explanation",
       created: now,
       engine: "HivePlainScan",
-      engine_id: "hive-confession",
-      engine_version: ENGINE_VERSION,
+      
     },
     manifest: {
       block_count: blocks.length,
@@ -233,3 +231,4 @@ export async function downloadUDS(result: ExplainResult): Promise<void> {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
