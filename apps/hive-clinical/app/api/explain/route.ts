@@ -38,7 +38,7 @@ import {
   recordImageSpend,
   recordSpend,
 } from "@/lib/cost-cap";
-import type { ExplainRequestBody, ExplainResult } from "@/types/plainscan";
+import type { ExplainRequestBody, ExplainResult } from "@/types/clinical";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

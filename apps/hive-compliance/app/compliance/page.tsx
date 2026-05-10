@@ -14,7 +14,7 @@ import PhilanthropicFooter from "@/components/PhilanthropicFooter";
   ExplainPayload,
   ExplainRequestBody,
   ExplainResult,
-} from "@/types/plainscan";
+} from "@/types/compliance";
 
 const GENERIC_ERROR =
   "Something went wrong. Please check your report and try again.";
@@ -76,8 +76,8 @@ export default function PlainScanPage() {
   return (
     <main className="shell">
       <header className="hero">
-        <p className="eyebrow">HivePlainScan</p>
-        <h1>Your Clinical Workflow, secured by the Hive.</h1>
+        <p className="eyebrow">HiveCompliance</p>
+        <h1>Your Compliance Audit, secured by the Hive.</h1>
         <p className="lede">
           Paste, upload, or photograph a finalized imaging report. Get a clear
           summary, a finding-by-finding breakdown, questions to bring to your
@@ -132,9 +132,9 @@ export default function PlainScanPage() {
         <>
           <ResultsSummary result={result} />
           <IllustrationDisplay result={result} />
-          <div className="mt-8 mb-4 font-bold text-lg">ICD-10 / CPT Code Extraction</div><FindingsTable findings={result.findings} />
-          <div className="mt-8 mb-4 font-bold text-lg">Follow-up Recommendations</div><DoctorQuestions questions={result.questionsForDoctor} />
-          <div className="mt-8 mb-4 font-bold text-lg">Critical Patient Alerts</div><RedFlagBox redFlags={result.redFlags} />
+          <div className="mt-8 mb-4 font-bold text-lg">Control Gap Analysis</div><FindingsTable findings={result.findings} />
+          <div className="mt-8 mb-4 font-bold text-lg">Required Remediation Steps</div><DoctorQuestions questions={result.questionsForDoctor} />
+          <div className="mt-8 mb-4 font-bold text-lg">Critical Security Vulnerabilities</div><RedFlagBox redFlags={result.redFlags} />
           <ReportExport result={result} />
           <Disclaimer text={result.disclaimer} />
         </>

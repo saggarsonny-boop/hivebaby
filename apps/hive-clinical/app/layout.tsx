@@ -16,12 +16,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: TITLE,
   description: DESCRIPTION,
-  applicationName: "HivePlainScan",
+  applicationName: "HiveClinical Enterprise",
   manifest: "/manifest.json",
   alternates: { canonical: APP_URL },
   appleWebApp: {
     capable: true,
-    title: "HivePlainScan",
+    title: "HiveClinical Enterprise",
     statusBarStyle: "black-translucent",
   },
   openGraph: {
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     url: APP_URL,
     title: TITLE,
     description: DESCRIPTION,
-    siteName: "HivePlainScan",
+    siteName: "HiveClinical Enterprise",
   },
   twitter: {
     card: "summary_large_image",

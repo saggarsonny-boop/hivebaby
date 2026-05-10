@@ -14,7 +14,7 @@ const VERSION = "0.3.0";
 
 export async function GET() {
   return NextResponse.json({
-    engine: "HivePlainScan",
+    engine: "HiveCompliance",
     version: VERSION,
     ok: true,
     timestamp: new Date().toISOString(),

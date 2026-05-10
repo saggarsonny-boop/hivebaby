@@ -16,12 +16,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: TITLE,
   description: DESCRIPTION,
-  applicationName: "HivePlainScan",
+  applicationName: "HiveCompliance",
   manifest: "/manifest.json",
   alternates: { canonical: APP_URL },
   appleWebApp: {
     capable: true,
-    title: "HivePlainScan",
+    title: "HiveCompliance",
     statusBarStyle: "black-translucent",
   },
   openGraph: {
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     url: APP_URL,
     title: TITLE,
     description: DESCRIPTION,
-    siteName: "HivePlainScan",
+    siteName: "HiveCompliance",
   },
   twitter: {
     card: "summary_large_image",
@@ -59,7 +59,7 @@ export default function RootLayout({
         <footer className="site-footer">
           <p>No ads. No investors. No agenda.</p>
           <p>Free at the base tier, forever.</p>
-          <p>This is not medical advice. Always consult a qualified clinician.</p>
+          <p>This tool is for preliminary gap analysis only and does not replace a certified auditor.</p>
           <HiveFooter />
         </footer>
         <ServiceWorkerRegistrar />

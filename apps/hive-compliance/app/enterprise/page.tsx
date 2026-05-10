@@ -2,9 +2,9 @@
 import { tierById } from "@/lib/tiers";
 
 export const metadata = {
-  title: "HivePlainScan Enterprise â€” Coming Q2 2026 â€” Join Waitlist",
+  title: "HiveCompliance Enterprise â€” Coming Q2 2026 â€” Join Waitlist",
   description:
-    "HivePlainScan Enterprise â€” custom deployments for health systems. Unlimited seats, dedicated infrastructure options, custom integrations, SLA. Join the waitlist.",
+    "HiveCompliance Enterprise â€” custom deployments for health systems. Unlimited seats, dedicated infrastructure options, custom integrations, SLA. Join the waitlist.",
 };
 
 export default function EnterprisePage() {

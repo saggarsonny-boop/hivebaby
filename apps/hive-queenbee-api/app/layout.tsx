@@ -59,7 +59,7 @@ export default function RootLayout({
         <footer className="site-footer">
           <p>No ads. No investors. No agenda.</p>
           <p>Free at the base tier, forever.</p>
-          <p>This is not medical advice. Always consult a qualified clinician.</p>
+          <p>Standard B2B API terms apply.</p>
           <HiveFooter />
         </footer>
         <ServiceWorkerRegistrar />
