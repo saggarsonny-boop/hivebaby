@@ -1,0 +1,77 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --hive-gold: #D4AF37;
+
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #f8fbff;
+  color: #243b53;
+}
+
+button,
+select,
+textarea,
+input {
+  font: inherit;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+
+/* --- PROJECT FABULOUS ENHANCEMENTS --- */
+.fabulous-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+.fabulous-skeleton {
+  background: linear-gradient(90deg, var(--ud-paper-2, #f2f1ee) 25%, var(--ud-paper-3, #e8e6e0) 50%, var(--ud-paper-2, #f2f1ee) 75%);
+  background-size: 200% 100%;
+  animation: fabulous-shimmer 1.5s infinite;
+  border-radius: var(--ud-radius, 8px);
+}
+
+@keyframes fabulous-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.fabulous-hover {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+.fabulous-hover:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+/* ------------------------------------- */
+
+
+/* Clerk Overrides */
+.cl-socialButtonsBlockButton { background-color: white !important; border: 1px solid #e2e8f0 !important; color: #0f172a !important; padding: 0.5rem 1rem !important; border-radius: 0.375rem !important; }
+.cl-socialButtonsBlockButton:hover { background-color: #f8fafc !important; }
