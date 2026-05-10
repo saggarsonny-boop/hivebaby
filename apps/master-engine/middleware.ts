@@ -11,8 +11,8 @@ export default clerkMiddleware((auth, req) => {
     engine = hostname.replace(".ud.hive.baby", "");
   } else if (hostname.includes(".universaldocument.org")) {
     engine = hostname.replace(".universaldocument.org", "");
-  } else if (hostname.includes("localhost")) {
-    engine = "ud-localtest";
+  } else if (hostname.includes("vercel.app") || hostname.includes("localhost")) {
+    return NextResponse.next();
   }
 
   // Rewrite the request to the dynamic /[engine] route
