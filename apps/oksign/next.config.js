@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@hive/telemetry'],
+  transpilePackages: ['@hive/telemetry', '@hive/auth', '@hive/parser'],
   reactStrictMode: true,
 };
 
