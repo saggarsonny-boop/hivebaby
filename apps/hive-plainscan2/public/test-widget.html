@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acme Orthopedics - Patient Portal</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; color: #333; }
+    header { background: #0f172a; color: white; padding: 1rem 2rem; }
+    main { padding: 2rem; max-width: 800px; margin: 0 auto; }
+    .hero { background: #f8fafc; padding: 3rem 2rem; border-radius: 8px; margin-bottom: 2rem; }
+    h1 { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>Acme Orthopedics</h2>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Welcome to your Patient Portal</h1>
+      <p>Access your visit summaries, pay your bills, and review your imaging reports.</p>
+    </div>
+
+    <h2>Understanding Your MRI</h2>
+    <p>We've partnered with Hive to help you understand your complex radiology reports. Click the button in the bottom right corner to upload your MRI report text and generate a patient-friendly summary with a 3D diagram.</p>
+
+  </main>
+
+  <!-- Embed Configuration -->
+  <script>
+    window.HiveWidgetConfig = {
+      // In production, this points to https://plainscan2.hive.baby/embed
+      url: 'http://localhost:3000/embed',
+      theme: 'blue'
+    };
+  </script>
+  
+  <!-- The Widget Script -->
+  <!-- In production this is <script src="https://plainscan2.hive.baby/widget.js"></script> -->
+  <script src="http://localhost:3000/widget.js"></script>
+
+</body>
+</html>

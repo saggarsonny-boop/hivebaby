@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkStripeAccess } from "@/lib/stripe-access";
 import { buildDiagramSvg } from "@/lib/diagram";
 import { fallbackExplanation } from "@/lib/fallback";
 import { removePhi } from "@/lib/privacy";
@@ -161,6 +162,20 @@ export async function POST(request: Request) {
 
   if (!cleanedReport.trim()) {
     return NextResponse.json({ error: "Report text is required." }, { status: 400 });
+  }
+
+  // ─── Stripe Paywall Check ───
+  const mockUserId = "user_" + (body.organizationId || "demo-clinic");
+  const access = await checkStripeAccess(mockUserId, "hive-plainscan2");
+  if (!access.hasAccess) {
+    return NextResponse.json(
+      { 
+        error: "Free credits exhausted.", 
+        code: "CREDITS_EXHAUSTED",
+        checkoutUrl: "https://buy.stripe.com/test_upgrade" // Mock checkout URL
+      }, 
+      { status: 402 }
+    );
   }
 
   const organizationId = body.organizationId || "demo-organization";
