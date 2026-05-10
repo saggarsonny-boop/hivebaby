@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^5.0.0",
     "@hive/telemetry": "file:../../packages/hive-telemetry",
     "@neondatabase/serverless": "^1.1.0",
     "drizzle-orm": "^0.45.2",
