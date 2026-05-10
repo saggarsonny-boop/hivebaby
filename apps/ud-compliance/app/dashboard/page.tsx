@@ -53,7 +53,7 @@ export default function Dashboard() {
         <div>
           <h1 style={{ fontSize: '2rem', margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>Compliance Analysis HUD</h1>
           <div style={{ color: '#94a3b8', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isOnline ? 'var(--success)' : 'var(--danger)', boxShadow: \`0 0 10px \${isOnline ? 'var(--success)' : 'var(--danger)'}\` }}></div>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isOnline ? 'var(--success)' : 'var(--danger)', boxShadow: `0 0 10px ${isOnline ? 'var(--success)' : 'var(--danger)'}` }}></div>
             {isOnline ? "System Online & Synced" : "System Offline (Local Mode)"}
           </div>
         </div>
