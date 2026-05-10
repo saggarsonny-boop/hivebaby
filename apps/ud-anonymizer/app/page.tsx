@@ -5,6 +5,29 @@ import { useHiveTelemetry } from "@hive/telemetry";
 export default function AnonymizerEngine() {
   useHiveTelemetry('ud-anonymizer');
   const [file, setFile] = useState<File | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const handleUpload = async (uploadedFile: File) => {
+    setFile(uploadedFile);
+    setAnalyzing(true);
+    
+    const formData = new FormData();
+    formData.append('file', uploadedFile);
+    
+    try {
+      const res = await fetch('/api/redact', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      setResult(data.redactedText);
+    } catch (e) {
+      console.error(e);
+      setResult("Error processing document.");
+    }
+    setAnalyzing(false);
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#020617', color: '#f8fafc', fontFamily: 'Inter, sans-serif' }}>
@@ -22,12 +45,19 @@ export default function AnonymizerEngine() {
         <div 
           style={{ border: '2px dashed rgba(16,185,129,0.3)', borderRadius: '12px', padding: '4rem 2rem', textAlign: 'center', background: 'rgba(16,185,129,0.02)', cursor: 'pointer', transition: 'all 0.3s' }}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => { e.preventDefault(); setFile(e.dataTransfer.files[0]); }}
+          onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files[0]); }}
         >
           <div style={{ width: '64px', height: '64px', background: 'rgba(16,185,129,0.1)', borderRadius: '50%', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
-          {file ? (
+          {analyzing ? (
+            <div style={{ color: '#10b981', fontWeight: 600 }}>Applying military-grade redactions...</div>
+          ) : result ? (
+            <div style={{ textAlign: 'left', background: 'rgba(0,0,0,0.5)', padding: '2rem', borderRadius: '8px' }}>
+              <pre style={{ whiteSpace: 'pre-wrap', color: '#f8fafc', fontFamily: 'inherit' }}>{result}</pre>
+              <button style={{ marginTop: '2rem', background: '#10b981', color: '#020617', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>Download Safe Copy</button>
+            </div>
+          ) : file ? (
             <div style={{ color: '#10b981', fontWeight: 600 }}>{file.name} ready for redaction.</div>
           ) : (
             <>

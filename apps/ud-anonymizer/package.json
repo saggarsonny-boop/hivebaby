@@ -15,7 +15,11 @@
     "react": "^18",
     "react-dom": "^18",
     "stripe": "^15.5.0",
-    "@hive/telemetry": "file:../../packages/hive-telemetry"
+    "@hive/telemetry": "file:../../packages/hive-telemetry",
+    "@hive/parser": "file:../../packages/hive-parser",
+    "@anthropic-ai/sdk": "^0.20.1",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.8.0"
   },
   "devDependencies": {
     "@types/node": "^20",

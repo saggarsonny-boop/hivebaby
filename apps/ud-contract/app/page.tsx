@@ -5,6 +5,30 @@ import { useHiveTelemetry } from "@hive/telemetry";
 export default function ContractEngine() {
   useHiveTelemetry('ud-contract');
   const [file, setFile] = useState<File | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const handleUpload = async (uploadedFile: File) => {
+    setFile(uploadedFile);
+    setAnalyzing(true);
+    
+    const formData = new FormData();
+    formData.append('file', uploadedFile);
+    // Language can be added here
+    
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      setResult(data.analysis);
+    } catch (e) {
+      console.error(e);
+      setResult("Error processing document.");
+    }
+    setAnalyzing(false);
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#020617', color: '#f8fafc', fontFamily: 'Inter, sans-serif' }}>
@@ -22,12 +46,19 @@ export default function ContractEngine() {
         <div 
           style={{ border: '2px dashed rgba(212,175,55,0.3)', borderRadius: '12px', padding: '4rem 2rem', textAlign: 'center', background: 'rgba(212,175,55,0.02)', cursor: 'pointer', transition: 'all 0.3s' }}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => { e.preventDefault(); setFile(e.dataTransfer.files[0]); }}
+          onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files[0]); }}
         >
           <div style={{ width: '64px', height: '64px', background: 'rgba(212,175,55,0.1)', borderRadius: '50%', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37' }}>
             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
           </div>
-          {file ? (
+          {analyzing ? (
+            <div style={{ color: '#D4AF37', fontWeight: 600 }}>Analyzing document via Queen Bee...</div>
+          ) : result ? (
+            <div style={{ textAlign: 'left', background: 'rgba(0,0,0,0.5)', padding: '2rem', borderRadius: '8px' }}>
+              <pre style={{ whiteSpace: 'pre-wrap', color: '#f8fafc', fontFamily: 'inherit' }}>{result}</pre>
+              <button style={{ marginTop: '2rem', background: '#D4AF37', color: '#020617', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>Share Analysis (Adoption Amplifier)</button>
+            </div>
+          ) : file ? (
             <div style={{ color: '#D4AF37', fontWeight: 600 }}>{file.name} ready for analysis.</div>
           ) : (
             <>
