@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey="pk_test_Y2hvaWNlLWRhc3NpZS02NS5jbGVyay5hY2NvdW50cy5kZXYk">
       <html lang="en">
         <body>
           <div className="grid-bg"></div>
