@@ -15,8 +15,8 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  url.pathname = `/${engine}${url.pathname === "/" ? "" : url.pathname}`;
-  return NextResponse.rewrite(url);
+  // Proxy rewrite to the canonical Vercel URL to bypass Next.js App Router Host-matching 404 bugs on wildcards
+  return NextResponse.rewrite(new URL(`/${engine}${url.pathname === "/" ? "" : url.pathname}`, "https://ud-master.vercel.app"));
 }
 
 export const config = {
