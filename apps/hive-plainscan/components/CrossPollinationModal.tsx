@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function CrossPollinationModal({ sourceEngine, targetEngine, targetUrl, description }) {
+export default function CrossPollinationModal({ sourceEngine, targetEngine, targetUrl, description }: { sourceEngine?: string, targetEngine?: string, targetUrl?: string, description?: string }) {
   const [isOpen, setIsOpen] = useState(true);
 
   if (!isOpen) return null;
