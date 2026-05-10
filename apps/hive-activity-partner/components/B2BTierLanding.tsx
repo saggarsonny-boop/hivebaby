@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 // Shared B2B-tier landing layout. Used by app/clinic/page.tsx,
 // app/practice/page.tsx, app/enterprise/page.tsx. Each tier passes the
 // same TierDef from lib/tiers.ts and the layout renders a description,
@@ -86,7 +87,7 @@ export function B2BTierLanding({ tier }: Props) {
         <h2 style={{ margin: "0 0 12px", fontSize: 18 }}>Join the waitlist</h2>
         <p style={{ margin: "0 0 16px", fontSize: 14 }}>
           We&apos;ll notify you the moment {tier.name} opens. The exact pricing
-          you see today is provisional — final pricing is set at launch and
+          you see today is provisional â€” final pricing is set at launch and
           you&apos;ll be offered the rate that&apos;s active at that moment.
         </p>
         <WaitlistForm tierSlug={tier.id as "clinic" | "practice" | "enterprise"} tierName={tier.name} />

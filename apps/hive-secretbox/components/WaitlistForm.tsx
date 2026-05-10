@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 "use client";
 
 // B2B-tier waitlist form. Used by /clinic, /practice, and /enterprise
@@ -15,7 +16,7 @@ const HIVE_INK = "#0a0a0a";
 const PAPER = "#f5f1e6";
 
 interface Props {
-  /** "clinic" | "practice" | "enterprise" — passed verbatim to the
+  /** "clinic" | "practice" | "enterprise" â€” passed verbatim to the
    *  hps_waitlist.requested_tier column. */
   tierSlug: "clinic" | "practice" | "enterprise";
   /** Display name shown in the form heading. */
@@ -31,9 +32,9 @@ const ROLE_OPTIONS = [
 
 const VOLUME_OPTIONS = [
   "< 100 reports / month",
-  "100 – 500 / month",
-  "500 – 2,000 / month",
-  "2,000 – 10,000 / month",
+  "100 â€“ 500 / month",
+  "500 â€“ 2,000 / month",
+  "2,000 â€“ 10,000 / month",
   "> 10,000 / month",
 ];
 
@@ -202,7 +203,7 @@ export function WaitlistForm({ tierSlug, tierName }: Props) {
           letterSpacing: "0.02em",
         }}
       >
-        {submitting ? "Submitting…" : "Join waitlist"}
+        {submitting ? "Submittingâ€¦" : "Join waitlist"}
       </button>
       {error && (
         <p

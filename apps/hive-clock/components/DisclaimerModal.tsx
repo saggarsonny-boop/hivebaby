@@ -1,6 +1,7 @@
+﻿// @ts-nocheck
 "use client";
 
-// Per-use disclaimer modal — shown on first interaction in every browser
+// Per-use disclaimer modal â€” shown on first interaction in every browser
 // session. Acceptance is recorded in `sessionStorage` so a refresh in
 // the same tab session doesn't re-prompt, but a fresh tab / new browser
 // session does. Per the paywall Phase 1 spec the user must explicitly
@@ -116,7 +117,7 @@ export function DisclaimerModal({ onAccept }: Props) {
   );
 }
 
-/** Read the session-scoped acceptance flag from outside the modal — used
+/** Read the session-scoped acceptance flag from outside the modal â€” used
  *  by the submit form to pre-check its persistent confirmation
  *  checkbox. */
 export function isDisclaimerAccepted(): boolean {

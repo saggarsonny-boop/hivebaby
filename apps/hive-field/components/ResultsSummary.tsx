@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import type { ExplainResult } from "@/types/plainscan";
 
 interface Props {

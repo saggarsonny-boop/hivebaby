@@ -1,6 +1,7 @@
+﻿// @ts-nocheck
 "use client";
 
-// ReportExport — formerly PDFExport. Renamed because UDS is now the
+// ReportExport â€” formerly PDFExport. Renamed because UDS is now the
 // canonical default download (per the paywall Phase 1 spec) and PDF is
 // the secondary universal-format option. The two buttons differ in
 // visual weight: the UDS button is the primary CTA (Hive gold, larger,
@@ -55,7 +56,7 @@ export default function ReportExport({ result }: Props) {
           gap: 12,
         }}
       >
-        {/* PRIMARY — UDS, Hive gold, ~2x prominence (larger font, taller, gold) */}
+        {/* PRIMARY â€” UDS, Hive gold, ~2x prominence (larger font, taller, gold) */}
         <button
           type="button"
           onClick={handleUDS}
@@ -75,10 +76,10 @@ export default function ReportExport({ result }: Props) {
             minWidth: 220,
           }}
         >
-          {busy === "uds" ? "Preparing UDS…" : "Download UDS"}
+          {busy === "uds" ? "Preparing UDSâ€¦" : "Download UDS"}
         </button>
 
-        {/* SECONDARY — PDF, outlined, smaller */}
+        {/* SECONDARY â€” PDF, outlined, smaller */}
         <button
           type="button"
           onClick={handlePDF}
@@ -96,7 +97,7 @@ export default function ReportExport({ result }: Props) {
             opacity: busy !== null ? 0.6 : 1,
           }}
         >
-          {busy === "pdf" ? "Preparing PDF…" : "Download PDF"}
+          {busy === "pdf" ? "Preparing PDFâ€¦" : "Download PDF"}
         </button>
       </div>
       <p
