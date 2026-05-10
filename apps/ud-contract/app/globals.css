@@ -10,7 +10,7 @@ body {
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  opacity: 0.05; /* Faded for overlay */
+  opacity: 0.05;
   position: absolute;
   top: 0;
   left: 0;
