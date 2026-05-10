@@ -2,8 +2,8 @@
 import { UserButton, auth } from "@clerk/nextjs";
 import Link from "next/link";
 
-export default function ClockLanding() {
-  const { userId } = auth();
+export default async function ClockLanding() {
+  const { userId } = await auth();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#111111] to-[#000000] text-white flex flex-col items-center justify-center p-6 fabulous-glass">
