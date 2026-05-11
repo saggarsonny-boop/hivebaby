@@ -1,244 +1,313 @@
-﻿import { NextResponse } from "next/server";
-import { checkStripeAccess } from "@/lib/stripe-access";
-import { buildDiagramSvg } from "@/lib/diagram";
-import { fallbackExplanation } from "@/lib/fallback";
+// /api/explain — main pipeline.
+//
+//   1. PHI scrub the report text server-side (defence in depth alongside
+//      client-side detectPhi preview).
+//   2. Cost-cap check — if today's per-process Anthropic spend is over the
+//      cap, skip the Anthropic call and serve the rule-based fallback.
+//   3. Anthropic Sonnet 4 call → parse JSON.
+//   4. On explanation success (AI or rule-based): try the illustration
+//      provider chain — OpenAI gpt-image-1 (primary, per [AI_PROVIDER_ROUTING])
+//      → Replicate FLUX (graceful tertiary) → local SVG diagram. The chain
+//      respects the per-day image cap and per-session image count in
+//      lib/cost-cap.ts; over-cap calls fall straight to the SVG diagram.
+//   5. On Anthropic failure: rule-based fallback explanation + illustration
+//      chain (which may still go to OpenAI if OPENAI_API_KEY is set, since
+//      illustration accuracy is independent of the explanation source).
+//
+// Returns ExplainResult with `illustrationUrl`, `illustrationSource`
+// ("openai" / "replicate" / "svg"), and `source` set.
+
+import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
+import {
+  SYSTEM_PROMPT,
+  USER_TEXT_INSTRUCTION,
+  USER_IMAGE_INSTRUCTION,
+} from "@/lib/promptTemplate";
+import { checkAndConsumeCredit } from "@/lib/credits";
+import { ParseError, parseModelResponse } from "@/lib/parseReport";
 import { removePhi } from "@/lib/privacy";
-import type { DiagramSource, ExplainRequest, Explanation } from "@/lib/types";
+import { fallbackExplanation } from "@/lib/fallback";
+import { buildDiagramSvg } from "@/lib/diagram";
 import { generateIllustration } from "@/lib/illustration";
+import {
+  estimateAnthropicCents,
+  isImageOverCap,
+  isOverCap,
+  recordImageSpend,
+  recordSpend,
+} from "@/lib/cost-cap";
+import type { ExplainRequestBody, ExplainResult } from "@/types/plainscan";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-type UsageBucket = { date: string; total: number };
+const MODEL = "claude-sonnet-4-20250514";
+const MAX_TOKENS = 2048;
+const MAX_REPORT_CHARS = 15000;
 
-const anthropicModel = process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
-const dailyUsage = new Map<string, UsageBucket>();
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+function isTextBody(
+  body: ExplainRequestBody,
+): body is { reportText: string; examType?: string; bodyRegion?: string } {
+  return typeof (body as { reportText?: unknown }).reportText === "string";
 }
 
-function estimateCost(reportText: string) {
-  const inputTokens = Math.ceil(reportText.length / 4);
-  const outputTokens = 2200;
-  return inputTokens * 0.0000008 + outputTokens * 0.000004;
+function isImageBody(
+  body: ExplainRequestBody,
+): body is {
+  imageBase64: string;
+  mediaType: "image/jpeg" | "image/png";
+  examType?: string;
+  bodyRegion?: string;
+} {
+  const b = body as { imageBase64?: unknown; mediaType?: unknown };
+  return (
+    typeof b.imageBase64 === "string" &&
+    (b.mediaType === "image/jpeg" || b.mediaType === "image/png")
+  );
 }
 
-function checkCostCap(organizationId: string, estimatedCost: number) {
-  const cap = Number(process.env.DAILY_AI_COST_CAP || "5");
-  const date = todayKey();
-  const current = dailyUsage.get(organizationId);
-  const bucket = current?.date === date ? current : { date, total: 0 };
-  if (bucket.total + estimatedCost > cap) {
-    return { allowed: false, cap, projected: bucket.total + estimatedCost };
+function jsonError(message: string, status: number) {
+  return NextResponse.json({ error: message }, { status });
+}
+
+async function attachIllustration(
+  result: ExplainResult,
+  sessionId: string | null,
+): Promise<ExplainResult> {
+  // Per-day fleet image cap or per-session image count → skip the
+  // provider call and degrade straight to the SVG diagram. Fail-closed
+  // is the canonical behavior per CLAUDE.md §C10 [AI_PROVIDER_ROUTING].
+  if (isImageOverCap(sessionId)) {
+    return {
+      ...result,
+      illustrationUrl: buildDiagramSvg(result),
+      illustrationSource: "svg",
+    };
   }
-  dailyUsage.set(organizationId, { date, total: bucket.total + estimatedCost });
-  return { allowed: true, cap, projected: bucket.total + estimatedCost };
-}
 
-function extractJson(text: string) {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) return "{}";
-  return text.slice(start, end + 1);
-}
-
-function repairExplanation(value: Partial<Explanation>, request: ExplainRequest): Explanation {
-  const fallback = fallbackExplanation(request.reportText, request.examType, request.bodyRegion);
-  const keyFindings = Array.isArray(value.key_findings) && value.key_findings.length > 0 ? value.key_findings : fallback.key_findings;
-  const redFlagObjects = Array.isArray(value.red_flag_terms_detected) ? value.red_flag_terms_detected : [];
+  const generated = await generateIllustration(result);
+  if (generated) {
+    recordImageSpend(generated.costCents, sessionId);
+    return {
+      ...result,
+      illustrationUrl: generated.url,
+      illustrationSource: generated.source,
+    };
+  }
   return {
-    exam_type: value.exam_type || fallback.exam_type,
-    body_region: value.body_region || fallback.body_region,
-    patient_friendly_title: value.patient_friendly_title || `${value.exam_type || fallback.exam_type} ${value.body_region || fallback.body_region} summary`,
-    plain_english_summary: value.plain_english_summary || fallback.plain_english_summary,
-    key_findings: keyFindings.map((finding) => ({
-      ...finding,
-      body_location: finding.body_location || finding.anatomic_location || "Not specified",
-      possible_symptoms: finding.possible_symptoms || finding.patient_relevance || "Discuss how this relates to symptoms with the clinician.",
-      doctor_followup: finding.doctor_followup || finding.clinician_review_note || "Ask your clinician how this finding fits with your exam."
-    })),
-    red_flags: Array.isArray(value.red_flags)
-      ? value.red_flags
-      : redFlagObjects.map((flag) => flag.clinician_attention_message || flag.term),
-    red_flag_terms_detected: redFlagObjects,
-    questions_for_doctor:
-      Array.isArray(value.questions_for_doctor) && value.questions_for_doctor.length > 0
-        ? value.questions_for_doctor
-        : Array.isArray(value.patient_questions) && value.patient_questions.length > 0
-          ? value.patient_questions
-          : fallback.questions_for_doctor,
-    patient_questions: value.patient_questions,
-    image_prompt: value.image_prompt || value.diagram_prompt || fallback.image_prompt,
-    diagram_prompt: value.diagram_prompt || value.image_prompt || fallback.image_prompt,
-    disclaimer:
-      value.disclaimer ||
-      value.patient_disclaimer ||
-      "This summary is designed to help you understand the wording of a finalized imaging report. It is not a diagnosis or treatment plan. Please review your results with your clinician.",
-    patient_disclaimer:
-      value.patient_disclaimer ||
-      "This summary is designed to help you understand the wording of your imaging report. It is not a diagnosis or treatment plan. Please review your results with your clinician.",
-    requires_physician_approval: true
+    ...result,
+    illustrationUrl: buildDiagramSvg(result),
+    illustrationSource: "svg",
   };
 }
 
-async function callClaude(safeRequest: ExplainRequest) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "anthropic-version": "2023-06-01",
-      "x-api-key": process.env.ANTHROPIC_API_KEY || ""
-    },
-    body: JSON.stringify({
-      model: anthropicModel,
-      max_tokens: 2600,
-      temperature: 0.1,
-      system:
-        "You create clinician-reviewed patient education summaries from finalized imaging report text. Do not interpret images. Do not add diagnoses, treatment recommendations, or certainty not present in the report. Use calm 6th-8th grade language. Prefer 'the report describes' over 'you have'. Return only valid JSON.",
-      messages: [
-        {
-          role: "user",
-          content: JSON.stringify({
-            task: "Generate a patient education draft that requires physician approval before release.",
-            selected_exam_type: safeRequest.examType,
-            selected_body_region: safeRequest.bodyRegion,
-            safety_rules: [
-              "Explain only what the finalized report states.",
-              "Preserve uncertainty such as may represent, cannot exclude, or indeterminate.",
-              "Flag urgent or sensitive findings for clinician attention.",
-              "Do not produce patient-facing alarm language unless it is phrased as clinician-reviewed education."
-            ],
-            schema: {
-              exam_type: "",
-              body_region: "",
-              patient_friendly_title: "",
-              plain_english_summary: "",
-              key_findings: [
-                {
-                  original_report_phrase: "",
-                  medical_term: "",
-                  plain_language_explanation: "",
-                  anatomic_location: "",
-                  severity_if_stated: "",
-                  laterality_if_stated: "",
-                  patient_relevance: "",
-                  clinician_review_note: ""
-                }
-              ],
-              red_flag_terms_detected: [
-                {
-                  term: "",
-                  why_flagged: "",
-                  clinician_attention_message: ""
-                }
-              ],
-              questions_for_doctor: [],
-              diagram_prompt: "",
-              patient_disclaimer: "",
-              requires_physician_approval: true
-            },
-            report: safeRequest.reportText
-          })
-        }
-      ]
-    })
-  });
-
-  if (!response.ok) throw new Error("AI generation failed.");
-  const payload = await response.json();
-  const content = payload.content?.find((item: { type: string; text?: string }) => item.type === "text")?.text || "{}";
-  return JSON.parse(extractJson(content)) as Partial<Explanation>;
-}
-
-export async function POST(request: Request) {
-  const body = (await request.json()) as ExplainRequest & { organizationId?: string; fidelity?: "fast" | "high" };
-  const cleanedReport = removePhi(body.reportText || "").slice(0, 15000);
-  const normalizedBody = {
-    ...body,
-    examType: body.examType === "Auto-detect" ? "" : body.examType,
-    bodyRegion: body.bodyRegion === "Auto-detect" ? "" : body.bodyRegion
-  };
-  const safeRequest = { ...normalizedBody, reportText: cleanedReport };
-
-  if (!cleanedReport.trim()) {
-    return NextResponse.json({ error: "Report text is required." }, { status: 400 });
+export async function POST(req: NextRequest) {
+  let body: ExplainRequestBody;
+  try {
+    body = (await req.json()) as ExplainRequestBody;
+  } catch {
+    return jsonError("Invalid request body.", 400);
   }
 
-  // â”€â”€â”€ Stripe Paywall Check â”€â”€â”€
-  const mockUserId = "user_" + (body.organizationId || "demo-clinic");
-  const access = await checkStripeAccess(mockUserId, "hive-plainscan2");
-  if (!access.hasAccess) {
-    return NextResponse.json(
-      { 
-        error: "Free credits exhausted.", 
-        code: "CREDITS_EXHAUSTED",
-        checkoutUrl: "https://buy.stripe.com/test_upgrade" // Mock checkout URL
-      }, 
-      { status: 402 }
-    );
-  }
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const examType = (body as { examType?: string }).examType ?? "";
+  const bodyRegion = (body as { bodyRegion?: string }).bodyRegion ?? "";
+  const sessionId =
+    typeof (body as { sessionId?: unknown }).sessionId === "string"
+      ? ((body as { sessionId?: string }).sessionId as string)
+      : null;
 
-  const organizationId = body.organizationId || "demo-organization";
-  const estimatedCost = estimateCost(cleanedReport);
-  const costCheck = checkCostCap(organizationId, estimatedCost);
-  if (!costCheck.allowed) {
-    return NextResponse.json(
-      { error: "AI generation limit reached for today. Please contact admin." },
-      { status: 429 }
-    );
-  }
+  // ─── Text-input branch ──────────────────────────────────────────────
+  if (isTextBody(body)) {
+    const cleaned = removePhi(body.reportText.trim()).slice(0, MAX_REPORT_CHARS);
+    if (!cleaned) return jsonError("Report text is empty.", 400);
 
-  let explanation: Explanation;
-  let source: "ai" | "local-fallback" = "local-fallback";
+    // Cost-cap or no key → rule-based fallback path.
+    if (!apiKey || isOverCap()) {
+      const fb = fallbackExplanation(cleaned, examType, bodyRegion);
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
+      return NextResponse.json(withDiagram);
+    }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    explanation = fallbackExplanation(cleanedReport, normalizedBody.examType, normalizedBody.bodyRegion);
-  } else {
+    let response: Anthropic.Message;
     try {
-      const draft = await callClaude(safeRequest);
-      explanation = repairExplanation(draft, safeRequest);
-      source = "ai";
+      const client = new Anthropic({ apiKey });
+      response = await client.messages.create({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        system: SYSTEM_PROMPT,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: USER_TEXT_INSTRUCTION },
+              { type: "text", text: cleaned },
+            ],
+          },
+        ],
+      });
     } catch {
-      explanation = fallbackExplanation(cleanedReport, normalizedBody.examType, normalizedBody.bodyRegion);
+      const fb = fallbackExplanation(cleaned, examType, bodyRegion);
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
+      return NextResponse.json(withDiagram);
+    }
+
+    if (response.usage) {
+      recordSpend(
+        estimateAnthropicCents(
+          response.usage.input_tokens,
+          response.usage.output_tokens,
+        ),
+      );
+    }
+
+    const textBlock = response.content.find(
+      (b): b is Anthropic.TextBlock => b.type === "text",
+    );
+    if (!textBlock) {
+      const fb = fallbackExplanation(cleaned, examType, bodyRegion);
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
+      return NextResponse.json(withDiagram);
+    }
+
+    try {
+      const parsed = parseModelResponse(textBlock.text);
+      if ("error" in parsed) return NextResponse.json(parsed, { status: 422 });
+      const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId);
+      
+      // ─── Queen Bee Governance Integration ───
+      fetch('https://queenbee.hive.baby/api/govern', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          engineId: 'hive-secretbox',
+          input: 'text-report',
+          content: {
+            plainEnglishSummary: withDiagram.summary,
+            keyFindings: withDiagram.findings,
+            redFlags: withDiagram.redFlags,
+            suggestedDoctorQuestions: withDiagram.questions,
+            illustrationSource: withDiagram.illustrationSource,
+            disclaimer: true,
+            reportType: examType,
+            bodyRegion: bodyRegion,
+          }
+        })
+      }).catch(err => console.warn('Queen Bee log failed:', err))
+      
+      return NextResponse.json(withDiagram);
+    } catch (err) {
+      if (err instanceof ParseError) {
+        const fb = fallbackExplanation(cleaned, examType, bodyRegion);
+        const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
+        return NextResponse.json(withDiagram);
+      }
+      return jsonError("Something went wrong. Please check your report and try again.", 500);
     }
   }
 
-  const fidelity = body.fidelity || "high";
-  const illustration = await generateIllustration(explanation, fidelity);
-  
-  const diagramImage = illustration ? illustration.url : buildDiagramSvg(explanation);
-  const diagramSource: DiagramSource = illustration ? "ai-image" : "svg-fallback";
-
-  // â”€â”€â”€ Queen Bee Governance Integration â”€â”€â”€
-  fetch('https://queenbee.hive.baby/api/govern', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      engineId: 'hive-plainscan2',
-      input: 'text-report',
-      content: {
-        plainEnglishSummary: explanation.plain_english_summary,
-        keyFindings: explanation.key_findings,
-        redFlags: explanation.red_flags,
-        suggestedDoctorQuestions: explanation.questions_for_doctor,
-        illustrationSource: diagramSource,
-        disclaimer: true,
-        reportType: explanation.exam_type,
-        bodyRegion: explanation.body_region,
-      }
-    })
-  }).catch(err => console.warn('Queen Bee log failed:', err))
-
-  return NextResponse.json({
-    explanation,
-    diagramSvg: diagramImage,
-    diagramSource,
-    source,
-    aiUsage: {
-      organizationId,
-      estimatedCost,
-      dailyCap: costCheck.cap,
-      projectedDailySpend: costCheck.projected
+  // ─── Image-input branch ─────────────────────────────────────────────
+  if (isImageBody(body)) {
+    if (!body.imageBase64.trim()) return jsonError("Image is empty.", 400);
+    if (!apiKey) {
+      return jsonError(
+        "Image-based explanations require the AI service. Please paste the report text instead.",
+        503,
+      );
     }
-  });
+    if (isOverCap()) {
+      return jsonError(
+        "Image-based explanations are temporarily over today's cost cap. Please paste the report text instead.",
+        503,
+      );
+    }
+
+    let response: Anthropic.Message;
+    try {
+      const client = new Anthropic({ apiKey });
+      response = await client.messages.create({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        system: SYSTEM_PROMPT,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: USER_IMAGE_INSTRUCTION },
+              {
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: body.mediaType,
+                  data: body.imageBase64,
+                },
+              },
+            ],
+          },
+        ],
+      });
+    } catch {
+      return jsonError(
+        "Something went wrong. Please check your image and try again.",
+        502,
+      );
+    }
+
+    if (response.usage) {
+      recordSpend(
+        estimateAnthropicCents(
+          response.usage.input_tokens,
+          response.usage.output_tokens,
+        ),
+      );
+    }
+
+    const textBlock = response.content.find(
+      (b): b is Anthropic.TextBlock => b.type === "text",
+    );
+    if (!textBlock) {
+      return jsonError(
+        "Could not read the report from this image. Try pasting the text instead.",
+        422,
+      );
+    }
+    try {
+      const parsed = parseModelResponse(textBlock.text);
+      if ("error" in parsed) return NextResponse.json(parsed, { status: 422 });
+      const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId);
+      
+      // ─── Queen Bee Governance Integration ───
+      fetch('https://queenbee.hive.baby/api/govern', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          engineId: 'hive-secretbox',
+          input: 'image-report',
+          content: {
+            plainEnglishSummary: withDiagram.summary,
+            keyFindings: withDiagram.findings,
+            redFlags: withDiagram.redFlags,
+            suggestedDoctorQuestions: withDiagram.questions,
+            illustrationSource: withDiagram.illustrationSource,
+            disclaimer: true,
+            reportType: examType,
+            bodyRegion: bodyRegion,
+          }
+        })
+      }).catch(err => console.warn('Queen Bee log failed:', err))
+
+      return NextResponse.json(withDiagram);
+    } catch (err) {
+      if (err instanceof ParseError) {
+        return jsonError(
+          "Could not read the report from this image. Try pasting the text instead.",
+          422,
+        );
+      }
+      return jsonError("Something went wrong. Please try again.", 500);
+    }
+  }
+
+  return jsonError("Provide either reportText or imageBase64 with mediaType.", 400);
 }

@@ -44,7 +44,7 @@ export default function Dashboard() {
 
   return (
     <div className="card">
-      <h2 style={{ color: 'var(--hive-gold)', marginBottom: '1rem' }}>Hive Plainscan HUD</h2>
+      <h2 style={{ color: 'var(--hive-gold)', marginBottom: '1rem' }}>Hive Photo HUD</h2>
       <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', marginBottom: '2rem' }}>
         Network Status: <span style={{ color: isOnline ? '#10b981' : '#ef4444' }}>{isOnline ? "ONLINE (SYNCED)" : "OFFLINE (CACHING LOCALLY)"}</span>
       </div>

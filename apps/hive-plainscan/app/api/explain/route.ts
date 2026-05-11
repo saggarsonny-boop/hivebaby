@@ -74,7 +74,6 @@ function jsonError(message: string, status: number) {
 async function attachIllustration(
   result: ExplainResult,
   sessionId: string | null,
-  fidelity: "fast" | "high" = "high"
 ): Promise<ExplainResult> {
   // Per-day fleet image cap or per-session image count → skip the
   // provider call and degrade straight to the SVG diagram. Fail-closed
@@ -87,7 +86,7 @@ async function attachIllustration(
     };
   }
 
-  const generated = await generateIllustration(result, fidelity);
+  const generated = await generateIllustration(result);
   if (generated) {
     recordImageSpend(generated.costCents, sessionId);
     return {
@@ -118,7 +117,6 @@ export async function POST(req: NextRequest) {
     typeof (body as { sessionId?: unknown }).sessionId === "string"
       ? ((body as { sessionId?: string }).sessionId as string)
       : null;
-  const fidelity = (body as { fidelity?: "fast" | "high" }).fidelity || "high";
 
   // ─── Text-input branch ──────────────────────────────────────────────
   if (isTextBody(body)) {
@@ -128,7 +126,7 @@ export async function POST(req: NextRequest) {
     // Cost-cap or no key → rule-based fallback path.
     if (!apiKey || isOverCap()) {
       const fb = fallbackExplanation(cleaned, examType, bodyRegion);
-      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId, fidelity);
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
       return NextResponse.json(withDiagram);
     }
 
@@ -151,7 +149,7 @@ export async function POST(req: NextRequest) {
       });
     } catch {
       const fb = fallbackExplanation(cleaned, examType, bodyRegion);
-      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId, fidelity);
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
       return NextResponse.json(withDiagram);
     }
 
@@ -169,21 +167,21 @@ export async function POST(req: NextRequest) {
     );
     if (!textBlock) {
       const fb = fallbackExplanation(cleaned, examType, bodyRegion);
-      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId, fidelity);
+      const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
       return NextResponse.json(withDiagram);
     }
 
     try {
       const parsed = parseModelResponse(textBlock.text);
       if ("error" in parsed) return NextResponse.json(parsed, { status: 422 });
-      const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId, fidelity);
+      const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId);
       
       // ─── Queen Bee Governance Integration ───
       fetch('https://queenbee.hive.baby/api/govern', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          engineId: 'hive-plainscan',
+          engineId: 'hive-secretbox',
           input: 'text-report',
           content: {
             plainEnglishSummary: withDiagram.summary,
@@ -202,7 +200,7 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       if (err instanceof ParseError) {
         const fb = fallbackExplanation(cleaned, examType, bodyRegion);
-        const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId, fidelity);
+        const withDiagram = await attachIllustration({ ...fb, source: "fallback" }, sessionId);
         return NextResponse.json(withDiagram);
       }
       return jsonError("Something went wrong. Please check your report and try again.", 500);
@@ -277,14 +275,14 @@ export async function POST(req: NextRequest) {
     try {
       const parsed = parseModelResponse(textBlock.text);
       if ("error" in parsed) return NextResponse.json(parsed, { status: 422 });
-      const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId, fidelity);
+      const withDiagram = await attachIllustration({ ...parsed, source: "ai" }, sessionId);
       
       // ─── Queen Bee Governance Integration ───
       fetch('https://queenbee.hive.baby/api/govern', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          engineId: 'hive-plainscan',
+          engineId: 'hive-secretbox',
           input: 'image-report',
           content: {
             plainEnglishSummary: withDiagram.summary,
