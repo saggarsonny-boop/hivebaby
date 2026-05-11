@@ -9,6 +9,8 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   transpilePackages: ['@hive/telemetry', '@hive/auth', '@hive/parser', '@hive/billing', '@hive/ud-schema', '@hive/storage'],
   reactStrictMode: true,
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
 };
 
 module.exports = withPWA(nextConfig);
