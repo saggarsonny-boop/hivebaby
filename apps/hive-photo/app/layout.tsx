@@ -1,7 +1,5 @@
 import './globals.css';
 import type { Metadata } from "next";
-import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
-import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Hive Photo | Sovereign Analysis",
@@ -10,15 +8,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
       <html lang="en">
         <body>
-          <div className="container">
-            <header className="navbar">
-              <a href="/" className="logo">Hive Photo</a>
-              <div>
-                <SignedIn><UserButton afterSignOutUrl="/"/></SignedIn>
-                <SignedOut><a href="/sign-in" className="btn">Authenticate</a></SignedOut>
+          <div className="container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <header style={{ padding: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <a href="/" style={{ color: '#f8fafc', textDecoration: 'none', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.02em' }}>Hive Photo</a>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <a href="/sign-in" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Authenticate</a>
               </div>
             </header>
             <main>{children}</main>
@@ -29,6 +25,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </footer>
       </body>
       </html>
-    </ClerkProvider>
   );
 }
