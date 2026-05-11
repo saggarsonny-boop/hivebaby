@@ -39,7 +39,7 @@ export default function HivePhotoPage() {
           onDragLeave={() => setDragActive(false)}
           onDrop={(e) => { e.preventDefault(); setDragActive(false); setUploaded(true); }}
           style={{
-            border: \`2px dashed \${dragActive ? '#D4AF37' : 'rgba(255,255,255,0.2)'}\`,
+            border: `2px dashed ${dragActive ? '#D4AF37' : 'rgba(255,255,255,0.2)'}`,
             borderRadius: '16px',
             padding: '4rem 2rem',
             background: dragActive ? 'rgba(212,175,55,0.05)' : 'rgba(0,0,0,0.2)',
