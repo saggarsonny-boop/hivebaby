@@ -16,14 +16,15 @@
     "react-dom": "^18",
     "stripe": "^15.5.0",
     "zod": "^3.22.4",
-    "openai": "^4.20.0",
+    "openai": "^4.20.1",
     "@anthropic-ai/sdk": "^0.20.1",
     "mammoth": "^1.8.0",
     "@neondatabase/serverless": "^0.9.0",
     "pdf-parse": "^1.1.1",
     "@hive/telemetry": "file:../../packages/hive-telemetry",
     "@hive/auth": "file:../../packages/hive-auth",
-    "@hive/parser": "file:../../packages/hive-parser"
+    "@hive/parser": "file:../../packages/hive-parser",
+    "lucide-react": "^0.292.0"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -19,7 +19,10 @@
     "stripe": "^15.5.0",
     "@hive/auth": "file:../../packages/hive-auth",
     "@hive/parser": "file:../../packages/hive-parser",
-    "@hive/billing": "file:../../packages/hive-billing"
+    "@hive/billing": "file:../../packages/hive-billing",
+    "openai": "^4.20.1",
+    "zod": "^3.22.4",
+    "lucide-react": "^0.292.0"
   },
   "devDependencies": {
     "@types/node": "^20",

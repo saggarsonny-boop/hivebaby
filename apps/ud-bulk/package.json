@@ -20,7 +20,10 @@
     "pdf-parse": "^1.1.1",
     "@hive/telemetry": "file:../../packages/hive-telemetry",
     "@hive/auth": "file:../../packages/hive-auth",
-    "@hive/parser": "file:../../packages/hive-parser"
+    "@hive/parser": "file:../../packages/hive-parser",
+    "openai": "^4.20.1",
+    "zod": "^3.22.4",
+    "lucide-react": "^0.292.0"
   },
   "devDependencies": {
     "@types/node": "^20",

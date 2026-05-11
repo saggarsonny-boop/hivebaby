@@ -23,7 +23,10 @@
     "@hive/auth": "file:../../packages/hive-auth",
     "@hive/billing": "file:../../packages/hive-billing",
     "@hive/ud-schema": "file:../../packages/hive-ud-schema",
-    "@hive/storage": "file:../../packages/hive-storage"
+    "@hive/storage": "file:../../packages/hive-storage",
+    "openai": "^4.20.1",
+    "zod": "^3.22.4",
+    "lucide-react": "^0.292.0"
   },
   "devDependencies": {
     "@types/node": "^20",
