@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <header style={{ padding: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <a href="/" style={{ color: '#f8fafc', textDecoration: 'none', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.02em' }}>Hive Photo</a>
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <a href="/sign-in" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Authenticate</a>
+                <a href="?auth=true" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', textDecoration: 'none', cursor: 'pointer', fontWeight: 600 }}>Authenticate</a>
               </div>
             </header>
             <main>{children}</main>
