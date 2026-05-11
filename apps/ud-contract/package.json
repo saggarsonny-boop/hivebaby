@@ -17,7 +17,7 @@
     "stripe": "^15.5.0",
     "@hive/telemetry": "file:../../packages/hive-telemetry",
     "@hive/parser": "file:../../packages/hive-parser",
-    "@anthropic-ai/sdk": "^0.20.1",
+    "@anthropic-ai/sdk": "^0.32.1",
     "pdf-parse": "^1.1.1",
     "mammoth": "^1.8.0",
     "@hive/auth": "file:../../packages/hive-auth",
@@ -26,7 +26,8 @@
     "@hive/storage": "file:../../packages/hive-storage",
     "openai": "^4.20.1",
     "zod": "^3.22.4",
-    "lucide-react": "^0.292.0"
+    "lucide-react": "^0.292.0",
+    "@neondatabase/serverless": "^0.9.0"
   },
   "devDependencies": {
     "@types/node": "^20",

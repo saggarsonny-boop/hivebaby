@@ -10,12 +10,11 @@ apps.forEach(app => {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     
     if (!pkg.dependencies) pkg.dependencies = {};
-    pkg.dependencies['openai'] = '^4.20.1';
-    pkg.dependencies['zod'] = '^3.22.4';
-    pkg.dependencies['lucide-react'] = '^0.292.0';
+    pkg.dependencies['@anthropic-ai/sdk'] = '^0.32.1';
+    pkg.dependencies['@neondatabase/serverless'] = '^0.9.0';
     
     fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2));
-    console.log(`[+] Added deps to ${app}`);
+    console.log(`[+] Added missing anthropic/neon deps to ${app}`);
   }
 });
 

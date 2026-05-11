@@ -20,7 +20,9 @@
     "@hive/auth": "file:../../packages/hive-auth",
     "@hive/parser": "file:../../packages/hive-parser",
     "openai": "^4.20.1",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@neondatabase/serverless": "^0.9.0"
   },
   "devDependencies": {
     "@types/node": "^20",
