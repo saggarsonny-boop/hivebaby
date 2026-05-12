@@ -6,7 +6,7 @@ export default function HiveConfessionPage() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <div className="hive-watermark" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+    <div className="relative z-10" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
       
       <div style={{
         background: 'rgba(0, 0, 0, 0.6)',
