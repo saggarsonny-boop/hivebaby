@@ -1,0 +1,1 @@
+export const QUEEN_BEE_REGISTRY = { id: 'hive-kit', active: true, tier: 'PRO' };

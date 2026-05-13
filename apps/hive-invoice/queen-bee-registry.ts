@@ -1,0 +1,1 @@
+export const QUEEN_BEE_REGISTRY = { id: 'hive-invoice', active: true, tier: 'PRO' };

@@ -1,0 +1,1 @@
+export const QUEEN_BEE_REGISTRY = { id: 'hive-recipe', active: true, tier: 'PRO' };
