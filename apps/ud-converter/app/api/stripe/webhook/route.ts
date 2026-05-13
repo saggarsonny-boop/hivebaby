@@ -1,20 +1,50 @@
 import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import { clerkClient } from '@clerk/nextjs/server';
 
-// Official Stripe Webhook for Hive Engine Monetization
-// Handles $1/yr Trapdoors and $10/mo Pro Subscriptions
-export async function POST(req) {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16',
+});
+
+export async function POST(req: Request) {
+  const body = await req.text();
+  const signature = req.headers.get('Stripe-Signature') as string;
+
+  let event: Stripe.Event;
+
   try {
-    // TODO: Verify Stripe Signature
-    // const sig = req.headers.get('stripe-signature');
-    // const event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
-
-    // Simulated Webhook Handling
-    // if (event.type === 'checkout.session.completed') {
-    //   // Update User DB: hasPaid = true
-    // }
-
-    return NextResponse.json({ received: true });
-  } catch (err) {
-    return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch (error: any) {
+    console.error('[STRIPE_WEBHOOK_ERROR]', error.message);
+    return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
   }
+
+  const session = event.data.object as Stripe.Checkout.Session;
+
+  if (event.type === 'checkout.session.completed') {
+    const clerkUserId = session.metadata?.clerkUserId;
+
+    if (clerkUserId) {
+      // Update Clerk metadata to unlock Plus features
+      await clerkClient.users.updateUserMetadata(clerkUserId, {
+        publicMetadata: {
+          isPlusPaid: true,
+          stripeCustomerId: session.customer as string,
+        },
+      });
+      console.log(`[STRIPE] Successfully unlocked Plus for ${clerkUserId}`);
+    }
+  }
+
+  if (event.type === 'customer.subscription.deleted') {
+    // Handle cancellations (optional for Phase 1, but good practice)
+    const subscription = event.data.object as Stripe.Subscription;
+    // You would typically query Clerk by stripeCustomerId here to revoke access
+  }
+
+  return new NextResponse('OK', { status: 200 });
 }
