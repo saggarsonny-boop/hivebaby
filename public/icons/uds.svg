@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 96" role="img" aria-label="UDS — Universal Document sealed file">
   <!-- File body with top-right corner fold -->
-  <path d="M 6,4 H 50 L 68,22 V 82 Q 68,87 63,87 H 11 Q 6,87 6,82 Z" fill="#1e2d3d"/>
+  <path d="M 6,4 H 50 L 68,22 V 82 Q 68,87 63,87 H 11 Q 6,87 6,82 Z" fill="#1E3A8A"/>
   <!-- Corner fold — slightly lighter navy -->
-  <path d="M 50,4 L 68,22 H 50 Z" fill="#2d4459"/>
+  <path d="M 50,4 L 68,22 H 50 Z" fill="#1e40af"/>
   <!-- Corner fold crease in gold -->
   <line x1="50" y1="4" x2="68" y2="22" stroke="#c8960a" stroke-width="1.2" opacity="0.55"/>
   <!-- UDS in DM Mono bold, gold -->

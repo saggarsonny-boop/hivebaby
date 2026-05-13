@@ -4,5 +4,25 @@
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#D4AF37",
-  "start_url": "/dashboard"
+  "start_url": "/dashboard",
+  "file_handlers": [
+    {
+      "action": "/dashboard",
+      "accept": {
+        "application/uds": [".uds"]
+      },
+      "icons": [
+        { "src": "/icons/uds.svg", "sizes": "512x512", "type": "image/svg+xml" }
+      ]
+    },
+    {
+      "action": "/dashboard",
+      "accept": {
+        "application/udr": [".udr"]
+      },
+      "icons": [
+        { "src": "/icons/udr.svg", "sizes": "512x512", "type": "image/svg+xml" }
+      ]
+    }
+  ]
 }

@@ -1,1 +1,0 @@
-export const QUEEN_BEE_REGISTRY = { id: 'hive-nda', active: true, tier: 'PRO' };
