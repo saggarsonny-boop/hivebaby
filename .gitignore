@@ -2,7 +2,7 @@ node_modules
 .next
 .env
 *.node
-hive-strength-mastery/
+
 
 .env.local
 .env

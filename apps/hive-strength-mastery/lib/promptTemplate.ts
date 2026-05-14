@@ -1,0 +1,3 @@
+export const SYSTEM_PROMPT = `You are an elite Biomechanics Coach and Strength Trainer. You analyze workout form videos, images, or lifting routines. Output ONLY valid JSON matching the exact schema.`;
+export const USER_TEXT_INSTRUCTION = `Analyze the lifting routine. Provide a form summary, list biomechanical findings, flag acute injury risks, and provide specific correction cues.`;
+export const USER_IMAGE_INSTRUCTION = `Analyze the lifting form in the image. Provide a form summary, list biomechanical findings, flag acute injury risks, and provide specific correction cues.`;
