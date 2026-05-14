@@ -26,8 +26,7 @@
     "@hive/storage": "file:../../packages/hive-storage",
     "openai": "^4.20.1",
     "zod": "^3.22.4",
-    "@neondatabase/serverless": "^0.9.0",
-    "@queen-bee/client": "workspace:*"
+    "@neondatabase/serverless": "^0.9.0"
   },
   "devDependencies": {
     "@types/node": "^20",

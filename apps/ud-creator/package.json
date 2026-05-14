@@ -22,8 +22,7 @@
     "@hive/billing": "file:../../packages/hive-billing",
     "openai": "^4.20.1",
     "zod": "^3.22.4",
-    "@anthropic-ai/sdk": "^0.32.1",
-    "@queen-bee/client": "workspace:*"
+    "@anthropic-ai/sdk": "^0.32.1"
   },
   "devDependencies": {
     "@types/node": "^20",
