@@ -1,4 +1,18 @@
 (function() {
+  // --- HIVE TELEMETRY BEACON ---
+  try {
+    fetch('https://creator-console-i47ojkkh4-saggarsonny-3909s-projects.vercel.app/api/telemetry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        engine_id: window.location.hostname || 'unknown-engine',
+        session_id: 'session_' + Math.random().toString(36).substring(7),
+        stamp: 'gov_hive_authorized'
+      })
+    }).catch(() => {});
+  } catch(e) {}
+  // -----------------------------
+
   // Config
   const HIVE_HOST = 'https://plainscan2.hive.baby';
   const WIDGET_URL = `${HIVE_HOST}/embed`;

@@ -2,10 +2,14 @@
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function DashboardClient({ mockData, mockEngines, totalDau: initialTotalDau }: any) {
+export default function DashboardClient({ mockData, mockEngines, totalDau: initialTotalDau, mrr, revenue7d, geoStats, complianceStats }: any) {
   const [data, setData] = useState(mockData);
   const [engines, setEngines] = useState(mockEngines);
   const [totalDau, setTotalDau] = useState(initialTotalDau);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+  };
 
   useEffect(() => {
     // Poll the live stats endpoint every 3 seconds
@@ -50,14 +54,35 @@ export default function DashboardClient({ mockData, mockEngines, totalDau: initi
           <div className="stat-change">+5% from last month</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">MRR (Stripe)</div>
-          <div className="stat-value">$142,500</div>
-          <div className="stat-change">+12% from last month</div>
+          <div className="stat-label">MRR (STRIPE)</div>
+          <div className="stat-value">{formatCurrency(mrr)}</div>
+          <div className="stat-change" style={{ color: '#10b981' }}>Live Sync Active</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Global Conversion Rate</div>
-          <div className="stat-value">3.4%</div>
-          <div className="stat-change">+0.2% from last week</div>
+          <div className="stat-label">REVENUE (7d)</div>
+          <div className="stat-value">{formatCurrency(revenue7d)}</div>
+          <div className="stat-change" style={{ color: '#10b981' }}>Live Sync Active</div>
+        </div>
+      </div>
+
+      <div className="grid-stats" style={{ marginTop: '1rem' }}>
+        <div className="stat-card" style={{ flex: 1 }}>
+          <div className="stat-label">GOVERNANCE INTEGRITY</div>
+          <div className="stat-value" style={{ color: complianceStats?.invalid > 0 ? '#ef4444' : '#10b981' }}>
+            {complianceStats ? `${((complianceStats.valid / (complianceStats.valid + complianceStats.invalid || 1)) * 100).toFixed(1)}%` : '100%'}
+          </div>
+          <div className="stat-change">Queen Bee Validated Pings</div>
+        </div>
+        <div className="stat-card" style={{ flex: 2 }}>
+          <div className="stat-label">TOP DEMOGRAPHICS (GEO)</div>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+            {geoStats && geoStats.length > 0 ? geoStats.map((geo: any) => (
+              <div key={geo.geo_country} style={{ background: '#262626', padding: '4px 12px', borderRadius: '4px', fontSize: '14px', color: '#e5e5e5' }}>
+                <span style={{ color: 'var(--accent-gold)', marginRight: '8px' }}>{geo.geo_country}</span>
+                {geo.dau}
+              </div>
+            )) : <div style={{ color: '#737373', fontSize: '14px' }}>Awaiting Geo Data...</div>}
+          </div>
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+import CrossPollinationModal from '@/components/CrossPollinationModal';
 import HiveOpsWidget from '@/components/HiveOpsWidget';
 import './globals.css';
 import type { Metadata } from "next";
@@ -27,10 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         
         <footer style={{ textAlign: 'center', padding: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', color: '#94a3b8', fontSize: '0.875rem', position: 'relative', zIndex: 10, marginTop: 'auto' }}>
-          <div>Made with ❤️ by <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>the Hive</span></div>
-          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>This is a Hive engine. We collect zero personal data. No tracking. No ads.</div>
+          <div>Made with ♥ in <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>the Hive</span>.</div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>This is a Hive engine. We collect zero personal data. No login, no account, no tracking.</div>
         </footer>
         <HiveOpsWidget />
+      
+        <CrossPollinationModal sourceEngine="ud-splitter" targetEngine="UD Converter" targetUrl="https://converter.universaldocument.org" description="Need to convert or unlock complex documents? Try the UD Converter." />
       </body>
       </html>
     </ClerkProvider>
