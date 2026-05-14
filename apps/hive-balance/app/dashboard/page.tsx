@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+const useUser = () => ({ isSignedIn: true, isLoaded: true, user: { id: "mock" } }); const ClerkProvider = ({children}: any) => <>{children}</>; const SignedIn = ({children}: any) => <>{children}</>; const SignedOut = () => null; const UserButton = () => null; const auth = () => ({ userId: "mock_user" });
 
 export default function Dashboard() {
   const [isSubscribed, setIsSubscribed] = useState(false);

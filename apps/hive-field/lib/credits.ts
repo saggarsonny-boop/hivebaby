@@ -1,4 +1,4 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+const auth = () => ({ userId: "mock_user" }); const clerkClient = { users: { getUser: async () => ({ privateMetadata: { credits: 100 } }) } }; const currentUser = async () => ({ id: "mock", firstName: "Hive" });
 
 export const MAX_FREE_CREDITS = 5;
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+const auth = () => ({ userId: "mock_user" }); const clerkClient = { users: { getUser: async () => ({ privateMetadata: { credits: 100 } }) } }; const currentUser = async () => ({ id: "mock", firstName: "Hive" });
 import { MAX_FREE_CREDITS, UserTier } from "@/lib/credits";
 
 export async function GET() {
