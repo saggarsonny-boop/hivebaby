@@ -1,4 +1,6 @@
 "use client";
+import HiveDashboard from "../components/HiveDashboard";
+import CrossPollinationModal from "../components/CrossPollinationModal";
 import { useState } from "react";
 import { useHiveTelemetry } from "@hive/telemetry";
 

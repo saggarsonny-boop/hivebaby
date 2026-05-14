@@ -23,7 +23,8 @@
     "pdf-parse": "^1.1.1",
     "@hive/telemetry": "file:../../packages/hive-telemetry",
     "@hive/auth": "file:../../packages/hive-auth",
-    "@hive/parser": "file:../../packages/hive-parser"
+    "@hive/parser": "file:../../packages/hive-parser",
+    "@hive/queen-bee": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20",

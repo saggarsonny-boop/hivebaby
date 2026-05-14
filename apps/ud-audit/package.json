@@ -23,7 +23,8 @@
     "@hive/auth": "file:../../packages/hive-auth",
     "@hive/parser": "file:../../packages/hive-parser",
     "openai": "^4.20.1",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "@hive/queen-bee": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20",

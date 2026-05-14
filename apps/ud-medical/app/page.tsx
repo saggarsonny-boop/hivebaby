@@ -1,4 +1,6 @@
 "use client";
+import HiveDashboard from "../components/HiveDashboard";
+import CrossPollinationModal from "../components/CrossPollinationModal";
 import { useState } from "react";
 import { useHiveTelemetry } from "@hive/telemetry";
 
@@ -66,6 +68,14 @@ export default function MedicalEngine() {
             </>
           )}
         </div>
+      
+        <HiveDashboard engineName="MEDICAL" creditsUsed={2} maxCredits={5} />
+        <CrossPollinationModal 
+          sourceEngine="ud-medical" 
+          targetEngine="Hive Plainscan" 
+          targetUrl="https://plainscan.hive.baby" 
+          description="Need a detailed medical explanation? Try Hive Plainscan." 
+        />
       </main>
     </div>
   );

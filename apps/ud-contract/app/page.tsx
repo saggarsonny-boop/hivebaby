@@ -1,4 +1,6 @@
 "use client";
+import HiveDashboard from "../components/HiveDashboard";
+import CrossPollinationModal from "../components/CrossPollinationModal";
 import { useState } from "react";
 import { useHiveTelemetry } from "@hive/telemetry";
 
@@ -96,6 +98,14 @@ export default function ContractEngine() {
             </>
           )}
         </div>
+      
+        <HiveDashboard engineName="CONTRACT" creditsUsed={2} maxCredits={5} />
+        <CrossPollinationModal 
+          sourceEngine="ud-contract" 
+          targetEngine="UD Signature" 
+          targetUrl="https://signer.hive.baby" 
+          description="Need to cryptographically sign this document? Try UD Signature." 
+        />
       </main>
     </div>
   );
