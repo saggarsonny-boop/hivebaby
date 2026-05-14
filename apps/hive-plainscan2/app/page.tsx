@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 
-export default function Hive PlainScanPage() {
+export default function HivePlainScanPage() {
   const [dragActive, setDragActive] = useState(false);
   const [uploaded, setUploaded] = useState(false);
 

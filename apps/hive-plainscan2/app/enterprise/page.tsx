@@ -1,6 +1,3 @@
-﻿import { B2BTierLanding } from "@/components/B2BTierLanding";
-import { tierById } from "@/lib/tiers";
-
 export const metadata = {
   title: "HivePlainScan Enterprise â€” Coming Q2 2026 â€” Join Waitlist",
   description:
@@ -8,6 +5,10 @@ export const metadata = {
 };
 
 export default function EnterprisePage() {
-  const tier = tierById("enterprise")!;
-  return <B2BTierLanding tier={tier} />;
+  return (
+    <div style={{ padding: '4rem', textAlign: 'center' }}>
+      <h1>Enterprise Tier - Coming Soon</h1>
+      <p>Join the waitlist for updates.</p>
+    </div>
+  );
 }
