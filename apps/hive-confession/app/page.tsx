@@ -22,8 +22,8 @@ export default function HiveConfessionPage() {
       }}>
         
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <h1 style={{ fontSize: '3rem', fontWeight: 300, color: '#f8fafc', letterSpacing: '0.1em', marginBottom: '1rem' }}>
-            H I V E C O N F E S S I O N
+          <h1 style={{ fontSize: '3rem', fontWeight: 300, color: '#f8fafc', letterSpacing: '0.2em', marginBottom: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            HIVECONFESSION
           </h1>
           <p style={{ color: '#64748b', fontSize: '1.1rem', fontStyle: 'italic' }}>
             Speak your absolute truth into the void. Cryptographically shredded. Zero retention.
