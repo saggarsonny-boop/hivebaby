@@ -1,3 +1,4 @@
+import HiveOpsWidget from '@/components/HiveOpsWidget';
 import './globals.css';
 import type { Metadata } from "next";
 
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div>Made with ❤️ by <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>the Hive</span></div>
           <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>This is a Hive engine. We collect zero personal data. No tracking. No ads.</div>
         </footer>
+        <HiveOpsWidget />
       </body>
     </html>
   );

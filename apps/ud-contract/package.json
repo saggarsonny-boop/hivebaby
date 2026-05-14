@@ -27,7 +27,7 @@
     "openai": "^4.20.1",
     "zod": "^3.22.4",
     "@neondatabase/serverless": "^0.9.0",
-    "@hive/queen-bee": "workspace:*"
+    "@queen-bee/client": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20",

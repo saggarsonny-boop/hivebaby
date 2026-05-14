@@ -23,7 +23,7 @@
     "openai": "^4.20.1",
     "zod": "^3.22.4",
     "@anthropic-ai/sdk": "^0.32.1",
-    "@hive/queen-bee": "workspace:*"
+    "@queen-bee/client": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20",
