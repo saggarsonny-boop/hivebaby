@@ -6,6 +6,26 @@ export default function HiveOpsWidget() {
     try {
       window.localStorage.setItem('governance_stamp', new Date().toISOString());
       console.log('[Queen Bee] Governance Active');
+
+      try {
+        let sessionId = window.localStorage.getItem('hive_session_id');
+        if (!sessionId) {
+          sessionId = crypto.randomUUID();
+          window.localStorage.setItem('hive_session_id', sessionId);
+        }
+        const engineId = window.location.hostname.split('.')[0] || 'hive-petmicrobiome';
+        fetch('https://creator-console.vercel.app/api/telemetry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            engine_id: engineId,
+            session_id: sessionId,
+            event_type: 'page_view',
+            stamp: new Date().toISOString()
+          })
+        }).catch(() => {});
+      } catch(e) {}
+
     } catch (e) {}
   }, []);
 
