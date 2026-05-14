@@ -1,5 +1,44 @@
 (function() {
-  // --- HIVE TELEMETRY BEACON ---
+  
+  // --- HIVE EVENT TRACKING ---
+  try {
+    // 1. Error Log Aggregation
+    window.addEventListener('error', function(event) {
+      fetch('https://creator-console-i47ojkkh4-saggarsonny-3909s-projects.vercel.app/api/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          engine_id: window.location.hostname || 'unknown-engine',
+          session_id: 'session_' + Math.random().toString(36).substring(7),
+          event_type: 'error',
+          governance_stamp: 'gov_hive_authorized'
+        })
+      }).catch(() => {});
+    });
+
+    // 2. Conversion Tracking
+    document.addEventListener('click', function(e) {
+      const target = e.target;
+      if (target && target.tagName && target.tagName.toLowerCase() === 'a') {
+        const text = target.innerText.toLowerCase();
+        const href = target.getAttribute('href') || '';
+        if (text.includes('buy') || text.includes('upgrade') || text.includes('pro') || href.includes('checkout')) {
+          fetch('https://creator-console-i47ojkkh4-saggarsonny-3909s-projects.vercel.app/api/telemetry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              engine_id: window.location.hostname || 'unknown-engine',
+              session_id: 'session_' + Math.random().toString(36).substring(7),
+              event_type: 'conversion',
+              governance_stamp: 'gov_hive_authorized'
+            })
+          }).catch(() => {});
+        }
+      }
+    });
+  } catch(e) {}
+  // -----------------------------
+\n  // --- HIVE TELEMETRY BEACON ---
   try {
     fetch('https://creator-console-i47ojkkh4-saggarsonny-3909s-projects.vercel.app/api/telemetry', {
       method: 'POST',
