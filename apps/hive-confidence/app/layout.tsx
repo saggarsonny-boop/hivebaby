@@ -1,7 +1,7 @@
 import HiveOpsWidget from '@/components/HiveOpsWidget';
 import './globals.css';
 import type { Metadata } from "next";
-import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,8 +18,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <header className="navbar">
               <a href="/" className="logo">Hive Confidence</a>
               <div>
-                <SignedIn><UserButton afterSignOutUrl="/"/></SignedIn>
-                <SignedOut><a href="/sign-in" className="btn">Authenticate</a></SignedOut>
+                
+                
               </div>
             </header>
             <main>{children}</main>
