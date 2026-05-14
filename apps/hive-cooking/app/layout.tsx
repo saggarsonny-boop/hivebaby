@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <>
       <html lang="en">
         <body>
           <div className="container">
@@ -31,6 +31,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HiveOpsWidget />
       </body>
       </html>
-    </ClerkProvider>
+    </>
   );
 }
