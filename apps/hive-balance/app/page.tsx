@@ -1,15 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+
+
 
 export default function Home() {
   const { isSignedIn, isLoaded } = { isSignedIn: true, isLoaded: true };
-  const router = useRouter();
+  
 
-  useEffect(() => {
-    if (isLoaded && isSignedIn) router.push("/dashboard");
-  }, [isLoaded, isSignedIn, router]);
+  
 
   return (
     <div style={{ maxWidth: '800px', margin: '4rem auto' }}>
@@ -22,7 +20,7 @@ export default function Home() {
           A Sovereign-Lite tactical engine specifically engineered to parse, analyze, and extract strategic leverage from balance documentation.
         </p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-          <a href="/sign-up" className="btn btn-solid" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+          <a href="/dashboard" className="btn btn-solid" style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
             Deploy Engine
           </a>
         </div>

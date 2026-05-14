@@ -22,25 +22,7 @@ export default function Dashboard() {
     };
   }, []);
 
-  if (!isSubscribed) {
-    return (
-      <div style={{ maxWidth: '600px', margin: '4rem auto', textAlign: 'center' }}>
-        <div className="card">
-          <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--hive-gold)' }}>Authentication Required</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
-            This Sovereign-Lite tactical engine is restricted to Enterprise subscribers.
-          </p>
-          <div style={{ padding: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginBottom: '2rem' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700 }}>$699 <span style={{ fontSize: '1rem', color: '#64748b' }}>/ month</span></div>
-          </div>
-          <button className="btn btn-solid" style={{ width: '100%', padding: '1rem' }} onClick={() => {
-            alert("Routing to Stripe Checkout... (Simulated success)");
-            setIsSubscribed(true);
-          }}>Authorize Payment & Deploy</button>
-        </div>
-      </div>
-    );
-  }
+  
 
   return (
     <div className="card">
