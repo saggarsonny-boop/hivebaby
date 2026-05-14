@@ -1,0 +1,14 @@
+
+> hive-plainscan@0.1.0 dev
+> next dev -p 3107
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3107
+
+ ✓ Starting...
+ ✓ Ready in 1868ms
+ ✓ Compiled /middleware in 448ms (72 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 2.1s (513 modules)
+ GET / 200 in 2406ms
+ ✓ Compiled in 330ms (264 modules)
