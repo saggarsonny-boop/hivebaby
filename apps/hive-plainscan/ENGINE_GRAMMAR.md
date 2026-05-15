@@ -8,7 +8,7 @@ domain_aliases:
 repo: saggarsonny-boop/hivebaby:apps/hive-plainscan
 owner: saggarsonny-boop
 
-version: 0.2.0
+version: 0.2.1
 status: building
 tier: 1
 schema: radiology-report-explanation
@@ -17,9 +17,10 @@ premium: false
 
 governance: QueenBee.MasterGrappler@pending
 safety: enabled
-multilingual: pending
+multilingual: enabled
 tone: calm, plain-language, sixth-grade reading level
 cost_profile: zero_marginal
+engine_class: nextjs
 
 api_models:
   - role: explain
@@ -50,7 +51,7 @@ viral_loop_targets:
   - share_card
   - pr_pickup
 production_state: not_listed
-last_audit_at: 2026-05-09
+last_audit_at: 2026-05-15
 
 health_check: /api/health
 
@@ -116,10 +117,13 @@ Layout-level footer (every page):
 ## Phase Plan
 
 - **Phase 1 (shipped):** Anthropic-powered explanation, ParseError handling, /api/explain text + image branches.
-- **Phase 2 (this PR):** PHI scrubbing, rule-based fallback, SVG diagrams, Replicate FLUX illustration pipeline, DOCX support, cost-cap circuit breaker, sample report, Hive footer signature, service worker registration, manifest.json, /api/health canonical shape.
-- **Phase 3 (next):** Locale catalogue expansion (es, fr, ar, hi, zh, pt — currently English only); seven-locale floor per Constitution §C2.
-- **Phase 4:** Wire Queen Bee `/api/govern` consumption per `planned_qb_consumption` block above. Until then, governance flag is `QueenBee.MasterGrappler@pending`.
-- **Phase 5:** DNS provisioning for `plainscan.hive.baby` (currently no DNS record) — flips status to `live`.
+- **Phase 2 (shipped):** PHI scrubbing, rule-based fallback, SVG diagrams, Replicate FLUX illustration pipeline, DOCX support, cost-cap circuit breaker, sample report, Hive footer signature, service worker registration, manifest.json, /api/health canonical shape.
+- **Phase 3 (shipped 2026-05-15):** Locale catalogue expansion (es, fr, ar, hi, zh, pt) — all 7 canonical Hive locales present in `locales/`. H05 override resolved; `multilingual` flag flipped pending → enabled.
+- **Phase 4 (in WARN until 2026-06-08):** Canonical onboarding stack wiring — `<HiveInstallHint />`, `<HiveFirstVisitExplainer />`, `HiveHeader`/`HiveFooter` wrappers around `@hive/onboarding`, canonical SEO `layout.tsx`, favicon set, OG image, logo asset port. Tracked via overrides H08/H11/H12/H13/H15.
+- **Phase 5 (shipped 2026-05-15):** DNS provisioning for `plainscan.hive.baby` + `scan.hive.baby` — Cloudflare CNAMEs upserted via `.github/workflows/wire-plainscan-dns.yml`. H21 override resolved (planet entry already at `status: 'live'`).
+- **Phase 6 (deferred):** Wire Queen Bee `/api/govern` consumption per `planned_qb_consumption` block above. Until then, governance flag remains `QueenBee.MasterGrappler@pending`. No engine in the fleet calls QB in production yet (per CLAUDE.md B18 / Constitution §VII); HivePlainScan adopts when the wiring pattern is finalised.
+
+`production_state` flips `not_listed → listed` and `status` flips `building → live` when Phase 4 ships (all WARN overrides resolved). Target: 2026-06-08 (override expiry).
 
 ## Out of Scope
 
@@ -133,59 +137,49 @@ Layout-level footer (every page):
 - Vercel project: `hive-plainscan` (root `apps/hive-plainscan`). Auto-deploy on push to `main`.
 - Required env vars in production: `ANTHROPIC_API_KEY`, `REPLICATE_API_TOKEN` (optional — graceful degrade when absent), `NEXT_PUBLIC_APP_URL`.
 - Vercel deployment protection: **off** (per C10).
-- DNS: `plainscan.hive.baby` not yet wired. Provision via Cloudflare CNAME → `cname.vercel-dns.com` per C11. Tracked in hivebaby#127.
+- DNS (shipped 2026-05-15): `plainscan.hive.baby` → `cname.vercel-dns.com`, alias `scan.hive.baby` → same. Wired via `.github/workflows/wire-plainscan-dns.yml` (since archived after one-shot run). Cloudflare zone `bcb5522993ecf90a4f1d5dfe101e5a5c`.
 
 ## Hive-Ops Overrides
 
+H05 and H21 resolved 2026-05-15 (locales shipped; planet entry already live).
+H08, H11, H12, H13, H15 remain in WARN covering Phase 4 onboarding-stack work
+— extended target: ship before 2026-06-08 expiry.
+
 ```yaml
 overrides:
-  - rule: H05
-    mode: warn
-    reason: "Locale catalog seeded with English only this PR; remaining six (es, fr, ar, hi, zh, pt) generated in follow-up PR per Phase 3."
-    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
-    reviewer: Sonny
-    date: 2026-05-09
-    warn_until: 2026-06-08
   - rule: H08
     mode: warn
-    reason: "OG image not yet generated; the engine has SVG fallback diagrams for in-product imagery, OG image is a post-DNS asset."
+    reason: "OG image not yet generated; engine has SVG fallback diagrams for in-product imagery. Asset generated as part of Phase 4 onboarding-stack work."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
   - rule: H11
     mode: warn
-    reason: "HiveInstallHint not yet wired; canonical onboarding stack is Phase 3 (with locales)."
+    reason: "HiveInstallHint not yet wired; canonical onboarding stack lands in Phase 4."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
   - rule: H12
     mode: warn
-    reason: "HiveFirstVisitExplainer not yet wired; Phase 3."
+    reason: "HiveFirstVisitExplainer not yet wired; Phase 4."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
   - rule: H13
     mode: warn
-    reason: "public/hive-logo-full.png not yet copied from @hive/onboarding; asset port is part of Phase 3 onboarding stack work."
+    reason: "public/hive-logo-full.png not yet copied from @hive/onboarding; asset port is part of Phase 4 onboarding stack work."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
   - rule: H15
     mode: warn
-    reason: "Favicon binaries not generated this PR — manifest.json declares them but actual PNG files are a follow-up asset commit."
+    reason: "Favicon binaries not generated this PR — manifest.json declares them but actual PNG files are a Phase 4 asset commit."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
-    warn_until: 2026-06-08
-  - rule: H21
-    mode: warn
-    reason: "Engine entry in hivebaby planet ENGINES array pending DNS provisioning; engine is currently DORMANT in inventory."
-    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
-    reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
 ```
