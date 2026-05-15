@@ -1,0 +1,133 @@
+name: HiveBuyStuff — Deploy + Migrate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'hive-hivebuystuff/**'
+      - '.github/workflows/hivebuystuff-deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Resolve Vercel token
+        env:
+          VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          if [ -z "$TOKEN" ]; then echo "ERROR: No Vercel token"; exit 1; fi
+          echo "VERCEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+          echo "Token length: ${#TOKEN}"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel project settings
+        working-directory: hive-hivebuystuff
+        run: |
+          # Link to or create the project
+          vercel pull --yes --environment=production \
+            --token "$VERCEL_TOKEN" 2>&1 || true
+          echo "Vercel project config:"
+          cat .vercel/project.json 2>/dev/null || echo 'No project.json yet'
+
+      - name: Build
+        working-directory: hive-hivebuystuff
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          vercel build --prod --token "$VERCEL_TOKEN" 2>&1
+
+      - name: Deploy to production
+        working-directory: hive-hivebuystuff
+        id: deploy
+        run: |
+          OUTPUT=$(vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN" 2>&1)
+          echo "$OUTPUT"
+          DEPLOY_URL=$(echo "$OUTPUT" | grep -Eo 'https://[a-z0-9._-]+\.vercel\.app' | tail -1)
+          echo "DEPLOY_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
+          echo "Deploy URL: $DEPLOY_URL"
+
+      - name: Add env vars to Vercel project (ensure they persist)
+        run: |
+          PROJECT_ID=$(cat hive-hivebuystuff/.vercel/project.json 2>/dev/null | jq -r '.projectId // empty')
+          if [ -z "$PROJECT_ID" ]; then
+            echo "No project ID found — skipping env var step"
+            exit 0
+          fi
+          echo "Project ID: $PROJECT_ID"
+
+          set_env() {
+            local KEY="$1" VALUE="$2"
+            STATUS=$(curl -s -o /tmp/e.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"$KEY\",\"value\":$(echo "$VALUE" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+            if [ "$STATUS" = "409" ]; then
+              ID=$(cat /tmp/e.json | jq -r '.error.envVarId // empty')
+              [ -n "$ID" ] && curl -s -X PATCH \
+                "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ID" \
+                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"value\":$(echo "$VALUE" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" > /dev/null
+              echo "  $KEY: updated"
+            else
+              echo "  $KEY: HTTP $STATUS"
+            fi
+          }
+
+          set_env "ANTHROPIC_API_KEY" "${{ secrets.ANTHROPIC_API_KEY }}"
+          set_env "DATABASE_URL" "${{ secrets.DATABASE_URL }}"
+
+      - name: Run DB migration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Try the deployment URL first, then custom domain
+          URLS=("$DEPLOY_URL" "https://hivebuystuff.hive.baby" "https://buy.hive.baby" "https://hive-hivebuystuff.vercel.app")
+          # Remove empty
+          URLS=($(printf '%s\n' "${URLS[@]}" | grep -v '^$'))
+
+          SUCCESS=false
+          for URL in "${URLS[@]}"; do
+            echo "→ POST $URL/api/hbs/migrate"
+            for attempt in 1 2 3; do
+              HTTP=$(curl -s -o /tmp/mg.json -w "%{http_code}" -X POST "$URL/api/hbs/migrate" --max-time 20)
+              BODY=$(cat /tmp/mg.json)
+              echo "  [$attempt] HTTP $HTTP: $BODY"
+              if [ "$HTTP" = "200" ]; then
+                SUCCESS=true
+                echo "✓ Migration complete via $URL"
+                break 2
+              fi
+              sleep 8
+            done
+          done
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo "✗ Migration failed on all URLs"
+            exit 1
+          fi
+
+      - name: Health check
+        run: |
+          for URL in "$DEPLOY_URL" "https://hivebuystuff.hive.baby"; do
+            echo "→ GET $URL/api/health"
+            R=$(curl -s "$URL/api/health" --max-time 10 2>&1)
+            echo "  $R"
+          done
+          echo "✓ HiveBuyStuff deployment complete"
