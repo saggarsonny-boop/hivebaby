@@ -95,6 +95,8 @@ jobs:
           VERCEL_TOKEN: ${{ env.VERCEL_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ADMIN_PASSWORD: ${{ inputs.admin_password }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
           PROJECT="gary-gansson"
 
@@ -111,6 +113,8 @@ jobs:
           set_env "DATABASE_URL" "$DATABASE_URL"
           set_env "ADMIN_PASSWORD" "$ADMIN_PASSWORD"
           set_env "NEXT_PUBLIC_SITE_URL" "https://gary.hive.baby"
+          set_env "ANTHROPIC_API_KEY" "$ANTHROPIC_API_KEY"
+          set_env "RESEND_API_KEY" "$RESEND_API_KEY"
 
       # ── Step 5: Add custom domain ────────────────────────────────────────
       - name: Add custom domain to Vercel

@@ -73,6 +73,7 @@ jobs:
           check_url "aesthetic.hive.baby" "https://aesthetic.hive.baby"
           # API
           check_url "HiveMoon API"        "https://hivemoon.hive.baby/api/moon"
+          check_url "GaryGansson"         "https://gary.hive.baby/api/health"
 
           # API smoke: honeypot -> must NOT be 500
           S=$(curl -s -o /tmp/rb.txt -w "%{http_code}" -X POST "https://test.hive.baby/api/apply" \

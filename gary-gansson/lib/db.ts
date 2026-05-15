@@ -42,4 +42,8 @@ export async function ensureTables() {
       response_json JSONB DEFAULT '{}'::jsonb
     )
   `
+
+  await sql`
+    ALTER TABLE episodes ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft'
+  `
 }

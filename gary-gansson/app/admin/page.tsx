@@ -20,6 +20,7 @@ interface Episode {
   video_url: string | null
   published_at: string | null
   created_at: string
+  status: 'draft' | 'approved' | 'audio_ready' | 'video_ready' | 'published'
 }
 
 export default function AdminPage() {
@@ -30,6 +31,19 @@ export default function AdminPage() {
   const [episodes, setEpisodes] = useState<Episode[]>([])
   const [tab, setTab] = useState<'submissions' | 'episodes'>('submissions')
   const [loading, setLoading] = useState(false)
+  const [storedPw, setStoredPw] = useState('')
+  const [generating, setGenerating] = useState<string | null>(null)
+  const [expandedScript, setExpandedScript] = useState<number | null>(null)
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('gary_admin_pw')
+    if (saved) { setStoredPw(saved); setAuthed(true); loadDataWithPw(saved) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function authHeaders(pw: string) {
+    return { 'Authorization': `Bearer ${pw}`, 'Content-Type': 'application/json' }
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -40,28 +54,79 @@ export default function AdminPage() {
       body: JSON.stringify({ password }),
     })
     if (res.ok) {
+      sessionStorage.setItem('gary_admin_pw', password)
+      setStoredPw(password)
       setAuthed(true)
-      loadData()
+      loadDataWithPw(password)
     } else {
       setAuthError('Incorrect password')
     }
   }
 
-  async function loadData() {
+  async function loadDataWithPw(pw: string) {
     setLoading(true)
     const [subRes, epRes] = await Promise.all([
-      fetch('/api/admin/submissions'),
-      fetch('/api/admin/episodes'),
+      fetch('/api/admin/submissions', { headers: authHeaders(pw) }),
+      fetch('/api/admin/episodes', { headers: authHeaders(pw) }),
     ])
     if (subRes.ok) setSubmissions(await subRes.json())
     if (epRes.ok) setEpisodes(await epRes.json())
     setLoading(false)
   }
 
+  async function loadData() {
+    loadDataWithPw(storedPw)
+  }
+
+  async function generateScript() {
+    setGenerating('script')
+    const res = await fetch('/api/generate-script', { method: 'POST', headers: authHeaders(storedPw) })
+    setGenerating(null)
+    if (res.ok) { loadDataWithPw(storedPw); setTab('episodes') }
+    else { const e = await res.json(); alert(`Script error: ${e.error}`) }
+  }
+
+  async function approveEpisode(id: number) {
+    await fetch('/api/admin/episodes/approve', { method: 'POST', headers: authHeaders(storedPw), body: JSON.stringify({ episode_id: id }) })
+    setEpisodes(prev => prev.map(e => e.id === id ? { ...e, status: 'approved' } : e))
+  }
+
+  async function generateAudio(id: number) {
+    setGenerating(`audio-${id}`)
+    const res = await fetch('/api/generate-audio', { method: 'POST', headers: authHeaders(storedPw), body: JSON.stringify({ episode_id: id }) })
+    setGenerating(null)
+    if (res.ok) loadDataWithPw(storedPw)
+    else { const e = await res.json(); alert(`Audio error: ${e.error}`) }
+  }
+
+  async function generateVideo(id: number) {
+    setGenerating(`video-${id}`)
+    const res = await fetch('/api/generate-video', { method: 'POST', headers: authHeaders(storedPw), body: JSON.stringify({ episode_id: id }) })
+    setGenerating(null)
+    if (res.ok) loadDataWithPw(storedPw)
+    else { const e = await res.json(); alert(`Video error: ${e.error}`) }
+  }
+
+  async function publishEpisode(id: number, platform: string) {
+    setGenerating(`publish-${id}-${platform}`)
+    const res = await fetch('/api/publish', { method: 'POST', headers: authHeaders(storedPw), body: JSON.stringify({ episode_id: id, platform }) })
+    setGenerating(null)
+    if (res.ok) loadDataWithPw(storedPw)
+    else { const e = await res.json(); alert(`Publish error: ${e.error}`) }
+  }
+
+  const STATUS_COLORS: Record<string, string> = {
+    draft: 'bg-white/10 text-white/40',
+    approved: 'bg-teal-900/40 text-teal-300',
+    audio_ready: 'bg-blue-900/40 text-blue-300',
+    video_ready: 'bg-purple-900/40 text-purple-300',
+    published: 'bg-gold-500/20 text-yellow-300',
+  }
+
   async function toggleUsed(id: number, used: boolean) {
     await fetch('/api/admin/submissions', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(storedPw),
       body: JSON.stringify({ id, used: !used }),
     })
     setSubmissions(prev => prev.map(s => s.id === id ? { ...s, used: !used } : s))
@@ -167,33 +232,112 @@ export default function AdminPage() {
 
       {/* Episodes */}
       {tab === 'episodes' && !loading && (
-        <div className="space-y-3">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-white/40 text-sm">{episodes.length} episode{episodes.length !== 1 ? 's' : ''}</p>
+            <button
+              onClick={generateScript}
+              disabled={generating === 'script'}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition bg-teal-600 hover:bg-teal-500 disabled:opacity-40 text-white"
+            >
+              {generating === 'script' ? 'Writing script…' : '+ Generate New Episode'}
+            </button>
+          </div>
+
           {episodes.map(ep => (
-            <div key={ep.id} className="border border-white/15 bg-white/5 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium text-white">{ep.title}</h3>
-                <span className="text-white/30 text-xs">
-                  {new Date(ep.created_at).toLocaleDateString('en-GB')}
-                </span>
+            <div key={ep.id} className="border border-white/15 bg-white/5 rounded-xl p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-medium text-white text-sm">{ep.title}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[ep.status] ?? 'bg-white/10 text-white/40'}`}>
+                      {ep.status}
+                    </span>
+                    <span className="text-white/25 text-xs">{new Date(ep.created_at).toLocaleDateString('en-GB')}</span>
+                  </div>
+                </div>
+                <span className="text-white/20 text-xs shrink-0">#{ep.id}</span>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                {ep.audio_url && (
-                  <audio controls src={ep.audio_url} className="h-8 max-w-full" />
+
+              {/* Script preview */}
+              {ep.script && (
+                <div>
+                  <button
+                    onClick={() => setExpandedScript(expandedScript === ep.id ? null : ep.id)}
+                    className="text-teal-400 text-xs hover:text-teal-300"
+                  >
+                    {expandedScript === ep.id ? 'Hide script ↑' : 'Preview script ↓'}
+                  </button>
+                  {expandedScript === ep.id && (
+                    <p className="text-white/60 text-xs mt-2 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto border border-white/10 rounded-lg p-3 bg-black/20">
+                      {ep.script}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Audio player */}
+              {ep.audio_url && (
+                <audio controls src={ep.audio_url} className="w-full h-8" />
+              )}
+
+              {/* Video preview */}
+              {ep.video_url && (
+                <video controls src={ep.video_url} className="w-full max-h-40 rounded-lg bg-black" />
+              )}
+
+              {/* Pipeline actions */}
+              <div className="flex gap-2 flex-wrap pt-1">
+                {ep.status === 'draft' && (
+                  <button
+                    onClick={() => approveEpisode(ep.id)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600/30 text-teal-300 hover:bg-teal-600/50 transition"
+                  >
+                    Approve script
+                  </button>
                 )}
-                {ep.video_url && (
-                  <a href={ep.video_url} target="_blank" rel="noopener noreferrer"
-                    className="text-teal-400 text-xs hover:underline">
-                    Preview video ↗
-                  </a>
+                {ep.status === 'approved' && (
+                  <button
+                    onClick={() => generateAudio(ep.id)}
+                    disabled={generating === `audio-${ep.id}`}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600/30 text-blue-300 hover:bg-blue-600/50 disabled:opacity-40 transition"
+                  >
+                    {generating === `audio-${ep.id}` ? 'Generating audio…' : 'Generate audio'}
+                  </button>
+                )}
+                {ep.status === 'audio_ready' && (
+                  <button
+                    onClick={() => generateVideo(ep.id)}
+                    disabled={generating === `video-${ep.id}`}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600/30 text-purple-300 hover:bg-purple-600/50 disabled:opacity-40 transition"
+                  >
+                    {generating === `video-${ep.id}` ? 'Generating video…' : 'Generate video'}
+                  </button>
+                )}
+                {ep.status === 'video_ready' && (
+                  <div className="flex gap-2 flex-wrap">
+                    {['youtube', 'tiktok', 'instagram', 'reddit', 'discord'].map(p => (
+                      <button
+                        key={p}
+                        onClick={() => publishEpisode(ep.id, p)}
+                        disabled={!!generating?.startsWith(`publish-${ep.id}`)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 text-white/60 hover:bg-white/15 disabled:opacity-40 transition capitalize"
+                      >
+                        {generating === `publish-${ep.id}-${p}` ? `Publishing…` : `→ ${p}`}
+                      </button>
+                    ))}
+                  </div>
                 )}
                 {ep.published_at && (
-                  <span className="text-gold-400 text-xs">Published {new Date(ep.published_at).toLocaleDateString('en-GB')}</span>
+                  <span className="text-yellow-400 text-xs self-center">
+                    Published {new Date(ep.published_at).toLocaleDateString('en-GB')}
+                  </span>
                 )}
               </div>
             </div>
           ))}
           {episodes.length === 0 && (
-            <p className="text-white/30 text-sm text-center py-12">No episodes yet. Generate a script to get started.</p>
+            <p className="text-white/30 text-sm text-center py-12">No episodes yet. Click &quot;Generate New Episode&quot; to get started.</p>
           )}
         </div>
       )}
