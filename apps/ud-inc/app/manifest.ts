@@ -1,20 +1,41 @@
-import { MetadataRoute } from 'next'
- 
+import { MetadataRoute } from "next";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Ud Inc | Hive',
-    short_name: 'Ud Inc',
-    description: 'Sovereign-Lite tactical engine by the Hive.',
-    start_url: '/',
-    display: 'standalone',
-    background_color: '#000000',
-    theme_color: '#D4AF37',
+    name: "Universal Document",
+    short_name: "UD",
+    description:
+      "Universal Document™ — the document substrate of the Hive ecosystem.",
+    start_url: "/",
+    scope: "/",
+    id: "/",
+    display: "standalone",
+    background_color: "#fafaf8",
+    theme_color: "#c8960a",
     icons: [
       {
-        src: '/favicon.ico',
-        sizes: 'any',
-        type: 'image/x-icon',
+        src: "/favicon.ico",
+        sizes: "any",
+        type: "image/x-icon",
+      },
+      {
+        src: "/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/maskable-icon.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
-  }
+  };
 }

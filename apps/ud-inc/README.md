@@ -1,31 +1,55 @@
-# HivePlainScan
+# UniversalDocumentInc (ud-inc)
 
-User education tool that explains finalized radiology reports in plain
-English. Part of the [Hive](https://hive.baby) ecosystem.
+The hub of the Universal Document™ ecosystem. Front door at
+`universaldocument.hive.baby` (declared — DNS not yet registered as of
+2026-05-15; see `registry/dns-inventory.md`).
 
-- Domain: [plainscan.hive.baby](https://plainscan.hive.baby)
-- Stack: Next.js + TypeScript + Anthropic SDK
+- Engine: `UniversalDocumentInc`
+- Domain (declared): https://universaldocument.hive.baby
+- Stack: Next.js 14 + Anthropic SDK + Stripe + Clerk
+- Status: SCAFFOLDED. The landing page is real; the API routes and clinic /
+  practice / dashboard sub-pages are inherited from the HivePlainScan template
+  and not on-scope for this hub.
+
+## What this hub does
+
+Explains what Universal Document™ (UD) is, names UDR (revisable) and UDS
+(sealed), and links out to the canonical sub-tools (UDConverter, UDReader,
+UDValidator, UDSigner, UDCreator, UDUtilities, UDMedical, UDBulk).
 
 ## Local development
 
 ```bash
 npm install
-ANTHROPIC_API_KEY=sk-... npm run dev
+npm run dev
 ```
 
-Then open http://localhost:3000/plainscan.
+Then open http://localhost:3000.
 
-## API
+## What's left
 
-- `GET /api/health` -> `{ status, engine, timestamp }`
-- `POST /api/explain` -> `{ reportText }` or `{ imageBase64, mediaType }`
+This hub was scaffolded as a clone of the HivePlainScan template. The
+landing page (`app/page.tsx`), layout (`app/layout.tsx`), styles
+(`app/globals.css`), and manifest (`app/manifest.ts` + `public/manifest.json`)
+were rewritten on 2026-05-15 to be a real UD hub with §G design system
+compliance (Playfair Display + DM Sans + DM Mono, UD palette `#c8960a`
+gold + `#1e2d3d` ink + `#fafaf8` paper) and §H trademark hygiene
+(`Universal Document™` first-mention).
 
-## Deployment
+The orphan PlainScan sub-pages and API routes (`app/clinic`, `app/practice`,
+`app/dashboard`, `app/enterprise`, `app/api/*`) are still present but unused
+by the new landing. They will be removed in a follow-up cleanup once the
+hub's actual feature set is decided. The `components/` and `lib/` directories
+are similarly inherited from the clone and unused by the new landing.
 
-Vercel project root directory: `apps/hive-confession/`. Required env var:
-`ANTHROPIC_API_KEY`.
+The favicon set referenced in `app/manifest.ts` (`favicon.ico`,
+`icon-192.png`, `icon-512.png`, `maskable-icon.png`) is **not yet generated**
+and needs to be added to `public/` before the hub ships.
+
+See `docs/UD_ECOSYSTEM_AUDIT_2026-05-15.md` for the full ecosystem audit.
 
 ## Notes
 
-- No diagnosis. No jargon. Educational use only.
-- This is not medical advice. Always consult a qualified clinician.
+- No ads. No investors. No agenda.
+- Universal Document™ is a pending trademark of Universal Document
+  Incorporated (Serial 99774346, filed 2026-04-20).

@@ -285,17 +285,22 @@ Status legend: **LIVE** (in production, listed) · **BUILDING** (in active dev) 
 | hivebaby/apps/parkback | ParkBack | parkback.hive.baby | LIVE | Next.js (client-only PWA) | zero | HiveOps **pass with waivers** (V01/V18/V19 waived — see ENGINE_GRAMMAR.md) |
 | hivebaby/apps/hive-activity-partner | HiveActivityPartner | activitypartner.hive.baby | BUILDING (Phase 1/6) | Next.js + Clerk + Neon + Anthropic + Stripe + Resend | medium_marginal | HiveOps Phase-1 with waivers (V18/V19) |
 
-### Universal Document ecosystem
+### Universal Document™ ecosystem
 
-| Repo / Path | Engine | Domain | Status | Stack |
-|---|---|---|---|---|
-| universal-document/apps/landing | UniversalDocument | ud.hive.baby | LIVE | Next.js |
-| universal-document/apps/converter | UDConverter | converter.hive.baby | LIVE | Next.js + Anthropic |
-| universal-document/apps/creator | UDCreator | creator.hive.baby | LIVE | Next.js + Anthropic |
-| universal-document/apps/reader | UDReader | reader.hive.baby | LIVE | Next.js |
-| universal-document/apps/validator | UDValidator | validator.hive.baby | LIVE | Next.js |
-| universal-document/apps/utilities | UDUtilities | utilities.hive.baby | LIVE | Next.js + Anthropic |
-| universal-document/apps/signer | UDSigner | signer.hive.baby | LIVE | Next.js |
+> **Reality check (2026-05-15):** Earlier versions of this section claimed 7 LIVE UD engines under `universal-document/apps/`. That path is empty; those engines never existed there. The real UD ecosystem is **128 scaffolded Next.js apps under `apps/ud-*`**, of which `ud-medical` is the only one that happens to fit its declared scope, `ud-bulk` is the only one with a custom (non-PlainScan-cloned) UI, and `ud-inc` (the supposed hub at `universaldocument.hive.baby`) was missing its `app/` directory entirely until 2026-05-15. None of the 128 are deployed at their declared `<slug>.hive.baby` domain. See [`docs/UD_ECOSYSTEM_AUDIT_2026-05-15.md`](docs/UD_ECOSYSTEM_AUDIT_2026-05-15.md) for the full audit and remediation plan.
+
+| Repo / Path | Engine | Domain | Status | Stack | Notes |
+|---|---|---|---|---|---|
+| `hivebaby/apps/ud-inc` | UniversalDocumentInc | universaldocument.hive.baby | SCAFFOLDED | Next.js + Anthropic + Stripe + Clerk | Hub. `app/` dir repaired 2026-05-15. Not deployed. |
+| `hivebaby/apps/ud-medical` | UDMedical | medical.universaldocument.hive.baby (declared) | BUILT (template-fit) | Next.js + Anthropic | Only engine that fits the cloned PlainScan template. Not deployed. |
+| `hivebaby/apps/ud-bulk` | UDBulk | bulk.universaldocument.hive.baby (declared) | BUILT (custom) | Next.js | Only engine with a non-cloned UI (Enterprise Dropzone). Not deployed. |
+| `hivebaby/apps/ud-converter` | UDConverter | converter.universaldocument.hive.baby (declared) | SCAFFOLDED (clone) | Next.js + Anthropic | PlainScan clone — has clinical components, not a converter. Not deployed. |
+| `hivebaby/apps/ud-creator` | UDCreator | creator.universaldocument.hive.baby (declared) | SCAFFOLDED (clone) | Next.js + Anthropic | PlainScan clone. Not deployed. |
+| `hivebaby/apps/ud-reader` | UDReader | reader.universaldocument.hive.baby (declared) | SCAFFOLDED (clone) | Next.js | PlainScan clone. Not deployed. |
+| `hivebaby/apps/ud-validator` | UDValidator | validator.universaldocument.hive.baby (declared) | SCAFFOLDED (clone) | Next.js | PlainScan clone. Not deployed. |
+| `hivebaby/apps/ud-utilities` | UDUtilities | utilities.universaldocument.hive.baby (declared) | SCAFFOLDED (clone) | Next.js + Anthropic | PlainScan clone. Not deployed. |
+| `hivebaby/apps/ud-signer` | UDSigner | signer.universaldocument.hive.baby (declared) | SCAFFOLDED (clone) | Next.js | PlainScan clone. Not deployed. |
+| `hivebaby/apps/ud-*` (other 119) | (various) | `<slug>.hive.baby` (declared) | SCAFFOLDED (clone) | Next.js + Anthropic | All PlainScan clones. See `engines.json` + `registry/engines.md` for the full enumeration. None deployed. |
 
 ### Vercel deploy hooks (frequently used)
 - **hivebaby:** `curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_Mj8SJS4gAlrG2PCXdUCUMmoAQAA3/CfgdTZ1r50"`
@@ -673,6 +678,10 @@ These are mistakes Claude has made in past sessions. They are recorded so future
 ### J10. "I'll add a quick helper workflow" is scope creep
 **What happened:** Adding new workflows mid-task to make the requested work easier, without flagging.
 **Lesson:** §B2. Surface the blocker. Don't pre-decide what tooling Sonny needs.
+
+### J11. Don't claim engines are LIVE in CLAUDE.md without verifying the path exists
+**What happened:** Until 2026-05-15, the §D "Universal Document ecosystem" table claimed 7 LIVE engines under `universal-document/apps/{landing,converter,creator,reader,validator,utilities,signer}`. The directory `/home/user/hivebaby/universal-document/` was empty; none of those paths existed; none of the declared `<slug>.hive.baby` domains resolved. The real ecosystem was 128 scaffolded apps under `apps/ud-*`, of which 125 were byte-identical clones of the HivePlainScan clinical template, and the hub `ud-inc` was missing its `app/` directory entirely. The audit at `docs/UD_ECOSYSTEM_AUDIT_2026-05-15.md` reconciled the gap.
+**Lesson:** §B5 strengthened. Before listing an engine as LIVE in §D, verify (1) the path on disk exists, (2) the domain resolves, (3) the engine is in `engines.json`, (4) the engine is in `registry/dns-inventory.md`. If you can't verify all four, mark it `SCAFFOLDED` or `BUILDING`, never `LIVE`. CLAUDE.md is operational doctrine — false LIVE claims silently corrupt every downstream session's planning.
 
 ---
 
