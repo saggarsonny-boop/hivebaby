@@ -1,191 +1,183 @@
 ---
-engine: HivePlainScan
-id: hiveplainscan
-domain: plainscan.hive.baby
-domain_aliases:
-  - plainscan.hive.baby
-  - scan.hive.baby
-repo: saggarsonny-boop/hivebaby:apps/hive-confession
+engine: UniversalDocumentInc
+id: ud-inc
+domain: universaldocument.hive.baby
+repo: saggarsonny-boop/hivebaby:apps/ud-inc
 owner: saggarsonny-boop
 
 version: 0.2.0
 status: building
 tier: 1
-schema: radiology-report-explanation
-stack: [nextjs, typescript, tailwind, anthropic, replicate, mammoth]
+schema: ud-ecosystem-hub
+stack: [nextjs, typescript, anthropic, stripe, clerk]
 premium: false
 
 governance: QueenBee.MasterGrappler@pending
 safety: enabled
-multilingual: pending
-tone: calm, plain-language, sixth-grade reading level
+multilingual: enabled
+tone: clear, plain-language, ecosystem-positioning
 cost_profile: zero_marginal
 
-api_models:
-  - role: explain
-    model_id: claude-sonnet-4-20250514
-  - role: illustration
-    model_id: black-forest-labs/flux-schnell
+api_models: []
 
 env_vars_required:
-  - ANTHROPIC_API_KEY
-  - REPLICATE_API_TOKEN
   - NEXT_PUBLIC_APP_URL
 
-env_vars_optional:
-  - PLAINSCAN_DAILY_CAP_CENTS
+env_vars_optional: []
 
 onboarding_stack:
-  auto_demo: pending
+  auto_demo: n/a
   first_visit_card: pending
   tooltip_tour: pending
-  rotating_placeholders: implemented
+  rotating_placeholders: n/a
 
-vercel_project: hive-confession
-vercel_root_directory: apps/hive-confession
+vercel_project: ud-inc
+vercel_root_directory: apps/ud-inc
 deployment_protection: off
 visibility: public
-commercial_surface: donations
+commercial_surface: none
 viral_loop_targets:
   - share_card
-  - pr_pickup
 production_state: not_listed
-last_audit_at: 2026-05-09
+last_audit_at: 2026-05-15
 
 health_check: /api/health
 
 planned_qb_consumption:
   schemas:
-    - radiology-report-explanation
+    - ud-ecosystem-hub
   endpoint: /api/govern
   status: not-yet-wired
 ---
 
 ## Purpose
 
-HivePlainScan is a patient education tool. It explains finalized radiology reports in plain English at a 6th–8th grade reading level. It does **not** diagnose, interpret raw scan images, recommend treatment, or replace a physician — it explains what the report already says.
+UniversalDocumentInc (ud-inc) is the **hub** of the Universal Document™ (UD) ecosystem. It's the front door at `universaldocument.hive.baby` (declared, DNS pending). Its job is to explain what UD is, name the UDR (revisable) and UDS (sealed) formats, and link out to the canonical sub-tools across the 128-engine UD fleet.
 
-The engine has a **rule-based local fallback** that runs without any AI keys. This keeps a base demo path free at the tier of `cost_profile: zero_marginal` even before AI keys are provisioned. With keys present, the AI explanation + Replicate FLUX illustration pipeline activates.
+This is a **landing engine**, not a document-processing engine. It does not parse, validate, sign, or convert documents — those operations live in the sub-engines (UDConverter, UDValidator, UDSigner, etc.).
 
 ## Inputs
 
-- Pasted text from a finalized radiology report
-- PDF upload (parsed client-side via pdfjs-dist)
-- DOCX upload (parsed server-side via mammoth at `/api/extract-report`)
-- Image upload (PNG/JPEG; OCR'd server-side via Anthropic vision)
-- Optional exam type selector (MRI · CT · X-ray · Ultrasound · Other · Auto-detect)
-- Optional body region selector (Spine, Brain, Knee, Shoulder, Hip, Abdomen, Chest, Other · Auto-detect)
+None. The hub is content-only: a marketing landing that links to the sub-engines.
 
 ## Outputs
 
-JSON `ExplainResult`:
+A single landing page rendered in the UD design system:
 
-- `bodyRegion` (string)
-- `reportType` (string)
-- `summary` (string, 2–4 sentences, 6th–8th grade reading level)
-- `findings` (array of `{ level, finding, plainLanguage, severity, possibleSymptoms[] }`)
-- `questionsForDoctor` (array of strings, 5–7 entries)
-- `redFlags` (array of strings, urgent terms surfaced from the report)
-- `disclaimer` (string)
-- `illustrationUrl` (string — AI illustration when available, SVG diagram fallback otherwise)
-- `illustrationSource` (`ai` | `svg`)
-- `source` (`ai` | `fallback`)
+- Hero: explains "Universal Document™" with ™ first-mention hygiene per §H
+- "What is UD" section: defines UDR + UDS
+- "Tools" section: links to anchor sub-tools (UDConverter, UDReader, UDValidator, UDSigner, UDCreator, UDUtilities, UDMedical, UDBulk)
+- "Pricing" section: canonical Hive pricing per §A (free / $0.97/mo Plus / $29/mo Pro)
+- Hive footer signature with #D4AF37 ♥ (Hive brand mark — the only Hive-palette element on a UD property)
 
 ## Rules
 
-- Always use "the report describes" phrasing
-- Never say diagnose, treat, recommend, or urgent (except in `redFlags`)
-- Reading level: 6th to 8th grade
-- All body regions supported; spine variants (cervical, thoracic, lumbar) get diagrammatic detail
-- If the uploaded content is not a radiology report, return `{ "error": "This does not appear to be a radiology report. Please upload a completed imaging report." }`
-- PHI scrubbing is **mandatory** at two layers:
-  1. Client-side preview (`detectPhi` in `lib/privacy.ts`) — non-mutating; warns the user before submission
-  2. Server-side pre-call (`removePhi`) — mutates the text the AI sees
-- Cost-cap circuit breaker (`lib/cost-cap.ts`) — when daily Anthropic spend exceeds `PLAINSCAN_DAILY_CAP_CENTS` (default 500¢), the engine falls back to the local rule-based explanation + SVG diagram. Image-input requests return 503 in this state.
-
-## Safety Templates
-
-Every response carries the disclaimer:
-
-> This explanation is based on the radiology report you provided. It is for educational purposes only. It does not diagnose your condition, recommend treatment, or replace advice from your physician.
-
-Layout-level footer (every page):
-
-> No ads. No investors. No agenda. — Free at the base tier, forever. — This is not medical advice. Always consult a qualified clinician.
+- **§G UD Design System (HARD)**: Playfair Display + DM Sans + DM Mono fonts; UD palette only — ink `#1e2d3d`, paper `#fafaf8`, gold `#c8960a`, paper-2 `#f2f1ee`, border `#e0ddd6`, muted `#6b7280`. Standard radius 8px, cards 12px.
+- **§H trademark hygiene**: First mention of "Universal Document" carries `™`. UDR / UDS expansions per §H.
+- **§A pricing**: free + $0.97/mo Plus + $29/mo Pro. No invented enterprise tiers.
+- **§G "don't cross the streams"**: theme_color is `#c8960a` (UD gold), not `#D4AF37` (Hive gold). The single exception is the Hive footer signature ♥, which retains `#D4AF37` because it's the Hive brand mark, not a UD design token.
 
 ## Phase Plan
 
-- **Phase 1 (shipped):** Anthropic-powered explanation, ParseError handling, /api/explain text + image branches.
-- **Phase 2 (this PR):** PHI scrubbing, rule-based fallback, SVG diagrams, Replicate FLUX illustration pipeline, DOCX support, cost-cap circuit breaker, sample report, Hive footer signature, service worker registration, manifest.json, /api/health canonical shape.
-- **Phase 3 (next):** Locale catalogue expansion (es, fr, ar, hi, zh, pt — currently English only); seven-locale floor per Constitution §C2.
-- **Phase 4:** Wire Queen Bee `/api/govern` consumption per `planned_qb_consumption` block above. Until then, governance flag is `QueenBee.MasterGrappler@pending`.
-- **Phase 5:** DNS provisioning for `plainscan.hive.baby` (currently no DNS record) — flips status to `live`.
+- **Phase 1 (this PR — 2026-05-15)**: Rewritten landing, layout, globals.css, manifest, README. UD design system compliance. ™ hygiene. Canonical pricing. Orphan PlainScan sub-pages and API routes deleted.
+- **Phase 2 (next)**: Generate the favicon set (`favicon.ico`, `icon-192.png`, `icon-512.png`, `maskable-icon.png`) — UD gold flat-top hex with the "U" letter centred.
+- **Phase 3**: DNS provisioning for `universaldocument.hive.baby` via Cloudflare CNAME → `cname.vercel-dns.com` per §C11. Vercel project provisioning. Status flips to `live`.
+- **Phase 4**: Decide whether the hub also surfaces the long-tail of 119 PlainScan-clone sub-engines or only the 8 anchor tools. (Strategic question raised in `docs/UD_ECOSYSTEM_AUDIT_2026-05-15.md` — recommended next action #1.)
+- **Phase 5**: Wire Queen Bee `/api/govern` consumption when the hub adds any AI surface (currently none).
 
 ## Out of Scope
 
-- Diagnostic interpretation of raw scan images (the AI vision branch only OCRs text from a report photo)
-- Treatment recommendations
-- Comparing against prior imaging
-- Reading non-radiology medical documents (lab reports, pathology, etc.)
+- Document parsing, validation, signing, conversion — those live in the sub-engines, not the hub.
+- Authentication / user accounts — the hub is a public marketing landing; per-tool auth is per-engine.
+- Pricing checkout — the hub names prices but defers the purchase flow to per-engine Stripe surfaces.
 
 ## Deployment Notes
 
-- Vercel project: `hive-confession` (root `apps/hive-confession`). Auto-deploy on push to `main`.
-- Required env vars in production: `ANTHROPIC_API_KEY`, `REPLICATE_API_TOKEN` (optional — graceful degrade when absent), `NEXT_PUBLIC_APP_URL`.
-- Vercel deployment protection: **off** (per C10).
-- DNS: `plainscan.hive.baby` not yet wired. Provision via Cloudflare CNAME → `cname.vercel-dns.com` per C11. Tracked in hivebaby#127.
+- Vercel project: `ud-inc` (root `apps/ud-inc`). Auto-deploy on push to `main`.
+- Required env vars: `NEXT_PUBLIC_APP_URL` (defaults to `https://universaldocument.hive.baby`).
+- Vercel deployment protection: **off** (per §C10).
+- DNS: `universaldocument.hive.baby` not yet wired. Provision via Cloudflare CNAME → `cname.vercel-dns.com` per §C11.
 
 ## Hive-Ops Overrides
 
 ```yaml
 overrides:
-  - rule: H05
-    mode: warn
-    reason: "Locale catalog seeded with English only this PR; remaining six (es, fr, ar, hi, zh, pt) generated in follow-up PR per Phase 3."
-    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
-    reviewer: Sonny
-    date: 2026-05-09
-    warn_until: 2026-06-08
   - rule: H08
     mode: warn
-    reason: "OG image not yet generated; the engine has SVG fallback diagrams for in-product imagery, OG image is a post-DNS asset."
+    reason: "OG image not yet generated; hub is landing-only with no in-product imagery. Asset will be added with the favicon set in Phase 2."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
   - rule: H11
     mode: warn
-    reason: "HiveInstallHint not yet wired; canonical onboarding stack is Phase 3 (with locales)."
+    reason: "HiveInstallHint not yet wired; hub is landing-only and PWA install is low-priority on a marketing front door."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
   - rule: H12
     mode: warn
-    reason: "HiveFirstVisitExplainer not yet wired; Phase 3."
+    reason: "HiveFirstVisitExplainer not yet wired; the landing copy itself serves as the first-visit explanation."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
   - rule: H13
     mode: warn
-    reason: "public/hive-logo-full.png not yet copied from @hive/onboarding; asset port is part of Phase 3 onboarding stack work."
+    reason: "public/hive-logo-full.png not yet copied from @hive/onboarding; hub uses the Hive footer signature only, header carries the UD wordmark instead. Asset port deferred to onboarding stack work."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
   - rule: H15
     mode: warn
-    reason: "Favicon binaries not generated this PR — manifest.json declares them but actual PNG files are a follow-up asset commit."
+    reason: "Favicon binaries not generated this PR — manifest.json declares them but actual PNG files land in Phase 2 with the OG image."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
+  - rule: H16
+    mode: waive
+    reason: "§G UD Design System (HARD rule) requires UD palette on UD properties — gold is #c8960a, not Hive gold #D4AF37. The H16 rule encodes the Hive engine convention; UD properties are the documented exception per §G \"don't cross the streams\" and §C3 (UD uses #c8960a, Hive uses #D4AF37)."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-15
+  - rule: H23
+    mode: waive
+    reason: "§G UD Design System (HARD rule) requires UD palette on UD properties — ink is #1e2d3d, not Hive ink #0a0a0a. Same logic as H16 waive: UD palette overrides Hive palette on UD properties per §G."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-15
   - rule: H21
     mode: warn
-    reason: "Engine entry in hivebaby planet ENGINES array pending DNS provisioning; engine is currently DORMANT in inventory."
+    reason: "Engine entry in hivebaby planet ENGINES array deferred — strategic question (recommended next action #1 in the UD audit) is whether the hub gets its own planet cell or whether a single 'UD' cell covers the whole ecosystem."
     issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
     reviewer: Sonny
-    date: 2026-05-09
+    date: 2026-05-15
     warn_until: 2026-06-08
+  - rule: V01
+    mode: waive
+    reason: "Per §C1 the hub is named 'UniversalDocument'/'UniversalDocumentInc' — distinct from the UD<Word> sub-engine pattern. The V01 regex /^(Hive|UD)[A-Z][A-Za-z0-9]*$/ encodes the sub-engine pattern but does not accommodate the documented hub-name exception. Either the regex needs widening in tools/hive-ops/v-rules.ts or §C1 needs a canonical-exception note added; tracked as a follow-up in docs/UD_ECOSYSTEM_AUDIT_2026-05-15.md."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-15
+  - rule: V02
+    mode: waive
+    reason: "Per §C1 every UD engine slug is hyphenated (ud-<purpose>). The V02 regex /^[a-z][a-z0-9]*$/ rejects hyphens, which would fail every one of the 128 UD engines. The regex needs widening to /^[a-z][a-z0-9-]*$/ in tools/hive-ops/v-rules.ts; tracked as a follow-up in docs/UD_ECOSYSTEM_AUDIT_2026-05-15.md."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-15
+  - rule: V03
+    mode: waive
+    reason: "Same root cause as V02 waive — the id≡normalised(engine) check assumes a non-hyphenated id, which breaks for every UD engine. Resolves when V02 is fixed."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-15
+  - rule: V04
+    mode: waive
+    reason: "The hub's domain is 'universaldocument.hive.baby' (the UD ecosystem front door), not 'ud-inc.hive.baby'. Per §C1 UD ecosystem domains use the 'universaldocument.hive.baby' subtree (see CLAUDE.md §D updated 2026-05-15). The V04 check enforces id-derived domains, which the UD subtree intentionally violates."
+    issue: https://github.com/saggarsonny-boop/hivebaby/issues/127
+    reviewer: Sonny
+    date: 2026-05-15
 ```
