@@ -6,8 +6,6 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function DashboardClient({ mockData, mockEngines, totalDau: initialTotalDau, mrr, revenue7d, geoStats, complianceStats }: any) {
   const [data, setData] = useState(mockData);
   const [engines, setEngines] = useState(mockEngines);
-  const [data, setData] = useState(mockData);
-  const [engines, setEngines] = useState(mockEngines);
   const [totalDau, setTotalDau] = useState(initialTotalDau);
   const router = useRouter();
 
