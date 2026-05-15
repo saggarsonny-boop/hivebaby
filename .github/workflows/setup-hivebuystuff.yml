@@ -1,0 +1,257 @@
+name: HiveBuyStuff — Full Setup & Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── 1. Resolve credentials ──────────────────────────────────────────────
+      - name: Resolve credentials
+        env:
+          VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CF_TOKEN_A: ${{ secrets.CF_TOKEN }}
+          CF_TOKEN_B: ${{ secrets.CF_API_TOKEN }}
+          CF_TOKEN_C: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          VERCEL_TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          CF_TOKEN="${CF_TOKEN_A:-${CF_TOKEN_B:-$CF_TOKEN_C}}"
+
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "ERROR: Set secret VERCEL_TOKEN_MAIN or VERCEL_TOKEN"; exit 1
+          fi
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: Set secret DATABASE_URL (Neon pooled connection string)"; exit 1
+          fi
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ERROR: Set secret ANTHROPIC_API_KEY"; exit 1
+          fi
+          if [ -z "$CF_TOKEN" ]; then
+            echo "ERROR: Set secret CF_TOKEN, CF_API_TOKEN, or CLOUDFLARE_API_TOKEN"; exit 1
+          fi
+
+          echo "✓ All credentials resolved"
+          echo "VERCEL_TOKEN=$VERCEL_TOKEN" >> "$GITHUB_ENV"
+          echo "DATABASE_URL=$DATABASE_URL" >> "$GITHUB_ENV"
+          echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> "$GITHUB_ENV"
+          echo "CF_TOKEN=$CF_TOKEN" >> "$GITHUB_ENV"
+          echo "CF_ZONE=bcb5522993ecf90a4f1d5dfe101e5a5c" >> "$GITHUB_ENV"
+
+      # ── 2. Create or update Vercel project ──────────────────────────────────
+      - name: Create Vercel project (hive-hivebuystuff)
+        run: |
+          echo "→ Creating Vercel project hive-hivebuystuff"
+          STATUS=$(curl -s -o /tmp/vp.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v10/projects" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "hive-hivebuystuff",
+              "framework": "nextjs",
+              "rootDirectory": "hive-hivebuystuff",
+              "gitRepository": {
+                "type": "github",
+                "repo": "saggarsonny-boop/hivebaby"
+              },
+              "installCommand": "npm install",
+              "buildCommand": "npm run build",
+              "outputDirectory": ".next"
+            }')
+          echo "HTTP $STATUS: $(cat /tmp/vp.json | jq -c '{id,name,rootDirectory,framework}' 2>/dev/null || cat /tmp/vp.json)"
+
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
+            PROJECT_ID=$(cat /tmp/vp.json | jq -r '.id')
+            echo "✓ Project created: $PROJECT_ID"
+          elif [ "$STATUS" = "409" ]; then
+            echo "  Project already exists — fetching ID"
+            PROJECT_ID=$(curl -s "https://api.vercel.com/v9/projects/hive-hivebuystuff" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.id')
+            echo "✓ Existing project ID: $PROJECT_ID"
+          else
+            echo "✗ Unexpected HTTP $STATUS"; cat /tmp/vp.json; exit 1
+          fi
+
+          if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then
+            echo "✗ Could not resolve project ID"; cat /tmp/vp.json; exit 1
+          fi
+
+          echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+
+      # ── 3. Disable deployment protection ────────────────────────────────────
+      - name: Disable deployment protection
+        run: |
+          echo "→ Disabling deployment protection on $PROJECT_ID"
+          STATUS=$(curl -s -o /tmp/prot.json -w "%{http_code}" \
+            -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"ssoProtection": null, "passwordProtection": null}')
+          echo "HTTP $STATUS: $(cat /tmp/prot.json | jq -c '{name,ssoProtection,passwordProtection}' 2>/dev/null || cat /tmp/prot.json)"
+          echo "✓ Deployment protection disabled"
+
+      # ── 4. Set environment variables ────────────────────────────────────────
+      - name: Set env vars on Vercel project
+        run: |
+          set_env() {
+            local KEY="$1"
+            local VALUE="$2"
+            echo "→ Setting $KEY"
+            STATUS=$(curl -s -o /tmp/env_resp.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"$KEY\",\"value\":$(echo "$VALUE" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+            if [ "$STATUS" = "409" ]; then
+              ENV_ID=$(cat /tmp/env_resp.json | jq -r '.error.envVarId // empty')
+              if [ -z "$ENV_ID" ]; then
+                ENV_ID=$(curl -s "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+                  -H "Authorization: Bearer $VERCEL_TOKEN" \
+                  | jq -r ".envs[]? | select(.key==\"$KEY\") | .id" | head -1)
+              fi
+              if [ -n "$ENV_ID" ]; then
+                curl -s -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ENV_ID" \
+                  -H "Authorization: Bearer $VERCEL_TOKEN" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"value\":$(echo "$VALUE" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" > /dev/null
+                echo "  ✓ $KEY updated"
+              fi
+            elif [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
+              echo "  ✓ $KEY set"
+            else
+              echo "  ⚠ $KEY: HTTP $STATUS ($(cat /tmp/env_resp.json | jq -r '.error.message' 2>/dev/null))"
+            fi
+          }
+
+          set_env "ANTHROPIC_API_KEY" "$ANTHROPIC_API_KEY"
+          set_env "DATABASE_URL"      "$DATABASE_URL"
+
+      # ── 5. Add custom domains ────────────────────────────────────────────────
+      - name: Add custom domains to Vercel project
+        run: |
+          add_domain() {
+            local DOMAIN="$1"
+            echo "→ Adding domain $DOMAIN"
+            STATUS=$(curl -s -o /tmp/dom.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v10/projects/$PROJECT_ID/domains" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"$DOMAIN\"}")
+            echo "  HTTP $STATUS: $(cat /tmp/dom.json | jq -c '{name,apexName,verified}' 2>/dev/null || cat /tmp/dom.json)"
+          }
+          add_domain "hivebuystuff.hive.baby"
+          add_domain "buy.hive.baby"
+
+      # ── 6. Add Cloudflare DNS records ────────────────────────────────────────
+      - name: Add Cloudflare CNAME records
+        run: |
+          add_cname() {
+            local NAME="$1"
+            local TARGET="cname.vercel-dns.com"
+            echo "→ CNAME $NAME → $TARGET"
+            EXISTING_ID=$(curl -s \
+              "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records?type=CNAME&name=${NAME}.hive.baby" \
+              -H "Authorization: Bearer $CF_TOKEN" | jq -r '.result[0].id // empty')
+            if [ -n "$EXISTING_ID" ]; then
+              STATUS=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+                -X PUT "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records/$EXISTING_ID" \
+                -H "Authorization: Bearer $CF_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"type\":\"CNAME\",\"name\":\"$NAME\",\"content\":\"$TARGET\",\"ttl\":1,\"proxied\":false}")
+              echo "  Updated: HTTP $STATUS"
+            else
+              STATUS=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+                -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records" \
+                -H "Authorization: Bearer $CF_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"type\":\"CNAME\",\"name\":\"$NAME\",\"content\":\"$TARGET\",\"ttl\":1,\"proxied\":false}")
+              echo "  Created: HTTP $STATUS"
+            fi
+            cat /tmp/cf.json | jq -c '{success,name:.result.name,content:.result.content}' 2>/dev/null || cat /tmp/cf.json
+          }
+          add_cname "hivebuystuff"
+          add_cname "buy"
+
+      # ── 7. Trigger production deployment ────────────────────────────────────
+      - name: Trigger Vercel production deployment
+        run: |
+          echo "→ Triggering production deployment from latest commit on main"
+          RESULT=$(curl -s -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"name\": \"hive-hivebuystuff\",
+              \"project\": \"$PROJECT_ID\",
+              \"target\": \"production\",
+              \"gitSource\": {
+                \"type\": \"github\",
+                \"repoId\": \"saggarsonny-boop/hivebaby\",
+                \"ref\": \"main\"
+              }
+            }")
+          DEPLOY_URL=$(echo "$RESULT" | jq -r '.url // empty')
+          DEPLOY_ID=$(echo "$RESULT" | jq -r '.id // empty')
+          echo "Deploy ID: $DEPLOY_ID"
+          echo "Deploy URL: $DEPLOY_URL"
+          echo "DEPLOY_ID=$DEPLOY_ID" >> "$GITHUB_ENV"
+          echo "DEPLOY_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
+
+      # ── 8. Wait for deployment to be ready ──────────────────────────────────
+      - name: Wait for deployment
+        run: |
+          echo "→ Polling deployment status (max 8 min)..."
+          for i in $(seq 1 48); do
+            STATE=$(curl -s "https://api.vercel.com/v13/deployments/$DEPLOY_ID" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.readyState // .state // "UNKNOWN"')
+            echo "  [$i/48] $STATE"
+            if [ "$STATE" = "READY" ]; then
+              echo "✓ Deployment READY"
+              break
+            fi
+            if [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; then
+              echo "✗ Deployment failed with state: $STATE"
+              exit 1
+            fi
+            sleep 10
+          done
+
+      # ── 9. Run DB migration ──────────────────────────────────────────────────
+      - name: Run DB migration
+        run: |
+          echo "→ Waiting 15s for DNS to propagate..."
+          sleep 15
+          echo "→ POST https://hivebuystuff.hive.baby/api/hbs/migrate"
+          for attempt in 1 2 3 4 5; do
+            RESULT=$(curl -s -X POST "https://hivebuystuff.hive.baby/api/hbs/migrate" \
+              --max-time 30 -w "\nHTTP:%{http_code}")
+            STATUS=$(echo "$RESULT" | grep "HTTP:" | cut -d: -f2)
+            BODY=$(echo "$RESULT" | grep -v "HTTP:")
+            echo "  Attempt $attempt — HTTP $STATUS: $BODY"
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ Migration complete"
+              break
+            fi
+            [ $attempt -lt 5 ] && sleep 15
+          done
+
+      # ── 10. Health check ─────────────────────────────────────────────────────
+      - name: Health check
+        run: |
+          echo "→ GET https://hivebuystuff.hive.baby/api/health"
+          for attempt in 1 2 3; do
+            RESULT=$(curl -s "https://hivebuystuff.hive.baby/api/health" --max-time 15)
+            echo "  $RESULT"
+            STATUS=$(echo "$RESULT" | jq -r '.status // empty')
+            ENGINE=$(echo "$RESULT" | jq -r '.engine // empty')
+            if [ "$STATUS" = "ok" ] && [ "$ENGINE" = "HiveBuyStuff" ]; then
+              echo "✓ Health check passed — HiveBuyStuff is live at hivebuystuff.hive.baby"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "⚠ Health check did not confirm — check https://hivebuystuff.hive.baby/api/health manually"
