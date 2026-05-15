@@ -1,4 +1,5 @@
 import HiveOpsWidget from '@/components/HiveOpsWidget';
+import { FloatingCompanion } from '@hive/amplifiers';
 import './globals.css';
 import type { Metadata } from "next";
 import { ClerkProvider, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>This is a Hive engine. We collect zero personal data. No login, no account, no tracking.</div>
         </footer>
         <HiveOpsWidget />
+        <FloatingCompanion engineName="hive-body-log" />
       </body>
       </html>
     </ClerkProvider>

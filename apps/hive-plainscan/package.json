@@ -24,7 +24,8 @@
     "@neondatabase/serverless": "^0.9.0",
     "mammoth": "^1.8.0",
     "pdf-parse": "^1.1.1",
-    "lucide-react": "^0.468.0"
+    "lucide-react": "^0.468.0",
+    "@hive/amplifiers": "file:../../packages/hive-amplifiers"
   },
   "devDependencies": {
     "@types/node": "^20",

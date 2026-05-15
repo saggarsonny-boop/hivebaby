@@ -93,18 +93,28 @@ export function FloatingCompanion({ engineName }: FloatingCompanionProps) {
   };
 
   return React.createElement(React.Fragment, null,
-    React.createElement(
-      "button",
-      {
-        onClick: () => setIsOpen(true),
-        style: {
-          position: "fixed", bottom: "2rem", right: "2rem", width: "60px", height: "60px",
-          borderRadius: "50%", backgroundColor: "#D4AF37", color: "#000", border: "none",
-          boxShadow: "0 10px 25px -5px rgba(212, 175, 55, 0.5)", cursor: "pointer",
-          display: isOpen ? "none" : "flex", alignItems: "center", justifyContent: "center", zIndex: 50
-        }
-      },
-      React.createElement(Zap, { size: 28 })
+    React.createElement("div", { style: { position: "fixed", bottom: "2rem", right: "2rem", zIndex: 50, display: isOpen ? "none" : "flex", flexDirection: "column", alignItems: "flex-end", gap: "1rem" } },
+      React.createElement(AnimatePresence, null,
+        !isOpen && React.createElement(motion.div, {
+          initial: { opacity: 0, x: 20 },
+          animate: { opacity: 1, x: 0 },
+          exit: { opacity: 0, x: 10 },
+          transition: { delay: 1, duration: 0.5 },
+          style: { backgroundColor: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid rgba(212,175,55,0.3)", color: "#D4AF37", fontSize: "0.85rem", fontWeight: "bold", whiteSpace: "nowrap" }
+        }, "Your AI Activity Partner is online.")
+      ),
+      React.createElement(
+        motion.button,
+        {
+          onClick: () => setIsOpen(true),
+          animate: { boxShadow: ["0 0 0px #D4AF37", "0 0 20px #D4AF37", "0 0 0px #D4AF37"] },
+          transition: { repeat: Infinity, duration: 2 },
+          style: {
+            width: "60px", height: "60px", borderRadius: "50%", backgroundColor: "#D4AF37", color: "#000", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+          }
+        },
+        React.createElement(Zap, { size: 28 })
+      )
     ),
     React.createElement(AnimatePresence, null,
       isOpen && React.createElement(
