@@ -1,4 +1,4 @@
-name: HiveBuyStuff — Deploy + Migrate
+name: HiveBuyStuff Deploy and Migrate
 
 on:
   workflow_dispatch:
@@ -13,6 +13,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -21,105 +24,68 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Resolve credentials
+      - name: Resolve Vercel token
         env:
-          VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
-          VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
-          DATABASE_URL_SECRET: ${{ secrets.DATABASE_URL }}
+          V1: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          V2: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          TOKEN="${V1:-$V2}"
           if [ -z "$TOKEN" ]; then echo "ERROR: No Vercel token"; exit 1; fi
-          if [ -z "$DATABASE_URL_SECRET" ]; then echo "ERROR: No DATABASE_URL"; exit 1; fi
           echo "VERCEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
-          echo "DATABASE_URL=$DATABASE_URL_SECRET" >> "$GITHUB_ENV"
-          echo "Token length: ${#TOKEN}, DB URL length: ${#DATABASE_URL_SECRET}"
+          echo "Token present, length=${#TOKEN}"
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Deploy to Vercel (prod)
+      - name: Deploy to Vercel
         working-directory: hive-hivebuystuff
         run: |
-          echo "Deploying hive-hivebuystuff to production..."
-          # Single-command deploy: links, builds, and deploys
-          OUTPUT=$(vercel --token "$VERCEL_TOKEN" --prod --yes \
-            --build-env ANTHROPIC_API_KEY="placeholder_build_only" \
-            --build-env DATABASE_URL="placeholder_build_only" \
-            2>&1)
+          OUTPUT=$(vercel --token "$VERCEL_TOKEN" --prod --yes 2>&1)
           echo "$OUTPUT"
-          DEPLOY_URL=$(echo "$OUTPUT" | grep -Eo 'https://[a-zA-Z0-9._-]+\.vercel\.app' | tail -1)
-          echo "DEPLOY_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
-          echo "Deploy URL: $DEPLOY_URL"
+          URL=$(echo "$OUTPUT" | grep -Eo 'https://[a-zA-Z0-9._-]+\.vercel\.app' | tail -1)
+          echo "DEPLOY_URL=$URL" >> "$GITHUB_ENV"
+          echo "Deployed: $URL"
 
-      - name: Set production env vars on Vercel project
+      - name: Set production env vars
         run: |
-          # Get project ID from the linked .vercel/project.json
-          PROJECT_ID=$(cat hive-hivebuystuff/.vercel/project.json 2>/dev/null | jq -r '.projectId // empty')
-          echo "Project ID: '${PROJECT_ID}'"
-          if [ -z "$PROJECT_ID" ]; then exit 0; fi
-
-          set_env() {
-            local KEY="$1" VALUE="$2"
-            HTTP=$(curl -s -o /tmp/ev.json -w "%{http_code}" \
-              -X POST "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+          PID=$(cat hive-hivebuystuff/.vercel/project.json 2>/dev/null | jq -r '.projectId // empty')
+          if [ -z "$PID" ]; then echo "No project ID, skipping"; exit 0; fi
+          echo "Project ID: $PID"
+          set_ev() {
+            K=$1; V=$2
+            H=$(curl -s -o /tmp/ev.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects/$PID/env" \
               -H "Authorization: Bearer $VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"key\":\"$KEY\",\"value\":$(echo "$VALUE" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
-            if [ "$HTTP" = "409" ]; then
-              ID=$(cat /tmp/ev.json | jq -r '.error.envVarId // empty')
+              -d "{\"key\":\"$K\",\"value\":$(printf '%s' "$V" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview"]}")
+            if [ "$H" = "409" ]; then
+              ID=$(jq -r '.error.envVarId // empty' /tmp/ev.json)
               [ -n "$ID" ] && curl -s -X PATCH \
-                "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ID" \
+                "https://api.vercel.com/v9/projects/$PID/env/$ID" \
                 -H "Authorization: Bearer $VERCEL_TOKEN" \
                 -H "Content-Type: application/json" \
-                -d "{\"value\":$(echo "$VALUE" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" > /dev/null
-              echo "  $KEY: updated"
+                -d "{\"value\":$(printf '%s' "$V" | jq -Rs .),\"target\":[\"production\",\"preview"]}" > /dev/null
+              echo "$K updated"
             else
-              echo "  $KEY: HTTP $HTTP"
+              echo "$K HTTP $H"
             fi
           }
-
-          set_env "ANTHROPIC_API_KEY" "${{ secrets.ANTHROPIC_API_KEY }}"
-          set_env "DATABASE_URL" "$DATABASE_URL"
+          set_ev "ANTHROPIC_API_KEY" "$ANTHROPIC_API_KEY"
+          set_ev "DATABASE_URL" "$DATABASE_URL"
 
       - name: Run DB migration via psql
         run: |
-          sudo apt-get install -y -q postgresql-client 2>/dev/null
-
-          psql "$DATABASE_URL" <<'SQL'
-            CREATE TABLE IF NOT EXISTS hbs_templates (
-              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-              user_id TEXT NOT NULL,
-              name TEXT NOT NULL,
-              items JSONB NOT NULL DEFAULT '[]',
-              cadence TEXT,
-              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-              updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-              UNIQUE (user_id, name)
-            );
-            CREATE TABLE IF NOT EXISTS hbs_preferences (
-              user_id TEXT PRIMARY KEY,
-              budget_ceiling NUMERIC,
-              substitution_tolerance TEXT NOT NULL DEFAULT 'flexible'
-                CHECK (substitution_tolerance IN ('strict', 'flexible', 'auto')),
-              preferred_backends JSONB NOT NULL DEFAULT '[]',
-              dietary_rules JSONB NOT NULL DEFAULT '[]',
-              delivery_constraints JSONB NOT NULL DEFAULT '{}',
-              updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            );
-            SELECT 'hbs_templates' AS table_name, COUNT(*) FROM hbs_templates
-            UNION ALL
-            SELECT 'hbs_preferences', COUNT(*) FROM hbs_preferences;
-SQL
+          sudo apt-get install -y -q postgresql-client
+          psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS hbs_templates (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id TEXT NOT NULL, name TEXT NOT NULL, items JSONB NOT NULL DEFAULT '[]', cadence TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE (user_id, name));"
+          psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS hbs_preferences (user_id TEXT PRIMARY KEY, budget_ceiling NUMERIC, substitution_tolerance TEXT NOT NULL DEFAULT 'flexible' CHECK (substitution_tolerance IN ('strict', 'flexible', 'auto')), preferred_backends JSONB NOT NULL DEFAULT '[]', dietary_rules JSONB NOT NULL DEFAULT '[]', delivery_constraints JSONB NOT NULL DEFAULT '{}', updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());"
           echo "Migration complete"
 
       - name: Health check
         run: |
-          echo "Waiting 20s for deployment to warm up..."
-          sleep 20
+          sleep 15
           for URL in "$DEPLOY_URL" "https://hivebuystuff.hive.baby"; do
             if [ -n "$URL" ]; then
-              echo "→ GET $URL/api/health"
               R=$(curl -s "$URL/api/health" --max-time 12 2>&1)
-              echo "  $R"
+              echo "$URL: $R"
             fi
           done
