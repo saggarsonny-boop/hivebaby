@@ -37,6 +37,28 @@ export async function runMigration() {
   `;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS hbs_magic_keys (
+      key_hash TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS hbs_ext_sessions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      items JSONB NOT NULL,
+      backend TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'executing', 'done', 'failed')),
+      result JSONB,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '10 minutes'
+    )
+  `;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS hbs_subscriptions (
       user_id TEXT PRIMARY KEY,
       tier TEXT NOT NULL DEFAULT 'free'
