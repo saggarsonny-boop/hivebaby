@@ -95,12 +95,51 @@ jobs:
           set_ev "ANTHROPIC_API_KEY" "$ANTHROPIC_API_KEY"
           set_ev "DATABASE_URL" "$DATABASE_URL"
 
+      - name: Set Stripe env vars
+        env:
+          SK: ${{ secrets.STRIPE_SECRET_KEY }}
+          WH: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          PRO: ${{ secrets.STRIPE_PRO_PRICE_ID }}
+          PREM: ${{ secrets.STRIPE_PREMIUM_PRICE_ID }}
+          PUBK: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          PID=$(cat hive-hivebuystuff/.vercel/project.json 2>/dev/null | jq -r '.projectId // empty')
+          if [ -z "$PID" ]; then echo "No project ID, skipping Stripe vars"; exit 0; fi
+          set_ev() {
+            K=$1; V=$2
+            [ -z "$V" ] && { echo "$K not set — skipping"; return; }
+            H=$(curl -s -o /tmp/ev.json -w "%{http_code}" \
+              -X POST "https://api.vercel.com/v9/projects/$PID/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"$K\",\"value\":$(printf '%s' "$V" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
+            if [ "$H" = "409" ]; then
+              ID=$(jq -r '.error.envVarId // empty' /tmp/ev.json)
+              [ -n "$ID" ] && curl -s -X PATCH \
+                "https://api.vercel.com/v9/projects/$PID/env/$ID" \
+                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"value\":$(printf '%s' "$V" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" > /dev/null
+              echo "$K updated"
+            else
+              echo "$K HTTP $H"
+            fi
+          }
+          set_ev "STRIPE_SECRET_KEY" "$SK"
+          set_ev "STRIPE_WEBHOOK_SECRET" "$WH"
+          set_ev "STRIPE_PRO_PRICE_ID" "$PRO"
+          set_ev "STRIPE_PREMIUM_PRICE_ID" "$PREM"
+          set_ev "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY" "$PUBK"
+          set_ev "NEXT_PUBLIC_APP_URL" "https://hivebuystuff.hive.baby"
+
       - name: Run DB migration via psql
         run: |
           sudo apt-get install -y -q postgresql-client
           psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS hbs_templates (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id TEXT NOT NULL, name TEXT NOT NULL, items JSONB NOT NULL DEFAULT '[]', cadence TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE (user_id, name));"
           psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS hbs_preferences (user_id TEXT PRIMARY KEY, budget_ceiling NUMERIC, substitution_tolerance TEXT NOT NULL DEFAULT 'flexible' CHECK (substitution_tolerance IN ('strict', 'flexible', 'auto')), preferred_backends JSONB NOT NULL DEFAULT '[]', dietary_rules JSONB NOT NULL DEFAULT '[]', delivery_constraints JSONB NOT NULL DEFAULT '{}', updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());"
-          echo "Migration complete"
+          psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS hbs_usage (user_id TEXT NOT NULL, year_month TEXT NOT NULL, run_count INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, year_month));"
+          psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS hbs_subscriptions (user_id TEXT PRIMARY KEY, tier TEXT NOT NULL DEFAULT 'free' CHECK (tier IN ('free', 'pro', 'premium')), stripe_customer_id TEXT, stripe_subscription_id TEXT, current_period_end TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());"
+          echo "Migration complete (V1: +hbs_usage, +hbs_subscriptions)"
 
       - name: Health check
         run: |

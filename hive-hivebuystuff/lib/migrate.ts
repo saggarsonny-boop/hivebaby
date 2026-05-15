@@ -26,4 +26,26 @@ export async function runMigration() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS hbs_usage (
+      user_id TEXT NOT NULL,
+      year_month TEXT NOT NULL,
+      run_count INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (user_id, year_month)
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS hbs_subscriptions (
+      user_id TEXT PRIMARY KEY,
+      tier TEXT NOT NULL DEFAULT 'free'
+        CHECK (tier IN ('free', 'pro', 'premium')),
+      stripe_customer_id TEXT,
+      stripe_subscription_id TEXT,
+      current_period_end TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
 }

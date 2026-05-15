@@ -27,9 +27,10 @@ type Backend = (typeof BACKENDS)[number];
 type Props = {
   userId: string;
   initialTemplateId?: string;
+  onRunComplete?: () => void;
 };
 
-export default function RunCart({ userId, initialTemplateId = "" }: Props) {
+export default function RunCart({ userId, initialTemplateId = "", onRunComplete }: Props) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState(initialTemplateId);
   const [backend, setBackend] = useState<Backend>("Walmart");
@@ -71,12 +72,17 @@ export default function RunCart({ userId, initialTemplateId = "" }: Props) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        setError(err.error ?? "Something went wrong");
+        if (err.upgrade_required) {
+          setError(`${err.error}. You've used ${err.run_count}/${err.limit} runs this month. Upgrade to continue.`);
+        } else {
+          setError(err.error ?? "Something went wrong");
+        }
         return;
       }
 
       const data = await res.json();
       setResult(data);
+      onRunComplete?.();
     } catch {
       setError("Network error. Please try again.");
     } finally {
