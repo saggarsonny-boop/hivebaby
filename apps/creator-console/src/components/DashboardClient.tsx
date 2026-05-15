@@ -7,6 +7,8 @@ export default function DashboardClient({ mockData, mockEngines, totalDau: initi
   const [data, setData] = useState(mockData);
   const [engines, setEngines] = useState(mockEngines);
   const [totalDau, setTotalDau] = useState(initialTotalDau);
+  const [pipelineData, setPipelineData] = useState<any[]>([]);
+  const [totalPipelineValue, setTotalPipelineValue] = useState(0);
   const router = useRouter();
 
   const formatCurrency = (amount: number) => {
@@ -26,6 +28,13 @@ export default function DashboardClient({ mockData, mockEngines, totalDau: initi
           if (stats.chartData && stats.chartData.length > 0) {
             setData(stats.chartData);
           }
+        }
+        
+        const pipeRes = await fetch('/api/pipeline');
+        if (pipeRes.ok) {
+          const pipeStats = await pipeRes.json();
+          setPipelineData(pipeStats.leads);
+          setTotalPipelineValue(pipeStats.totalPipelineValue);
         }
       } catch (e) {}
     }, 3000);
@@ -136,6 +145,50 @@ export default function DashboardClient({ mockData, mockEngines, totalDau: initi
                 <td style={{ padding: '1rem 1.5rem', color: engine.rev !== '$0' ? '#10b981' : '#737373', fontWeight: 500 }}>{engine.rev}</td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="table-section" style={{ background: 'rgba(20,20,20,0.4)', backdropFilter: 'blur(10px)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '12px', marginTop: '2rem', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 1.5rem 0 1.5rem', marginBottom: '1rem' }}>
+          <div className="chart-header" style={{ color: '#fff', fontSize: '1.1rem' }}>Enterprise AAC Pipeline (B2B Leads)</div>
+          <div style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: '1.1rem' }}>Total ACV Pipeline: {formatCurrency(totalPipelineValue)}</div>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.2)', color: '#D4AF37', fontSize: '0.9rem' }}>
+              <th style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>Lead ID</th>
+              <th style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>Company</th>
+              <th style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>Seats</th>
+              <th style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>Status</th>
+              <th style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>Est. ACV</th>
+              <th style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>Last Touch</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pipelineData && pipelineData.map((lead: any, idx: number) => (
+              <tr key={lead.id} style={{ borderBottom: idx !== pipelineData.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(212,175,55,0.05)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '1rem 1.5rem' }}><code style={{ color: '#a3a3a3', background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>{lead.id}</code></td>
+                <td style={{ padding: '1rem 1.5rem', fontWeight: 500, color: '#fff' }}>{lead.company}</td>
+                <td style={{ padding: '1rem 1.5rem', color: '#a3a3a3' }}>{lead.seats.toLocaleString()}</td>
+                <td style={{ padding: '1rem 1.5rem' }}>
+                  <span style={{ 
+                    background: lead.status === 'Closed Won' ? 'rgba(16,185,129,0.1)' : lead.status === 'Checkout Abandoned' ? 'rgba(239,68,68,0.1)' : 'rgba(212,175,55,0.1)', 
+                    color: lead.status === 'Closed Won' ? '#10b981' : lead.status === 'Checkout Abandoned' ? '#ef4444' : '#D4AF37', 
+                    padding: '4px 10px', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 500 
+                  }}>
+                    {lead.status}
+                  </span>
+                </td>
+                <td style={{ padding: '1rem 1.5rem', color: '#D4AF37', fontWeight: 600 }}>{lead.acv}</td>
+                <td style={{ padding: '1rem 1.5rem', color: '#737373', fontSize: '0.9rem' }}>{lead.lastTouch}</td>
+              </tr>
+            ))}
+            {(!pipelineData || pipelineData.length === 0) && (
+              <tr>
+                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: '#737373' }}>No Enterprise Leads Generated Yet.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
