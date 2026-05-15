@@ -1,0 +1,55 @@
+name: HiveBuyStuff — E2E Tests
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["HiveBuyStuff Deploy and Migrate"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  e2e:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright + deps
+        working-directory: hive-hivebuystuff
+        run: |
+          npm install --legacy-peer-deps
+          npx playwright install chromium --with-deps
+
+      - name: Wait for deployment to be live
+        run: |
+          echo "Waiting for hivebuystuff.hive.baby to be ready..."
+          for i in $(seq 1 24); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://hivebuystuff.hive.baby/api/health" --max-time 10)
+            echo "  [$i/24] HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ Site is live"
+              break
+            fi
+            sleep 10
+          done
+
+      - name: Run E2E tests
+        working-directory: hive-hivebuystuff
+        env:
+          BASE_URL: https://hivebuystuff.hive.baby
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx playwright test --reporter=list
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: hive-hivebuystuff/playwright-report/
+          retention-days: 7
