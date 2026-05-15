@@ -31,7 +31,7 @@
       "id": "hive-imr",
       "name": "HiveIMR",
       "url": "https://hiveimr.hive.baby",
-      "description": "Intelligent Medical Records — the post-EMR substrate",
+      "description": "Intelligent Medical Records \u2014 the post-EMR substrate",
       "status": "live",
       "category": "medical"
     },
@@ -39,7 +39,7 @@
       "id": "hive-hivephoto",
       "name": "HivePhoto",
       "url": "https://hivephoto.hive.baby",
-      "description": "AI photo intelligence — upload, search, understand your photos",
+      "description": "AI photo intelligence \u2014 upload, search, understand your photos",
       "status": "live",
       "category": "media"
     },
@@ -47,9 +47,18 @@
       "id": "secret-box",
       "name": "HiveSecretBox",
       "url": "https://secretbox.hive.baby",
-      "description": "Anonymous secrets — no account, no IP storage, you are not alone",
+      "description": "Anonymous secrets \u2014 no account, no IP storage, you are not alone",
       "status": "live",
       "category": "social"
+    },
+    {
+      "id": "hive-hivebuystuff",
+      "name": "HiveBuyStuff",
+      "url": "https://hivebuystuff.hive.baby",
+      "alias": "https://buy.hive.baby",
+      "description": "Build shopping lists once. Run them on any store. AI maps to real products.",
+      "status": "live",
+      "category": "commerce"
     }
   ]
 }
