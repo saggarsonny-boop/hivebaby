@@ -21,64 +21,52 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Resolve Vercel token
+      - name: Resolve credentials
         env:
           VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
           VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+          DATABASE_URL_SECRET: ${{ secrets.DATABASE_URL }}
         run: |
           TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
           if [ -z "$TOKEN" ]; then echo "ERROR: No Vercel token"; exit 1; fi
+          if [ -z "$DATABASE_URL_SECRET" ]; then echo "ERROR: No DATABASE_URL"; exit 1; fi
           echo "VERCEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
-          echo "Token length: ${#TOKEN}"
+          echo "DATABASE_URL=$DATABASE_URL_SECRET" >> "$GITHUB_ENV"
+          echo "Token length: ${#TOKEN}, DB URL length: ${#DATABASE_URL_SECRET}"
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Pull Vercel project settings
+      - name: Deploy to Vercel (prod)
         working-directory: hive-hivebuystuff
         run: |
-          # Link to or create the project
-          vercel pull --yes --environment=production \
-            --token "$VERCEL_TOKEN" 2>&1 || true
-          echo "Vercel project config:"
-          cat .vercel/project.json 2>/dev/null || echo 'No project.json yet'
-
-      - name: Build
-        working-directory: hive-hivebuystuff
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          vercel build --prod --token "$VERCEL_TOKEN" 2>&1
-
-      - name: Deploy to production
-        working-directory: hive-hivebuystuff
-        id: deploy
-        run: |
-          OUTPUT=$(vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN" 2>&1)
+          echo "Deploying hive-hivebuystuff to production..."
+          # Single-command deploy: links, builds, and deploys
+          OUTPUT=$(vercel --token "$VERCEL_TOKEN" --prod --yes \
+            --build-env ANTHROPIC_API_KEY="placeholder_build_only" \
+            --build-env DATABASE_URL="placeholder_build_only" \
+            2>&1)
           echo "$OUTPUT"
-          DEPLOY_URL=$(echo "$OUTPUT" | grep -Eo 'https://[a-z0-9._-]+\.vercel\.app' | tail -1)
+          DEPLOY_URL=$(echo "$OUTPUT" | grep -Eo 'https://[a-zA-Z0-9._-]+\.vercel\.app' | tail -1)
           echo "DEPLOY_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
           echo "Deploy URL: $DEPLOY_URL"
 
-      - name: Add env vars to Vercel project (ensure they persist)
+      - name: Set production env vars on Vercel project
         run: |
+          # Get project ID from the linked .vercel/project.json
           PROJECT_ID=$(cat hive-hivebuystuff/.vercel/project.json 2>/dev/null | jq -r '.projectId // empty')
-          if [ -z "$PROJECT_ID" ]; then
-            echo "No project ID found — skipping env var step"
-            exit 0
-          fi
-          echo "Project ID: $PROJECT_ID"
+          echo "Project ID: '${PROJECT_ID}'"
+          if [ -z "$PROJECT_ID" ]; then exit 0; fi
 
           set_env() {
             local KEY="$1" VALUE="$2"
-            STATUS=$(curl -s -o /tmp/e.json -w "%{http_code}" \
+            HTTP=$(curl -s -o /tmp/ev.json -w "%{http_code}" \
               -X POST "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
               -H "Authorization: Bearer $VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
               -d "{\"key\":\"$KEY\",\"value\":$(echo "$VALUE" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
-            if [ "$STATUS" = "409" ]; then
-              ID=$(cat /tmp/e.json | jq -r '.error.envVarId // empty')
+            if [ "$HTTP" = "409" ]; then
+              ID=$(cat /tmp/ev.json | jq -r '.error.envVarId // empty')
               [ -n "$ID" ] && curl -s -X PATCH \
                 "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ID" \
                 -H "Authorization: Bearer $VERCEL_TOKEN" \
@@ -86,48 +74,52 @@ jobs:
                 -d "{\"value\":$(echo "$VALUE" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" > /dev/null
               echo "  $KEY: updated"
             else
-              echo "  $KEY: HTTP $STATUS"
+              echo "  $KEY: HTTP $HTTP"
             fi
           }
 
           set_env "ANTHROPIC_API_KEY" "${{ secrets.ANTHROPIC_API_KEY }}"
-          set_env "DATABASE_URL" "${{ secrets.DATABASE_URL }}"
+          set_env "DATABASE_URL" "$DATABASE_URL"
 
-      - name: Run DB migration
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Run DB migration via psql
         run: |
-          # Try the deployment URL first, then custom domain
-          URLS=("$DEPLOY_URL" "https://hivebuystuff.hive.baby" "https://buy.hive.baby" "https://hive-hivebuystuff.vercel.app")
-          # Remove empty
-          URLS=($(printf '%s\n' "${URLS[@]}" | grep -v '^$'))
+          sudo apt-get install -y -q postgresql-client 2>/dev/null
 
-          SUCCESS=false
-          for URL in "${URLS[@]}"; do
-            echo "→ POST $URL/api/hbs/migrate"
-            for attempt in 1 2 3; do
-              HTTP=$(curl -s -o /tmp/mg.json -w "%{http_code}" -X POST "$URL/api/hbs/migrate" --max-time 20)
-              BODY=$(cat /tmp/mg.json)
-              echo "  [$attempt] HTTP $HTTP: $BODY"
-              if [ "$HTTP" = "200" ]; then
-                SUCCESS=true
-                echo "✓ Migration complete via $URL"
-                break 2
-              fi
-              sleep 8
-            done
-          done
-
-          if [ "$SUCCESS" != "true" ]; then
-            echo "✗ Migration failed on all URLs"
-            exit 1
-          fi
+          psql "$DATABASE_URL" <<'SQL'
+            CREATE TABLE IF NOT EXISTS hbs_templates (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              user_id TEXT NOT NULL,
+              name TEXT NOT NULL,
+              items JSONB NOT NULL DEFAULT '[]',
+              cadence TEXT,
+              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              UNIQUE (user_id, name)
+            );
+            CREATE TABLE IF NOT EXISTS hbs_preferences (
+              user_id TEXT PRIMARY KEY,
+              budget_ceiling NUMERIC,
+              substitution_tolerance TEXT NOT NULL DEFAULT 'flexible'
+                CHECK (substitution_tolerance IN ('strict', 'flexible', 'auto')),
+              preferred_backends JSONB NOT NULL DEFAULT '[]',
+              dietary_rules JSONB NOT NULL DEFAULT '[]',
+              delivery_constraints JSONB NOT NULL DEFAULT '{}',
+              updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            SELECT 'hbs_templates' AS table_name, COUNT(*) FROM hbs_templates
+            UNION ALL
+            SELECT 'hbs_preferences', COUNT(*) FROM hbs_preferences;
+SQL
+          echo "Migration complete"
 
       - name: Health check
         run: |
+          echo "Waiting 20s for deployment to warm up..."
+          sleep 20
           for URL in "$DEPLOY_URL" "https://hivebuystuff.hive.baby"; do
-            echo "→ GET $URL/api/health"
-            R=$(curl -s "$URL/api/health" --max-time 10 2>&1)
-            echo "  $R"
+            if [ -n "$URL" ]; then
+              echo "→ GET $URL/api/health"
+              R=$(curl -s "$URL/api/health" --max-time 12 2>&1)
+              echo "  $R"
+            fi
           done
-          echo "✓ HiveBuyStuff deployment complete"
