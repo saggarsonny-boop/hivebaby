@@ -52,6 +52,7 @@ export default function MyLists({ userId, onRunCart }: Props) {
   const [formName, setFormName] = useState("");
   const [items, setItems] = useState<NewItem[]>([emptyItem()]);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
 
   const fetchTemplates = useCallback(async () => {
@@ -101,17 +102,27 @@ export default function MyLists({ userId, onRunCart }: Props) {
   async function saveTemplate() {
     if (!formName.trim() || items.length === 0) return;
     setSaving(true);
+    setSaveError("");
     const payload = {
       user_id: userId,
       name: formName.trim(),
       items: items.map((i) => ({ ...i, unit: i.unit || null })),
     };
-    await fetch("/api/hbs/templates", {
+    const res = await fetch("/api/hbs/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     setSaving(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (err.upgrade_required) {
+        setSaveError(`List limit reached (${err.list_count}/${err.limit} on free tier). Upgrade to Pro for unlimited lists.`);
+      } else {
+        setSaveError(err.error ?? "Failed to save list.");
+      }
+      return;
+    }
     setShowForm(false);
     fetchTemplates();
   }
@@ -266,8 +277,14 @@ export default function MyLists({ userId, onRunCart }: Props) {
             </button>
           </div>
 
+          {saveError && (
+            <div style={{ color: "var(--red)", fontSize: "0.85rem", background: "rgba(248,81,73,0.08)", borderRadius: 6, padding: "0.5rem 0.75rem" }}>
+              {saveError}
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-            <button className="btn-ghost" onClick={() => setShowForm(false)}>Cancel</button>
+            <button className="btn-ghost" onClick={() => { setShowForm(false); setSaveError(""); }}>Cancel</button>
             <button
               className="btn-primary"
               onClick={saveTemplate}

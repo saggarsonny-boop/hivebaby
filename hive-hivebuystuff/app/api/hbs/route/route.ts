@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import sql from "@/lib/db";
+import { TIER_LIMITS } from "@/app/api/hbs/usage/route";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -28,8 +29,9 @@ Walmart: https://www.walmart.com/search?q=[encoded+item+names+joined+by+comma]
 Target: https://www.target.com/s?searchTerm=[encoded+items]
 Amazon: https://www.amazon.com/s?k=[encoded+items]
 Instacart: https://www.instacart.com/store/search_v3/term?term=[encoded+items]
+Kroger: https://www.kroger.com/search?query=[encoded+items]
 
-These are search links, not direct cart links. That is correct and expected for V0.`;
+These are search links, not direct cart links. That is correct and expected for V1.`;
 
 type CartResult = {
   backend: string;
@@ -37,6 +39,11 @@ type CartResult = {
   cart_url: string;
   notes: string;
 };
+
+function currentYearMonth(): string {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -48,15 +55,35 @@ export async function POST(req: NextRequest) {
   }
 
   const { template_id, backend, user_id } = body;
+  const ym = currentYearMonth();
 
-  const [templateRows, prefRows] = await Promise.all([
+  const [templateRows, prefRows, subRows, usageRows] = await Promise.all([
     sql`SELECT * FROM hbs_templates WHERE id = ${template_id} AND user_id = ${user_id}`,
     sql`SELECT * FROM hbs_preferences WHERE user_id = ${user_id}`,
+    sql`SELECT tier FROM hbs_subscriptions WHERE user_id = ${user_id}`,
+    sql`SELECT run_count FROM hbs_usage WHERE user_id = ${user_id} AND year_month = ${ym}`,
   ]);
 
   const template = templateRows[0];
   if (!template) {
     return NextResponse.json({ error: "Template not found" }, { status: 404 });
+  }
+
+  const tier = (subRows[0]?.tier ?? "free") as keyof typeof TIER_LIMITS;
+  const run_count = usageRows[0]?.run_count ?? 0;
+  const limit = TIER_LIMITS[tier].runs_per_month;
+
+  if (run_count >= limit) {
+    return NextResponse.json(
+      {
+        error: "Monthly run limit reached",
+        tier,
+        run_count,
+        limit,
+        upgrade_required: true,
+      },
+      { status: 429 }
+    );
   }
 
   const prefs = prefRows[0] ?? {};
@@ -71,8 +98,13 @@ export async function POST(req: NextRequest) {
     backend,
   });
 
+  const model =
+    tier === "premium"
+      ? "claude-opus-4-7"
+      : "claude-haiku-4-5-20251001";
+
   const message = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model,
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: userMessage }],
@@ -89,5 +121,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to parse AI response", raw: rawText }, { status: 500 });
   }
 
-  return NextResponse.json(cart);
+  await sql`
+    INSERT INTO hbs_usage (user_id, year_month, run_count)
+    VALUES (${user_id}, ${ym}, 1)
+    ON CONFLICT (user_id, year_month) DO UPDATE SET
+      run_count = hbs_usage.run_count + 1
+  `;
+
+  return NextResponse.json({ ...cart, tier, run_count: run_count + 1 });
 }

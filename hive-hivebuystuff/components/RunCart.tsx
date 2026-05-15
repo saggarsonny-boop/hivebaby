@@ -27,9 +27,10 @@ type Backend = (typeof BACKENDS)[number];
 type Props = {
   userId: string;
   initialTemplateId?: string;
+  onRunComplete?: () => void;
 };
 
-export default function RunCart({ userId, initialTemplateId = "" }: Props) {
+export default function RunCart({ userId, initialTemplateId = "", onRunComplete }: Props) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState(initialTemplateId);
   const [backend, setBackend] = useState<Backend>("Walmart");
@@ -71,12 +72,17 @@ export default function RunCart({ userId, initialTemplateId = "" }: Props) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        setError(err.error ?? "Something went wrong");
+        if (err.upgrade_required) {
+          setError(`${err.error}. You've used ${err.run_count}/${err.limit} runs this month. Upgrade to continue.`);
+        } else {
+          setError(err.error ?? "Something went wrong");
+        }
         return;
       }
 
       const data = await res.json();
       setResult(data);
+      onRunComplete?.();
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -191,16 +197,30 @@ export default function RunCart({ userId, initialTemplateId = "" }: Props) {
             </div>
           )}
 
-          <a
-            href={result.cart_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
-          >
-            <button className="btn-primary" style={{ fontSize: "0.95rem", padding: "0.65rem 1.5rem" }}>
-              Open Cart →
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+            <a href={result.cart_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+              <button className="btn-primary" style={{ fontSize: "0.95rem", padding: "0.65rem 1.5rem" }}>
+                Open Cart →
+              </button>
+            </a>
+            <button
+              className="btn-ghost"
+              style={{ fontSize: "0.85rem" }}
+              onClick={() => {
+                const text = `🛒 ${selectedName} → ${result.backend}\n` +
+                  result.items.map((i) => `  • ${i.mapped} ×${i.qty}`).join("\n") +
+                  `\n\nBuilt with HiveBuyStuff — hivebuystuff.hive.baby`;
+                if (navigator.share) {
+                  navigator.share({ title: `My ${result.backend} cart`, text });
+                } else {
+                  navigator.clipboard.writeText(text);
+                  alert("Cart summary copied to clipboard");
+                }
+              }}
+            >
+              Share cart
             </button>
-          </a>
+          </div>
         </div>
       )}
 
