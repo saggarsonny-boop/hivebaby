@@ -11,7 +11,8 @@ export default function DashboardClient({ mockData, mockEngines, totalDau: initi
   const [totalPipelineValue, setTotalPipelineValue] = useState(0);
   const router = useRouter();
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (typeof amount !== 'number' || isNaN(amount)) return '$0';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
   };
 
@@ -132,7 +133,7 @@ export default function DashboardClient({ mockData, mockEngines, totalDau: initi
             </tr>
           </thead>
           <tbody>
-            {engines.map((engine: any, idx: number) => (
+            {Array.isArray(engines) && engines.map((engine: any, idx: number) => (
               <tr key={engine.id} onClick={() => router.push(`/engine/${engine.id}`)} style={{ borderBottom: idx !== engines.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                 <td style={{ padding: '1rem 1.5rem' }}><code style={{ color: 'var(--accent-gold)', background: 'rgba(212,175,55,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>{engine.id}</code></td>
                 <td style={{ padding: '1rem 1.5rem', fontWeight: 500, color: '#e5e5e5' }}>{engine.name}</td>
@@ -166,7 +167,7 @@ export default function DashboardClient({ mockData, mockEngines, totalDau: initi
             </tr>
           </thead>
           <tbody>
-            {pipelineData && pipelineData.map((lead: any, idx: number) => (
+            {Array.isArray(pipelineData) && pipelineData.map((lead: any, idx: number) => (
               <tr key={lead.id} style={{ borderBottom: idx !== pipelineData.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(212,175,55,0.05)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                 <td style={{ padding: '1rem 1.5rem' }}><code style={{ color: '#a3a3a3', background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>{lead.id}</code></td>
                 <td style={{ padding: '1rem 1.5rem', fontWeight: 500, color: '#fff' }}>{lead.company}</td>
@@ -184,7 +185,7 @@ export default function DashboardClient({ mockData, mockEngines, totalDau: initi
                 <td style={{ padding: '1rem 1.5rem', color: '#737373', fontSize: '0.9rem' }}>{lead.lastTouch}</td>
               </tr>
             ))}
-            {(!pipelineData || pipelineData.length === 0) && (
+            {(!Array.isArray(pipelineData) || pipelineData.length === 0) && (
               <tr>
                 <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: '#737373' }}>No Enterprise Leads Generated Yet.</td>
               </tr>
