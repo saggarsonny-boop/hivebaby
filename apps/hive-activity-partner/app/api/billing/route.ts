@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2023-10-16',
+}) : null;
 
 export async function POST(req: Request) {
   try {
@@ -23,8 +28,41 @@ export async function POST(req: Request) {
 
     console.log(`[AAC Billing] Calculated enterprise contract for ${enterpriseId}. Seats: ${seatCount}. ACV: $${totalAnnualContractValue}`);
 
-    // In production, this would initialize a Stripe Checkout Session for the Base Platform Fee
-    // and set up a usage-based / metered billing subscription for the active seat count.
+    let checkoutUrl = 'https://checkout.stripe.com/c/pay/cs_test_mock_enterprise_aac';
+
+    if (stripe) {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card', 'us_bank_account'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'Hive AAC Base Enterprise Platform (Annual)',
+                description: 'Core infrastructure and vector sandbox deployment.',
+              },
+              unit_amount: basePlatformFee * 100, // Stripe expects cents
+            },
+            quantity: 1,
+          },
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `AAC Seat Licenses (${seatCount} users)`,
+                description: `Annualized rate of $${seatPricePerMonth}/user/month`,
+              },
+              unit_amount: annualSeatRevenue * 100, // Stripe expects cents
+            },
+            quantity: 1,
+          }
+        ],
+        mode: 'payment',
+        success_url: `${req.headers.get('origin') || 'http://localhost:3000'}/?success=true`,
+        cancel_url: `${req.headers.get('origin') || 'http://localhost:3000'}/?canceled=true`,
+      });
+      checkoutUrl = session.url || checkoutUrl;
+    }
 
     return NextResponse.json({ 
       success: true, 
@@ -33,7 +71,7 @@ export async function POST(req: Request) {
       seatPricePerMonth,
       basePlatformFee,
       totalAnnualContractValue,
-      checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_test_mock_enterprise_aac'
+      checkoutUrl
     });
   } catch (error) {
     console.error('AAC Billing setup failed:', error);
