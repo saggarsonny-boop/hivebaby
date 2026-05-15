@@ -1,0 +1,91 @@
+name: HiveBuyStuff — Diagnostics
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/hivebuystuff-diag.yml'
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+
+    steps:
+      - name: Resolve tokens
+        env:
+          VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          echo "VERCEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+          echo "Token length: ${#TOKEN}"
+
+      - name: Gather diagnostics
+        run: |
+          echo "=== Project ==="
+          curl -s "https://api.vercel.com/v9/projects/hive-hivebuystuff" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" | jq . > /tmp/project.json
+          cat /tmp/project.json
+
+          echo "=== All projects (name search) ==="
+          curl -s "https://api.vercel.com/v9/projects?search=hivebuystuff&limit=5" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" | jq -c '[.projects[]? | {id,name,framework,rootDirectory}]'
+
+          PROJECT_ID=$(cat /tmp/project.json | jq -r '.id // empty')
+          echo "Project ID: '$PROJECT_ID'"
+          echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+
+          if [ -n "$PROJECT_ID" ]; then
+            echo "=== Deployments ==="
+            curl -s "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&limit=5" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" | jq -c '[.deployments[]? | {url,state,readyState,target,created}]' > /tmp/deployments.json
+            cat /tmp/deployments.json
+
+            echo "=== Aliases ==="
+            curl -s "https://api.vercel.com/v2/projects/$PROJECT_ID/aliases?limit=5" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" | jq -c '[.aliases[]? | {alias,deployment:.deployment.url}]'
+          fi
+
+          echo "=== URL probes ==="
+          for URL in "https://hive-hivebuystuff.vercel.app" "https://hivebuystuff.hive.baby" "https://buy.hive.baby"; do
+            RESP=$(curl -s --max-time 8 "$URL/api/health" -w "\nHTTP:%{http_code}" 2>&1)
+            echo "$URL: $RESP"
+          done
+
+      - name: Post results to GitHub issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PROJECT=$(cat /tmp/project.json 2>/dev/null | jq -c '{id,name,framework,rootDirectory,alias:([.alias[]?.domain]|.[0:3])}' 2>/dev/null || echo 'not found')
+          DEPS=$(cat /tmp/deployments.json 2>/dev/null || echo 'no deployments')
+
+          # Probe URLs
+          PROBE_HBS=$(curl -s --max-time 8 "https://hive-hivebuystuff.vercel.app/api/health" 2>&1 || echo 'no response')
+          PROBE_CUSTOM=$(curl -s --max-time 8 "https://hivebuystuff.hive.baby/api/health" 2>&1 || echo 'no response')
+
+          BODY=$(cat <<ISSEOF
+## HiveBuyStuff Deployment Diagnostics
+
+**Project:** \`$PROJECT\`
+
+**Deployments:**
+\`\`\`
+$DEPS
+\`\`\`
+
+**URL probes:**
+- hive-hivebuystuff.vercel.app/api/health: \`$PROBE_HBS\`
+- hivebuystuff.hive.baby/api/health: \`$PROBE_CUSTOM\`
+ISSEOF
+)
+
+          curl -s -X POST \
+            "https://api.github.com/repos/saggarsonny-boop/hivebaby/issues" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"title\":\"HiveBuyStuff deploy diagnostics $(date -u +%H:%M)\",\"body\":$(echo \"$BODY\" | jq -Rs .),\"labels\":[]}"
