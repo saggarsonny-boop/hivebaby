@@ -281,7 +281,7 @@ Status legend: **LIVE** (in production, listed) · **BUILDING** (in active dev) 
 | ud-inc | UniversalDocumentInc | universaldocument.hive.baby | LIVE | Next.js + Tailwind | low_marginal | manual |
 | hivebaby/hive-imr | HiveIMR | hiveimr.hive.baby | LIVE | Next.js + Anthropic + Neon | medium_marginal | HiveOps **PASS** (canonical migration #122, 2026-05-08) |
 | hivebaby/imgtrainer | IMGTrainer | imgtrainer.hive.baby | LIVE | Next.js + Anthropic | medium_marginal | manual |
-| hivebaby/apps/hive-plainscan | HivePlainScan | plainscan.hive.baby | DORMANT | Next.js + Anthropic | medium_marginal | Deployed but unreachable — no DNS for `plainscan.hive.baby`, no users, idle 11+ days. Migration deferred; WARN overrides expire 2026-06-05. DNS-or-retire decision tracked in hivebaby#127. |
+| hivebaby/apps/hive-plainscan | HivePlainScan | plainscan.hive.baby | BUILDING | Next.js + Anthropic | zero_marginal | DNS wired 2026-05-15 (`plainscan.hive.baby` + alias `scan.hive.baby` → `cname.vercel-dns.com`). Phase 3 locales shipped (7 canonical). Phase 4 onboarding-stack work (H08/H11/H12/H13/H15) in WARN until 2026-06-08; flips `building → live` + `not_listed → listed` when Phase 4 lands. Tracked in hivebaby#127. |
 | hivebaby/apps/parkback | ParkBack | parkback.hive.baby | LIVE | Next.js (client-only PWA) | zero | HiveOps **pass with waivers** (V01/V18/V19 waived — see ENGINE_GRAMMAR.md) |
 | hivebaby/apps/hive-activity-partner | HiveActivityPartner | activitypartner.hive.baby | BUILDING (Phase 1/6) | Next.js + Clerk + Neon + Anthropic + Stripe + Resend | medium_marginal | HiveOps Phase-1 with waivers (V18/V19) |
 

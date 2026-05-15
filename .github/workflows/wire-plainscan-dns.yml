@@ -1,0 +1,203 @@
+name: Ops — Wire plainscan.hive.baby + scan.hive.baby DNS
+
+# One-shot DNS-wire workflow. Closes hivebaby#127. Reason this exists:
+# the original setup-hive-plainscan.yml (now archived) had a silent
+# `if: env.CF_TOKEN_RESOLVED != ''` guard that caused the Cloudflare
+# CNAME step to be skipped without erroring when none of the CF secrets
+# resolved at run time. This workflow fixes the bug by failing loudly
+# if no CF token is available, then upserts both CNAMEs and verifies
+# health from inside the Actions runner.
+#
+# Auto-fires on push via `on: push: paths: [self]`, runs once, archives
+# itself in the same PR via a tiny side-step.
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - '.github/workflows/wire-plainscan-dns.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      DOMAIN_PRIMARY: plainscan.hive.baby
+      DOMAIN_ALIAS: scan.hive.baby
+      CNAME_TARGET: cname.vercel-dns.com
+      VERCEL_PROJECT: hive-plainscan
+      OUT_DIR: .ops/deployment-debug
+      VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+      VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+      CF_TOKEN_A: ${{ secrets.CF_API_TOKEN }}
+      CF_TOKEN_B: ${{ secrets.CF_TOKEN }}
+      CF_TOKEN_C: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ZONE_INPUT: ${{ secrets.CF_ZONE }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve tokens (FAIL LOUDLY if missing — bug from archived workflow)
+        run: |
+          set -e
+          CF="${CF_TOKEN_A:-${CF_TOKEN_B:-$CF_TOKEN_C}}"
+          if [ -z "$CF" ]; then
+            echo "::error::No Cloudflare token resolved. None of CF_API_TOKEN / CF_TOKEN / CLOUDFLARE_API_TOKEN is set in Actions secrets."
+            exit 1
+          fi
+          VERCEL_TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::No Vercel token resolved. Need VERCEL_TOKEN_MAIN or VERCEL_TOKEN."
+            exit 1
+          fi
+          ZONE="${CF_ZONE_INPUT:-${CLOUDFLARE_ZONE_ID:-bcb5522993ecf90a4f1d5dfe101e5a5c}}"
+          echo "✓ CF token resolved (length=${#CF})"
+          echo "✓ Vercel token resolved (length=${#VERCEL_TOKEN})"
+          echo "✓ Zone = $ZONE"
+          echo "CF_TOKEN=$CF" >> "$GITHUB_ENV"
+          echo "VERCEL_TOKEN=$VERCEL_TOKEN" >> "$GITHUB_ENV"
+          echo "ZONE=$ZONE" >> "$GITHUB_ENV"
+
+      - name: Cloudflare CNAME upsert (plainscan + scan)
+        run: |
+          set -e
+          upsert_cname() {
+            local FQDN="$1"
+            EXISTING=$(curl -s \
+              "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?type=CNAME&name=$FQDN" \
+              -H "Authorization: Bearer $CF_TOKEN")
+            ID=$(echo "$EXISTING" | jq -r '.result[0].id // empty')
+            BODY=$(jq -n --arg n "$FQDN" --arg t "$CNAME_TARGET" \
+              '{type:"CNAME", name:$n, content:$t, ttl:1, proxied:false}')
+            if [ -n "$ID" ]; then
+              echo "  Update $FQDN ($ID) → $CNAME_TARGET"
+              HTTP=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+                -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records/$ID" \
+                -H "Authorization: Bearer $CF_TOKEN" \
+                -H "Content-Type: application/json" \
+                --data-binary "$BODY")
+            else
+              echo "  Create $FQDN → $CNAME_TARGET"
+              HTTP=$(curl -s -o /tmp/cf.json -w "%{http_code}" \
+                -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records" \
+                -H "Authorization: Bearer $CF_TOKEN" \
+                -H "Content-Type: application/json" \
+                --data-binary "$BODY")
+            fi
+            echo "  CF HTTP $HTTP"
+            jq '{success, errors, "result.name": .result.name, "result.content": .result.content, "result.proxied": .result.proxied}' /tmp/cf.json
+            SUCCESS=$(jq -r '.success' /tmp/cf.json)
+            if [ "$SUCCESS" != "true" ]; then
+              echo "::error::CF upsert failed for $FQDN"
+              exit 1
+            fi
+          }
+          upsert_cname "$DOMAIN_PRIMARY"
+          upsert_cname "$DOMAIN_ALIAS"
+
+      - name: Verify Vercel project has both domains attached
+        run: |
+          set -e
+          DOMAINS=$(curl -s "https://api.vercel.com/v9/projects/$VERCEL_PROJECT/domains" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" | jq -r '.domains[].name' 2>/dev/null)
+          echo "Attached domains:"
+          echo "$DOMAINS"
+          for D in "$DOMAIN_PRIMARY" "$DOMAIN_ALIAS"; do
+            if echo "$DOMAINS" | grep -qx "$D"; then
+              echo "  ✓ $D already attached"
+            else
+              echo "  → attaching $D"
+              BODY=$(jq -n --arg n "$D" '{name:$n}')
+              HTTP=$(curl -s -o /tmp/dom.json -w "%{http_code}" \
+                -X POST "https://api.vercel.com/v10/projects/$VERCEL_PROJECT/domains" \
+                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                -H "Content-Type: application/json" \
+                --data-binary "$BODY")
+              echo "  HTTP $HTTP"
+              jq . /tmp/dom.json || cat /tmp/dom.json
+              if [ "$HTTP" != "200" ] && [ "$HTTP" != "201" ] && [ "$HTTP" != "409" ]; then
+                echo "::error::Failed to attach $D"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Trigger fresh production deployment from main
+        run: |
+          BODY=$(jq -n \
+            --arg n "$VERCEL_PROJECT" \
+            '{ name: $n, gitSource: { type: "github", repo: "saggarsonny-boop/hivebaby", ref: "main" }, target: "production" }')
+          HTTP=$(curl -s -o /tmp/dep.json -w "%{http_code}" \
+            -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "$BODY")
+          echo "Deployment HTTP $HTTP"
+          jq '{id, url, readyState, alias, error}' /tmp/dep.json || cat /tmp/dep.json
+
+      - name: Poll /api/health on production domain (6 min ceiling)
+        run: |
+          mkdir -p "$OUT_DIR"
+          DEADLINE=$(( $(date +%s) + 360 ))
+          PRIMARY_OK=0
+          ALIAS_OK=0
+          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+            PS=$(curl -s -o /tmp/p.body -w "%{http_code}" --max-time 10 "https://$DOMAIN_PRIMARY/api/health" || echo "000")
+            AS=$(curl -s -o /tmp/a.body -w "%{http_code}" --max-time 10 "https://$DOMAIN_ALIAS/api/health"   || echo "000")
+            REM=$(( DEADLINE - $(date +%s) ))
+            echo "[$(date +%T)] primary=$PS alias=$AS  (remaining ${REM}s)"
+            [ "$PS" = "200" ] && PRIMARY_OK=1
+            [ "$AS" = "200" ] && ALIAS_OK=1
+            if [ "$PRIMARY_OK" = "1" ] && [ "$ALIAS_OK" = "1" ]; then
+              echo "✓ Both domains live"
+              break
+            fi
+            sleep 10
+          done
+          PRIMARY_BODY=$(head -c 300 /tmp/p.body 2>/dev/null || echo "")
+          ALIAS_BODY=$(head -c 300 /tmp/a.body   2>/dev/null || echo "")
+          jq -n \
+            --arg primary "$DOMAIN_PRIMARY" \
+            --arg alias   "$DOMAIN_ALIAS" \
+            --arg ps "$PRIMARY_OK" --arg pb "$PRIMARY_BODY" \
+            --arg as "$ALIAS_OK"   --arg ab "$ALIAS_BODY" \
+            '{
+              workflow: "wire-plainscan-dns",
+              primary: { domain: $primary, ok: ($ps == "1"), body: $pb },
+              alias:   { domain: $alias,   ok: ($as == "1"), body: $ab },
+              polled_at: (now | todate)
+            }' > "$OUT_DIR/wire-plainscan-dns-result.json"
+          cat "$OUT_DIR/wire-plainscan-dns-result.json"
+          if [ "$PRIMARY_OK" != "1" ]; then
+            echo "::error::Primary domain $DOMAIN_PRIMARY did not respond 200 within 6 min"
+            exit 1
+          fi
+          if [ "$ALIAS_OK" != "1" ]; then
+            echo "::warning::Alias domain $DOMAIN_ALIAS did not respond 200 within 6 min (non-fatal)"
+          fi
+
+      - name: Auto-archive this workflow (one-shot pattern)
+        if: success()
+        run: |
+          mkdir -p .github/archived-workflows
+          git mv .github/workflows/wire-plainscan-dns.yml \
+                 .github/archived-workflows/wire-plainscan-dns.yml
+          echo "✓ Workflow moved to archived-workflows/"
+
+      - name: Commit results + archived workflow
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT_DIR" .github/workflows .github/archived-workflows 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "ops(plainscan): DNS wired, workflow archived"
+            git pull --rebase origin "$GITHUB_REF_NAME" 2>&1 || true
+            git push origin "HEAD:$GITHUB_REF_NAME" || true
+          else
+            echo "No changes to commit."
+          fi
