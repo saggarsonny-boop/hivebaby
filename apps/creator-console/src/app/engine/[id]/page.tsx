@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function EnginePage({ params }: { params: { id: string } }) {
   const engineId = params.id;
-  const sql = neon(process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_B3kfDXLNUP5Z@ep-wild-surf-anjb0x31-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require');
+  const sql = neon('postgresql://neondb_owner:npg_B3kfDXLNUP5Z@ep-wild-surf-anjb0x31-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require');
   
   let stats = {
     dau: 0,

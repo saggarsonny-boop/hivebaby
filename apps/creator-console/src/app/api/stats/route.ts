@@ -5,7 +5,7 @@ export const revalidate = 0; // Disable static caching for live telemetry
 
 export async function GET() {
   try {
-    const sql = neon(process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_B3kfDXLNUP5Z@ep-wild-surf-anjb0x31-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require');
+    const sql = neon('postgresql://neondb_owner:npg_B3kfDXLNUP5Z@ep-wild-surf-anjb0x31-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require');
     
     // 1. Get total unique sessions (DAU)
     const totalDauResult = await sql`
