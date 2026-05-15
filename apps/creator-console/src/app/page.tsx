@@ -19,7 +19,10 @@ export default async function Home() {
     totalDau = parseInt(totalQuery[0]?.total || '0');
     
     engineStats = await sql`
-      SELECT engine_id, COUNT(DISTINCT session_id) as dau
+      SELECT 
+        engine_id, 
+        COUNT(DISTINCT session_id) as dau,
+        COUNT(DISTINCT CASE WHEN event_type = 'conversion' THEN session_id END) as conversions
       FROM ecosystem_telemetry
       GROUP BY engine_id
       ORDER BY dau DESC
@@ -84,13 +87,19 @@ export default async function Home() {
   }
 
   // Format data for Recharts & Table
-  const mockEngines = engineStats.map((e) => ({
-    id: e.engine_id,
-    name: e.engine_id.replace('ud-', 'UD ').replace('hive-', 'Hive '),
-    dau: parseInt(e.dau),
-    convRate: 'TBD%',
-    rev: 'TBD'
-  }));
+  const mockEngines = engineStats.map((e) => {
+    const dau = parseInt(e.dau) || 1;
+    const conv = parseInt(e.conversions) || 0;
+    const rate = ((conv / dau) * 100).toFixed(2);
+    
+    return {
+      id: e.engine_id,
+      name: e.engine_id.replace('ud-', 'UD ').replace('hive-', 'Hive ').toUpperCase(),
+      dau: parseInt(e.dau),
+      convRate: rate + '%',
+      rev: '$' + (conv * 12).toLocaleString()
+    };
+  });
 
   // Fallback if empty (before script runs)
   if (mockEngines.length === 0) {

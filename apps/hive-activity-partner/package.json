@@ -9,22 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@clerk/nextjs": "^5.0.0",
+    "@hive/auth": "file:../../packages/hive-auth",
+    "@hive/parser": "file:../../packages/hive-parser",
+    "@hive/telemetry": "file:../../packages/hive-telemetry",
+    "@neondatabase/serverless": "^0.9.0",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^0.468.0",
+    "mammoth": "^1.8.0",
     "next": "14.2.3",
     "next-pwa": "^5.6.0",
+    "openai": "^4.20.1",
+    "pdf-parse": "^1.1.1",
     "react": "^18",
     "react-dom": "^18",
     "stripe": "^15.5.0",
-    "@hive/telemetry": "file:../../packages/hive-telemetry",
-    "@hive/auth": "file:../../packages/hive-auth",
-    "@hive/parser": "file:../../packages/hive-parser",
-    "openai": "^4.20.1",
-    "zod": "^3.22.4",
-    "@anthropic-ai/sdk": "^0.32.1",
-    "@neondatabase/serverless": "^0.9.0",
-    "mammoth": "^1.8.0",
-    "pdf-parse": "^1.1.1",
-    "lucide-react": "^0.468.0"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20",
