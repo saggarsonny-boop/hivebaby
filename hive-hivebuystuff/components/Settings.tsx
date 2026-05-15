@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+const MagicKey = lazy(() => import("./MagicKey"));
 
 type SubTolerance = "strict" | "flexible" | "auto";
 const BACKENDS = ["Walmart", "Target", "Amazon", "Instacart", "Kroger"] as const;
@@ -217,16 +218,20 @@ export default function Settings({ userId }: Props) {
           {saved && <span className="save-notice">✓ Saved</span>}
         </div>
 
-        {/* Identity */}
-        <div style={{ borderTop: "1px solid var(--border-soft)", paddingTop: "1rem" }}>
-          <label className="hbs-label">Your session ID</label>
-          <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.78rem", color: "var(--text-muted)", wordBreak: "break-all", marginBottom: "0.3rem" }}>
-            {userId}
+        {/* Identity + Magic Key */}
+        <div style={{ borderTop: "1px solid var(--border-soft)", paddingTop: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div>
+            <label className="hbs-label">Your session ID</label>
+            <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.78rem", color: "var(--text-muted)", wordBreak: "break-all", marginBottom: "0.3rem" }}>
+              {userId}
+            </div>
+            <div style={{ color: "var(--text-muted)", fontSize: "0.78rem", lineHeight: 1.5 }}>
+              Stored in your browser. Your lists and preferences live here.
+            </div>
           </div>
-          <div style={{ color: "var(--text-muted)", fontSize: "0.78rem", lineHeight: 1.5 }}>
-            Stored in your browser. Your lists and preferences live here.
-            Clearing localStorage loses them — a portable magic key is coming soon.
-          </div>
+          <Suspense fallback={null}>
+            <MagicKey userId={userId} />
+          </Suspense>
         </div>
       </div>
     </div>

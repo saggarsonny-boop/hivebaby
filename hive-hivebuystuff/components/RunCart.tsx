@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 type Template = {
   id: string;
@@ -37,6 +37,9 @@ export default function RunCart({ userId, initialTemplateId = "", onRunComplete 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CartResult | null>(null);
   const [error, setError] = useState("");
+  const [extSession, setExtSession] = useState<string | null>(null);
+  const [extStatus, setExtStatus] = useState<"idle" | "pending" | "executing" | "done" | "failed">("idle");
+  const extPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchTemplates = useCallback(async () => {
     const res = await fetch(`/api/hbs/templates?user_id=${userId}`);
@@ -88,6 +91,33 @@ export default function RunCart({ userId, initialTemplateId = "", onRunComplete 
     } finally {
       setLoading(false);
     }
+  }
+
+  async function sendToExtension() {
+    if (!result) return;
+    setExtStatus("pending");
+    const res = await fetch("/api/hbs/ext/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, items: result.items, backend: result.backend }),
+    });
+    const data = await res.json();
+    setExtSession(data.id);
+    pollExtSession(data.id);
+  }
+
+  function pollExtSession(sessionId: string) {
+    if (extPollRef.current) clearTimeout(extPollRef.current);
+    extPollRef.current = setTimeout(async () => {
+      const res = await fetch(`/api/hbs/ext/session?user_id=${userId}&session_id=${sessionId}`);
+      const data = await res.json();
+      if (data?.status && data.status !== "pending") {
+        setExtStatus(data.status);
+      } else {
+        setExtStatus("pending");
+        pollExtSession(sessionId);
+      }
+    }, 3000);
   }
 
   const selectedName = templates.find((t) => t.id === selectedTemplate)?.name ?? "";
@@ -203,6 +233,19 @@ export default function RunCart({ userId, initialTemplateId = "", onRunComplete 
                 Open Cart →
               </button>
             </a>
+            <button
+              className="btn-ghost"
+              style={{ fontSize: "0.85rem", borderColor: extStatus === "done" ? "var(--green)" : extStatus === "failed" ? "var(--red)" : undefined }}
+              onClick={sendToExtension}
+              disabled={extStatus === "pending" || extStatus === "executing"}
+              title="Requires HiveBuyStuff Chrome extension"
+            >
+              {extStatus === "idle" && "🧩 Add via extension"}
+              {extStatus === "pending" && "Waiting for extension…"}
+              {extStatus === "executing" && "Extension working…"}
+              {extStatus === "done" && "✓ Added to cart"}
+              {extStatus === "failed" && "Extension failed — retry?"}
+            </button>
             <button
               className="btn-ghost"
               style={{ fontSize: "0.85rem" }}

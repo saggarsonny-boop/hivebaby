@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HiveBuyStuff</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0d1117;
+      color: #e6e1d3;
+      width: 320px;
+      min-height: 200px;
+      padding: 0;
+    }
+
+    .header {
+      background: #161b22;
+      border-bottom: 1px solid #2a2a2a;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+    .header-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #D4AF37;
+      letter-spacing: 0.02em;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: #9a9588;
+    }
+
+    .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #9a9588;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #4a4a4a;
+      flex-shrink: 0;
+    }
+    .dot.green { background: #3fb950; }
+    .dot.gold { background: #D4AF37; animation: pulse 1.8s ease-in-out infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #6a6460;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .session-card {
+      background: #161b22;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .session-store {
+      font-weight: 600;
+      color: #e6e1d3;
+      text-transform: capitalize;
+    }
+    .session-meta {
+      color: #9a9588;
+      font-size: 11px;
+    }
+    .session-status {
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .session-status.pending { color: #D4AF37; }
+    .session-status.executing { color: #58a6ff; }
+    .session-status.done { color: #3fb950; }
+    .session-status.failed { color: #f85149; }
+
+    .empty {
+      text-align: center;
+      font-size: 12px;
+      color: #6a6460;
+      padding: 10px 0;
+      line-height: 1.6;
+    }
+
+    input {
+      background: #161b22;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      color: #e6e1d3;
+      font-size: 12px;
+      padding: 7px 10px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: #D4AF37; }
+    input::placeholder { color: #4a4a4a; }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 12px;
+      transition: opacity 0.15s;
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: #D4AF37;
+      color: #0d1117;
+      width: 100%;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.85; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid #2a2a2a;
+      color: #9a9588;
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: #D4AF37; color: #D4AF37; }
+
+    .id-row {
+      font-family: "DM Mono", "Courier New", monospace;
+      font-size: 10px;
+      color: #4a4a4a;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    .id-label {
+      font-size: 10px;
+      color: #6a6460;
+      margin-bottom: 2px;
+    }
+
+    .row { display: flex; gap: 6px; }
+
+    .error-msg { font-size: 11px; color: #f85149; }
+    .success-msg { font-size: 11px; color: #3fb950; }
+
+    hr { border: none; border-top: 1px solid #1e1e1e; }
+
+    .footer {
+      padding: 8px 16px;
+      border-top: 1px solid #1e1e1e;
+      font-size: 10px;
+      color: #6a6460;
+      text-align: center;
+    }
+    .footer a { color: #9a9588; text-decoration: none; }
+    .footer a:hover { color: #D4AF37; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-icon">🛒</div>
+    <div>
+      <div class="header-title">HiveBuyStuff</div>
+      <div class="header-sub">Build once. Buy anywhere.</div>
+    </div>
+  </div>
+
+  <div class="body" id="main-body">
+    <div class="status-row">
+      <div class="dot" id="status-dot"></div>
+      <span id="status-text">Loading…</span>
+    </div>
+
+    <div id="sessions-section" style="display:none; flex-direction:column; gap:8px;">
+      <div class="section-label">Active sessions</div>
+      <div id="sessions-list"></div>
+    </div>
+
+    <div id="empty-section" style="display:none;">
+      <div class="empty">No carts queued.<br>Build a cart at <a id="app-link" href="https://hivebuystuff.hive.baby" target="_blank">hivebuystuff.hive.baby</a></div>
+    </div>
+
+    <hr />
+
+    <div id="id-section">
+      <div class="id-label">Session ID</div>
+      <div class="id-row" id="user-id-display">—</div>
+    </div>
+
+    <div id="link-section" style="display:none;">
+      <div class="section-label" style="margin-bottom:6px;">Link to account</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <input type="text" id="user-id-input" placeholder="Paste your session ID from the web app" />
+        <div id="link-error" class="error-msg" style="display:none;"></div>
+        <div class="row">
+          <button class="btn-primary" id="link-btn">Link</button>
+          <button class="btn-ghost" id="link-cancel-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="action-row">
+      <button class="btn-ghost" id="change-id-btn" style="flex:1;">Change ID</button>
+      <button class="btn-ghost" id="poll-btn" style="flex:1;">Refresh</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://hivebuystuff.hive.baby" target="_blank">hivebuystuff.hive.baby</a>
+    &nbsp;·&nbsp;
+    <a href="https://hive.baby" target="_blank">Hive ecosystem</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

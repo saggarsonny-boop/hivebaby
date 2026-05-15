@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "HiveBuyStuff",
+  "version": "2.0.0",
+  "description": "Automatically add your HiveBuyStuff cart to any store. Build once, buy anywhere.",
+  "permissions": ["storage", "tabs", "scripting", "alarms"],
+  "host_permissions": [
+    "https://www.walmart.com/*",
+    "https://www.target.com/*",
+    "https://www.amazon.com/*",
+    "https://www.instacart.com/*",
+    "https://www.kroger.com/*",
+    "https://hivebuystuff.hive.baby/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.walmart.com/*",
+        "https://www.target.com/*",
+        "https://www.amazon.com/*",
+        "https://www.instacart.com/*",
+        "https://www.kroger.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "HiveBuyStuff",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
