@@ -1,0 +1,80 @@
+name: HiveBuyStuff — Run DB Migration
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/hivebuystuff-migrate.yml'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Resolve Vercel token
+        env:
+          VERCEL_TOKEN_MAIN: ${{ secrets.VERCEL_TOKEN_MAIN }}
+          VERCEL_TOKEN_FALLBACK: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          TOKEN="${VERCEL_TOKEN_MAIN:-$VERCEL_TOKEN_FALLBACK}"
+          if [ -z "$TOKEN" ]; then echo "ERROR: No Vercel token"; exit 1; fi
+          echo "VERCEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Get Vercel deployment URL
+        run: |
+          RESP=$(curl -s \
+            "https://api.vercel.com/v6/deployments?projectId=hive-hivebuystuff&limit=1&target=production" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+          DEPLOY_URL=$(echo "$RESP" | jq -r '.deployments[0].url // empty')
+          if [ -z "$DEPLOY_URL" ]; then
+            DEPLOY_URL="hive-hivebuystuff.vercel.app"
+          fi
+          echo "DEPLOY_URL=https://$DEPLOY_URL" >> "$GITHUB_ENV"
+          echo "Deployment URL: https://$DEPLOY_URL"
+
+      - name: Run migration (via Vercel URL)
+        run: |
+          echo "→ POST $DEPLOY_URL/api/hbs/migrate"
+          SUCCESS=false
+          for attempt in 1 2 3 4 5 6; do
+            RESULT=$(curl -s -X POST "$DEPLOY_URL/api/hbs/migrate" \
+              --max-time 30 -w "\nHTTP:%{http_code}")
+            STATUS=$(echo "$RESULT" | grep "HTTP:" | cut -d: -f2)
+            BODY=$(echo "$RESULT" | grep -v "HTTP:")
+            echo "  Attempt $attempt — HTTP $STATUS: $BODY"
+            if [ "$STATUS" = "200" ]; then
+              SUCCESS=true
+              echo "✓ Migration complete"
+              break
+            fi
+            sleep 10
+          done
+          if [ "$SUCCESS" != "true" ]; then
+            echo "✗ Migration failed after 6 attempts"
+            exit 1
+          fi
+
+      - name: Health check (via Vercel URL)
+        run: |
+          echo "→ GET $DEPLOY_URL/api/health"
+          for attempt in 1 2 3; do
+            RESULT=$(curl -s "$DEPLOY_URL/api/health" --max-time 15)
+            echo "  $RESULT"
+            STATUS=$(echo "$RESULT" | jq -r '.status // empty')
+            ENGINE=$(echo "$RESULT" | jq -r '.engine // empty')
+            if [ "$STATUS" = "ok" ] && [ "$ENGINE" = "HiveBuyStuff" ]; then
+              echo "✓ Health check passed"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "⚠ Health check inconclusive — check manually"
+
+      - name: Health check (via custom domain)
+        run: |
+          echo "→ GET https://hivebuystuff.hive.baby/api/health (DNS propagation check)"
+          RESULT=$(curl -s --max-time 15 "https://hivebuystuff.hive.baby/api/health" 2>&1 || echo "DNS not yet")
+          echo "  $RESULT"
