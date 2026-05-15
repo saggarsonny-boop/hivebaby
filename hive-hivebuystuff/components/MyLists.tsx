@@ -118,7 +118,11 @@ export default function MyLists({ userId, onRunCart }: Props) {
 
   async function deleteTemplate(id: string) {
     if (!confirm("Delete this list?")) return;
-    await fetch(`/api/hbs/templates/${id}`, { method: "DELETE" });
+    await fetch(`/api/hbs/templates/${id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId }),
+    });
     fetchTemplates();
   }
 
