@@ -37,10 +37,32 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Deploy to Vercel
+      - name: Link Vercel project
         working-directory: hive-hivebuystuff
         run: |
-          OUTPUT=$(vercel --token "$VERCEL_TOKEN" --prod --yes 2>&1)
+          vercel link \
+            --token "$VERCEL_TOKEN" \
+            --yes \
+            --project hive-hivebuystuff 2>&1 || true
+          echo "Project JSON: $(cat .vercel/project.json 2>/dev/null || echo 'not found')"
+
+      - name: Pull Vercel env
+        working-directory: hive-hivebuystuff
+        run: |
+          vercel pull \
+            --token "$VERCEL_TOKEN" \
+            --yes \
+            --environment production 2>&1 || true
+
+      - name: Build
+        working-directory: hive-hivebuystuff
+        run: |
+          vercel build --prod --token "$VERCEL_TOKEN" 2>&1
+
+      - name: Deploy prebuilt to production
+        working-directory: hive-hivebuystuff
+        run: |
+          OUTPUT=$(vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN" 2>&1)
           echo "$OUTPUT"
           URL=$(echo "$OUTPUT" | grep -Eo 'https://[a-zA-Z0-9._-]+\.vercel\.app' | tail -1)
           echo "DEPLOY_URL=$URL" >> "$GITHUB_ENV"
@@ -57,14 +79,14 @@ jobs:
               -X POST "https://api.vercel.com/v9/projects/$PID/env" \
               -H "Authorization: Bearer $VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"key\":\"$K\",\"value\":$(printf '%s' "$V" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview"]}")
+              -d "{\"key\":\"$K\",\"value\":$(printf '%s' "$V" | jq -Rs .),\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}")
             if [ "$H" = "409" ]; then
               ID=$(jq -r '.error.envVarId // empty' /tmp/ev.json)
               [ -n "$ID" ] && curl -s -X PATCH \
                 "https://api.vercel.com/v9/projects/$PID/env/$ID" \
                 -H "Authorization: Bearer $VERCEL_TOKEN" \
                 -H "Content-Type: application/json" \
-                -d "{\"value\":$(printf '%s' "$V" | jq -Rs .),\"target\":[\"production\",\"preview"]}" > /dev/null
+                -d "{\"value\":$(printf '%s' "$V" | jq -Rs .),\"target\":[\"production\",\"preview\"]}" > /dev/null
               echo "$K updated"
             else
               echo "$K HTTP $H"
