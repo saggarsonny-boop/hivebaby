@@ -23,17 +23,43 @@ jobs:
           if [ -z "$TOKEN" ]; then echo "ERROR: No Vercel token"; exit 1; fi
           echo "VERCEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
-      - name: Get Vercel deployment URL
+      - name: Resolve Vercel project and deployment URL
         run: |
-          RESP=$(curl -s \
-            "https://api.vercel.com/v6/deployments?projectId=hive-hivebuystuff&limit=1&target=production" \
+          # Get project by name to find project ID
+          PROJECT=$(curl -s "https://api.vercel.com/v9/projects/hive-hivebuystuff" \
             -H "Authorization: Bearer $VERCEL_TOKEN")
-          DEPLOY_URL=$(echo "$RESP" | jq -r '.deployments[0].url // empty')
-          if [ -z "$DEPLOY_URL" ]; then
-            DEPLOY_URL="hive-hivebuystuff.vercel.app"
+          PROJECT_ID=$(echo "$PROJECT" | jq -r '.id // empty')
+          echo "Project ID: $PROJECT_ID"
+
+          if [ -z "$PROJECT_ID" ]; then
+            echo "ERROR: Could not find Vercel project hive-hivebuystuff"
+            echo "Full response: $PROJECT"
+            exit 1
           fi
+
+          # Get latest production deployment
+          DEPLOYMENTS=$(curl -s \
+            "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&limit=3&target=production" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+          echo "Deployments: $(echo "$DEPLOYMENTS" | jq -c '[.deployments[]?.url] | .[0:3]')"
+
+          DEPLOY_URL=$(echo "$DEPLOYMENTS" | jq -r '.deployments[0].url // empty')
+
+          if [ -z "$DEPLOY_URL" ]; then
+            # Try the project alias directly
+            ALIAS=$(echo "$PROJECT" | jq -r '.alias[0].domain // empty')
+            if [ -n "$ALIAS" ]; then
+              DEPLOY_URL="$ALIAS"
+              echo "Using project alias: $ALIAS"
+            else
+              echo "ERROR: Could not find deployment URL"
+              echo "Project: $(echo "$PROJECT" | jq -c '{id,name,alias}')"
+              exit 1
+            fi
+          fi
+
           echo "DEPLOY_URL=https://$DEPLOY_URL" >> "$GITHUB_ENV"
-          echo "Deployment URL: https://$DEPLOY_URL"
+          echo "Using deployment URL: https://$DEPLOY_URL"
 
       - name: Run migration (via Vercel URL)
         run: |
@@ -57,24 +83,19 @@ jobs:
             exit 1
           fi
 
-      - name: Health check (via Vercel URL)
+      - name: Health check
         run: |
           echo "→ GET $DEPLOY_URL/api/health"
-          for attempt in 1 2 3; do
-            RESULT=$(curl -s "$DEPLOY_URL/api/health" --max-time 15)
-            echo "  $RESULT"
-            STATUS=$(echo "$RESULT" | jq -r '.status // empty')
-            ENGINE=$(echo "$RESULT" | jq -r '.engine // empty')
-            if [ "$STATUS" = "ok" ] && [ "$ENGINE" = "HiveBuyStuff" ]; then
-              echo "✓ Health check passed"
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "⚠ Health check inconclusive — check manually"
-
-      - name: Health check (via custom domain)
-        run: |
-          echo "→ GET https://hivebuystuff.hive.baby/api/health (DNS propagation check)"
-          RESULT=$(curl -s --max-time 15 "https://hivebuystuff.hive.baby/api/health" 2>&1 || echo "DNS not yet")
+          RESULT=$(curl -s "$DEPLOY_URL/api/health" --max-time 15)
           echo "  $RESULT"
+          STATUS=$(echo "$RESULT" | jq -r '.status // empty')
+          ENGINE=$(echo "$RESULT" | jq -r '.engine // empty')
+          if [ "$STATUS" = "ok" ] && [ "$ENGINE" = "HiveBuyStuff" ]; then
+            echo "✓ HiveBuyStuff health check passed"
+          else
+            echo "⚠ Health check unexpected response"
+          fi
+
+          echo "→ GET https://hivebuystuff.hive.baby/api/health (custom domain DNS check)"
+          CUSTOM=$(curl -s --max-time 10 "https://hivebuystuff.hive.baby/api/health" 2>&1 || echo "DNS not yet propagated")
+          echo "  $CUSTOM"
