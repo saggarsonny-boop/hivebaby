@@ -1,5 +1,6 @@
 import CrossPollinationModal from '@/components/CrossPollinationModal';
 import HiveOpsWidget from '@/components/HiveOpsWidget';
+import { FloatingCompanion } from '@hive/amplifiers';
 import './globals.css';
 import type { Metadata } from "next";
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HiveOpsWidget />
       
         <CrossPollinationModal sourceEngine="hive-vitality" targetEngine="UD Converter" targetUrl="https://converter.universaldocument.org" description="Need to convert or unlock complex documents? Try the UD Converter." />
+        <FloatingCompanion engineName="Hive Vitality" />
       </body>
       </html>
   );

@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Zap, X, Send } from "lucide-react";
 
 // ------------------------------------------------------------------
 // A5: UNIVERSAL ONBOARDING WRAPPER (Frictionless Entry)
@@ -45,26 +47,98 @@ export function HiveOnboarding({ children, engineName, engineValueProposition }:
 // A18: GRAPPLER HOOK (Hallucination Containment via Metadata)
 // ------------------------------------------------------------------
 
-/**
- * A wrapper for Next.js API routes that forcibly injects the Grappler Hook
- * into the response headers, ensuring Queen Bee governance is enforced downstream.
- */
 export function withGrapplerHook(handler: Function) {
   return async (req: Request, ...args: any[]) => {
     const response = await handler(req, ...args);
-    
-    // If it's a standard Response object, append the header
     if (response instanceof Response) {
       const newHeaders = new Headers(response.headers);
       newHeaders.set("X-Hive-Governance", "QueenBee.MasterGrappler");
-      
       return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
         headers: newHeaders
       });
     }
-    
     return response;
   };
+}
+
+// ------------------------------------------------------------------
+// A27: FLOATING COMPANION WIDGET (AAC Injected Module)
+// ------------------------------------------------------------------
+
+interface FloatingCompanionProps {
+  engineName: string;
+}
+
+export function FloatingCompanion({ engineName }: FloatingCompanionProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: "assistant", content: `I'm your Activity Partner for ${engineName}. I'm here to pace you and answer any questions.` }
+  ]);
+  const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    setMessages(prev => [...prev, { role: "user", content: input }]);
+    setInput("");
+    setTimeout(() => {
+      setMessages(prev => [...prev, { role: "assistant", content: "I'm processing that through the local sandbox." }]);
+    }, 600);
+  };
+
+  return React.createElement(React.Fragment, null,
+    React.createElement(
+      "button",
+      {
+        onClick: () => setIsOpen(true),
+        style: {
+          position: "fixed", bottom: "2rem", right: "2rem", width: "60px", height: "60px",
+          borderRadius: "50%", backgroundColor: "#D4AF37", color: "#000", border: "none",
+          boxShadow: "0 10px 25px -5px rgba(212, 175, 55, 0.5)", cursor: "pointer",
+          display: isOpen ? "none" : "flex", alignItems: "center", justifyContent: "center", zIndex: 50
+        }
+      },
+      React.createElement(Zap, { size: 28 })
+    ),
+    React.createElement(AnimatePresence, null,
+      isOpen && React.createElement(
+        motion.div,
+        {
+          initial: { opacity: 0, y: 20, scale: 0.95 },
+          animate: { opacity: 1, y: 0, scale: 1 },
+          exit: { opacity: 0, y: 20, scale: 0.95 },
+          style: {
+            position: "fixed", bottom: "2rem", right: "2rem", width: "350px", height: "500px",
+            backgroundColor: "#0a0a0a", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "16px",
+            boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", zIndex: 50, overflow: "hidden"
+          }
+        },
+        // Header
+        React.createElement("div", { style: { padding: "1rem", backgroundColor: "rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center" } },
+          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "0.5rem", color: "#fff", fontWeight: "bold" } },
+            React.createElement(Zap, { size: 18, color: "#D4AF37" }), "Activity Partner"
+          ),
+          React.createElement("button", { onClick: () => setIsOpen(false), style: { background: "none", border: "none", color: "#a1a1aa", cursor: "pointer" } }, React.createElement(X, { size: 20 }))
+        ),
+        // Body
+        React.createElement("div", { style: { flex: 1, padding: "1rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem" } },
+          messages.map((m, i) => React.createElement("div", { key: i, style: { display: "flex", flexDirection: m.role === "user" ? "row-reverse" : "row", gap: "0.5rem" } },
+            React.createElement("div", { style: { padding: "0.75rem 1rem", borderRadius: "12px", backgroundColor: m.role === "user" ? "#27272a" : "rgba(212,175,55,0.1)", color: "#fff", maxWidth: "85%", fontSize: "0.9rem", border: m.role === "assistant" ? "1px solid rgba(212,175,55,0.2)" : "none" } }, m.content)
+          )),
+          React.createElement("div", { ref: messagesEndRef })
+        ),
+        // Input
+        React.createElement("div", { style: { padding: "1rem", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: "0.5rem" } },
+          React.createElement("input", { type: "text", value: input, onChange: e => setInput(e.target.value), onKeyDown: e => e.key === "Enter" && handleSend(), placeholder: "Ask me anything...", style: { flex: 1, padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.05)", color: "#fff", outline: "none" } }),
+          React.createElement("button", { onClick: handleSend, style: { padding: "0 1rem", backgroundColor: "#D4AF37", color: "#000", border: "none", borderRadius: "8px", cursor: "pointer" } }, React.createElement(Send, { size: 18 }))
+        )
+      )
+    )
+  );
 }
