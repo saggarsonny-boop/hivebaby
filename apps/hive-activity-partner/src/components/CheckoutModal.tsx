@@ -32,12 +32,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       });
       const data = await res.json();
       if (data.checkoutUrl) {
-        // Simulate redirect
-        setTimeout(() => {
-          alert(`Redirecting to Stripe Checkout for $${totalACV.toLocaleString()} ACV...`);
-          setIsProcessing(false);
-          onClose();
-        }, 1500);
+        window.location.href = data.checkoutUrl;
       }
     } catch (e) {
       console.error(e);
