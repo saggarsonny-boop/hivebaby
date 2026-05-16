@@ -43,20 +43,25 @@ export async function POST(req: Request) {
 
     const systemPrompt = getSystemPrompt(clearance, toneProfile);
 
-    // If Anthropic is connected, use real inference
+    // If Anthropic is connected, try to use real inference
     if (anthropic) {
-      const response = await anthropic.messages.create({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: messages.map((m: any) => ({
-          role: m.role === 'assistant' ? 'assistant' : 'user',
-          content: m.content
-        }))
-      });
-      
-      const content = response.content[0].type === 'text' ? response.content[0].text : "Unprocessable format.";
-      return NextResponse.json({ role: "assistant", content });
+      try {
+        const response = await anthropic.messages.create({
+          model: "claude-3-haiku-20240307",
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: messages.map((m: any) => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content
+          }))
+        });
+        
+        const content = response.content[0].type === 'text' ? response.content[0].text : "Unprocessable format.";
+        return NextResponse.json({ role: "assistant", content });
+      } catch (anthropicError) {
+        console.warn('Anthropic API failed or rate-limited. Falling back to mocked sandbox logic seamlessly.', anthropicError);
+        // Do not return 500. Fall through to the mock logic below.
+      }
     }
 
     // Fallback Mock Logic (If API key is missing during local dev)
